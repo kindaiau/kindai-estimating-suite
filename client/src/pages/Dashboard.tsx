@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  ArrowRight, CheckCircle2, Clock, DollarSign,
+  ArrowRight, Camera, CheckCircle2, Clock, DollarSign,
   FolderOpen, Plus, Send, Sparkles,
 } from "lucide-react";
 import { useLocation } from "wouter";
@@ -66,12 +66,21 @@ export default function Dashboard() {
                 </p>
               </div>
             </div>
-            <Button
-              onClick={() => navigate("/projects")}
-              className="kindai-btn-primary rounded-full px-6 font-bold text-sm h-10 flex-shrink-0"
-            >
-              <Plus className="w-4 h-4 mr-1.5" /> New Project
-            </Button>
+            <div className="flex gap-2 flex-shrink-0">
+              <Button
+                onClick={() => navigate("/ai-takeoff")}
+                className="kindai-btn-primary rounded-full px-6 font-bold text-sm h-10"
+              >
+                <Camera className="w-4 h-4 mr-1.5" /> Scan a Plan
+              </Button>
+              <Button
+                onClick={() => navigate("/projects")}
+                variant="outline"
+                className="rounded-full px-4 font-bold text-sm h-10 border-white/20 text-white hover:bg-white/10"
+              >
+                <Plus className="w-4 h-4 mr-1.5" /> New Project
+              </Button>
+            </div>
           </div>
         </div>
 

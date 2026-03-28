@@ -13,6 +13,7 @@ import MaterialsLibrary from "./pages/MaterialsLibrary";
 import LabourRates from "./pages/LabourRates";
 import Profile from "./pages/Profile";
 import QuoteAcceptance from "./pages/QuoteAcceptance";
+import AITakeoff from "./pages/AITakeoff";
 
 function Router() {
   return (
@@ -25,6 +26,7 @@ function Router() {
       <Route path="/materials" component={MaterialsLibrary} />
       <Route path="/labour" component={LabourRates} />
       <Route path="/profile" component={Profile} />
+      <Route path="/ai-takeoff" component={AITakeoff} />
       <Route path="/quote/accept/:token" component={QuoteAcceptance} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

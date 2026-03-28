@@ -3,8 +3,8 @@ import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import {
-  BarChart3, BookOpen, ChevronRight, FolderOpen,
-  LogOut, Menu, Settings, Users, X,
+  BarChart3, BookOpen, Camera, ChevronRight, FolderOpen,
+  LogOut, Menu, Settings, Sparkles, Users, X,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -18,10 +18,11 @@ import {
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
 
 const NAV_ITEMS = [
-  { href: "/dashboard",  label: "Dashboard",        icon: BarChart3 },
-  { href: "/projects",   label: "Projects",          icon: FolderOpen },
-  { href: "/materials",  label: "Materials Library", icon: BookOpen },
-  { href: "/labour",     label: "Labour Rates",      icon: Users },
+  { href: "/ai-takeoff", label: "AI Vision Takeoff", icon: Sparkles, highlight: true },
+  { href: "/dashboard",  label: "Dashboard",         icon: BarChart3 },
+  { href: "/projects",   label: "Projects",           icon: FolderOpen },
+  { href: "/materials",  label: "Materials Library",  icon: BookOpen },
+  { href: "/labour",     label: "Labour Rates",       icon: Users },
 ];
 
 interface AppLayoutProps {
@@ -99,7 +100,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
         <div className="text-[10px] font-bold text-sidebar-foreground/30 uppercase tracking-widest px-3 mb-2">
           Main Menu
         </div>
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {NAV_ITEMS.map(({ href, label, icon: Icon, highlight }) => {
           const active = location === href || location.startsWith(href + "/");
           return (
             <Link key={href} href={href}>
@@ -109,11 +110,14 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                   "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer",
                   active
                     ? "kindai-gradient text-white shadow-md shadow-pink-500/20"
+                    : highlight && !active
+                    ? "bg-gradient-to-r from-pink-50 to-orange-50 text-pink-600 hover:from-pink-100 hover:to-orange-100 border border-pink-200/50"
                     : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />
                 <span className="flex-1">{label}</span>
+                {highlight && !active && <span className="text-[9px] font-black bg-gradient-to-r from-pink-500 to-orange-500 text-white px-1.5 py-0.5 rounded-full">NEW</span>}
                 {active && <ChevronRight className="w-3 h-3 opacity-70" />}
               </div>
             </Link>

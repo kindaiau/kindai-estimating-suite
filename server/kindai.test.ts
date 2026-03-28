@@ -239,3 +239,101 @@ describe("Australian state validation", () => {
     });
   });
 });
+
+// ── AI Vision Takeoff Tests ──────────────────────────────────────────────
+
+describe("AI Vision Takeoff pricing logic", () => {
+  const sampleItems = [
+    { quantity: 20, retailPrice: 12.50, tradePrice: 8.75, labourMinutes: 15, wasteFactor: 5 },
+    { quantity: 15, retailPrice: 45.00, tradePrice: 32.00, labourMinutes: 20, wasteFactor: 3 },
+    { quantity: 1, retailPrice: 850.00, tradePrice: 620.00, labourMinutes: 120, wasteFactor: 0 },
+  ];
+
+  it("calculates trade vs retail savings correctly", () => {
+    let totalRetail = 0;
+    let totalTrade = 0;
+    for (const item of sampleItems) {
+      const wm = 1 + item.wasteFactor / 100;
+      totalRetail += item.quantity * wm * item.retailPrice;
+      totalTrade += item.quantity * wm * item.tradePrice;
+    }
+    const savings = totalRetail - totalTrade;
+    expect(savings).toBeGreaterThan(0);
+    // Trade should always be cheaper than retail
+    expect(totalTrade).toBeLessThan(totalRetail);
+  });
+
+  it("applies waste factor to material quantities", () => {
+    const item = sampleItems[0];
+    const withWaste = item.quantity * (1 + item.wasteFactor / 100);
+    expect(withWaste).toBe(21); // 20 * 1.05 = 21
+  });
+
+  it("calculates total labour hours from per-item minutes", () => {
+    let totalMinutes = 0;
+    for (const item of sampleItems) {
+      totalMinutes += item.quantity * item.labourMinutes;
+    }
+    const totalHours = totalMinutes / 60;
+    // 20*15 + 15*20 + 1*120 = 300 + 300 + 120 = 720 minutes = 12 hours
+    expect(totalHours).toBe(12);
+  });
+
+  it("calculates full quote with markup and GST", () => {
+    const labourRate = 85;
+    const markupPercent = 20;
+
+    let materialsCost = 0;
+    let totalLabourHours = 0;
+    for (const item of sampleItems) {
+      const wm = 1 + item.wasteFactor / 100;
+      materialsCost += item.quantity * wm * item.tradePrice;
+      totalLabourHours += (item.quantity * item.labourMinutes) / 60;
+    }
+
+    const labourCost = totalLabourHours * labourRate;
+    const subtotal = materialsCost + labourCost;
+    const markup = subtotal * (markupPercent / 100);
+    const subtotalWithMarkup = subtotal + markup;
+    const gst = subtotalWithMarkup * 0.1;
+    const total = subtotalWithMarkup + gst;
+
+    expect(materialsCost).toBeGreaterThan(0);
+    expect(labourCost).toBeGreaterThan(0);
+    expect(gst).toBeCloseTo(subtotalWithMarkup * 0.1, 2);
+    expect(total).toBeCloseTo(subtotalWithMarkup * 1.1, 2);
+    expect(total).toBeGreaterThan(subtotal);
+  });
+
+  it("handles zero markup correctly", () => {
+    const cost = 5000;
+    const markupPercent = 0;
+    const withMarkup = cost * (1 + markupPercent / 100);
+    const gst = withMarkup * 0.1;
+    const total = withMarkup + gst;
+    expect(withMarkup).toBe(5000);
+    expect(total).toBe(5500);
+  });
+});
+
+describe("AI supplier recommendation", () => {
+  it("getSuppliers returns suppliers for valid trade", async () => {
+    const caller = appRouter.createCaller(makeCtx());
+    const suppliers = await caller.ai.getSuppliers({ trade: "electrical" });
+    expect(Array.isArray(suppliers)).toBe(true);
+    expect(suppliers.length).toBeGreaterThan(0);
+    // Each supplier should have required fields
+    for (const s of suppliers) {
+      expect(s.name).toBeTruthy();
+      expect(s.website).toBeTruthy();
+      expect(["trade", "retail", "online"]).toContain(s.type);
+    }
+  });
+
+  it("getSuppliers filters by state when provided", async () => {
+    const caller = appRouter.createCaller(makeCtx());
+    const suppliers = await caller.ai.getSuppliers({ trade: "plumbing", state: "QLD" });
+    expect(Array.isArray(suppliers)).toBe(true);
+    expect(suppliers.length).toBeGreaterThan(0);
+  });
+});

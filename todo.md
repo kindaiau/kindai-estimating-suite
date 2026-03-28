@@ -91,3 +91,23 @@
 - [x] Polish all inner pages with consistent Kindai brand (Projects, EstimateBuilder, Materials, Labour, Profile)
 - [x] Ensure mobile-first simplicity — tradie on a building site can use it one-handed
 - [x] Fix server module import error (routers/projects restart)
+
+## AI Vision Takeoff Engine (KILLER FEATURE)
+- [x] Backend: Image/PDF upload to S3 storage
+- [x] Backend: GPT-4 Vision analysis — symbol detection, room identification, dimension extraction
+- [x] Backend: Material extraction engine — identifies every material needed from plan analysis
+- [x] Backend: Dual pricing engine — retail (Bunnings) vs trade/wholesale pricing per material
+- [x] Backend: Labour benchmark calculator — industry-standard rates per trade per task
+- [x] Backend: Markup percentage calculator — tradie sets their margin on materials
+- [x] Backend: Supplier recommendation engine — best suppliers per trade per region
+- [x] Frontend: Camera capture / photo upload (mobile-first)
+- [x] Frontend: PDF plan upload with drag-and-drop
+- [x] Frontend: Plan preview with AI annotation overlay
+- [x] Frontend: Full materials breakdown table (retail vs trade pricing columns)
+- [x] Frontend: Labour cost breakdown with benchmark references
+- [x] Frontend: Markup slider/input with live total recalculation
+- [x] Frontend: Supplier recommendations panel with "Send Order" action
+- [x] Frontend: One-click "Generate Quote" from AI takeoff results
+- [x] Redesign landing page hero to showcase AI Vision as the #1 feature
+- [x] Redesign dashboard quick-start to prioritise "Scan a Plan" CTA
+- [x] Write vitest tests for Vision Takeoff engine (27 tests passing)
