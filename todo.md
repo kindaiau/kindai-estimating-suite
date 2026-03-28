@@ -85,3 +85,9 @@
 - [x] Labour rate penalty calculation tests
 - [x] Margin calculation tests
 - [x] Australian state validation tests
+
+## Branding Overhaul (User Feedback Round 2)
+- [x] Rebrand Dashboard with Kindai wow-factor: origami crane logo, rainbow gradients, colourful trade cards
+- [x] Polish all inner pages with consistent Kindai brand (Projects, EstimateBuilder, Materials, Labour, Profile)
+- [x] Ensure mobile-first simplicity — tradie on a building site can use it one-handed
+- [x] Fix server module import error (routers/projects restart)

@@ -3,38 +3,25 @@ import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import {
-  BarChart3,
-  BookOpen,
-  Building2,
-  ChevronRight,
-  ClipboardList,
-  FolderOpen,
-  HardHat,
-  LogOut,
-  Menu,
-  Settings,
-  Users,
-  Wrench,
-  X,
-  Zap,
+  BarChart3, BookOpen, ChevronRight, FolderOpen,
+  LogOut, Menu, Settings, Users, X,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
+const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
+
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
-  { href: "/projects", label: "Projects", icon: FolderOpen },
-  { href: "/materials", label: "Materials Library", icon: BookOpen },
-  { href: "/labour", label: "Labour Rates", icon: Users },
+  { href: "/dashboard",  label: "Dashboard",        icon: BarChart3 },
+  { href: "/projects",   label: "Projects",          icon: FolderOpen },
+  { href: "/materials",  label: "Materials Library", icon: BookOpen },
+  { href: "/labour",     label: "Labour Rates",      icon: Users },
 ];
 
 interface AppLayoutProps {
@@ -53,11 +40,9 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-xl kindai-gradient flex items-center justify-center">
-            <Zap className="w-5 h-5 text-white" />
-          </div>
-          <div className="text-sm text-muted-foreground">Loading Kindai...</div>
+        <div className="flex flex-col items-center gap-4">
+          <img src={LOGO_URL} alt="Kindai" className="w-16 h-16 object-contain animate-pulse" />
+          <div className="text-sm text-muted-foreground font-medium">Loading Kindai...</div>
         </div>
       </div>
     );
@@ -65,18 +50,18 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl kindai-gradient flex items-center justify-center mx-auto shadow-lg">
-            <HardHat className="w-8 h-8 text-white" />
+      <div className="min-h-screen flex items-center justify-center kindai-hero-bg">
+        <div className="text-center space-y-5 glass-card rounded-3xl p-10 max-w-sm mx-4">
+          <img src={LOGO_URL} alt="Kindai" className="w-20 h-20 object-contain mx-auto drop-shadow-xl" />
+          <div>
+            <h2 className="text-2xl font-black text-white mb-1">Kindai Estimating</h2>
+            <p className="text-white/60 text-sm">Sign in to access your trade workbench</p>
           </div>
-          <h2 className="text-xl font-semibold text-foreground">Sign in to continue</h2>
-          <p className="text-muted-foreground text-sm">Access your Kindai Estimating Suite</p>
           <Button
-            className="kindai-gradient text-white border-0 shadow-md"
+            className="kindai-btn-primary w-full rounded-full font-bold text-sm h-11"
             onClick={() => window.location.href = getLoginUrl()}
           >
-            Sign In
+            Sign In to Continue
           </Button>
         </div>
       </div>
@@ -89,24 +74,29 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-        <div className="w-9 h-9 rounded-xl kindai-gradient flex items-center justify-center shadow-sm flex-shrink-0">
-          <HardHat className="w-5 h-5 text-white" />
-        </div>
-        <div className="min-w-0">
-          <div className="text-sm font-bold text-sidebar-foreground leading-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-            Kindai
+      {/* Brand Header */}
+      <div className="px-4 py-5 border-b border-sidebar-border">
+        <Link href="/">
+          <div className="flex items-center gap-3 cursor-pointer group">
+            <div className="relative flex-shrink-0">
+              <div className="absolute inset-0 rounded-xl blur-md opacity-60 kindai-gradient scale-110 group-hover:opacity-80 transition-opacity" />
+              <img src={LOGO_URL} alt="Kindai" className="relative w-10 h-10 object-contain" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-base font-black leading-tight kindai-gradient-text" style={{ fontFamily: "'Nunito', sans-serif" }}>
+                kindai
+              </div>
+              <div className="text-[10px] text-sidebar-foreground/40 leading-tight uppercase tracking-widest">
+                Estimating Suite
+              </div>
+            </div>
           </div>
-          <div className="text-[10px] text-sidebar-foreground/50 leading-tight uppercase tracking-wider">
-            Estimating Suite
-          </div>
-        </div>
+        </Link>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        <div className="text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-wider px-3 mb-2">
+        <div className="text-[10px] font-bold text-sidebar-foreground/30 uppercase tracking-widest px-3 mb-2">
           Main Menu
         </div>
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
@@ -116,31 +106,31 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
               <div
                 onClick={() => setSidebarOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer group",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer",
                   active
-                    ? "bg-primary text-white shadow-sm"
-                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                    ? "kindai-gradient text-white shadow-md shadow-pink-500/20"
+                    : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 )}
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />
                 <span className="flex-1">{label}</span>
-                {active && <ChevronRight className="w-3 h-3 opacity-60" />}
+                {active && <ChevronRight className="w-3 h-3 opacity-70" />}
               </div>
             </Link>
           );
         })}
 
-        <div className="text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-wider px-3 mt-5 mb-2">
+        <div className="text-[10px] font-bold text-sidebar-foreground/30 uppercase tracking-widest px-3 mt-5 mb-2">
           Account
         </div>
         <Link href="/profile">
           <div
             onClick={() => setSidebarOpen(false)}
             className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer",
+              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer",
               location === "/profile"
-                ? "bg-primary text-white shadow-sm"
-                : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+                ? "kindai-gradient text-white shadow-md shadow-pink-500/20"
+                : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
             )}
           >
             <Settings className="w-4 h-4 flex-shrink-0" />
@@ -149,26 +139,28 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
         </Link>
       </nav>
 
-      {/* User footer */}
+      {/* User Footer */}
       <div className="px-3 pb-4 border-t border-sidebar-border pt-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-sidebar-accent transition-colors cursor-pointer">
+            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-sidebar-accent transition-colors cursor-pointer">
               <Avatar className="w-8 h-8 flex-shrink-0">
-                <AvatarFallback className="bg-primary/20 text-primary text-xs font-semibold">
+                <AvatarFallback className="text-xs font-black text-white kindai-gradient">
                   {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0 text-left">
-                <div className="text-xs font-semibold text-sidebar-foreground truncate">{user?.name ?? "User"}</div>
-                <div className="text-[10px] text-sidebar-foreground/50 truncate">{user?.email ?? ""}</div>
+                <div className="text-xs font-bold text-sidebar-foreground truncate">{user?.name ?? "User"}</div>
+                <div className="text-[10px] text-sidebar-foreground/40 truncate">{user?.email ?? ""}</div>
               </div>
-              <ChevronRight className="w-3 h-3 text-sidebar-foreground/40 flex-shrink-0" />
+              <ChevronRight className="w-3 h-3 text-sidebar-foreground/30 flex-shrink-0" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem asChild>
-              <Link href="/profile"><div className="flex items-center gap-2 cursor-pointer"><Settings className="w-4 h-4" /> Settings</div></Link>
+              <Link href="/profile">
+                <div className="flex items-center gap-2 cursor-pointer"><Settings className="w-4 h-4" /> Settings</div>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -193,11 +185,11 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
           <aside className="relative flex flex-col w-64 bg-sidebar border-r border-sidebar-border z-10">
             <button
               onClick={() => setSidebarOpen(false)}
-              className="absolute top-4 right-4 text-sidebar-foreground/60 hover:text-sidebar-foreground"
+              className="absolute top-4 right-4 text-sidebar-foreground/50 hover:text-sidebar-foreground"
             >
               <X className="w-5 h-5" />
             </button>
@@ -209,16 +201,14 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile Header */}
-        <header className="lg:hidden flex items-center gap-3 px-4 py-3 bg-card border-b border-border sticky top-0 z-40">
+        <header className="lg:hidden flex items-center gap-3 px-4 py-3 bg-card border-b border-border sticky top-0 z-40 shadow-sm">
           <button onClick={() => setSidebarOpen(true)} className="text-muted-foreground hover:text-foreground">
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg kindai-gradient flex items-center justify-center">
-              <HardHat className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-sm font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-              {title ?? "Kindai"}
+            <img src={LOGO_URL} alt="Kindai" className="w-7 h-7 object-contain" />
+            <span className="text-sm font-black kindai-gradient-text" style={{ fontFamily: "'Nunito', sans-serif" }}>
+              {title ?? "kindai"}
             </span>
           </div>
         </header>

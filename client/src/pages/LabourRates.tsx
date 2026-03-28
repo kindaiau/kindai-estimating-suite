@@ -1,22 +1,21 @@
 import AppLayout from "@/components/AppLayout";
 import { trpc } from "@/lib/trpc";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Users, Plus, Trash2, Zap, RefreshCw } from "lucide-react";
+import { Users, Plus, Trash2, RefreshCw, Sparkles, Shield } from "lucide-react";
 import { useState } from "react";
 
+const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
+
 const TRADES = [
-  { id: "electrical", name: "Electrical" }, { id: "plumbing", name: "Plumbing" },
-  { id: "carpentry", name: "Carpentry" }, { id: "concreting", name: "Concreting" },
-  { id: "hvac", name: "HVAC" }, { id: "flooring", name: "Flooring" },
-  { id: "landscaping", name: "Landscaping" }, { id: "cabinetry", name: "Cabinetry" },
-  { id: "rendering", name: "Rendering & Plastering" }, { id: "cabinet-making", name: "Cabinet Making" },
+  { id: "electrical", name: "Electrical", emoji: "⚡" }, { id: "plumbing", name: "Plumbing", emoji: "🔧" },
+  { id: "carpentry", name: "Carpentry", emoji: "🪚" }, { id: "concreting", name: "Concreting", emoji: "🏗️" },
+  { id: "hvac", name: "HVAC", emoji: "❄️" }, { id: "flooring", name: "Flooring", emoji: "🟫" },
+  { id: "landscaping", name: "Landscaping", emoji: "🌿" }, { id: "cabinetry", name: "Cabinetry", emoji: "🚪" },
+  { id: "rendering", name: "Rendering & Plastering", emoji: "🧱" }, { id: "cabinet-making", name: "Cabinet Making", emoji: "🪵" },
 ];
 
 export default function LabourRates() {
@@ -46,10 +45,12 @@ export default function LabourRates() {
 
   return (
     <AppLayout title="Labour Rates">
-      <div className="p-6 space-y-5">
-        <div className="flex items-center justify-between">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Labour Rates</h1>
+            <h1 className="text-2xl font-black text-foreground flex items-center gap-2">
+              <Users className="w-6 h-6 text-green-500" /> Labour Rates
+            </h1>
             <p className="text-sm text-muted-foreground mt-0.5">Fair Work Act-compliant rates per trade</p>
           </div>
           <div className="flex gap-2">
@@ -58,60 +59,60 @@ export default function LabourRates() {
               size="sm"
               onClick={() => seedDefaults.mutate({ trade: tradeFilter })}
               disabled={seedDefaults.isPending}
+              className="rounded-full font-bold text-xs"
             >
               <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${seedDefaults.isPending ? "animate-spin" : ""}`} />
               Load Defaults
             </Button>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" className="kindai-gradient text-white border-0">
+                <Button size="sm" className="kindai-btn-primary rounded-full font-bold text-xs px-4">
                   <Plus className="w-3.5 h-3.5 mr-1.5" /> Add Rate
                 </Button>
               </DialogTrigger>
               <DialogContent>
-                <DialogHeader><DialogTitle>Add Labour Rate</DialogTitle></DialogHeader>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-lg font-black">
+                    <Sparkles className="w-5 h-5 text-pink-500" /> Add Labour Rate
+                  </DialogTitle>
+                </DialogHeader>
                 <div className="space-y-3 mt-2">
                   <div className="space-y-1.5">
-                    <Label>Classification *</Label>
-                    <Input placeholder="e.g. Electrician Grade 3" value={form.classification} onChange={e => setForm(f => ({ ...f, classification: e.target.value }))} />
+                    <Label className="text-xs font-bold">Classification *</Label>
+                    <Input placeholder="e.g. Electrician Grade 3" value={form.classification} onChange={e => setForm(f => ({ ...f, classification: e.target.value }))} className="rounded-xl" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label>Base Rate ($/hr) *</Label>
-                      <Input type="number" min="0" step="0.01" placeholder="0.00" value={form.baseRate} onChange={e => setForm(f => ({ ...f, baseRate: e.target.value }))} />
+                      <Label className="text-xs font-bold">Base Rate ($/hr) *</Label>
+                      <Input type="number" min="0" step="0.01" placeholder="0.00" value={form.baseRate} onChange={e => setForm(f => ({ ...f, baseRate: e.target.value }))} className="rounded-xl" />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>Overtime Rate ($/hr)</Label>
-                      <Input type="number" min="0" step="0.01" placeholder="0.00" value={form.overtimeRate} onChange={e => setForm(f => ({ ...f, overtimeRate: e.target.value }))} />
+                      <Label className="text-xs font-bold">Overtime ($/hr)</Label>
+                      <Input type="number" min="0" step="0.01" placeholder="0.00" value={form.overtimeRate} onChange={e => setForm(f => ({ ...f, overtimeRate: e.target.value }))} className="rounded-xl" />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>Saturday Rate ($/hr)</Label>
-                      <Input type="number" min="0" step="0.01" placeholder="0.00" value={form.saturdayRate} onChange={e => setForm(f => ({ ...f, saturdayRate: e.target.value }))} />
+                      <Label className="text-xs font-bold">Saturday ($/hr)</Label>
+                      <Input type="number" min="0" step="0.01" placeholder="0.00" value={form.saturdayRate} onChange={e => setForm(f => ({ ...f, saturdayRate: e.target.value }))} className="rounded-xl" />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>Sunday Rate ($/hr)</Label>
-                      <Input type="number" min="0" step="0.01" placeholder="0.00" value={form.sundayRate} onChange={e => setForm(f => ({ ...f, sundayRate: e.target.value }))} />
+                      <Label className="text-xs font-bold">Sunday ($/hr)</Label>
+                      <Input type="number" min="0" step="0.01" placeholder="0.00" value={form.sundayRate} onChange={e => setForm(f => ({ ...f, sundayRate: e.target.value }))} className="rounded-xl" />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>Public Holiday ($/hr)</Label>
-                      <Input type="number" min="0" step="0.01" placeholder="0.00" value={form.publicHolidayRate} onChange={e => setForm(f => ({ ...f, publicHolidayRate: e.target.value }))} />
+                      <Label className="text-xs font-bold">Public Holiday ($/hr)</Label>
+                      <Input type="number" min="0" step="0.01" placeholder="0.00" value={form.publicHolidayRate} onChange={e => setForm(f => ({ ...f, publicHolidayRate: e.target.value }))} className="rounded-xl" />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>Travel Allowance ($/day)</Label>
-                      <Input type="number" min="0" step="0.01" placeholder="0.00" value={form.travelAllowance} onChange={e => setForm(f => ({ ...f, travelAllowance: e.target.value }))} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label>Tool Allowance ($/day)</Label>
-                      <Input type="number" min="0" step="0.01" placeholder="0.00" value={form.toolAllowance} onChange={e => setForm(f => ({ ...f, toolAllowance: e.target.value }))} />
+                      <Label className="text-xs font-bold">Travel ($/day)</Label>
+                      <Input type="number" min="0" step="0.01" placeholder="0.00" value={form.travelAllowance} onChange={e => setForm(f => ({ ...f, travelAllowance: e.target.value }))} className="rounded-xl" />
                     </div>
                   </div>
                   <Button
-                    className="w-full kindai-gradient text-white border-0"
+                    className="w-full kindai-btn-primary rounded-xl font-bold"
                     onClick={() => {
                       if (!form.classification || !form.baseRate) return toast.error("Classification and base rate required");
                       createRate.mutate({
-                        trade: tradeFilter,
-                        classification: form.classification,
+                        trade: tradeFilter, classification: form.classification,
                         baseRate: parseFloat(form.baseRate),
                         overtimeRate: form.overtimeRate ? parseFloat(form.overtimeRate) : undefined,
                         saturdayRate: form.saturdayRate ? parseFloat(form.saturdayRate) : undefined,
@@ -131,66 +132,76 @@ export default function LabourRates() {
           </div>
         </div>
 
-        {/* Trade Selector */}
+        {/* Trade Selector Pills */}
         <div className="flex gap-2 flex-wrap">
           {TRADES.map(t => (
             <button
               key={t.id}
               onClick={() => setTradeFilter(t.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${tradeFilter === t.id ? "bg-primary text-white shadow-sm" : "bg-secondary text-muted-foreground hover:text-foreground hover:bg-secondary/80"}`}
+              className={`px-3.5 py-2 rounded-full text-xs font-bold transition-all ${
+                tradeFilter === t.id
+                  ? "kindai-gradient text-white shadow-md shadow-pink-500/20"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
             >
-              {t.name}
+              {t.emoji} {t.name}
             </button>
           ))}
         </div>
 
         {/* Fair Work Notice */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700">
-          <strong>Fair Work Act 2009:</strong> These rates are based on applicable Modern Awards. Always verify current rates at{" "}
-          <a href="https://www.fairwork.gov.au" target="_blank" rel="noopener noreferrer" className="underline">fairwork.gov.au</a>.
-          Penalty rates, allowances, and overtime must comply with the relevant Award for each classification.
+        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-start gap-3">
+          <Shield className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+          <div className="text-xs text-blue-700">
+            <strong className="font-bold">Fair Work Act 2009:</strong> These rates are based on applicable Modern Awards. Always verify current rates at{" "}
+            <a href="https://www.fairwork.gov.au" target="_blank" rel="noopener noreferrer" className="underline font-bold">fairwork.gov.au</a>.
+            Penalty rates, allowances, and overtime must comply with the relevant Award for each classification.
+          </div>
         </div>
 
         {isLoading ? (
-          <div className="space-y-2">{[...Array(4)].map((_, i) => <div key={i} className="h-16 bg-secondary/50 rounded-lg animate-pulse" />)}</div>
+          <div className="space-y-2">{[...Array(4)].map((_, i) => <div key={i} className="h-16 bg-secondary/50 rounded-xl animate-pulse" />)}</div>
         ) : !rates || rates.length === 0 ? (
           <div className="text-center py-12">
-            <Users className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-            <h3 className="text-base font-semibold text-foreground mb-1">No rates for {TRADES.find(t => t.id === tradeFilter)?.name}</h3>
+            <div className="relative inline-block mb-4">
+              <div className="absolute inset-0 rounded-2xl blur-lg opacity-40 kindai-gradient scale-110" />
+              <img src={LOGO_URL} alt="Kindai" className="relative w-16 h-16 object-contain" />
+            </div>
+            <h3 className="text-base font-black text-foreground mb-1">No rates for {TRADES.find(t => t.id === tradeFilter)?.name}</h3>
             <p className="text-sm text-muted-foreground mb-4">Load default Fair Work rates or add your own</p>
             <div className="flex gap-2 justify-center">
-              <Button variant="outline" onClick={() => seedDefaults.mutate({ trade: tradeFilter })} disabled={seedDefaults.isPending}>
+              <Button variant="outline" onClick={() => seedDefaults.mutate({ trade: tradeFilter })} disabled={seedDefaults.isPending} className="rounded-full font-bold text-xs">
                 <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Load Defaults
               </Button>
-              <Button className="kindai-gradient text-white border-0" onClick={() => setOpen(true)}>
+              <Button className="kindai-btn-primary rounded-full font-bold text-xs" onClick={() => setOpen(true)}>
                 <Plus className="w-3.5 h-3.5 mr-1.5" /> Add Rate
               </Button>
             </div>
           </div>
         ) : (
-          <div className="border border-border rounded-xl overflow-hidden">
+          <div className="border-0 rounded-2xl overflow-hidden shadow-sm bg-white">
             <table className="w-full text-sm">
-              <thead className="bg-secondary/50">
+              <thead className="bg-gray-50">
                 <tr>
-                  <th className="text-left p-3 font-medium text-xs">Classification</th>
-                  <th className="text-right p-3 font-medium text-xs">Base</th>
-                  <th className="text-right p-3 font-medium text-xs hidden sm:table-cell">Overtime</th>
-                  <th className="text-right p-3 font-medium text-xs hidden md:table-cell">Saturday</th>
-                  <th className="text-right p-3 font-medium text-xs hidden md:table-cell">Sunday</th>
-                  <th className="text-right p-3 font-medium text-xs hidden lg:table-cell">Travel/day</th>
-                  <th className="w-10 p-3"></th>
+                  <th className="text-left p-3.5 font-bold text-xs text-muted-foreground uppercase tracking-wider">Classification</th>
+                  <th className="text-right p-3.5 font-bold text-xs text-muted-foreground uppercase tracking-wider">Base</th>
+                  <th className="text-right p-3.5 font-bold text-xs text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Overtime</th>
+                  <th className="text-right p-3.5 font-bold text-xs text-muted-foreground uppercase tracking-wider hidden md:table-cell">Saturday</th>
+                  <th className="text-right p-3.5 font-bold text-xs text-muted-foreground uppercase tracking-wider hidden md:table-cell">Sunday</th>
+                  <th className="text-right p-3.5 font-bold text-xs text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Travel/day</th>
+                  <th className="w-10 p-3.5"></th>
                 </tr>
               </thead>
               <tbody>
                 {rates.map((r) => (
-                  <tr key={r.id} className="border-t border-border hover:bg-secondary/20 transition-colors">
-                    <td className="p-3 font-medium">{r.classification}</td>
-                    <td className="p-3 text-right font-semibold text-primary">${parseFloat(r.baseRate as string).toFixed(2)}/hr</td>
-                    <td className="p-3 text-right text-xs hidden sm:table-cell">${parseFloat(r.overtimeRate as string || "0").toFixed(2)}</td>
-                    <td className="p-3 text-right text-xs hidden md:table-cell">${parseFloat(r.saturdayRate as string || "0").toFixed(2)}</td>
-                    <td className="p-3 text-right text-xs hidden md:table-cell">${parseFloat(r.sundayRate as string || "0").toFixed(2)}</td>
-                    <td className="p-3 text-right text-xs hidden lg:table-cell">${parseFloat(r.travelAllowance as string || "0").toFixed(2)}</td>
-                    <td className="p-3">
+                  <tr key={r.id} className="border-t border-gray-100 hover:bg-gray-50/50 transition-colors">
+                    <td className="p-3.5 font-bold text-foreground">{r.classification}</td>
+                    <td className="p-3.5 text-right font-black kindai-gradient-text">${parseFloat(r.baseRate as string).toFixed(2)}/hr</td>
+                    <td className="p-3.5 text-right text-xs text-muted-foreground hidden sm:table-cell">${parseFloat(r.overtimeRate as string || "0").toFixed(2)}</td>
+                    <td className="p-3.5 text-right text-xs text-muted-foreground hidden md:table-cell">${parseFloat(r.saturdayRate as string || "0").toFixed(2)}</td>
+                    <td className="p-3.5 text-right text-xs text-muted-foreground hidden md:table-cell">${parseFloat(r.sundayRate as string || "0").toFixed(2)}</td>
+                    <td className="p-3.5 text-right text-xs text-muted-foreground hidden lg:table-cell">${parseFloat(r.travelAllowance as string || "0").toFixed(2)}</td>
+                    <td className="p-3.5">
                       <button onClick={() => deleteRate.mutate({ id: r.id })} className="text-muted-foreground hover:text-destructive transition-colors">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

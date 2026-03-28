@@ -40,78 +40,97 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  /* Kindai brand tokens */
+  --color-kindai-pink: var(--kindai-pink);
+  --color-kindai-orange: var(--kindai-orange);
+  --color-kindai-yellow: var(--kindai-yellow);
+  --color-kindai-green: var(--kindai-green);
+  --color-kindai-blue: var(--kindai-blue);
+  --color-kindai-purple: var(--kindai-purple);
 }
 
 :root {
-  /* Kindai Electric Blue brand */
-  --primary: oklch(0.48 0.22 255);
+  /* ── Kindai Brand Palette (extracted from origami crane logo) ── */
+  --kindai-pink:   oklch(0.58 0.28 0);      /* #FF2D78 hot pink */
+  --kindai-orange: oklch(0.68 0.22 40);     /* #FF6B35 warm orange */
+  --kindai-yellow: oklch(0.88 0.18 88);     /* #FFD700 golden yellow */
+  --kindai-green:  oklch(0.72 0.25 145);    /* #00C853 vivid green */
+  --kindai-blue:   oklch(0.55 0.22 255);    /* #2979FF electric blue */
+  --kindai-purple: oklch(0.55 0.25 310);    /* #AA00FF magenta-purple */
+
+  /* ── Primary = Kindai Pink (most distinctive brand colour) ── */
+  --primary: oklch(0.58 0.28 0);
   --primary-foreground: oklch(1 0 0);
-  --sidebar-primary: oklch(0.48 0.22 255);
+
+  /* ── Sidebar uses deep dark with pink accent ── */
+  --sidebar: oklch(0.10 0.015 270);
+  --sidebar-foreground: oklch(0.92 0.008 270);
+  --sidebar-primary: oklch(0.58 0.28 0);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --chart-1: oklch(0.48 0.22 255);
-  --chart-2: oklch(0.75 0.18 75);
-  --chart-3: oklch(0.55 0.18 155);
-  --chart-4: oklch(0.60 0.18 340);
-  --chart-5: oklch(0.60 0.15 210);
-  --radius: 0.5rem;
-  --background: oklch(0.98 0.005 240);
-  --foreground: oklch(0.13 0.02 240);
+  --sidebar-accent: oklch(0.18 0.02 270);
+  --sidebar-accent-foreground: oklch(0.95 0.005 270);
+  --sidebar-border: oklch(0.22 0.015 270);
+  --sidebar-ring: oklch(0.58 0.28 0);
+
+  /* ── Chart colours follow brand palette ── */
+  --chart-1: oklch(0.58 0.28 0);
+  --chart-2: oklch(0.68 0.22 40);
+  --chart-3: oklch(0.72 0.25 145);
+  --chart-4: oklch(0.55 0.22 255);
+  --chart-5: oklch(0.88 0.18 88);
+
+  /* ── Light theme neutrals ── */
+  --radius: 0.625rem;
+  --background: oklch(0.985 0.003 270);
+  --foreground: oklch(0.12 0.02 270);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.13 0.02 240);
+  --card-foreground: oklch(0.12 0.02 270);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.13 0.02 240);
-  --secondary: oklch(0.94 0.01 240);
-  --secondary-foreground: oklch(0.28 0.04 240);
-  --muted: oklch(0.96 0.005 240);
-  --muted-foreground: oklch(0.52 0.02 240);
-  --accent: oklch(0.96 0.005 240);
-  --accent-foreground: oklch(0.13 0.02 240);
+  --popover-foreground: oklch(0.12 0.02 270);
+  --secondary: oklch(0.94 0.008 270);
+  --secondary-foreground: oklch(0.28 0.03 270);
+  --muted: oklch(0.96 0.005 270);
+  --muted-foreground: oklch(0.52 0.018 270);
+  --accent: oklch(0.96 0.005 270);
+  --accent-foreground: oklch(0.12 0.02 270);
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.90 0.008 240);
-  --input: oklch(0.90 0.008 240);
-  --ring: oklch(0.48 0.22 255);
-  --sidebar: oklch(0.13 0.025 240);
-  --sidebar-foreground: oklch(0.90 0.01 240);
-  --sidebar-accent: oklch(0.20 0.025 240);
-  --sidebar-accent-foreground: oklch(0.95 0.005 240);
-  --sidebar-border: oklch(0.22 0.02 240);
-  --sidebar-ring: oklch(0.48 0.22 255);
+  --border: oklch(0.90 0.006 270);
+  --input: oklch(0.90 0.006 270);
+  --ring: oklch(0.58 0.28 0);
 }
 
 .dark {
-  --primary: oklch(0.60 0.22 255);
+  --primary: oklch(0.68 0.28 0);
   --primary-foreground: oklch(1 0 0);
-  --sidebar-primary: oklch(0.60 0.22 255);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --background: oklch(0.10 0.015 240);
-  --foreground: oklch(0.95 0.005 240);
-  --card: oklch(0.13 0.015 240);
-  --card-foreground: oklch(0.95 0.005 240);
-  --popover: oklch(0.13 0.015 240);
-  --popover-foreground: oklch(0.95 0.005 240);
-  --secondary: oklch(0.18 0.015 240);
-  --secondary-foreground: oklch(0.85 0.01 240);
-  --muted: oklch(0.18 0.015 240);
-  --muted-foreground: oklch(0.60 0.02 240);
-  --accent: oklch(0.18 0.015 240);
-  --accent-foreground: oklch(0.95 0.005 240);
+  --background: oklch(0.09 0.015 270);
+  --foreground: oklch(0.95 0.005 270);
+  --card: oklch(0.12 0.015 270);
+  --card-foreground: oklch(0.95 0.005 270);
+  --popover: oklch(0.12 0.015 270);
+  --popover-foreground: oklch(0.95 0.005 270);
+  --secondary: oklch(0.17 0.015 270);
+  --secondary-foreground: oklch(0.85 0.01 270);
+  --muted: oklch(0.17 0.015 270);
+  --muted-foreground: oklch(0.60 0.018 270);
+  --accent: oklch(0.17 0.015 270);
+  --accent-foreground: oklch(0.95 0.005 270);
   --destructive: oklch(0.60 0.22 25);
   --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.22 0.015 240);
-  --input: oklch(0.22 0.015 240);
-  --ring: oklch(0.60 0.22 255);
-  --chart-1: oklch(0.60 0.22 255);
-  --chart-2: oklch(0.80 0.18 75);
-  --chart-3: oklch(0.65 0.18 155);
-  --chart-4: oklch(0.70 0.18 340);
-  --chart-5: oklch(0.70 0.15 210);
-  --sidebar: oklch(0.08 0.015 240);
-  --sidebar-foreground: oklch(0.90 0.01 240);
-  --sidebar-accent: oklch(0.16 0.02 240);
-  --sidebar-accent-foreground: oklch(0.95 0.005 240);
-  --sidebar-border: oklch(0.18 0.015 240);
-  --sidebar-ring: oklch(0.60 0.22 255);
+  --border: oklch(0.22 0.015 270);
+  --input: oklch(0.22 0.015 270);
+  --ring: oklch(0.68 0.28 0);
+  --chart-1: oklch(0.68 0.28 0);
+  --chart-2: oklch(0.75 0.22 40);
+  --chart-3: oklch(0.78 0.25 145);
+  --chart-4: oklch(0.65 0.22 255);
+  --chart-5: oklch(0.88 0.18 88);
+  --sidebar: oklch(0.07 0.012 270);
+  --sidebar-foreground: oklch(0.92 0.008 270);
+  --sidebar-accent: oklch(0.15 0.018 270);
+  --sidebar-accent-foreground: oklch(0.95 0.005 270);
+  --sidebar-border: oklch(0.18 0.012 270);
+  --sidebar-ring: oklch(0.68 0.28 0);
 }
 
 @layer base {
@@ -119,100 +138,134 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Nunito', 'Inter', system-ui, sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-family: 'Nunito', system-ui, sans-serif;
+    font-weight: 700;
     letter-spacing: -0.02em;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   [type="button"]:not(:disabled),
   [type="submit"]:not(:disabled),
-  [type="reset"]:not(:disabled),
   a[href],
-  select:not(:disabled),
-  input[type="checkbox"]:not(:disabled),
-  input[type="radio"]:not(:disabled) {
+  select:not(:disabled) {
     @apply cursor-pointer;
   }
 }
 
 @layer components {
-  /**
-   * Custom container utility that centers content and adds responsive padding.
-   *
-   * This overrides Tailwind's default container behavior to:
-   * - Auto-center content (mx-auto)
-   * - Add responsive horizontal padding
-   * - Set max-width for large screens
-   *
-   * Usage: <div className="container">...</div>
-   *
-   * For custom widths, use max-w-* utilities directly:
-   * <div className="max-w-6xl mx-auto px-4">...</div>
-   */
   .container {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem; /* 16px - mobile padding */
+    padding-left: 1rem;
     padding-right: 1rem;
   }
-
   .flex {
     min-height: 0;
     min-width: 0;
   }
-
   @media (min-width: 640px) {
-    .container {
-      padding-left: 1.5rem; /* 24px - tablet padding */
-      padding-right: 1.5rem;
-    }
+    .container { padding-left: 1.5rem; padding-right: 1.5rem; }
   }
-
   @media (min-width: 1024px) {
-    .container {
-      padding-left: 2rem; /* 32px - desktop padding */
-      padding-right: 2rem;
-      max-width: 1280px; /* Standard content width */
-    }
+    .container { padding-left: 2rem; padding-right: 2rem; max-width: 1280px; }
   }
 }
-/* ============================================
-   KINDAI BRAND UTILITIES
-   ============================================ */
 
+/* ============================================================
+   KINDAI BRAND UTILITIES
+   ============================================================ */
+
+/* The signature rainbow gradient — matches the logo wordmark */
 .kindai-gradient {
-  background: linear-gradient(135deg, oklch(0.48 0.22 255) 0%, oklch(0.55 0.20 275) 100%);
+  background: linear-gradient(135deg,
+    oklch(0.58 0.28 0) 0%,       /* pink */
+    oklch(0.68 0.22 40) 35%,     /* orange */
+    oklch(0.72 0.25 145) 65%,    /* green */
+    oklch(0.55 0.22 255) 100%    /* blue */
+  );
 }
 
+/* Crane wing gradient — yellow → orange → pink (top wing of logo) */
+.kindai-gradient-warm {
+  background: linear-gradient(135deg,
+    oklch(0.88 0.18 88) 0%,      /* yellow */
+    oklch(0.68 0.22 40) 50%,     /* orange */
+    oklch(0.58 0.28 0) 100%      /* pink */
+  );
+}
+
+/* Text rainbow gradient */
 .kindai-gradient-text {
-  background: linear-gradient(135deg, oklch(0.48 0.22 255) 0%, oklch(0.55 0.20 275) 100%);
+  background: linear-gradient(135deg,
+    oklch(0.58 0.28 0) 0%,
+    oklch(0.68 0.22 40) 30%,
+    oklch(0.72 0.25 145) 65%,
+    oklch(0.55 0.22 255) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Status badge colours */
-.status-draft { @apply bg-slate-100 text-slate-700; }
-.status-quoted { @apply bg-amber-100 text-amber-700; }
-.status-review { @apply bg-blue-100 text-blue-700; }
-.status-sent { @apply bg-violet-100 text-violet-700; }
-.status-accepted { @apply bg-emerald-100 text-emerald-700; }
-.status-declined { @apply bg-red-100 text-red-700; }
-.status-invoiced { @apply bg-orange-100 text-orange-700; }
-.status-completed { @apply bg-green-100 text-green-700; }
+/* Pink-only CTA button gradient */
+.kindai-btn-primary {
+  background: linear-gradient(135deg, oklch(0.58 0.28 0) 0%, oklch(0.62 0.26 340) 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 14px oklch(0.58 0.28 0 / 0.35);
+  transition: box-shadow 0.2s, transform 0.1s;
+}
+.kindai-btn-primary:hover {
+  box-shadow: 0 6px 20px oklch(0.58 0.28 0 / 0.45);
+  transform: translateY(-1px);
+}
 
-/* AI confidence colours */
-.confidence-high { @apply text-emerald-700; }
-.confidence-medium { @apply text-amber-700; }
-.confidence-low { @apply text-red-700; }
+/* Status badges */
+.status-draft     { @apply bg-slate-100 text-slate-700 border border-slate-200; }
+.status-quoted    { @apply bg-amber-50 text-amber-700 border border-amber-200; }
+.status-review    { @apply bg-blue-50 text-blue-700 border border-blue-200; }
+.status-sent      { @apply bg-violet-50 text-violet-700 border border-violet-200; }
+.status-accepted  { @apply bg-emerald-50 text-emerald-700 border border-emerald-200; }
+.status-declined  { @apply bg-red-50 text-red-700 border border-red-200; }
+.status-invoiced  { @apply bg-orange-50 text-orange-700 border border-orange-200; }
+.status-completed { @apply bg-green-50 text-green-700 border border-green-200; }
 
-/* Scrollbar styling */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* Confidence colours */
+.confidence-high   { @apply text-emerald-600 font-semibold; }
+.confidence-medium { @apply text-amber-600 font-semibold; }
+.confidence-low    { @apply text-red-600 font-semibold; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: oklch(0.80 0.01 240); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: oklch(0.65 0.02 240); }
+::-webkit-scrollbar-thumb { background: oklch(0.80 0.01 270); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: oklch(0.65 0.02 270); }
+
+/* Glass card effect for hero sections */
+.glass-card {
+  background: oklch(1 0 0 / 0.08);
+  backdrop-filter: blur(12px);
+  border: 1px solid oklch(1 0 0 / 0.15);
+}
+
+/* Animated gradient background for hero */
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.kindai-hero-bg {
+  background: linear-gradient(135deg,
+    oklch(0.12 0.04 310) 0%,
+    oklch(0.10 0.03 270) 30%,
+    oklch(0.08 0.02 240) 60%,
+    oklch(0.12 0.04 0) 100%
+  );
+  background-size: 300% 300%;
+  animation: gradientShift 12s ease infinite;
+}

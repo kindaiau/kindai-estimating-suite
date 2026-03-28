@@ -8,30 +8,23 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import {
-  ArrowRight, Building2, Boxes, Droplets, FolderOpen, Grid3X3,
-  Hammer, Layers, Leaf, Package, Plus, Search, Wind, Zap,
-} from "lucide-react";
+import { ArrowRight, FolderOpen, Plus, Search, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
 
-const TRADE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  electrical: Zap, plumbing: Droplets, carpentry: Hammer, concreting: Building2,
-  hvac: Wind, flooring: Grid3X3, landscaping: Leaf, cabinetry: Package,
-  rendering: Layers, "cabinet-making": Boxes,
-};
-const TRADE_COLORS: Record<string, string> = {
-  electrical: "bg-amber-500", plumbing: "bg-blue-500", carpentry: "bg-amber-800",
-  concreting: "bg-slate-500", hvac: "bg-cyan-500", flooring: "bg-violet-500",
-  landscaping: "bg-emerald-500", cabinetry: "bg-orange-500",
-  rendering: "bg-pink-500", "cabinet-making": "bg-orange-600",
-};
+const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
+
 const TRADES = [
-  { id: "electrical", name: "Electrical" }, { id: "plumbing", name: "Plumbing" },
-  { id: "carpentry", name: "Carpentry" }, { id: "concreting", name: "Concreting" },
-  { id: "hvac", name: "HVAC" }, { id: "flooring", name: "Flooring" },
-  { id: "landscaping", name: "Landscaping" }, { id: "cabinetry", name: "Cabinetry" },
-  { id: "rendering", name: "Rendering & Plastering" }, { id: "cabinet-making", name: "Cabinet Making" },
+  { id: "electrical", name: "Electrical", emoji: "⚡", gradient: "from-yellow-400 to-orange-500" },
+  { id: "plumbing", name: "Plumbing", emoji: "🔧", gradient: "from-blue-400 to-cyan-500" },
+  { id: "carpentry", name: "Carpentry", emoji: "🪚", gradient: "from-amber-500 to-yellow-600" },
+  { id: "concreting", name: "Concreting", emoji: "🏗️", gradient: "from-slate-400 to-slate-600" },
+  { id: "hvac", name: "HVAC", emoji: "❄️", gradient: "from-sky-400 to-blue-600" },
+  { id: "flooring", name: "Flooring", emoji: "🟫", gradient: "from-purple-400 to-violet-600" },
+  { id: "landscaping", name: "Landscaping", emoji: "🌿", gradient: "from-green-400 to-emerald-600" },
+  { id: "cabinetry", name: "Cabinetry", emoji: "🚪", gradient: "from-orange-400 to-red-500" },
+  { id: "rendering", name: "Rendering & Plastering", emoji: "🧱", gradient: "from-rose-400 to-pink-600" },
+  { id: "cabinet-making", name: "Cabinet Making", emoji: "🪵", gradient: "from-teal-400 to-green-600" },
 ];
 const AU_STATES = ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"];
 
@@ -72,73 +65,81 @@ export default function Projects() {
 
   return (
     <AppLayout title="Projects">
-      <div className="p-6 space-y-5">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Projects</h1>
+            <h1 className="text-2xl font-black text-foreground flex items-center gap-2">
+              <FolderOpen className="w-6 h-6 text-blue-500" /> Projects
+            </h1>
             <p className="text-sm text-muted-foreground mt-0.5">{projects?.length ?? 0} total projects</p>
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button className="kindai-gradient text-white border-0 shadow-sm">
+              <Button className="kindai-btn-primary rounded-full px-6 font-bold text-sm">
                 <Plus className="w-4 h-4 mr-1.5" /> New Project
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Create New Project</DialogTitle>
+                <DialogTitle className="flex items-center gap-2 text-lg font-black">
+                  <Sparkles className="w-5 h-5 text-pink-500" /> Create New Project
+                </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 mt-2">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="col-span-2 space-y-1.5">
-                    <Label>Project Name *</Label>
-                    <Input placeholder="e.g. Smith Residence Renovation" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                    <Label className="text-xs font-bold">Project Name *</Label>
+                    <Input placeholder="e.g. Smith Residence Renovation" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="rounded-xl" />
                   </div>
                   <div className="col-span-2 space-y-1.5">
-                    <Label>Trade *</Label>
+                    <Label className="text-xs font-bold">Trade *</Label>
                     <Select value={form.trade} onValueChange={v => setForm(f => ({ ...f, trade: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Select trade..." /></SelectTrigger>
+                      <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select trade..." /></SelectTrigger>
                       <SelectContent>
-                        {TRADES.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                        {TRADES.map(t => (
+                          <SelectItem key={t.id} value={t.id}>
+                            <span className="flex items-center gap-2">{t.emoji} {t.name}</span>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Client Name</Label>
-                    <Input placeholder="John Smith" value={form.clientName} onChange={e => setForm(f => ({ ...f, clientName: e.target.value }))} />
+                    <Label className="text-xs font-bold">Client Name</Label>
+                    <Input placeholder="John Smith" value={form.clientName} onChange={e => setForm(f => ({ ...f, clientName: e.target.value }))} className="rounded-xl" />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Client Phone</Label>
-                    <Input placeholder="0400 000 000" value={form.clientPhone} onChange={e => setForm(f => ({ ...f, clientPhone: e.target.value }))} />
+                    <Label className="text-xs font-bold">Client Phone</Label>
+                    <Input placeholder="0400 000 000" value={form.clientPhone} onChange={e => setForm(f => ({ ...f, clientPhone: e.target.value }))} className="rounded-xl" />
                   </div>
                   <div className="col-span-2 space-y-1.5">
-                    <Label>Client Email</Label>
-                    <Input type="email" placeholder="client@example.com" value={form.clientEmail} onChange={e => setForm(f => ({ ...f, clientEmail: e.target.value }))} />
+                    <Label className="text-xs font-bold">Client Email</Label>
+                    <Input type="email" placeholder="client@example.com" value={form.clientEmail} onChange={e => setForm(f => ({ ...f, clientEmail: e.target.value }))} className="rounded-xl" />
                   </div>
                   <div className="col-span-2 space-y-1.5">
-                    <Label>Site Address</Label>
-                    <Input placeholder="123 Main Street" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
+                    <Label className="text-xs font-bold">Site Address</Label>
+                    <Input placeholder="123 Main Street" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} className="rounded-xl" />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Suburb</Label>
-                    <Input placeholder="Suburb" value={form.suburb} onChange={e => setForm(f => ({ ...f, suburb: e.target.value }))} />
+                    <Label className="text-xs font-bold">Suburb</Label>
+                    <Input placeholder="Suburb" value={form.suburb} onChange={e => setForm(f => ({ ...f, suburb: e.target.value }))} className="rounded-xl" />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Postcode</Label>
-                    <Input placeholder="2000" value={form.postcode} onChange={e => setForm(f => ({ ...f, postcode: e.target.value }))} />
+                    <Label className="text-xs font-bold">Postcode</Label>
+                    <Input placeholder="2000" value={form.postcode} onChange={e => setForm(f => ({ ...f, postcode: e.target.value }))} className="rounded-xl" />
                   </div>
                   <div className="col-span-2 space-y-1.5">
-                    <Label>State</Label>
+                    <Label className="text-xs font-bold">State</Label>
                     <Select value={form.state} onValueChange={v => setForm(f => ({ ...f, state: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Select state..." /></SelectTrigger>
+                      <SelectTrigger className="rounded-xl"><SelectValue placeholder="Select state..." /></SelectTrigger>
                       <SelectContent>
                         {AU_STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
-                <Button className="w-full kindai-gradient text-white border-0" onClick={handleCreate} disabled={createProject.isPending}>
+                <Button className="w-full kindai-btn-primary rounded-xl font-bold" onClick={handleCreate} disabled={createProject.isPending}>
                   {createProject.isPending ? "Creating..." : "Create Project"}
                 </Button>
               </div>
@@ -150,7 +151,7 @@ export default function Projects() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            className="pl-9"
+            className="pl-9 rounded-xl"
             placeholder="Search projects or clients..."
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -161,20 +162,21 @@ export default function Projects() {
         {isLoading ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-32 bg-secondary/50 rounded-xl animate-pulse" />
+              <div key={i} className="h-36 bg-secondary/50 rounded-2xl animate-pulse" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16">
-            <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-4">
-              <FolderOpen className="w-7 h-7 text-muted-foreground" />
+            <div className="relative inline-block mb-4">
+              <div className="absolute inset-0 rounded-2xl blur-lg opacity-40 kindai-gradient scale-110" />
+              <img src={LOGO_URL} alt="Kindai" className="relative w-16 h-16 object-contain" />
             </div>
-            <h3 className="text-base font-semibold text-foreground mb-1">No projects found</h3>
+            <h3 className="text-base font-black text-foreground mb-1">No projects found</h3>
             <p className="text-sm text-muted-foreground mb-4">
               {search ? "Try a different search term" : "Create your first project to get started"}
             </p>
             {!search && (
-              <Button className="kindai-gradient text-white border-0" onClick={() => setOpen(true)}>
+              <Button className="kindai-btn-primary rounded-full px-6 font-bold text-sm" onClick={() => setOpen(true)}>
                 <Plus className="w-4 h-4 mr-1.5" /> New Project
               </Button>
             )}
@@ -182,21 +184,20 @@ export default function Projects() {
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filtered.map((project) => {
-              const Icon = TRADE_ICONS[project.trade] ?? Zap;
-              const color = TRADE_COLORS[project.trade] ?? "bg-primary";
+              const trade = TRADES.find(t => t.id === project.trade);
               return (
                 <Card
                   key={project.id}
-                  className="border-border shadow-sm hover:shadow-md hover:border-primary/30 cursor-pointer transition-all group"
+                  className="border-0 shadow-sm hover:shadow-lg hover:-translate-y-0.5 cursor-pointer transition-all duration-200 group rounded-2xl overflow-hidden"
                   onClick={() => navigate(`/projects/${project.id}`)}
                 >
                   <CardContent className="p-5">
                     <div className="flex items-start gap-3 mb-3">
-                      <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center flex-shrink-0`}>
-                        <Icon className="w-5 h-5 text-white" />
+                      <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${trade?.gradient ?? "from-gray-400 to-gray-500"} flex items-center justify-center flex-shrink-0 text-xl shadow-sm group-hover:scale-105 transition-transform`}>
+                        {trade?.emoji ?? "📋"}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-foreground truncate">{project.name}</div>
+                        <div className="text-sm font-bold text-foreground truncate">{project.name}</div>
                         <div className="text-xs text-muted-foreground truncate">{project.clientName ?? "No client"}</div>
                       </div>
                       <Badge variant="secondary" className={`text-[10px] capitalize flex-shrink-0 status-${project.status}`}>
