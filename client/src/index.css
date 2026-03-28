@@ -43,74 +43,75 @@
 }
 
 :root {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-600);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.235 0.015 65);
+  /* Kindai Electric Blue brand */
+  --primary: oklch(0.48 0.22 255);
+  --primary-foreground: oklch(1 0 0);
+  --sidebar-primary: oklch(0.48 0.22 255);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --chart-1: oklch(0.48 0.22 255);
+  --chart-2: oklch(0.75 0.18 75);
+  --chart-3: oklch(0.55 0.18 155);
+  --chart-4: oklch(0.60 0.18 340);
+  --chart-5: oklch(0.60 0.15 210);
+  --radius: 0.5rem;
+  --background: oklch(0.98 0.005 240);
+  --foreground: oklch(0.13 0.02 240);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.235 0.015 65);
+  --card-foreground: oklch(0.13 0.02 240);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.235 0.015 65);
-  --secondary: oklch(0.98 0.001 286.375);
-  --secondary-foreground: oklch(0.4 0.015 65);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.141 0.005 285.823);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.623 0.214 259.815);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.235 0.015 65);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.623 0.214 259.815);
+  --popover-foreground: oklch(0.13 0.02 240);
+  --secondary: oklch(0.94 0.01 240);
+  --secondary-foreground: oklch(0.28 0.04 240);
+  --muted: oklch(0.96 0.005 240);
+  --muted-foreground: oklch(0.52 0.02 240);
+  --accent: oklch(0.96 0.005 240);
+  --accent-foreground: oklch(0.13 0.02 240);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.90 0.008 240);
+  --input: oklch(0.90 0.008 240);
+  --ring: oklch(0.48 0.22 255);
+  --sidebar: oklch(0.13 0.025 240);
+  --sidebar-foreground: oklch(0.90 0.01 240);
+  --sidebar-accent: oklch(0.20 0.025 240);
+  --sidebar-accent-foreground: oklch(0.95 0.005 240);
+  --sidebar-border: oklch(0.22 0.02 240);
+  --sidebar-ring: oklch(0.48 0.22 255);
 }
 
 .dark {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-500);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.85 0.005 65);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.85 0.005 65);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.85 0.005 65);
-  --secondary: oklch(0.24 0.006 286.033);
-  --secondary-foreground: oklch(0.7 0.005 65);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground:  oklch(0.92 0.005 65);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.488 0.243 264.376);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.85 0.005 65);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground:  oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
+  --primary: oklch(0.60 0.22 255);
+  --primary-foreground: oklch(1 0 0);
+  --sidebar-primary: oklch(0.60 0.22 255);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --background: oklch(0.10 0.015 240);
+  --foreground: oklch(0.95 0.005 240);
+  --card: oklch(0.13 0.015 240);
+  --card-foreground: oklch(0.95 0.005 240);
+  --popover: oklch(0.13 0.015 240);
+  --popover-foreground: oklch(0.95 0.005 240);
+  --secondary: oklch(0.18 0.015 240);
+  --secondary-foreground: oklch(0.85 0.01 240);
+  --muted: oklch(0.18 0.015 240);
+  --muted-foreground: oklch(0.60 0.02 240);
+  --accent: oklch(0.18 0.015 240);
+  --accent-foreground: oklch(0.95 0.005 240);
+  --destructive: oklch(0.60 0.22 25);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.22 0.015 240);
+  --input: oklch(0.22 0.015 240);
+  --ring: oklch(0.60 0.22 255);
+  --chart-1: oklch(0.60 0.22 255);
+  --chart-2: oklch(0.80 0.18 75);
+  --chart-3: oklch(0.65 0.18 155);
+  --chart-4: oklch(0.70 0.18 340);
+  --chart-5: oklch(0.70 0.15 210);
+  --sidebar: oklch(0.08 0.015 240);
+  --sidebar-foreground: oklch(0.90 0.01 240);
+  --sidebar-accent: oklch(0.16 0.02 240);
+  --sidebar-accent-foreground: oklch(0.95 0.005 240);
+  --sidebar-border: oklch(0.18 0.015 240);
+  --sidebar-ring: oklch(0.60 0.22 255);
 }
 
 @layer base {
@@ -118,7 +119,12 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    letter-spacing: -0.02em;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -175,3 +181,38 @@
     }
   }
 }
+/* ============================================
+   KINDAI BRAND UTILITIES
+   ============================================ */
+
+.kindai-gradient {
+  background: linear-gradient(135deg, oklch(0.48 0.22 255) 0%, oklch(0.55 0.20 275) 100%);
+}
+
+.kindai-gradient-text {
+  background: linear-gradient(135deg, oklch(0.48 0.22 255) 0%, oklch(0.55 0.20 275) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Status badge colours */
+.status-draft { @apply bg-slate-100 text-slate-700; }
+.status-quoted { @apply bg-amber-100 text-amber-700; }
+.status-review { @apply bg-blue-100 text-blue-700; }
+.status-sent { @apply bg-violet-100 text-violet-700; }
+.status-accepted { @apply bg-emerald-100 text-emerald-700; }
+.status-declined { @apply bg-red-100 text-red-700; }
+.status-invoiced { @apply bg-orange-100 text-orange-700; }
+.status-completed { @apply bg-green-100 text-green-700; }
+
+/* AI confidence colours */
+.confidence-high { @apply text-emerald-700; }
+.confidence-medium { @apply text-amber-700; }
+.confidence-low { @apply text-red-700; }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: oklch(0.80 0.01 240); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: oklch(0.65 0.02 240); }
