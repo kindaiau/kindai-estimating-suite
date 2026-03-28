@@ -15,6 +15,13 @@
       "when": 1774695398377,
       "tag": "0001_low_jean_grey",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1774734585421,
+      "tag": "0002_safe_nova",
+      "breakpoints": true
     }
   ]
 }

@@ -9,6 +9,7 @@ import { labourRouter } from "./routers/labour";
 import { complianceRouter } from "./routers/compliance";
 import { aiRouter } from "./routers/ai";
 import { profileRouter } from "./routers/profile";
+import { billingRouter } from "./routers/billing";
 
 export const appRouter = router({
   system: systemRouter,
@@ -27,6 +28,7 @@ export const appRouter = router({
   compliance: complianceRouter,
   ai: aiRouter,
   profile: profileRouter,
+  billing: billingRouter,
 });
 
 export type AppRouter = typeof appRouter;

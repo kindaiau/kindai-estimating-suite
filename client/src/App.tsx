@@ -14,6 +14,8 @@ import LabourRates from "./pages/LabourRates";
 import Profile from "./pages/Profile";
 import QuoteAcceptance from "./pages/QuoteAcceptance";
 import AITakeoff from "./pages/AITakeoff";
+import Pricing from "./pages/Pricing";
+import Billing from "./pages/Billing";
 
 function Router() {
   return (
@@ -27,6 +29,8 @@ function Router() {
       <Route path="/labour" component={LabourRates} />
       <Route path="/profile" component={Profile} />
       <Route path="/ai-takeoff" component={AITakeoff} />
+      <Route path="/pricing" component={Pricing} />
+      <Route path="/billing" component={Billing} />
       <Route path="/quote/accept/:token" component={QuoteAcceptance} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

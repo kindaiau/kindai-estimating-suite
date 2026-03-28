@@ -3,7 +3,7 @@ import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import {
-  BarChart3, BookOpen, Camera, ChevronRight, FolderOpen,
+  BarChart3, BookOpen, Camera, ChevronRight, CreditCard, FolderOpen,
   LogOut, Menu, Settings, Sparkles, Users, X,
 } from "lucide-react";
 import { useState } from "react";
@@ -23,6 +23,7 @@ const NAV_ITEMS = [
   { href: "/projects",   label: "Projects",           icon: FolderOpen },
   { href: "/materials",  label: "Materials Library",  icon: BookOpen },
   { href: "/labour",     label: "Labour Rates",       icon: Users },
+  { href: "/billing",    label: "Billing",             icon: CreditCard },
 ];
 
 interface AppLayoutProps {

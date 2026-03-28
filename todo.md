@@ -111,3 +111,15 @@
 - [x] Redesign landing page hero to showcase AI Vision as the #1 feature
 - [x] Redesign dashboard quick-start to prioritise "Scan a Plan" CTA
 - [x] Write vitest tests for Vision Takeoff engine (27 tests passing)
+
+## Stripe Payment Integration
+- [x] Add Stripe feature scaffold (webdev_add_feature)
+- [x] Request Stripe API keys from user (auto-configured)
+- [x] Create subscription tiers: Free, Pro ($49/mo), Business ($149/mo)
+- [x] Build Stripe checkout session creation (server-side)
+- [x] Build Stripe webhook handler for subscription events
+- [x] Build customer portal for billing management
+- [x] Create Pricing page UI with Kindai branding
+- [x] Add subscription status to user profile and dashboard
+- [x] Gate premium features behind subscription tier (plan limits defined)
+- [x] Write vitest tests for Stripe integration (18 tests passing)

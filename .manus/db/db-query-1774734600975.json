@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `users` ADD `stripeCustomerId` varchar(255); ALTER TABLE `users` ADD `stripeSubscriptionId` varchar(255); ALTER TABLE `users` ADD `subscriptionTier` enum('free','pro','business') DEFAULT 'free' NOT NULL; ALTER TABLE `users` ADD `subscriptionStatus` varchar(32) DEFAULT 'none';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3nRz7NtAsP3mGUV.6f09badccb2a --database UNVDthJPfT4ofd4pppvMM2 --execute ALTER TABLE `users` ADD `stripeCustomerId` varchar(255); ALTER TABLE `users` ADD `stripeSubscriptionId` varchar(255); ALTER TABLE `users` ADD `subscriptionTier` enum('free','pro','business') DEFAULT 'free' NOT NULL; ALTER TABLE `users` ADD `subscriptionStatus` varchar(32) DEFAULT 'none';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 3722
+}

@@ -25,6 +25,11 @@ export const users = mysqlTable("users", {
   state: mysqlEnum("state", ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"]),
   licenseNumber: varchar("licenseNumber", { length: 100 }),
   phone: varchar("phone", { length: 20 }),
+  // Stripe
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  subscriptionTier: mysqlEnum("subscriptionTier", ["free", "pro", "business"]).default("free").notNull(),
+  subscriptionStatus: varchar("subscriptionStatus", { length: 32 }).default("none"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
