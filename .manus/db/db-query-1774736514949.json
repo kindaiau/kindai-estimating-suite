@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `users` MODIFY COLUMN `subscriptionTier` enum('free','solo','trade_business','commercial','enterprise') NOT NULL DEFAULT 'free';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3nRz7NtAsP3mGUV.6f09badccb2a --database UNVDthJPfT4ofd4pppvMM2 --execute ALTER TABLE `users` MODIFY COLUMN `subscriptionTier` enum('free','solo','trade_business','commercial','enterprise') NOT NULL DEFAULT 'free';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2712
+}

@@ -17,12 +17,16 @@ export const billingRouter = router({
     return PLANS.map((p) => ({
       id: p.id,
       name: p.name,
+      tagline: p.tagline,
       description: p.description,
       priceMonthly: p.priceMonthly,
       priceYearly: p.priceYearly,
       features: p.features,
       limits: p.limits,
       popular: p.popular ?? false,
+      contactSales: p.contactSales ?? false,
+      targetAudience: p.targetAudience,
+      annualSavings: p.annualSavings,
     }));
   }),
 
@@ -75,7 +79,7 @@ export const billingRouter = router({
   createCheckout: protectedProcedure
     .input(
       z.object({
-        planId: z.enum(["pro", "business"]),
+        planId: z.enum(["solo", "trade_business", "commercial", "enterprise"]),
         interval: z.enum(["monthly", "yearly"]).default("monthly"),
         origin: z.string(),
       })

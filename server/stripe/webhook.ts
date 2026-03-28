@@ -54,9 +54,15 @@ export function registerStripeWebhook(app: Router) {
                 const priceId = sub.items?.data?.[0]?.price?.id;
                 const lookupKey = sub.items?.data?.[0]?.price?.lookup_key ?? "";
 
-                let tier: "pro" | "business" = "pro";
-                if (lookupKey.includes("business") || priceId?.includes("business")) {
-                  tier = "business";
+                let tier: "free" | "solo" | "trade_business" | "commercial" | "enterprise" = "solo";
+                if (lookupKey.includes("enterprise") || priceId?.includes("enterprise")) {
+                  tier = "enterprise";
+                } else if (lookupKey.includes("commercial") || priceId?.includes("commercial")) {
+                  tier = "commercial";
+                } else if (lookupKey.includes("trade_business") || priceId?.includes("trade_business")) {
+                  tier = "trade_business";
+                } else if (lookupKey.includes("solo") || priceId?.includes("solo")) {
+                  tier = "solo";
                 }
 
                 await db

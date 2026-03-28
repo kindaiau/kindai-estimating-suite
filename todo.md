@@ -123,3 +123,14 @@
 - [x] Add subscription status to user profile and dashboard
 - [x] Gate premium features behind subscription tier (plan limits defined)
 - [x] Write vitest tests for Stripe integration (18 tests passing)
+
+## Pricing Model Restructure (Value-Based)
+- [x] Research enterprise estimating software pricing (Procore $20K-$150K+, PlanSwift $1.7K, Bluebeam $3.2K, CostX $10K-$30K+)
+- [x] Research Australian estimator salary data ($95K-$150K+ loaded cost)
+- [x] Redesign pricing: 5 tiers (Free, Solo $49/mo, Trade Business $199/mo, Commercial $799/mo, Enterprise $1,499/mo)
+- [x] Update Stripe products with new pricing structure + ROI calculator
+- [x] Rebuild Pricing page with value-based messaging, competitor comparison table, and ROI badges
+- [x] Add ROI calculator showing cost savings vs full-time estimator (17x-55x return)
+- [x] Update billing router and webhook handler for new tier IDs
+- [x] Migrate database enum for subscriptionTier
+- [x] Write tests for new pricing model (56 tests passing)
