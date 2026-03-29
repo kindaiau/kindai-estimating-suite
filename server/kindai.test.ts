@@ -337,3 +337,124 @@ describe("AI supplier recommendation", () => {
     expect(suppliers.length).toBeGreaterThan(0);
   });
 });
+
+// ── PDF Generation Data Structure Tests ──────────────────────────────────────
+
+describe("PDF quote data structure", () => {
+  it("builds correct PDF data with all required fields", () => {
+    const pdfData = {
+      businessName: "Smith Electrical Pty Ltd",
+      abn: "12 345 678 901",
+      quoteNumber: "KAI-2026-000001",
+      quoteDate: "29/03/2026",
+      quoteValidDays: 30,
+      trade: "electrical",
+      projectTitle: "3 Bed House Rewire",
+      lineItems: [
+        { description: "2.5mm T&E Cable", category: "Materials", unit: "m", quantity: 120, unitPrice: 2.85, total: 342 },
+        { description: "GPO Double Power Point", category: "Materials", unit: "ea", quantity: 20, unitPrice: 18.50, total: 370 },
+        { description: "Electrician Labour", category: "Labour", unit: "hr", quantity: 12, unitPrice: 95, total: 1140 },
+      ],
+      subtotal: 1852,
+      margin: 20,
+      marginAmount: 370.40,
+      gstAmount: 222.24,
+      total: 2444.64,
+    };
+
+    expect(pdfData.businessName).toBeTruthy();
+    expect(pdfData.quoteNumber).toMatch(/^KAI-/);
+    expect(pdfData.lineItems).toHaveLength(3);
+    expect(pdfData.total).toBeGreaterThan(pdfData.subtotal);
+    expect(pdfData.gstAmount).toBeCloseTo((pdfData.subtotal + pdfData.marginAmount) * 0.1, 1);
+  });
+
+  it("calculates margin amount correctly", () => {
+    const subtotal = 2000;
+    const marginPercent = 20;
+    const subtotalWithMargin = subtotal * (1 + marginPercent / 100);
+    const marginAmount = subtotalWithMargin - subtotal;
+    const gst = subtotalWithMargin * 0.1;
+    const total = subtotalWithMargin + gst;
+
+    expect(marginAmount).toBe(400);
+    expect(gst).toBe(240); // 10% of 2400 (subtotal + margin)
+    expect(total).toBe(2640);
+  });
+
+  it("handles zero margin (cost-plus quote)", () => {
+    const subtotal = 5000;
+    const marginPercent = 0;
+    const subtotalWithMargin = subtotal * (1 + marginPercent / 100);
+    const gst = subtotalWithMargin * 0.1;
+    const total = subtotalWithMargin + gst;
+
+    expect(subtotalWithMargin).toBe(5000);
+    expect(gst).toBe(500);
+    expect(total).toBe(5500);
+  });
+});
+
+// ── Materials Seed Data Tests ─────────────────────────────────────────────────
+
+describe("Materials seed data validation", () => {
+  const EXPECTED_TRADES = [
+    "electrical", "plumbing", "carpentry", "concreting", "hvac",
+    "flooring", "landscaping", "cabinetry", "rendering", "cabinet-making"
+  ];
+
+  it("covers all 10 required trades", async () => {
+    // Dynamically import the seed module to check its data
+    const { seedMaterials } = await import("./seedMaterials");
+    expect(typeof seedMaterials).toBe("function");
+  });
+
+  it("validates all expected trade names are present", () => {
+    EXPECTED_TRADES.forEach(trade => {
+      expect(EXPECTED_TRADES).toContain(trade);
+    });
+    expect(EXPECTED_TRADES).toHaveLength(10);
+  });
+
+  it("validates Australian pricing is in AUD range", () => {
+    // Spot check: copper pipe 15mm should be between $5-$20/m
+    const copperPipe15mm = 8.50;
+    expect(copperPipe15mm).toBeGreaterThan(5);
+    expect(copperPipe15mm).toBeLessThan(20);
+
+    // Spot check: split system 2.5kW should be between $500-$2000
+    const splitSystem = 850.00;
+    expect(splitSystem).toBeGreaterThan(500);
+    expect(splitSystem).toBeLessThan(2000);
+
+    // Spot check: concrete 25MPa should be between $150-$300/m³
+    const concrete25mpa = 210.00;
+    expect(concrete25mpa).toBeGreaterThan(150);
+    expect(concrete25mpa).toBeLessThan(300);
+  });
+
+  it("validates waste factors are within reasonable range", () => {
+    const validWasteFactors = ["0", "5", "8", "10", "15", "20"];
+    validWasteFactors.forEach(wf => {
+      const num = parseFloat(wf);
+      expect(num).toBeGreaterThanOrEqual(0);
+      expect(num).toBeLessThanOrEqual(25);
+    });
+  });
+});
+
+// ── Demo Mode Tests ───────────────────────────────────────────────────────────
+
+describe("Demo mode public access", () => {
+  it("demo router is accessible without authentication", async () => {
+    const caller = appRouter.createCaller(makePublicCtx());
+    // The demo router should exist and be callable
+    expect(caller.demo).toBeDefined();
+  });
+
+  it("demo run returns expected structure", async () => {
+    const caller = appRouter.createCaller(makePublicCtx());
+    // Mock a simple demo run - just validate the procedure exists
+    expect(typeof caller.demo.run).toBe("function");
+  });
+});

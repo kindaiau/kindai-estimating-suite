@@ -2,10 +2,9 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import {
-  Zap, Shield, Brain, FileText, Users, BarChart3,
+import { Zap, Shield, Brain, FileText, Users, BarChart3,
   ChevronRight, CheckCircle2, Star, ArrowRight, HardHat,
-  Camera, Sparkles, DollarSign, Truck, Clock, Upload
+  Camera, Sparkles, DollarSign, Truck, Clock, Upload, Play
 } from "lucide-react";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
@@ -132,13 +131,22 @@ export default function Home() {
                   className="kindai-btn-primary px-8 py-4 rounded-full text-base font-black h-auto shadow-2xl"
                 >
                   <Camera className="w-5 h-5 mr-2" />
-                  Try AI Vision Takeoff
+                  Start Free
                   <ChevronRight className="w-5 h-5 ml-2" />
                 </Button>
-                <div className="flex flex-col gap-1.5 text-white/60 text-sm pl-1">
-                  <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-400" /> Free to try</span>
-                  <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-400" /> No credit card</span>
-                </div>
+                <Button
+                  onClick={() => navigate("/demo")}
+                  size="lg"
+                  variant="outline"
+                  className="px-8 py-4 rounded-full text-base font-black h-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
+                >
+                  <Play className="w-5 h-5 mr-2" />
+                  Try Live Demo
+                </Button>
+              </div>
+              <div className="flex gap-4 text-white/60 text-sm mt-1">
+                <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-400" /> No sign-up for demo</span>
+                <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-400" /> Real AI results</span>
               </div>
             </div>
 
@@ -229,6 +237,54 @@ export default function Home() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Video Explainer ── */}
+      <section className="py-16 px-4 bg-gray-950 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-30" style={{ background: "radial-gradient(ellipse at center, oklch(0.35 0.18 0) 0%, transparent 70%)" }} />
+        <div className="max-w-5xl mx-auto relative z-10">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/70 text-xs font-semibold mb-4">
+              <Play className="w-3.5 h-3.5 text-pink-400" />
+              See it in action
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
+              Watch Kindai <span className="kindai-gradient-text">build a quote in 60 seconds.</span>
+            </h2>
+            <p className="text-white/60 text-base max-w-xl mx-auto">
+              Real plans. Real AI. Real Australian pricing. No demo tricks.
+            </p>
+          </div>
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-black aspect-video">
+            <video
+              controls
+              preload="metadata"
+              poster=""
+              className="w-full h-full object-cover"
+              style={{ display: 'block' }}
+            >
+              <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai_script4_explainer_6ef6dea5.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          <div className="flex justify-center gap-6 mt-6">
+            <Button
+              onClick={handleTryAI}
+              size="lg"
+              className="kindai-btn-primary px-8 py-4 rounded-full text-base font-black h-auto shadow-xl"
+            >
+              <Camera className="w-5 h-5 mr-2" /> Try It Free
+            </Button>
+            <Button
+              onClick={() => navigate("/demo")}
+              size="lg"
+              variant="outline"
+              className="px-8 py-4 rounded-full text-base font-black h-auto border-white/30 text-white hover:bg-white/10"
+            >
+              <Play className="w-5 h-5 mr-2" /> Live Demo
+            </Button>
           </div>
         </div>
       </section>

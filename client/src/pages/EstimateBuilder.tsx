@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import {
   AlertTriangle, ArrowLeft, Bot, CheckCircle2, DollarSign, ExternalLink,
-  FileText, Loader2, Plus, Shield, Sparkles, Trash2,
+  FileText, Loader2, Plus, Shield, Sparkles, Trash2, Download,
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useParams } from "wouter";
@@ -66,6 +66,15 @@ export default function EstimateBuilder() {
 
   const updateStatus = trpc.estimates.update.useMutation({
     onSuccess: () => { toast.success("Updated"); utils.estimates.get.invalidate(); },
+  });
+
+  const generatePdf = trpc.estimates.generatePdf.useMutation({
+    onSuccess: (data) => {
+      toast.success("PDF generated! Opening now...");
+      window.open(data.url, "_blank");
+      utils.estimates.get.invalidate();
+    },
+    onError: (e) => toast.error("PDF failed: " + e.message),
   });
 
   const analyzePlan = trpc.ai.analyzePlan.useMutation({
@@ -152,6 +161,28 @@ export default function EstimateBuilder() {
                   </Badge>
                 )}
               </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => generatePdf.mutate({ id: estimateId })}
+                disabled={generatePdf.isPending}
+                variant="outline"
+                size="sm"
+                className="rounded-xl text-xs font-bold border-pink-300 text-pink-600 hover:bg-pink-50 h-8"
+              >
+                {generatePdf.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Download className="w-3.5 h-3.5 mr-1.5" />}
+                {generatePdf.isPending ? "Generating..." : "Download PDF"}
+              </Button>
+              {estimate.quotePdfUrl && (
+                <Button
+                  onClick={() => window.open(estimate.quotePdfUrl!, "_blank")}
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-xl text-xs font-bold text-gray-500 h-8"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 mr-1" /> View Last PDF
+                </Button>
+              )}
             </div>
             <Select value={estimate.status} onValueChange={(v) => updateStatus.mutate({ id: estimateId, status: v as any })}>
               <SelectTrigger className="w-32 text-xs h-8 rounded-xl"><SelectValue /></SelectTrigger>

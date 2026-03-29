@@ -152,3 +152,32 @@
 - [x] Supplier order email: auto-generate materials order from AI takeoff results
 - [x] SMTP / email provider settings (SendGrid/SMTP per user)
 - [x] Quote email preview with user's own branding
+
+## Demo Mode & Video
+- [x] No-login demo mode for AI Takeoff with pre-loaded sample electrical plan
+- [x] Demo mode shows full flow: upload → AI analysis → materials → pricing → quote
+- [x] "Try Demo" CTA on landing page (no sign-up required)
+- [x] Animated demo video showing scan-to-quote flow
+- [x] Embed demo video on landing page (Script 4 explainer — CDN hosted)
+- [x] Update landing page bounce-rate CTAs
+
+## PDF Quote Export (Most-Requested Feature)
+- [x] Server-side PDF generation using puppeteer-core + system Chromium
+- [x] Branded PDF template: Kindai header, trade logo, ABN, licence, GST breakdown
+- [x] Line items table with materials + labour + markup + GST
+- [x] Compliance disclaimers per trade on PDF footer
+- [x] "Download PDF" button on EstimateBuilder page
+- [x] PDF stored in S3 and linked from estimate record
+
+## Default Materials Seeding
+- [x] Seed 151 default materials across all 10 trades with real 2024-25 Australian pricing
+- [x] Electrical: cable, GPOs, switchboards, conduit, circuit breakers, data (Clipsal/HPM/Schneider pricing)
+- [x] Plumbing: copper pipe, PEX, PVC drainage, tapware, hot water units (Reece/Tradelink pricing)
+- [x] Carpentry: framing timber, plywood, doors, fixings (Bowens/Bunnings Trade pricing)
+- [x] Concreting: concrete mix, reinforcing mesh, formwork, DPC, sealers (Boral/Hanson pricing)
+- [x] HVAC: split systems, ducted, ductwork, refrigerant pipe (Daikin/Mitsubishi pricing)
+- [x] Flooring: hybrid, laminate, timber, carpet, tiles, underlay (Carpet Court/Beaumont pricing)
+- [x] Landscaping: turf, mulch, pavers, retaining walls, irrigation (Turf Farm/Holman pricing)
+- [x] Cabinetry: cabinet boxes, benchtops, hardware (Kaboodle/Blum/Laminex pricing)
+- [x] Rendering: render coats, mesh, primers, EPS insulation (Rockcote/Dulux pricing)
+- [x] Cabinet Making: sheet material, hardware, edging, wardrobe systems (Blum/Laminex pricing)

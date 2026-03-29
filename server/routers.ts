@@ -11,6 +11,7 @@ import { aiRouter } from "./routers/ai";
 import { profileRouter } from "./routers/profile";
 import { billingRouter } from "./routers/billing";
 import { tradeProfilesRouter } from "./routers/tradeProfiles";
+import { demoRouter } from "./routers/demo";
 
 export const appRouter = router({
   system: systemRouter,
@@ -31,6 +32,7 @@ export const appRouter = router({
   profile: profileRouter,
   billing: billingRouter,
   tradeProfiles: tradeProfilesRouter,
+  demo: demoRouter,
 });
 
 export type AppRouter = typeof appRouter;

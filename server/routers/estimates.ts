@@ -1,10 +1,12 @@
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { estimates, lineItems } from "../../drizzle/schema";
+import { estimates, lineItems, users } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { GST_RATE } from "../../shared/trades";
+import { generateQuotePdf } from "../pdfGenerator";
+import { storagePut } from "../storage";
 
 export const estimatesRouter = router({
   list: protectedProcedure.input(z.object({ projectId: z.number().optional() })).query(async ({ ctx, input }) => {
@@ -225,5 +227,87 @@ export const estimatesRouter = router({
       accepted: all.filter(e => e.status === "accepted").length,
       totalValue,
     };
+  }),
+
+  generatePdf: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+
+    // Load estimate
+    const [estimate] = await db.select().from(estimates)
+      .where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)))
+      .limit(1);
+    if (!estimate) throw new Error("Estimate not found");
+
+    // Load line items
+    const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, input.id));
+
+    // Load user profile
+    const [user] = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
+
+    // Load project for client info
+    const { projects } = await import("../../drizzle/schema");
+    const [project] = await db.select().from(projects).where(eq(projects.id, estimate.projectId)).limit(1);
+
+    // Build line item rows
+    const lineItemRows = items.map(item => ({
+      description: item.description,
+      category: item.category,
+      unit: item.unit,
+      quantity: parseFloat(item.quantity as string),
+      unitPrice: parseFloat(item.unitRate as string),
+      total: parseFloat(item.subtotal as string),
+    }));
+
+    const subtotalNum = parseFloat(estimate.subtotal as string);
+    const gstNum = parseFloat(estimate.gstAmount as string);
+    const totalNum = parseFloat(estimate.total as string);
+    const marginNum = parseFloat(estimate.margin as string) || 0;
+    const marginAmount = subtotalNum - (subtotalNum / (1 + marginNum / 100));
+
+    const pdfData = {
+      businessName: user?.companyName || user?.name || "Kindai Estimating",
+      abn: user?.abn || undefined,
+      licenseNumber: user?.licenseNumber || undefined,
+      phone: user?.phone || undefined,
+      email: user?.email || undefined,
+      state: user?.state || undefined,
+      trade: estimate.trade,
+      quoteNumber: estimate.quoteNumber || `KAI-${Date.now()}`,
+      quoteDate: new Date().toLocaleDateString("en-AU"),
+      quoteValidDays: estimate.quoteValidDays || 30,
+      clientName: project?.clientName || undefined,
+      clientEmail: project?.clientEmail || undefined,
+      clientPhone: project?.clientPhone || undefined,
+      projectAddress: project?.address ? `${project.address}${project.suburb ? ", " + project.suburb : ""}${project.state ? " " + project.state : ""}` : undefined,
+      projectTitle: estimate.title,
+      lineItems: lineItemRows,
+      subtotal: subtotalNum,
+      margin: marginNum,
+      marginAmount,
+      gstAmount: gstNum,
+      total: totalNum,
+      complianceState: estimate.complianceState || undefined,
+      complianceNotes: estimate.complianceNotes || undefined,
+      quoteTerms: estimate.quoteTerms || undefined,
+      notes: estimate.notes || undefined,
+      aiConfidenceScore: estimate.aiConfidenceScore || undefined,
+      aiAssumptions: (estimate.aiAssumptions as string[]) || undefined,
+    };
+
+    // Generate PDF
+    const pdfBuffer = await generateQuotePdf(pdfData);
+
+    // Upload to S3
+    const fileKey = `quotes/${ctx.user.id}/${estimate.quoteNumber || input.id}-${Date.now()}.pdf`;
+    const { url } = await storagePut(fileKey, pdfBuffer, "application/pdf");
+
+    // Save URL to estimate
+    await db.update(estimates).set({
+      quotePdfUrl: url,
+      quotePdfKey: fileKey,
+    } as any).where(eq(estimates.id, input.id));
+
+    return { url, fileKey };
   }),
 });
