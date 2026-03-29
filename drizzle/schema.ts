@@ -178,3 +178,64 @@ export const complianceProfiles = mysqlTable("compliance_profiles", {
 });
 
 export type ComplianceProfile = typeof complianceProfiles.$inferSelect;
+
+// ─── Trade Profiles (per-user, per-trade customisation) ───────────────────────
+export const tradeProfiles = mysqlTable("trade_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  trade: varchar("trade", { length: 64 }).notNull(), // e.g. "electrical"
+  // Business branding
+  businessName: varchar("businessName", { length: 255 }),
+  abn: varchar("abn", { length: 20 }),
+  licenseNumber: varchar("licenseNumber", { length: 100 }),
+  phone: varchar("phone", { length: 20 }),
+  email: varchar("email", { length: 320 }),
+  website: varchar("website", { length: 255 }),
+  address: text("address"),
+  logoUrl: text("logoUrl"),
+  brandColour: varchar("brandColour", { length: 7 }).default("#FF2D78"), // hex
+  // Quote defaults
+  defaultMarkup: decimal("defaultMarkup", { precision: 5, scale: 2 }).default("20.00"),
+  defaultLabourRate: decimal("defaultLabourRate", { precision: 8, scale: 2 }),
+  defaultValidDays: int("defaultValidDays").default(30),
+  defaultTerms: text("defaultTerms"),
+  defaultState: mysqlEnum("defaultState", ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"]),
+  // Email automation
+  emailFromName: varchar("emailFromName", { length: 255 }),
+  emailFromAddress: varchar("emailFromAddress", { length: 320 }),
+  emailSignature: text("emailSignature"),
+  sendQuoteAutomatically: boolean("sendQuoteAutomatically").default(false),
+  followUpEnabled: boolean("followUpEnabled").default(true),
+  followUpDays: int("followUpDays").default(3),
+  reminderEnabled: boolean("reminderEnabled").default(true),
+  reminderDays: int("reminderDays").default(7),
+  // Supplier connections
+  suppliers: json("suppliers"), // array of { name, contactName, email, phone, accountNumber, notes }
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TradeProfile = typeof tradeProfiles.$inferSelect;
+export type InsertTradeProfile = typeof tradeProfiles.$inferInsert;
+
+// ─── Email Templates ──────────────────────────────────────────────────────────
+export const emailTemplates = mysqlTable("email_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  trade: varchar("trade", { length: 64 }), // null = applies to all trades
+  type: mysqlEnum("type", [
+    "quote_delivery",   // Initial quote sent to client
+    "quote_followup",   // 3-day follow-up
+    "quote_reminder",   // 7-day reminder
+    "quote_accepted",   // Confirmation when client accepts
+    "supplier_order",   // Materials order sent to supplier
+  ]).notNull(),
+  subject: varchar("subject", { length: 500 }).notNull(),
+  bodyHtml: text("bodyHtml").notNull(), // HTML with {{variables}}
+  isActive: boolean("isActive").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type EmailTemplate = typeof emailTemplates.$inferSelect;
+export type InsertEmailTemplate = typeof emailTemplates.$inferInsert;

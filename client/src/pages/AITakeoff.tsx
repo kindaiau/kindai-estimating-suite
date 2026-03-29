@@ -117,20 +117,25 @@ export default function AITakeoff() {
   }, [result, markupPercent, labourRate, useTradePrice]);
 
   async function ensureEstimate(): Promise<number> {
-    if (tempEstimateId) return tempEstimateId;
+    if (tempEstimateId && !isNaN(tempEstimateId)) return tempEstimateId;
+    if (!selectedTrade) throw new Error("Please select your trade first");
     const tradeName = TRADES.find(t => t.id === selectedTrade)?.name ?? selectedTrade;
     const proj = await createProject.mutateAsync({
-      name: `AI Takeoff - ${tradeName}`,
+      name: `AI Takeoff — ${tradeName} ${new Date().toLocaleDateString("en-AU")}`,
       trade: selectedTrade,
       state: (selectedState || "NSW") as any,
     });
+    const projId = Number(proj.id);
+    if (!projId || isNaN(projId)) throw new Error("Failed to create project — please try again");
     const est = await createEstimate.mutateAsync({
-      projectId: proj.id,
+      projectId: projId,
       trade: selectedTrade,
-      title: `AI Takeoff - ${tradeName}`,
+      title: `AI Takeoff — ${tradeName}`,
     });
-    setTempEstimateId(est.id);
-    return est.id;
+    const estId = Number(est.id);
+    if (!estId || isNaN(estId)) throw new Error("Failed to create estimate — please try again");
+    setTempEstimateId(estId);
+    return estId;
   }
 
   async function handleFileSelect(file: File) {

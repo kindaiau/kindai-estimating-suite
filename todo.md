@@ -134,3 +134,21 @@
 - [x] Update billing router and webhook handler for new tier IDs
 - [x] Migrate database enum for subscriptionTier
 - [x] Write tests for new pricing model (56 tests passing)
+
+## Bug Fixes
+- [x] Fix projectId NaN error on AI Takeoff page — allow takeoff without pre-selected project
+- [x] Ensure AI Takeoff works end-to-end on mobile (plan upload → analysis → results)
+
+## Bug Fix: AI Takeoff NaN Error
+- [ ] Fix projectId NaN — AI Takeoff auto-creates project when none selected
+- [ ] Validate trade selected before allowing analyse button
+- [ ] Test full mobile flow: upload → analyse → results
+
+## Per-Trade Customisation & Automation
+- [x] Trade profile settings page (logo, brand colours, business name, ABN, licence number)
+- [x] Per-trade supplier connections (custom supplier name, contact, account number, email)
+- [x] Branded email templates per trade (quote delivery, follow-up, supplier order)
+- [x] Email automation flows: quote sent → 3-day follow-up → 7-day reminder
+- [x] Supplier order email: auto-generate materials order from AI takeoff results
+- [x] SMTP / email provider settings (SendGrid/SMTP per user)
+- [x] Quote email preview with user's own branding

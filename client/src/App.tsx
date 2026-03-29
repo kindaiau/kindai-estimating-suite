@@ -16,6 +16,7 @@ import QuoteAcceptance from "./pages/QuoteAcceptance";
 import AITakeoff from "./pages/AITakeoff";
 import Pricing from "./pages/Pricing";
 import Billing from "./pages/Billing";
+import TradeProfile from "./pages/TradeProfile";
 
 function Router() {
   return (
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/ai-takeoff" component={AITakeoff} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/billing" component={Billing} />
+      <Route path="/trade-profiles" component={TradeProfile} />
       <Route path="/quote/accept/:token" component={QuoteAcceptance} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
