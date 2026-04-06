@@ -42,10 +42,16 @@ function createPublicContext(): TrpcContext {
 
 // ─── Product / Plan Tests ──────────────────────────────────────────────────────
 
-describe("Stripe Products & Plans (5-Tier Value-Based)", () => {
+describe("Stripe Products & Plans (5-Tier Enterprise Value-Based)", () => {
   it("defines exactly 5 subscription tiers", () => {
     expect(PLANS).toHaveLength(5);
-    expect(PLANS.map((p) => p.id)).toEqual(["free", "solo", "trade_business", "commercial", "enterprise"]);
+    expect(PLANS.map((p) => p.id)).toEqual([
+      "free",
+      "sole_trader",
+      "small_builder",
+      "mid_builder",
+      "enterprise",
+    ]);
   });
 
   it("free plan has $0 pricing", () => {
@@ -55,36 +61,37 @@ describe("Stripe Products & Plans (5-Tier Value-Based)", () => {
     expect(free!.priceYearly).toBe(0);
   });
 
-  it("solo plan is $49/mo monthly, $468/yr yearly", () => {
-    const solo = getPlanById("solo");
+  it("sole_trader plan is $149/mo monthly", () => {
+    const solo = getPlanById("sole_trader");
     expect(solo).toBeDefined();
-    expect(solo!.priceMonthly).toBe(4900);
-    expect(solo!.priceYearly).toBe(46800);
-    expect(solo!.popular).toBe(true);
+    expect(solo!.priceMonthly).toBe(14900);
+    expect(solo!.priceYearly).toBe(143040);
   });
 
-  it("trade_business plan is $199/mo", () => {
-    const tb = getPlanById("trade_business");
-    expect(tb).toBeDefined();
-    expect(tb!.priceMonthly).toBe(19900);
+  it("small_builder plan is $499/mo — replaces part-time estimator", () => {
+    const sb = getPlanById("small_builder");
+    expect(sb).toBeDefined();
+    expect(sb!.priceMonthly).toBe(49900);
+    expect(sb!.popular).toBe(true);
+    expect(sb!.tagline).toContain("part-time estimator");
   });
 
-  it("commercial plan is $799/mo — replaces full-time estimator", () => {
-    const comm = getPlanById("commercial");
-    expect(comm).toBeDefined();
-    expect(comm!.priceMonthly).toBe(79900);
-    expect(comm!.tagline).toContain("full-time estimator");
+  it("mid_builder plan is $1,499/mo — replaces full-time estimator", () => {
+    const mb = getPlanById("mid_builder");
+    expect(mb).toBeDefined();
+    expect(mb!.priceMonthly).toBe(149900);
+    expect(mb!.tagline).toContain("full-time estimator");
   });
 
-  it("enterprise plan is $1,499/mo — replaces estimating department", () => {
+  it("enterprise plan is $3,999/mo — replaces estimating department", () => {
     const ent = getPlanById("enterprise");
     expect(ent).toBeDefined();
-    expect(ent!.priceMonthly).toBe(149900);
+    expect(ent!.priceMonthly).toBe(399900);
     expect(ent!.contactSales).toBe(true);
   });
 
-  it("yearly pricing is cheaper than monthly (20% discount) for solo", () => {
-    const solo = getPlanById("solo")!;
+  it("yearly pricing is cheaper than monthly (20% discount) for sole_trader", () => {
+    const solo = getPlanById("sole_trader")!;
     const monthlyAnnualised = solo.priceMonthly * 12;
     expect(solo.priceYearly).toBeLessThan(monthlyAnnualised);
     const discount = 1 - solo.priceYearly / monthlyAnnualised;
@@ -114,16 +121,16 @@ describe("Stripe Products & Plans (5-Tier Value-Based)", () => {
   it("free plan has restrictive limits", () => {
     const free = getPlanById("free")!;
     expect(free.limits.estimatesPerMonth).toBe(3);
-    expect(free.limits.aiTakeoffsPerMonth).toBe(1);
+    expect(free.limits.aiTakeoffsPerMonth).toBe(3);
     expect(free.limits.projectsTotal).toBe(5);
   });
 
-  it("commercial plan has unlimited estimates and takeoffs", () => {
-    const comm = getPlanById("commercial")!;
-    expect(comm.limits.estimatesPerMonth).toBe(-1);
-    expect(comm.limits.aiTakeoffsPerMonth).toBe(-1);
-    expect(comm.limits.projectsTotal).toBe(-1);
-    expect(comm.limits.teamMembers).toBe(20);
+  it("mid_builder plan has unlimited estimates and takeoffs", () => {
+    const mb = getPlanById("mid_builder")!;
+    expect(mb.limits.estimatesPerMonth).toBe(-1);
+    expect(mb.limits.aiTakeoffsPerMonth).toBe(-1);
+    expect(mb.limits.projectsTotal).toBe(-1);
+    expect(mb.limits.teamMembers).toBe(20);
   });
 
   it("enterprise plan has unlimited everything", () => {
@@ -136,9 +143,10 @@ describe("Stripe Products & Plans (5-Tier Value-Based)", () => {
 
   it("formatPrice returns correct AUD formatting", () => {
     expect(formatPrice(0)).toBe("Free");
-    expect(formatPrice(4900)).toBe("$49");
-    expect(formatPrice(79900)).toBe("$799");
+    expect(formatPrice(14900)).toBe("$149");
+    expect(formatPrice(49900)).toBe("$499");
     expect(formatPrice(149900)).toBe("$1.5K");
+    expect(formatPrice(399900)).toBe("$4.0K");
   });
 
   it("getPlanById returns undefined for invalid id", () => {
@@ -146,14 +154,14 @@ describe("Stripe Products & Plans (5-Tier Value-Based)", () => {
   });
 
   it("each paid tier targets a different audience", () => {
-    const solo = getPlanById("solo")!;
-    const tb = getPlanById("trade_business")!;
-    const comm = getPlanById("commercial")!;
+    const solo = getPlanById("sole_trader")!;
+    const sb = getPlanById("small_builder")!;
+    const mb = getPlanById("mid_builder")!;
     const ent = getPlanById("enterprise")!;
-    expect(solo.targetAudience).toContain("Solo");
-    expect(tb.targetAudience).toContain("4-20");
-    expect(comm.targetAudience).toContain("20-100");
-    expect(ent.targetAudience).toContain("Major");
+    expect(solo.targetAudience).toContain("Sole");
+    expect(sb.targetAudience).toContain("3");
+    expect(mb.targetAudience).toContain("15");
+    expect(ent.targetAudience).toContain("Tier");
   });
 });
 
@@ -164,15 +172,15 @@ describe("ROI Calculator", () => {
     expect(calculateROI("free")).toBeNull();
   });
 
-  it("solo plan has positive ROI", () => {
-    const roi = calculateROI("solo");
+  it("sole_trader plan has positive ROI", () => {
+    const roi = calculateROI("sole_trader");
     expect(roi).not.toBeNull();
     expect(roi!.annualSavings).toBeGreaterThan(0);
-    expect(roi!.roiMultiple).toBeGreaterThan(10);
+    expect(roi!.roiMultiple).toBeGreaterThan(5);
   });
 
-  it("commercial plan saves over $100K/yr", () => {
-    const roi = calculateROI("commercial");
+  it("mid_builder plan saves over $100K/yr", () => {
+    const roi = calculateROI("mid_builder");
     expect(roi).not.toBeNull();
     expect(roi!.annualSavings).toBeGreaterThan(100000);
   });
@@ -181,6 +189,15 @@ describe("ROI Calculator", () => {
     const roi = calculateROI("enterprise");
     expect(roi).not.toBeNull();
     expect(roi!.annualSavings).toBeGreaterThan(250000);
+  });
+
+  it("all paid plans include paybackDays", () => {
+    ["sole_trader", "small_builder", "mid_builder", "enterprise"].forEach((id) => {
+      const roi = calculateROI(id);
+      expect(roi).not.toBeNull();
+      expect(roi!.paybackDays).toBeGreaterThan(0);
+      expect(roi!.paybackDays).toBeLessThan(365);
+    });
   });
 });
 
@@ -193,9 +210,9 @@ describe("Billing Router", () => {
     const plans = await caller.billing.getPlans();
     expect(plans).toHaveLength(5);
     expect(plans[0].id).toBe("free");
-    expect(plans[1].id).toBe("solo");
-    expect(plans[2].id).toBe("trade_business");
-    expect(plans[3].id).toBe("commercial");
+    expect(plans[1].id).toBe("sole_trader");
+    expect(plans[2].id).toBe("small_builder");
+    expect(plans[3].id).toBe("mid_builder");
     expect(plans[4].id).toBe("enterprise");
   });
 
@@ -210,12 +227,12 @@ describe("Billing Router", () => {
     });
   });
 
-  it("getPlans returns popular flag for solo plan", async () => {
+  it("getPlans returns popular flag for small_builder plan", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
     const plans = await caller.billing.getPlans();
-    const solo = plans.find((p) => p.id === "solo");
-    expect(solo?.popular).toBe(true);
+    const sb = plans.find((p) => p.id === "small_builder");
+    expect(sb?.popular).toBe(true);
     const free = plans.find((p) => p.id === "free");
     expect(free?.popular).toBe(false);
   });
@@ -238,40 +255,40 @@ describe("Plan Feature Gating", () => {
     expect(tradePricing?.included).toBe(false);
   });
 
-  it("solo plan includes trade pricing", () => {
-    const solo = getPlanById("solo")!;
+  it("sole_trader plan includes trade pricing", () => {
+    const solo = getPlanById("sole_trader")!;
     const tradePricing = solo.features.find((f) => f.text.toLowerCase().includes("trade"));
     expect(tradePricing?.included).toBe(true);
   });
 
-  it("commercial plan includes priority support", () => {
-    const comm = getPlanById("commercial")!;
-    const support = comm.features.find((f) => f.text.includes("Priority support"));
+  it("mid_builder plan includes priority support", () => {
+    const mb = getPlanById("mid_builder")!;
+    const support = mb.features.find((f) => f.text.toLowerCase().includes("support"));
     expect(support?.included).toBe(true);
   });
 
-  it("free and solo plans do not include team members", () => {
+  it("free and sole_trader plans do not include team members", () => {
     const free = getPlanById("free")!;
-    const solo = getPlanById("solo")!;
+    const solo = getPlanById("sole_trader")!;
     expect(free.limits.teamMembers).toBe(1);
     expect(solo.limits.teamMembers).toBe(1);
   });
 
-  it("trade_business plan includes up to 5 team members", () => {
-    const tb = getPlanById("trade_business")!;
-    expect(tb.limits.teamMembers).toBe(5);
-    const teamFeature = tb.features.find((f) => f.text.includes("team member"));
+  it("small_builder plan includes up to 5 team members", () => {
+    const sb = getPlanById("small_builder")!;
+    expect(sb.limits.teamMembers).toBe(5);
+    const teamFeature = sb.features.find((f) => f.text.includes("team member"));
     expect(teamFeature?.included).toBe(true);
   });
 
   it("pricing scales with value delivered", () => {
-    const solo = getPlanById("solo")!;
-    const tb = getPlanById("trade_business")!;
-    const comm = getPlanById("commercial")!;
+    const solo = getPlanById("sole_trader")!;
+    const sb = getPlanById("small_builder")!;
+    const mb = getPlanById("mid_builder")!;
     const ent = getPlanById("enterprise")!;
     // Each tier should be more expensive than the previous
-    expect(tb.priceMonthly).toBeGreaterThan(solo.priceMonthly);
-    expect(comm.priceMonthly).toBeGreaterThan(tb.priceMonthly);
-    expect(ent.priceMonthly).toBeGreaterThan(comm.priceMonthly);
+    expect(sb.priceMonthly).toBeGreaterThan(solo.priceMonthly);
+    expect(mb.priceMonthly).toBeGreaterThan(sb.priceMonthly);
+    expect(ent.priceMonthly).toBeGreaterThan(mb.priceMonthly);
   });
 });

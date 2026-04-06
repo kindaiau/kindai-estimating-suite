@@ -181,3 +181,16 @@
 - [x] Cabinetry: cabinet boxes, benchtops, hardware (Kaboodle/Blum/Laminex pricing)
 - [x] Rendering: render coats, mesh, primers, EPS insulation (Rockcote/Dulux pricing)
 - [x] Cabinet Making: sheet material, hardware, edging, wardrobe systems (Blum/Laminex pricing)
+
+## Enterprise Pricing Restructure (B2B Value-Based) — COMPLETE
+- [x] Research competitor enterprise pricing benchmarks (Procore $20K-$150K+, PlanSwift $2K, Buildxact $5K, Cubit $3.5K, CostX $30K+)
+- [x] Define new 5-tier pricing: Free Trial, Sole Trader, Small Builder, Mid-Tier Builder, Enterprise
+- [x] Price points: $0 / $149/mo / $499/mo / $1,499/mo / $3,999/mo (custom enterprise)
+- [x] Update Stripe products.ts with new pricing + ROI data + paybackDays
+- [x] Rebuild Pricing page with enterprise B2B positioning ("Stop paying $130K-$180K/yr for a full-time estimator")
+- [x] Add interactive ROI calculator with tier selector
+- [x] Add competitor comparison table (vs hiring estimator, vs Procore, vs PlanSwift, vs Buildxact, vs Cubit, vs CostX)
+- [x] Add "The risk you're not pricing in" section (underquoting, time cost, missed opportunities)
+- [x] Update database enum for new subscription tiers (0005_unknown_tomas.sql migration)
+- [x] Update billing router and webhook handler for new tier IDs
+- [x] 66 tests passing (all green)

@@ -79,7 +79,7 @@ export const billingRouter = router({
   createCheckout: protectedProcedure
     .input(
       z.object({
-        planId: z.enum(["solo", "trade_business", "commercial", "enterprise"]),
+        planId: z.enum(["sole_trader", "small_builder", "mid_builder", "enterprise"]),
         interval: z.enum(["monthly", "yearly"]).default("monthly"),
         origin: z.string(),
       })
