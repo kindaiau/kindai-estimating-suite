@@ -18,6 +18,8 @@ import Pricing from "./pages/Pricing";
 import Billing from "./pages/Billing";
 import TradeProfile from "./pages/TradeProfile";
 import DemoMode from "./pages/DemoMode";
+import SupplierManager from "./pages/SupplierManager";
+import QuoteFollowups from "./pages/QuoteFollowups";
 
 function Router() {
   return (
@@ -35,6 +37,8 @@ function Router() {
       <Route path="/billing" component={Billing} />
       <Route path="/trade-profiles" component={TradeProfile} />
       <Route path="/demo" component={DemoMode} />
+      <Route path="/suppliers" component={SupplierManager} />
+      <Route path="/followups" component={QuoteFollowups} />
       <Route path="/quote/accept/:token" component={QuoteAcceptance} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

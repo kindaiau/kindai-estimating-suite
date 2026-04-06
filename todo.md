@@ -194,3 +194,139 @@
 - [x] Update database enum for new subscription tiers (0005_unknown_tomas.sql migration)
 - [x] Update billing router and webhook handler for new tier IDs
 - [x] 66 tests passing (all green)
+
+## Enterprise Upgrade — $100M Builder Grade
+
+### Multi-User Team Management & RBAC
+- [ ] Team invitations: owner can invite users by email with role assignment
+- [ ] Roles: Owner, Estimator, Project Manager, Quantity Surveyor, Viewer (read-only)
+- [ ] Role-based feature gates: Viewers cannot edit, Estimators cannot delete projects
+- [ ] Team members table in DB with role + status (pending/active/suspended)
+- [ ] Team management UI page: invite, remove, change roles, suspend users
+- [ ] Per-project access control: assign team members to specific projects only
+
+### Tender & Bid Management
+- [ ] Tender module: create tender packages with scope of works, drawings, due date
+- [ ] Subcontractor invite system: send tender invitations by email with secure link
+- [ ] Bid submission portal: subcontractors submit bids via public link (no login required)
+- [ ] Bid comparison table: side-by-side comparison of all received bids per trade
+- [ ] Bid levelling: normalise bids to same scope for fair comparison
+- [ ] Award tender: mark winning bid, auto-generate subcontract summary
+- [ ] Tender status tracking: Draft → Issued → Bids Received → Awarded → Closed
+
+### Full Audit Trail
+- [ ] Audit log table: every create/update/delete logged with userId, timestamp, entity, before/after JSON
+- [ ] Audit trail UI: filterable log per project, per user, per entity type
+- [ ] Immutable audit records: no delete on audit_logs table
+- [ ] Export audit trail to CSV for compliance/legal purposes
+
+### Cost Control Dashboard (Budget vs Actual)
+- [ ] Cost codes system: assign WBS/cost codes to line items (AS 1181 standard)
+- [ ] Budget vs actual tracking per project per cost code
+- [ ] Variation management: log approved variations with cost impact and approval chain
+- [ ] Subcontractor cost tracking: committed costs vs invoiced vs paid
+- [ ] Cashflow forecast: monthly spend projection vs budget
+- [ ] Cost overrun alerts: notify PM when cost code exceeds budget by X%
+- [ ] Executive summary dashboard: total portfolio value, margin %, at-risk projects
+
+### Accounting Integration
+- [ ] Xero export: GST-compliant CSV/JSON in Xero format (invoices, bills, cost codes)
+- [ ] MYOB export: MYOB AccountRight compatible export format
+- [ ] QuickBooks export: QBO format for international users
+- [ ] Export history: track what was exported and when
+
+### Enterprise Security & Compliance
+- [ ] Session management: view and revoke active sessions per user
+- [ ] Two-factor authentication (2FA) prompt for enterprise tier
+- [ ] Data encryption at rest indicator (documented in security page)
+- [ ] IP allowlisting for enterprise accounts (config only)
+- [ ] GDPR/Privacy Act compliance page with data retention policy
+- [ ] SOC 2 readiness checklist (documented)
+
+## Plumbing UX Deep-Dive — 5 Townhouse Development Scenario
+
+### Estimate Structure (Multi-Section)
+- [ ] Replace flat line-item list with structured sections: Preliminaries, Drainage (Sewer), Drainage (Stormwater), Trenching & Excavation, Cold Water Rough-In, Hot Water System, Internal Fixtures & Fittings, Appliance Installs, Commissioning & Testing
+- [ ] Each section has its own subtotal, labour hours, and materials cost
+- [ ] Section collapse/expand for large estimates
+- [ ] Section-level notes field (e.g. "Drainage: Allow for rock excavation contingency")
+- [ ] Multi-building quantity multiplier: "x5 townhouses" applies to all internal sections automatically
+
+### Plumbing Materials Library (Comprehensive)
+- [ ] Drainage: uPVC pipe (40mm, 50mm, 80mm, 100mm, 150mm), bends, junctions, inspection openings, gully traps, floor wastes, P-traps, S-traps
+- [ ] Stormwater: uPVC 90mm, 100mm, 150mm, downpipe connectors, pits, sumps, charged lines
+- [ ] Trenching: allow rates per linear metre (hand dig, machine dig, backfill, compaction, reinstatement)
+- [ ] Cold water: copper 15mm, 20mm, 25mm, 32mm; PEX 16mm, 20mm; poly pipe; isolation valves; pressure limiting valve; water meter connection
+- [ ] Hot water: copper 15mm, 20mm; tempering valve; expansion valve; pressure relief valve; sacrificial anode; lagging/insulation
+- [ ] Hot water units: Rheem 250L electric, 315L electric, Rinnai 26L continuous flow, Dux 250L heat pump, Stiebel Eltron 300L heat pump
+- [ ] Fixtures: toilet suites (Caroma, Fowler), basins (various), showers (rail, overhead), baths, laundry tubs, kitchen sinks
+- [ ] Tapware: mixers (Methven, Caroma, Grohe), pillar taps, shower sets, bath sets
+- [ ] Appliances: dishwasher connection, washing machine connection, gas bayonet, outdoor tap
+
+### AI Takeoff — Plumbing Plan Analysis
+- [ ] Upgrade plumbing AI prompt to handle multi-building hydraulic plans
+- [ ] Detect: fixture schedule, pipe sizing notes, invert levels, drainage layout, hot water locations
+- [ ] Output structured by section (drainage, cold water, hot water, fixtures, appliances)
+- [ ] Identify number of wet areas per unit (bathrooms, ensuites, laundries, kitchens)
+- [ ] Calculate linear metres of pipe runs from plan dimensions
+- [ ] Flag assumptions clearly: "Assumed 1.5m trench depth — confirm with hydraulic engineer"
+- [ ] Multi-building detection: "5 identical units detected — quantities shown per unit x5"
+
+### Labour Rates — Plumbing Specific
+- [ ] Licensed plumber rate: $95–$115/hr (base, QLD/NSW/VIC)
+- [ ] Apprentice rate: $35–$55/hr
+- [ ] Labour units per task: rough-in per wet area, fixture install per type, drain per linear metre, hot water install per unit
+- [ ] Trenching: machine $180–$250/hr, hand dig $85/hr
+- [ ] Commissioning: pressure test, CCTV inspection, council inspection allowance
+
+### Quote Output — Plumbing Specific
+- [ ] Quote shows breakdown by section with subtotals
+- [ ] Separate materials and labour columns per section
+- [ ] Provisional sum items (e.g. "Rock excavation — PS $5,000")
+- [ ] Exclusions list: "Excludes: gas work, electrical to hot water, council fees, hydraulic engineer"
+- [ ] Inclusions list: "Includes: all rough-in, fit-off, hot water installation, commissioning"
+- [ ] QBCC/VBA/NSW Fair Trading licence number on quote
+- [ ] Payment schedule: 30% deposit, 40% rough-in complete, 30% on completion
+
+## Expert AI Prompts — All 10 Trades (Section-by-Section + Labour + Margin)
+- [ ] Electrical: sections = Preliminaries, Switchboard & Mains, Power (GPOs/circuits), Lighting, Data & Communications, Safety Systems (smoke/RCD), External/Outdoor, Commissioning
+- [ ] Carpentry: sections = Preliminaries, Structural Framing, Roof Framing, External Cladding, Internal Linings, Doors & Frames, Windows & Glazing, Stairs & Balustrades, Joinery & Trim, Commissioning
+- [ ] Concreting: sections = Preliminaries, Earthworks & Preparation, Formwork, Reinforcement, Concrete Supply & Pour, Finishing & Curing, Waterproofing, Commissioning
+- [ ] HVAC: sections = Preliminaries, Equipment Supply, Refrigerant Pipework, Ductwork & Diffusers, Electrical Connections, Controls & BMS, Commissioning & Testing
+- [ ] Flooring: sections = Preliminaries, Subfloor Preparation, Waterproofing (wet areas), Tiling, Timber/Laminate/Hybrid, Carpet, Skirting & Trims, Commissioning
+- [ ] Landscaping: sections = Preliminaries, Demolition & Clearing, Earthworks & Drainage, Retaining Walls, Paving & Paths, Turf & Planting, Irrigation, Fencing, Lighting, Commissioning
+- [ ] Cabinetry: sections = Preliminaries, Kitchen Cabinets, Bathroom Vanities, Laundry, Wardrobes, Benchtops, Splashbacks, Hardware & Accessories, Installation Labour
+- [ ] Rendering: sections = Preliminaries, Substrate Preparation, Scratch Coat, Base Coat, Finish Coat, Texture & Paint, External Insulation (if EPS), Commissioning
+- [ ] Cabinet Making: sections = Preliminaries, Sheet Material & Panels, Doors & Drawer Fronts, Hardware (hinges/runners/handles), Benchtops, Assembly Labour, Installation Labour, Commissioning
+- [ ] All prompts include: labour rates per classification, margin/markup field, multi-building multiplier, provisional sums, exclusions list
+
+## Industry Benchmarking Engine
+- [ ] Database table: benchmark_rates (trade, section, metric, p25, p50, p75, p90, unit, state, updatedAt)
+- [ ] Seed benchmark data for all 10 trades: labour rate ranges, material cost per m², total project cost per m² by type
+- [ ] Benchmark comparison on EstimateBuilder: show user's rate vs P25/P50/P75 market range per section
+- [ ] Visual indicator: green (competitive), amber (slightly high), red (significantly above market)
+- [ ] "How does your quote compare?" panel on Quote Summary tab
+- [ ] Win rate correlation: track accepted vs declined quotes and show user their actual win rate vs benchmark
+
+## Quote Follow-Up Email Sequence
+- [ ] Email sequence table: quote_follow_ups (estimateId, sequence, scheduledAt, sentAt, status, emailType)
+- [ ] Trigger: when estimate status changes to "sent", auto-schedule 4 follow-up emails
+- [ ] Day 1 (same day): "Your quote has been sent" confirmation to tradie + "Quote received" to client
+- [ ] Day 3: Friendly check-in to client: "Just checking you received our quote — happy to answer any questions"
+- [ ] Day 7: Value reinforcement email: "Still thinking it over? Here's what's included..." with quote summary
+- [ ] Day 14: Final chase: "Our quote expires in [X] days — let us know if you'd like to proceed or discuss"
+- [ ] Auto-cancel sequence when estimate is accepted or declined
+- [ ] Email templates editable per user in Settings
+- [ ] Unsubscribe/opt-out handling
+- [ ] Email log visible in EstimateBuilder (sent, opened, clicked)
+
+## Supplier Integration
+- [ ] Supplier profiles table: user_suppliers (userId, supplierName, supplierUrl, accountNumber, tradeDiscount, isActive, notes)
+- [ ] Supplier management page in Settings: add/edit/remove trade supplier accounts
+- [ ] Pre-loaded supplier list per trade: Reece, Tradelink, Samios (plumbing); Middy's, Rexel, L&H (electrical); Bowens, Dahlsens, Mitre 10 (carpentry); Boral, Hanson, Holcim (concreting); etc.
+- [ ] "Generate Order List" button on EstimateBuilder: exports all Materials line items as a formatted order list
+- [ ] Order list format: supplier name, item description, quantity + 10% buffer, unit, estimated cost
+- [ ] One-click "Open in Supplier Website" — opens supplier's website with order list pre-filled where API allows
+- [ ] PDF/CSV export of order list for manual ordering
+- [ ] Material matching: AI suggests which supplier stocks each item based on trade and location
+- [ ] Price comparison: if user has multiple suppliers for same trade, show cheapest option per item

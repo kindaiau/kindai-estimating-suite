@@ -1,0 +1,1 @@
+ALTER TABLE `line_items` ADD `section` varchar(150);

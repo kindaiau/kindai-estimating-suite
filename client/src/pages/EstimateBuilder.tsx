@@ -20,6 +20,135 @@ import { useLocation, useParams } from "wouter";
 const CATEGORIES = ["Materials", "Labour", "Plant & Equipment", "Subcontract", "Preliminaries", "Other"];
 const UNITS = ["ea", "m²", "m³", "lm", "hr", "day", "tonne", "kg", "L", "set", "lot", "point", "circuit", "fixture"];
 
+// ─── Market Benchmark Panel ───────────────────────────────────────────────────
+function BenchmarkPanel({ estimateId }: { estimateId: number }) {
+  const { data: bench, isLoading } = trpc.estimates.getBenchmark.useQuery({ id: estimateId });
+
+  if (isLoading) return <div className="text-center py-12 text-muted-foreground text-sm">Calculating market benchmark...</div>;
+  if (!bench) return <div className="text-center py-12 text-muted-foreground text-sm">Add line items to see market benchmarking.</div>;
+
+  const { analysis, benchmark } = bench;
+  const marginStatusColor = analysis.marginStatus === "within" ? "text-green-600" : analysis.marginStatus === "below" ? "text-red-600" : "text-amber-600";
+  const competitiveColor = analysis.competitiveIndex >= -20 && analysis.competitiveIndex <= 30 ? "text-green-600" : analysis.competitiveIndex < -20 ? "text-red-600" : "text-amber-600";
+
+  return (
+    <div className="space-y-4">
+      {/* Overall Position */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="border shadow-sm rounded-2xl">
+          <CardContent className="pt-4 pb-4 px-4">
+            <div className="text-xs text-muted-foreground font-bold mb-1">TOTAL QUOTE</div>
+            <div className="text-xl font-black">${bench.totalValue.toLocaleString("en-AU")}</div>
+            <div className="text-xs text-muted-foreground mt-1">Market avg ({analysis.sizeBucket}): ${analysis.marketAvg.toLocaleString("en-AU")}</div>
+          </CardContent>
+        </Card>
+        <Card className="border shadow-sm rounded-2xl">
+          <CardContent className="pt-4 pb-4 px-4">
+            <div className="text-xs text-muted-foreground font-bold mb-1">VS MARKET</div>
+            <div className={`text-xl font-black ${competitiveColor}`}>{analysis.competitiveIndex > 0 ? "+" : ""}{analysis.competitiveIndex}%</div>
+            <div className="text-xs text-muted-foreground mt-1">{analysis.competitiveIndex >= -20 && analysis.competitiveIndex <= 30 ? "Competitive" : analysis.competitiveIndex < -20 ? "Below market" : "Above market"}</div>
+          </CardContent>
+        </Card>
+        <Card className="border shadow-sm rounded-2xl">
+          <CardContent className="pt-4 pb-4 px-4">
+            <div className="text-xs text-muted-foreground font-bold mb-1">YOUR MARGIN</div>
+            <div className={`text-xl font-black ${marginStatusColor}`}>{bench.marginPercent}%</div>
+            <div className="text-xs text-muted-foreground mt-1">Benchmark: {benchmark.marginRange.min}–{benchmark.marginRange.max}%</div>
+          </CardContent>
+        </Card>
+        <Card className="border shadow-sm rounded-2xl">
+          <CardContent className="pt-4 pb-4 px-4">
+            <div className="text-xs text-muted-foreground font-bold mb-1">WIN RATE BENCHMARK</div>
+            <div className="text-xl font-black text-primary">{benchmark.winRateBenchmark}%</div>
+            <div className="text-xs text-muted-foreground mt-1">Industry average for {bench.trade}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Labour vs Materials Split */}
+      <Card className="border shadow-sm rounded-2xl">
+        <CardHeader className="pb-2 pt-5 px-5">
+          <CardTitle className="text-sm font-black">Cost Composition</CardTitle>
+        </CardHeader>
+        <CardContent className="px-5 pb-5 space-y-3">
+          <div>
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-muted-foreground">Labour</span>
+              <span className="font-bold">{bench.labourPercent}%</span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2">
+              <div className="h-2 rounded-full bg-blue-500" style={{ width: `${bench.labourPercent}%` }} />
+            </div>
+          </div>
+          <div>
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-muted-foreground">Materials</span>
+              <span className="font-bold">{bench.materialsPercent}%</span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2">
+              <div className="h-2 rounded-full bg-orange-400" style={{ width: `${bench.materialsPercent}%` }} />
+            </div>
+          </div>
+          <div className="text-xs text-muted-foreground pt-1">
+            Labour rate range for {bench.trade}: ${benchmark.labourRateRange.min}–${benchmark.labourRateRange.max}/hr (median ${benchmark.labourRateRange.median}/hr)
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Analysis Messages */}
+      <Card className="border shadow-sm rounded-2xl">
+        <CardHeader className="pb-2 pt-5 px-5">
+          <CardTitle className="text-sm font-black">Market Analysis</CardTitle>
+        </CardHeader>
+        <CardContent className="px-5 pb-5 space-y-3">
+          <div className="p-3 bg-muted/40 rounded-xl text-sm">{analysis.marginMessage}</div>
+          <div className="p-3 bg-muted/40 rounded-xl text-sm">{analysis.competitiveMessage}</div>
+        </CardContent>
+      </Card>
+
+      {/* Recommendations */}
+      {analysis.recommendations.length > 0 && (
+        <Card className="border shadow-sm rounded-2xl">
+          <CardHeader className="pb-2 pt-5 px-5">
+            <CardTitle className="text-sm font-black">Kindai Recommendations</CardTitle>
+          </CardHeader>
+          <CardContent className="px-5 pb-5">
+            <ul className="space-y-2">
+              {analysis.recommendations.map((r: string, i: number) => (
+                <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                  <span className="text-primary mt-0.5">→</span> {r}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Trade Sections */}
+      {benchmark.sections.length > 0 && (
+        <Card className="border shadow-sm rounded-2xl">
+          <CardHeader className="pb-2 pt-5 px-5">
+            <CardTitle className="text-sm font-black">Standard {bench.trade} Sections</CardTitle>
+          </CardHeader>
+          <CardContent className="px-5 pb-5">
+            <div className="flex flex-wrap gap-2">
+              {benchmark.sections.map((s: string, i: number) => (
+                <span key={i} className="text-xs px-3 py-1 bg-primary/10 text-primary rounded-full font-medium">{s}</span>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">Ensure your estimate covers all relevant sections for a complete scope.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      <p className="text-xs text-muted-foreground text-center">
+        Benchmarks based on 2024–25 Australian construction market data for {bench.trade} projects.
+        Rates vary by state, project complexity, and site conditions.
+      </p>
+    </div>
+  );
+}
+
 export default function EstimateBuilder() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
@@ -200,6 +329,7 @@ export default function EstimateBuilder() {
             <TabsTrigger value="items" className="text-xs rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm">Line Items</TabsTrigger>
             <TabsTrigger value="compliance" className="text-xs rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm">Compliance</TabsTrigger>
             <TabsTrigger value="summary" className="text-xs rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm">Quote Summary</TabsTrigger>
+            <TabsTrigger value="benchmark" className="text-xs rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm">Market Benchmark</TabsTrigger>
           </TabsList>
 
           {/* Line Items Tab */}
@@ -616,6 +746,11 @@ export default function EstimateBuilder() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          {/* ── Market Benchmark Tab ── */}
+          <TabsContent value="benchmark" className="space-y-4 mt-4">
+            <BenchmarkPanel estimateId={estimateId} />
           </TabsContent>
         </Tabs>
       </div>

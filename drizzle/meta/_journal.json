@@ -43,6 +43,27 @@
       "when": 1775455771015,
       "tag": "0005_unknown_tomas",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1775509693771,
+      "tag": "0006_aberrant_rictor",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1775510218099,
+      "tag": "0007_colorful_speed",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1775511303209,
+      "tag": "0008_special_hulk",
+      "breakpoints": true
     }
   ]
 }

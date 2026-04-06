@@ -1,4 +1,5 @@
 import {
+  bigint,
   boolean,
   decimal,
   int,
@@ -105,6 +106,7 @@ export type InsertEstimate = typeof estimates.$inferInsert;
 export const lineItems = mysqlTable("line_items", {
   id: int("id").autoincrement().primaryKey(),
   estimateId: int("estimateId").notNull(),
+  section: varchar("section", { length: 150 }), // e.g. "Sewer Drainage", "Stormwater", "Trenching & Excavation", "Cold Water Rough-In", "Hot Water System", "Internal Fixtures", "Appliance Installs", "Preliminaries"
   category: varchar("category", { length: 100 }).notNull(), // e.g. "Materials", "Labour", "Plant", "Subcontract"
   description: varchar("description", { length: 500 }).notNull(),
   unit: varchar("unit", { length: 30 }).notNull(), // e.g. "m²", "lm", "ea", "hr"
@@ -239,3 +241,178 @@ export const emailTemplates = mysqlTable("email_templates", {
 
 export type EmailTemplate = typeof emailTemplates.$inferSelect;
 export type InsertEmailTemplate = typeof emailTemplates.$inferInsert;
+
+// ─── Team Members (Enterprise Multi-User) ─────────────────────────────────────
+export const teamMembers = mysqlTable("team_members", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerId: int("ownerId").notNull(), // The account owner who invited this member
+  userId: int("userId"), // null until invitation accepted
+  email: varchar("email", { length: 320 }).notNull(),
+  name: varchar("name", { length: 255 }),
+  role: mysqlEnum("role", ["owner", "estimator", "project_manager", "quantity_surveyor", "viewer"]).notNull(),
+  status: mysqlEnum("status", ["pending", "active", "suspended"]).default("pending").notNull(),
+  inviteToken: varchar("inviteToken", { length: 64 }),
+  inviteExpiresAt: timestamp("inviteExpiresAt"),
+  acceptedAt: timestamp("acceptedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TeamMember = typeof teamMembers.$inferSelect;
+export type InsertTeamMember = typeof teamMembers.$inferInsert;
+
+// ─── Tenders (Bid Management) ─────────────────────────────────────────────────
+export const tenders = mysqlTable("tenders", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // owner
+  projectId: int("projectId"),
+  title: varchar("title", { length: 255 }).notNull(),
+  tenderNumber: varchar("tenderNumber", { length: 50 }),
+  trade: varchar("trade", { length: 64 }).notNull(),
+  scopeOfWorks: text("scopeOfWorks"),
+  siteAddress: text("siteAddress"),
+  estimatedValue: decimal("estimatedValue", { precision: 14, scale: 2 }),
+  dueDate: timestamp("dueDate"),
+  status: mysqlEnum("status", ["draft", "issued", "bids_received", "under_review", "awarded", "closed"]).default("draft").notNull(),
+  awardedBidId: int("awardedBidId"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Tender = typeof tenders.$inferSelect;
+export type InsertTender = typeof tenders.$inferInsert;
+
+// ─── Tender Bids (Subcontractor Responses) ────────────────────────────────────
+export const tenderBids = mysqlTable("tender_bids", {
+  id: int("id").autoincrement().primaryKey(),
+  tenderId: int("tenderId").notNull(),
+  subcontractorName: varchar("subcontractorName", { length: 255 }).notNull(),
+  subcontractorEmail: varchar("subcontractorEmail", { length: 320 }),
+  subcontractorPhone: varchar("subcontractorPhone", { length: 20 }),
+  subcontractorAbn: varchar("subcontractorAbn", { length: 20 }),
+  bidAmount: decimal("bidAmount", { precision: 14, scale: 2 }),
+  gstIncluded: boolean("gstIncluded").default(true),
+  completionWeeks: int("completionWeeks"),
+  inclusions: text("inclusions"),
+  exclusions: text("exclusions"),
+  notes: text("notes"),
+  attachmentUrl: text("attachmentUrl"),
+  submissionToken: varchar("submissionToken", { length: 64 }), // for public submission link
+  status: mysqlEnum("status", ["invited", "submitted", "under_review", "shortlisted", "awarded", "declined"]).default("invited").notNull(),
+  submittedAt: timestamp("submittedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TenderBid = typeof tenderBids.$inferSelect;
+export type InsertTenderBid = typeof tenderBids.$inferInsert;
+
+// ─── Audit Log (Immutable) ────────────────────────────────────────────────────
+export const auditLogs = mysqlTable("audit_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"), // null for system actions
+  userName: varchar("userName", { length: 255 }),
+  userEmail: varchar("userEmail", { length: 320 }),
+  action: mysqlEnum("action", ["create", "update", "delete", "view", "export", "login", "logout", "invite", "accept", "award"]).notNull(),
+  entityType: varchar("entityType", { length: 64 }).notNull(), // e.g. "estimate", "project", "tender"
+  entityId: int("entityId"),
+  entityName: varchar("entityName", { length: 255 }),
+  projectId: int("projectId"), // for project-scoped filtering
+  beforeData: json("beforeData"), // snapshot before change
+  afterData: json("afterData"),  // snapshot after change
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = typeof auditLogs.$inferInsert;
+
+// ─── Cost Codes (WBS / Budget Tracking) ──────────────────────────────────────
+export const costCodes = mysqlTable("cost_codes", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  projectId: int("projectId"), // null = company-level template
+  code: varchar("code", { length: 30 }).notNull(), // e.g. "01.01", "ELEC-001"
+  name: varchar("name", { length: 255 }).notNull(),
+  category: varchar("category", { length: 100 }), // e.g. "Preliminaries", "Structure", "Services"
+  budgetAmount: decimal("budgetAmount", { precision: 14, scale: 2 }).default("0.00"),
+  committedAmount: decimal("committedAmount", { precision: 14, scale: 2 }).default("0.00"),
+  actualAmount: decimal("actualAmount", { precision: 14, scale: 2 }).default("0.00"),
+  forecastAmount: decimal("forecastAmount", { precision: 14, scale: 2 }).default("0.00"),
+  isActive: boolean("isActive").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CostCode = typeof costCodes.$inferSelect;
+export type InsertCostCode = typeof costCodes.$inferInsert;
+
+// ─── Variations (Change Orders) ───────────────────────────────────────────────
+export const variations = mysqlTable("variations", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull(),
+  estimateId: int("estimateId"),
+  userId: int("userId").notNull(),
+  variationNumber: varchar("variationNumber", { length: 50 }),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  reason: mysqlEnum("reason", ["client_request", "design_change", "site_condition", "scope_omission", "regulatory", "other"]).default("client_request").notNull(),
+  costImpact: decimal("costImpact", { precision: 14, scale: 2 }).notNull(), // positive = addition, negative = deduction
+  timeImpactDays: int("timeImpactDays").default(0),
+  status: mysqlEnum("status", ["draft", "submitted", "approved", "rejected", "on_hold"]).default("draft").notNull(),
+  approvedBy: varchar("approvedBy", { length: 255 }),
+  approvedAt: timestamp("approvedAt"),
+  attachmentUrl: text("attachmentUrl"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Variation = typeof variations.$inferSelect;
+export type InsertVariation = typeof variations.$inferInsert;
+
+// ─── Quote Follow-ups (Automated Email Sequence) ──────────────────────────────
+export const quoteFollowups = mysqlTable("quote_followups", {
+  id: int("id").autoincrement().primaryKey(),
+  estimateId: int("estimateId").notNull(),
+  userId: int("userId").notNull(),
+  clientEmail: varchar("clientEmail", { length: 320 }).notNull(),
+  clientName: varchar("clientName", { length: 255 }),
+  dayOffset: int("dayOffset").notNull(), // 1, 3, 7, or 14
+  label: varchar("label", { length: 100 }),
+  scheduledAt: bigint("scheduledAt", { mode: "number" }), // Unix ms
+  sentAt: bigint("sentAt", { mode: "number" }),
+  status: mysqlEnum("status", ["scheduled", "sent", "cancelled", "bounced"]).default("scheduled").notNull(),
+  emailSubject: varchar("emailSubject", { length: 500 }),
+  emailBody: text("emailBody"),
+  openedAt: bigint("openedAt", { mode: "number" }),
+  clickedAt: bigint("clickedAt", { mode: "number" }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type QuoteFollowup = typeof quoteFollowups.$inferSelect;
+export type InsertQuoteFollowup = typeof quoteFollowups.$inferInsert;
+
+// ─── Supplier Connections (Trade Account Integration) ─────────────────────────
+export const supplierConnections = mysqlTable("supplier_connections", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  supplierName: varchar("supplierName", { length: 255 }).notNull(),
+  supplierWebsite: varchar("supplierWebsite", { length: 500 }),
+  supplierType: mysqlEnum("supplierType", ["trade_account", "retail", "direct", "custom"]).default("trade_account").notNull(),
+  trades: json("trades"), // array of trade strings this supplier covers
+  accountNumber: varchar("accountNumber", { length: 100 }),
+  contactName: varchar("contactName", { length: 255 }),
+  contactEmail: varchar("contactEmail", { length: 320 }),
+  contactPhone: varchar("contactPhone", { length: 20 }),
+  discountPercent: decimal("discountPercent", { precision: 5, scale: 2 }).default("0.00"),
+  notes: text("notes"),
+  isActive: boolean("isActive").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SupplierConnection = typeof supplierConnections.$inferSelect;
+export type InsertSupplierConnection = typeof supplierConnections.$inferInsert;

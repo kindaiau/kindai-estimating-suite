@@ -229,6 +229,81 @@ export const estimatesRouter = router({
     };
   }),
 
+  // Industry benchmarking — compare user's estimate vs market rates
+  getBenchmark: protectedProcedure.input(z.object({
+    id: z.number(),
+  })).query(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) return null;
+    const [estimate] = await db.select().from(estimates)
+      .where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)))
+      .limit(1);
+    if (!estimate) return null;
+
+    const { INDUSTRY_BENCHMARKS } = await import("../routers/ai");
+    const benchmark = INDUSTRY_BENCHMARKS[estimate.trade];
+    if (!benchmark) return null;
+
+    const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, input.id));
+    const totalValue = parseFloat(estimate.total as string) || 0;
+    const subtotalValue = parseFloat(estimate.subtotal as string) || 0;
+    const marginValue = parseFloat(estimate.margin as string) || 0;
+
+    // Calculate labour hours from line items
+    const labourItems = items.filter(i => i.category === "Labour");
+    const totalLabourCost = labourItems.reduce((sum, i) => sum + parseFloat(i.subtotal as string), 0);
+    const totalMaterialsCost = items
+      .filter(i => i.category === "Materials")
+      .reduce((sum, i) => sum + parseFloat(i.subtotal as string), 0);
+
+    const labourPercent = subtotalValue > 0 ? (totalLabourCost / subtotalValue) * 100 : 0;
+    const materialsPercent = subtotalValue > 0 ? (totalMaterialsCost / subtotalValue) * 100 : 0;
+
+    // Determine project size bucket
+    let sizeBucket: "small" | "medium" | "large" = "small";
+    if (totalValue > benchmark.avgQuoteValue.medium) sizeBucket = "large";
+    else if (totalValue > benchmark.avgQuoteValue.small) sizeBucket = "medium";
+
+    const marketAvg = benchmark.avgQuoteValue[sizeBucket];
+    const competitiveIndex = marketAvg > 0 ? ((totalValue - marketAvg) / marketAvg) * 100 : 0;
+
+    return {
+      trade: estimate.trade,
+      totalValue,
+      marginPercent: marginValue,
+      labourPercent: Math.round(labourPercent),
+      materialsPercent: Math.round(materialsPercent),
+      benchmark: {
+        labourRateRange: benchmark.labourRateRange,
+        marginRange: benchmark.marginRange,
+        winRateBenchmark: benchmark.winRateBenchmark,
+        avgQuoteValue: benchmark.avgQuoteValue,
+        sections: benchmark.sections,
+      },
+      analysis: {
+        sizeBucket,
+        marketAvg,
+        competitiveIndex: Math.round(competitiveIndex),
+        marginStatus: marginValue < benchmark.marginRange.min ? "below" : marginValue > benchmark.marginRange.max ? "above" : "within",
+        marginMessage: marginValue < benchmark.marginRange.min
+          ? `Your margin of ${marginValue}% is below the industry minimum of ${benchmark.marginRange.min}%. You may be underpricing.`
+          : marginValue > benchmark.marginRange.max
+          ? `Your margin of ${marginValue}% is above the typical range. Ensure your quote is still competitive.`
+          : `Your margin of ${marginValue}% is within the industry benchmark range of ${benchmark.marginRange.min}–${benchmark.marginRange.max}%.`,
+        competitiveMessage: competitiveIndex < -20
+          ? "Your quote is significantly below market average — check for missing items or underpricing."
+          : competitiveIndex > 30
+          ? "Your quote is above market average — ensure your value proposition is clear to the client."
+          : "Your quote is competitively positioned within the market range.",
+        recommendations: [
+          ...(marginValue < benchmark.marginRange.median ? [`Consider increasing your margin to the industry median of ${benchmark.marginRange.median}% to improve profitability.`] : []),
+          ...(labourPercent < 20 && labourItems.length === 0 ? ["No labour items detected — ensure labour costs are included in your estimate."] : []),
+          `Industry win rate benchmark for ${estimate.trade}: ${benchmark.winRateBenchmark}% of quotes convert to jobs.`,
+        ],
+      },
+    };
+  }),
+
   generatePdf: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new Error("Database not available");
