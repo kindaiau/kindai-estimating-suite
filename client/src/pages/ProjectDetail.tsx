@@ -15,14 +15,22 @@ import { useState } from "react";
 const TRADE_EMOJI: Record<string, string> = {
   electrical: "⚡", plumbing: "🔧", carpentry: "🪚", concreting: "🏗️",
   hvac: "❄️", flooring: "🟫", landscaping: "🌿", cabinetry: "🚪",
-  rendering: "🧱", "cabinet-making": "🪵",
+  rendering: "🧱", painting: "🎨", bricklaying: "🧱", roofing: "🏠",
+  tiling: "⬜", waterproofing: "💧", "fire-protection": "🔥",
+  glazing: "🪟", "quantity-surveying": "📐", demolition: "⛏️",
+  "swimming-pool": "🏊", "steel-fabrication": "🔩",
 };
 const TRADE_GRADIENTS: Record<string, string> = {
   electrical: "from-amber-400 to-orange-500", plumbing: "from-blue-400 to-cyan-500",
   carpentry: "from-amber-600 to-yellow-500", concreting: "from-slate-400 to-gray-500",
   hvac: "from-cyan-400 to-blue-500", flooring: "from-violet-400 to-purple-500",
   landscaping: "from-emerald-400 to-green-500", cabinetry: "from-orange-400 to-amber-500",
-  rendering: "from-pink-400 to-rose-500", "cabinet-making": "from-orange-500 to-red-400",
+  rendering: "from-pink-400 to-rose-500", painting: "from-purple-400 to-pink-500",
+  bricklaying: "from-red-400 to-orange-500", roofing: "from-slate-500 to-gray-600",
+  tiling: "from-teal-400 to-cyan-500", waterproofing: "from-blue-500 to-indigo-600",
+  "fire-protection": "from-red-500 to-rose-600", glazing: "from-sky-400 to-blue-500",
+  "quantity-surveying": "from-indigo-400 to-violet-500", demolition: "from-stone-400 to-gray-500",
+  "swimming-pool": "from-cyan-400 to-teal-500", "steel-fabrication": "from-zinc-500 to-slate-600",
 };
 
 export default function ProjectDetail() {

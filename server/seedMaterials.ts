@@ -177,19 +177,19 @@ const SEED_MATERIALS: SeedMaterial[] = [
   { trade: "rendering", category: "Insulation", name: "EPS Foam Board 75mm", description: "75mm EPS foam insulation board for EIFS", unit: "m²", unitPrice: "26.00", supplier: "Rockcote/Various", wasteFactor: "10" },
 
   // ─── CABINET MAKING ───────────────────────────────────────────────────────────
-  { trade: "cabinet-making", category: "Sheet Material", name: "Melamine Board 16mm White 2400x1200", description: "16mm white melamine board", unit: "sheet", unitPrice: "68.00", supplier: "Laminex/Polytec", wasteFactor: "15" },
-  { trade: "cabinet-making", category: "Sheet Material", name: "Melamine Board 18mm White 2400x1200", description: "18mm white melamine board", unit: "sheet", unitPrice: "78.00", supplier: "Laminex/Polytec", wasteFactor: "15" },
-  { trade: "cabinet-making", category: "Sheet Material", name: "MDF 16mm 2400x1200", description: "16mm MDF standard sheet", unit: "sheet", unitPrice: "52.00", supplier: "Laminex/Various", wasteFactor: "15" },
-  { trade: "cabinet-making", category: "Sheet Material", name: "MDF 25mm 2400x1200", description: "25mm MDF for shelving", unit: "sheet", unitPrice: "72.00", supplier: "Laminex/Various", wasteFactor: "15" },
-  { trade: "cabinet-making", category: "Sheet Material", name: "Plywood 12mm Birch 2400x1200", description: "12mm birch plywood for drawer boxes", unit: "sheet", unitPrice: "95.00", supplier: "Bowens/Various", wasteFactor: "15" },
-  { trade: "cabinet-making", category: "Hardware", name: "Soft Close Hinge Blum Clip Top", description: "Blum Clip Top soft close hinge", unit: "ea", unitPrice: "12.50", supplier: "Blum", wasteFactor: "0" },
-  { trade: "cabinet-making", category: "Hardware", name: "Drawer Runner Blum Tandem 500mm", description: "Blum Tandem soft close drawer runner 500mm", unit: "pair", unitPrice: "48.00", supplier: "Blum", wasteFactor: "0" },
-  { trade: "cabinet-making", category: "Hardware", name: "Shelf Pin 5mm", description: "5mm shelf support pin", unit: "ea", unitPrice: "0.45", supplier: "Hafele/Various", wasteFactor: "5" },
-  { trade: "cabinet-making", category: "Hardware", name: "Cam Lock 15mm", description: "15mm cam lock connector", unit: "ea", unitPrice: "0.85", supplier: "Hafele/Various", wasteFactor: "5" },
-  { trade: "cabinet-making", category: "Edging", name: "ABS Edging 22mm White", description: "22mm white ABS edging tape 50m roll", unit: "roll", unitPrice: "28.50", supplier: "Laminex/Polytec", wasteFactor: "10" },
-  { trade: "cabinet-making", category: "Edging", name: "Iron-On Edging 22mm", description: "22mm iron-on edging tape 50m roll", unit: "roll", unitPrice: "18.50", supplier: "Various", wasteFactor: "10" },
-  { trade: "cabinet-making", category: "Wardrobe Systems", name: "Wardrobe Rail Oval 25x16mm", description: "Oval wardrobe rail 25x16mm per metre", unit: "m", unitPrice: "8.50", supplier: "Hafele/Various", wasteFactor: "5" },
-  { trade: "cabinet-making", category: "Wardrobe Systems", name: "Wardrobe Rail Bracket", description: "Wardrobe rail end bracket pair", unit: "pair", unitPrice: "4.50", supplier: "Hafele/Various", wasteFactor: "0" },
+  { trade: "cabinetry", category: "Sheet Material", name: "Melamine Board 16mm White 2400x1200", description: "16mm white melamine board", unit: "sheet", unitPrice: "68.00", supplier: "Laminex/Polytec", wasteFactor: "15" },
+  { trade: "cabinetry", category: "Sheet Material", name: "Melamine Board 18mm White 2400x1200", description: "18mm white melamine board", unit: "sheet", unitPrice: "78.00", supplier: "Laminex/Polytec", wasteFactor: "15" },
+  { trade: "cabinetry", category: "Sheet Material", name: "MDF 16mm 2400x1200", description: "16mm MDF standard sheet", unit: "sheet", unitPrice: "52.00", supplier: "Laminex/Various", wasteFactor: "15" },
+  { trade: "cabinetry", category: "Sheet Material", name: "MDF 25mm 2400x1200", description: "25mm MDF for shelving", unit: "sheet", unitPrice: "72.00", supplier: "Laminex/Various", wasteFactor: "15" },
+  { trade: "cabinetry", category: "Sheet Material", name: "Plywood 12mm Birch 2400x1200", description: "12mm birch plywood for drawer boxes", unit: "sheet", unitPrice: "95.00", supplier: "Bowens/Various", wasteFactor: "15" },
+  { trade: "cabinetry", category: "Hardware", name: "Soft Close Hinge Blum Clip Top", description: "Blum Clip Top soft close hinge", unit: "ea", unitPrice: "12.50", supplier: "Blum", wasteFactor: "0" },
+  { trade: "cabinetry", category: "Hardware", name: "Drawer Runner Blum Tandem 500mm", description: "Blum Tandem soft close drawer runner 500mm", unit: "pair", unitPrice: "48.00", supplier: "Blum", wasteFactor: "0" },
+  { trade: "cabinetry", category: "Hardware", name: "Shelf Pin 5mm", description: "5mm shelf support pin", unit: "ea", unitPrice: "0.45", supplier: "Hafele/Various", wasteFactor: "5" },
+  { trade: "cabinetry", category: "Hardware", name: "Cam Lock 15mm", description: "15mm cam lock connector", unit: "ea", unitPrice: "0.85", supplier: "Hafele/Various", wasteFactor: "5" },
+  { trade: "cabinetry", category: "Edging", name: "ABS Edging 22mm White", description: "22mm white ABS edging tape 50m roll", unit: "roll", unitPrice: "28.50", supplier: "Laminex/Polytec", wasteFactor: "10" },
+  { trade: "cabinetry", category: "Edging", name: "Iron-On Edging 22mm", description: "22mm iron-on edging tape 50m roll", unit: "roll", unitPrice: "18.50", supplier: "Various", wasteFactor: "10" },
+  { trade: "cabinetry", category: "Wardrobe Systems", name: "Wardrobe Rail Oval 25x16mm", description: "Oval wardrobe rail 25x16mm per metre", unit: "m", unitPrice: "8.50", supplier: "Hafele/Various", wasteFactor: "5" },
+  { trade: "cabinetry", category: "Wardrobe Systems", name: "Wardrobe Rail Bracket", description: "Wardrobe rail end bracket pair", unit: "pair", unitPrice: "4.50", supplier: "Hafele/Various", wasteFactor: "0" },
 ];
 
 export async function seedMaterials() {

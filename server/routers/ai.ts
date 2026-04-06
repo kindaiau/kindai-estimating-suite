@@ -56,21 +56,16 @@ export const AUSTRALIAN_SUPPLIERS: Record<string, Array<{
     { name: "Bunnings Warehouse", type: "retail", website: "https://www.bunnings.com.au", trades: ["landscaping"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Retail landscaping supplies." },
   ],
   cabinetry: [
-    { name: "Laminex", type: "trade", website: "https://www.laminex.com.au", trades: ["cabinetry", "cabinet-making"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Australia's leading laminate and panel supplier. Trade pricing available." },
-    { name: "Polytec", type: "trade", website: "https://www.polytec.com.au", trades: ["cabinetry", "cabinet-making"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Premium decorative surfaces and panels." },
-    { name: "Hafele", type: "trade", website: "https://www.hafele.com.au", trades: ["cabinetry", "cabinet-making"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Cabinet hardware and fittings specialist." },
-    { name: "Bunnings Warehouse", type: "retail", website: "https://www.bunnings.com.au", trades: ["cabinetry", "cabinet-making"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Retail hardware and basic panel products." },
+    { name: "Laminex", type: "trade", website: "https://www.laminex.com.au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Australia's leading laminate and panel supplier. Trade pricing available." },
+    { name: "Polytec", type: "trade", website: "https://www.polytec.com.au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Premium decorative surfaces and panels." },
+    { name: "Hafele", type: "trade", website: "https://www.hafele.com.au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Cabinet hardware and fittings specialist." },
+    { name: "Blum", type: "trade", website: "https://www.blum.com/au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Premium cabinet hardware — hinges, drawer systems, lift systems." },
+    { name: "Bunnings Warehouse", type: "retail", website: "https://www.bunnings.com.au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Retail hardware and basic panel products." },
   ],
   rendering: [
     { name: "CSR Gyprock", type: "trade", website: "https://www.csr.com.au", trades: ["rendering"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Australia's leading plasterboard and render supplier." },
     { name: "Dulux AcraTex", type: "trade", website: "https://www.dulux.com.au", trades: ["rendering"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Specialist texture and render coatings." },
     { name: "Bunnings Warehouse", type: "retail", website: "https://www.bunnings.com.au", trades: ["rendering"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Retail render and plaster products." },
-  ],
-  "cabinet-making": [
-    { name: "Laminex", type: "trade", website: "https://www.laminex.com.au", trades: ["cabinetry", "cabinet-making"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Australia's leading laminate and panel supplier." },
-    { name: "Polytec", type: "trade", website: "https://www.polytec.com.au", trades: ["cabinetry", "cabinet-making"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Premium decorative surfaces and panels." },
-    { name: "Blum", type: "trade", website: "https://www.blum.com/au", trades: ["cabinet-making"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Premium cabinet hardware — hinges, drawer systems, lift systems." },
-    { name: "Bunnings Warehouse", type: "retail", website: "https://www.bunnings.com.au", trades: ["cabinet-making"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Retail hardware and basic panel products." },
   ],
 };
 
@@ -155,13 +150,93 @@ export const INDUSTRY_BENCHMARKS: Record<string, {
     avgQuoteValue: { small: 2800, medium: 14000, large: 75000 },
     sections: ["Preliminaries", "Substrate Preparation", "Scratch Coat", "Base Coat", "Finish Coat", "Texture & Decorative Finish", "External Insulation (EPS)", "Commissioning"],
   },
-  "cabinet-making": {
-    labourRateRange: { min: 80, max: 120, median: 98 },
-    marginRange: { min: 25, max: 45, median: 35 },
-    costPerM2: { residential: { min: 900, max: 2800 } },
+  painting: {
+    labourRateRange: { min: 55, max: 90, median: 72 },
+    marginRange: { min: 20, max: 38, median: 28 },
+    costPerM2: { residential: { min: 18, max: 45 }, commercial: { min: 22, max: 60 } },
+    winRateBenchmark: 62,
+    avgQuoteValue: { small: 1800, medium: 9500, large: 55000 },
+    sections: ["Preliminaries", "Surface Preparation", "Priming", "Internal Walls & Ceilings", "External Walls", "Doors & Trims", "Specialty Coatings", "Commissioning"],
+  },
+  bricklaying: {
+    labourRateRange: { min: 75, max: 115, median: 92 },
+    marginRange: { min: 18, max: 32, median: 24 },
+    costPerM2: { residential: { min: 120, max: 280 }, commercial: { min: 160, max: 380 } },
+    winRateBenchmark: 58,
+    avgQuoteValue: { small: 4500, medium: 28000, large: 180000 },
+    sections: ["Preliminaries", "Footings & Foundations", "Brickwork — External Skin", "Brickwork — Internal Skin", "Cavity Wall Construction", "Lintels & Arches", "Paving & Paths", "Commissioning"],
+  },
+  roofing: {
+    labourRateRange: { min: 70, max: 110, median: 88 },
+    marginRange: { min: 20, max: 38, median: 28 },
+    costPerM2: { residential: { min: 55, max: 140 }, commercial: { min: 80, max: 200 } },
+    winRateBenchmark: 60,
+    avgQuoteValue: { small: 4200, medium: 22000, large: 120000 },
+    sections: ["Preliminaries", "Roof Structure & Battens", "Roof Tiles / Metal Cladding", "Roof Plumbing (Gutters & Downpipes)", "Flashings & Cappings", "Ridge & Hip Capping", "Skylights & Penetrations", "Commissioning"],
+  },
+  tiling: {
+    labourRateRange: { min: 55, max: 90, median: 70 },
+    marginRange: { min: 20, max: 38, median: 28 },
+    costPerM2: { residential: { min: 65, max: 180 }, commercial: { min: 85, max: 240 } },
+    winRateBenchmark: 63,
+    avgQuoteValue: { small: 2200, medium: 12000, large: 65000 },
+    sections: ["Preliminaries", "Substrate Preparation", "Waterproofing", "Floor Tiling", "Wall Tiling", "Grouting & Sealing", "Trims & Accessories", "Commissioning"],
+  },
+  waterproofing: {
+    labourRateRange: { min: 60, max: 95, median: 78 },
+    marginRange: { min: 22, max: 42, median: 32 },
+    costPerM2: { residential: { min: 35, max: 95 }, commercial: { min: 55, max: 140 } },
+    winRateBenchmark: 65,
+    avgQuoteValue: { small: 1800, medium: 9000, large: 48000 },
+    sections: ["Preliminaries", "Substrate Preparation", "Primer Application", "Membrane — Wet Areas", "Membrane — Balconies & Decks", "Membrane — Below Slab", "Drainage & Outlets", "Commissioning & Testing"],
+  },
+  "fire-protection": {
+    labourRateRange: { min: 85, max: 130, median: 105 },
+    marginRange: { min: 22, max: 42, median: 30 },
+    costPerM2: { residential: { min: 25, max: 65 }, commercial: { min: 45, max: 120 } },
     winRateBenchmark: 55,
-    avgQuoteValue: { small: 5500, medium: 28000, large: 120000 },
-    sections: ["Preliminaries", "Sheet Material & Panels", "Doors & Drawer Fronts", "Hardware (Hinges, Runners, Handles)", "Benchtops & Surfaces", "Assembly Labour", "Installation Labour", "Commissioning"],
+    avgQuoteValue: { small: 5500, medium: 35000, large: 280000 },
+    sections: ["Preliminaries", "Fire Sprinkler System", "Fire Alarm & Detection", "Passive Fire (Walls, Doors, Collars)", "Emergency Lighting & Exit Signs", "Special Hazard Systems", "Commissioning & Certification"],
+  },
+  glazing: {
+    labourRateRange: { min: 70, max: 110, median: 88 },
+    marginRange: { min: 20, max: 38, median: 28 },
+    costPerM2: { residential: { min: 280, max: 680 }, commercial: { min: 380, max: 950 } },
+    winRateBenchmark: 58,
+    avgQuoteValue: { small: 3500, medium: 22000, large: 180000 },
+    sections: ["Preliminaries", "Aluminium Frames & Sections", "Windows", "Doors & Sliding Doors", "Curtain Wall & Shopfronts", "Glazing & Sealing", "Hardware & Accessories", "Commissioning"],
+  },
+  "quantity-surveying": {
+    labourRateRange: { min: 95, max: 180, median: 135 },
+    marginRange: { min: 30, max: 55, median: 40 },
+    costPerM2: { residential: { min: 8, max: 22 }, commercial: { min: 12, max: 35 } },
+    winRateBenchmark: 68,
+    avgQuoteValue: { small: 2500, medium: 18000, large: 120000 },
+    sections: ["Preliminaries", "Substructure", "Superstructure", "External Envelope", "Internal Finishes", "Services (M&E)", "External Works", "Contingency & Escalation", "Professional Fees"],
+  },
+  demolition: {
+    labourRateRange: { min: 70, max: 115, median: 90 },
+    marginRange: { min: 18, max: 35, median: 25 },
+    costPerM2: { residential: { min: 45, max: 120 }, commercial: { min: 65, max: 180 } },
+    winRateBenchmark: 60,
+    avgQuoteValue: { small: 4500, medium: 28000, large: 220000 },
+    sections: ["Preliminaries", "Asbestos Testing & Removal", "Selective Demolition", "Full Demolition", "Excavation & Earthworks", "Piling & Anchors", "Site Remediation", "Waste Disposal & Recycling"],
+  },
+  "swimming-pool": {
+    labourRateRange: { min: 75, max: 120, median: 95 },
+    marginRange: { min: 22, max: 42, median: 32 },
+    costPerM2: { residential: { min: 1200, max: 3500 } },
+    winRateBenchmark: 58,
+    avgQuoteValue: { small: 28000, medium: 65000, large: 180000 },
+    sections: ["Preliminaries", "Excavation", "Shell Construction (Concrete/Fibreglass)", "Waterproofing & Tiling", "Equipment (Pump, Filter, Heater)", "Fencing & Safety Barriers", "Paving & Surrounds", "Commissioning & Compliance"],
+  },
+  "steel-fabrication": {
+    labourRateRange: { min: 85, max: 135, median: 108 },
+    marginRange: { min: 18, max: 35, median: 25 },
+    costPerM2: { residential: { min: 180, max: 420 }, commercial: { min: 280, max: 680 } },
+    winRateBenchmark: 55,
+    avgQuoteValue: { small: 8500, medium: 55000, large: 450000 },
+    sections: ["Preliminaries", "Structural Steel Supply", "Fabrication", "Surface Treatment (Galvanising/Painting)", "Erection & Installation", "Connections & Bolting", "Welding", "Commissioning & Inspection"],
   },
 };
 
@@ -376,26 +451,6 @@ function buildTradePrompt(mode: "vision" | "text", trade: string): string {
 - EPS systems: include adhesive, mesh, primer, and finish coat
 - Include scaffolding for anything above 3m
 - Expansion joints: include at 6m centres and at all corners`,
-    },
-    "cabinet-making": {
-      title: "custom cabinet making",
-      specialist: "senior Australian cabinet maker and custom joinery estimator with 20+ years experience on bespoke residential and commercial joinery projects",
-      pricingBenchmarks: `PRICING BENCHMARKS (2024-25 Australian trade pricing):
-- Laminex MDF (2400x1200x18mm): $55-75/sheet trade
-- Laminex MDF (2400x1200x25mm): $75-95/sheet trade
-- Polytec door (per door): $85-180 trade
-- Blum Tandembox drawer (500mm): $95-150 trade
-- Blum Aventos lift system: $120-220 trade
-- Blum Hinge (Clip-Top): $8-14/pair trade
-- Caesarstone 40mm benchtop: $380-580/lm trade
-- Edge banding (50m roll): $28-45 trade
-- Cabinet maker labour: $${labourRate.min}-${labourRate.max}/hr
-- CNC cutting (per sheet): $25-45 trade`,
-      criticalRules: `- List every cabinet, door, and drawer individually
-- Sheet material: calculate from cutting list — include 15% waste for offcuts
-- Hardware: count every hinge, runner, handle, and lift system
-- Benchtops: include all cutouts (sink, cooktop) as separate labour items
-- Include delivery and installation as separate line items`,
     },
   };
 

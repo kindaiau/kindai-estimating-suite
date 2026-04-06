@@ -86,10 +86,7 @@ const TRADE_COMPLIANCE: Record<string, { body: string; disclaimer: string }> = {
     body: "QBCC (QLD) / VBA (VIC) / NSW Fair Trading / SA Consumer & Business Services",
     disclaimer: "Rendering and plastering must comply with AS 3700 (Masonry Structures) and manufacturer specifications. External renders must be suitable for the local climate zone.",
   },
-  "cabinet-making": {
-    body: "QBCC (QLD) / VBA (VIC) / NSW Fair Trading / SA Consumer & Business Services",
-    disclaimer: "Cabinet making and joinery must comply with AS 4386 and relevant Australian Standards. All timber products must comply with AS/NZS 1859 formaldehyde emission requirements.",
-  },
+
 };
 
 function formatCurrency(amount: number): string {

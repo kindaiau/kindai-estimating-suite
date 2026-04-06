@@ -27,7 +27,7 @@ const TRADES = [
   { id: "landscaping", name: "Landscaping", emoji: "🌿" },
   { id: "cabinetry", name: "Cabinetry", emoji: "🗄️" },
   { id: "rendering", name: "Rendering", emoji: "🏠" },
-  { id: "cabinet_making", name: "Cabinet Making", emoji: "🔨" },
+  { id: "cabinetry", name: "Cabinet Making", emoji: "🔨" },
 ];
 
 const EMAIL_TYPES = [

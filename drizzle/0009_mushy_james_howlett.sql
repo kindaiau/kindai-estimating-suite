@@ -1,0 +1,21 @@
+CREATE TABLE `quote_tokens` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`estimateId` int NOT NULL,
+	`userId` int NOT NULL,
+	`token` varchar(128) NOT NULL,
+	`clientName` varchar(255),
+	`clientEmail` varchar(320),
+	`status` enum('pending','viewed','accepted','declined','expired') NOT NULL DEFAULT 'pending',
+	`message` text,
+	`expiresAt` timestamp,
+	`viewedAt` timestamp,
+	`respondedAt` timestamp,
+	`clientSignature` text,
+	`clientNotes` text,
+	`pdfUrl` text,
+	`sentAt` timestamp,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `quote_tokens_id` PRIMARY KEY(`id`),
+	CONSTRAINT `quote_tokens_token_unique` UNIQUE(`token`)
+);

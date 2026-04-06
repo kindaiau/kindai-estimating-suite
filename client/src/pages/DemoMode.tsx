@@ -18,16 +18,26 @@ import {
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
 
 const TRADES = [
-  { id: "electrical", name: "Electrical", emoji: "⚡", colour: "from-yellow-400 to-orange-500" },
-  { id: "plumbing",   name: "Plumbing",   emoji: "🔧", colour: "from-blue-400 to-cyan-500" },
-  { id: "carpentry",  name: "Carpentry",  emoji: "🪚", colour: "from-amber-600 to-yellow-500" },
-  { id: "concreting", name: "Concreting", emoji: "🏗️", colour: "from-slate-500 to-slate-700" },
-  { id: "hvac",       name: "HVAC",       emoji: "❄️", colour: "from-sky-400 to-blue-600" },
-  { id: "flooring",   name: "Flooring",   emoji: "🟫", colour: "from-purple-500 to-violet-600" },
-  { id: "landscaping",name: "Landscaping",emoji: "🌿", colour: "from-green-400 to-emerald-600" },
-  { id: "cabinetry",  name: "Cabinetry",  emoji: "🚪", colour: "from-orange-400 to-red-500" },
-  { id: "rendering",  name: "Rendering",  emoji: "🧱", colour: "from-rose-400 to-pink-600" },
-  { id: "cabinet-making", name: "Cabinet Making", emoji: "🪵", colour: "from-teal-400 to-green-600" },
+  { id: "electrical",        name: "Electrical",          emoji: "⚡",  colour: "from-yellow-400 to-orange-500" },
+  { id: "plumbing",          name: "Plumbing & Drainage",  emoji: "🔧",  colour: "from-blue-400 to-cyan-500" },
+  { id: "carpentry",         name: "Carpentry & Joinery",  emoji: "🪚",  colour: "from-amber-600 to-yellow-500" },
+  { id: "concreting",        name: "Concreting",           emoji: "🏗️",  colour: "from-slate-500 to-slate-700" },
+  { id: "hvac",              name: "HVAC",                 emoji: "❄️",  colour: "from-sky-400 to-blue-600" },
+  { id: "flooring",          name: "Flooring",             emoji: "🟫",  colour: "from-purple-500 to-violet-600" },
+  { id: "landscaping",       name: "Landscaping",          emoji: "🌿",  colour: "from-green-400 to-emerald-600" },
+  { id: "cabinetry",         name: "Cabinetry & Joinery",  emoji: "🚪",  colour: "from-orange-400 to-red-500" },
+  { id: "rendering",         name: "Rendering & Plastering",emoji: "🧱",  colour: "from-rose-400 to-pink-600" },
+  { id: "painting",          name: "Painting & Decorating",emoji: "🎨",  colour: "from-purple-400 to-pink-500" },
+  { id: "bricklaying",       name: "Bricklaying",          emoji: "🧱",  colour: "from-red-400 to-orange-500" },
+  { id: "roofing",           name: "Roofing",              emoji: "🏠",  colour: "from-slate-500 to-gray-600" },
+  { id: "tiling",            name: "Tiling",               emoji: "⬜",  colour: "from-teal-400 to-cyan-500" },
+  { id: "waterproofing",     name: "Waterproofing",        emoji: "💧",  colour: "from-blue-500 to-indigo-600" },
+  { id: "fire-protection",   name: "Fire Protection",      emoji: "🔥",  colour: "from-red-500 to-rose-600" },
+  { id: "glazing",           name: "Glazing & Aluminium",  emoji: "🪟",  colour: "from-sky-400 to-blue-500" },
+  { id: "quantity-surveying",name: "Quantity Surveying",   emoji: "📐",  colour: "from-indigo-400 to-violet-500" },
+  { id: "demolition",        name: "Demolition & Excavation",emoji: "⛏️", colour: "from-stone-400 to-gray-500" },
+  { id: "swimming-pool",     name: "Swimming Pool",        emoji: "🏊",  colour: "from-cyan-400 to-teal-500" },
+  { id: "steel-fabrication", name: "Steel Fabrication",    emoji: "🔩",  colour: "from-zinc-500 to-slate-600" },
 ] as const;
 
 type TradeId = typeof TRADES[number]["id"];
@@ -42,7 +52,7 @@ const DEMO_PROMPTS: Record<string, string> = {
   landscaping: "Backyard 120m². Includes lawn, garden beds, retaining wall, paving, and irrigation system.",
   cabinetry: "Kitchen renovation. 4.2m run of base and overhead cabinets, island bench, pantry.",
   rendering: "Double brick house, external render 280m². Acrylic texture coat finish.",
-  "cabinet-making": "Custom built-in wardrobe 3.6m wide, floor to ceiling with drawers, shelves, and hanging rails.",
+
 };
 
 type DemoResult = {

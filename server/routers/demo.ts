@@ -79,10 +79,15 @@ const DEMO_SCENARIOS: Record<string, {
 // ─── Build text prompt for demo (same as main AI router) ─────────────────────
 function buildDemoPrompt(trade: string): string {
   const tradeNames: Record<string, string> = {
-    electrical: "electrical", plumbing: "plumbing", carpentry: "carpentry",
+    electrical: "electrical", plumbing: "plumbing & drainage", carpentry: "carpentry & joinery",
     concreting: "concreting", hvac: "HVAC", flooring: "flooring",
-    landscaping: "landscaping", cabinetry: "cabinetry",
-    rendering: "rendering and plastering", "cabinet-making": "cabinet making",
+    landscaping: "landscaping & irrigation", cabinetry: "cabinetry & joinery",
+    rendering: "rendering & plastering", painting: "painting & decorating",
+    bricklaying: "bricklaying & blocklaying", roofing: "roofing",
+    tiling: "wall & floor tiling", waterproofing: "waterproofing",
+    "fire-protection": "fire protection", glazing: "glazing & aluminium",
+    "quantity-surveying": "quantity surveying", demolition: "demolition & excavation",
+    "swimming-pool": "swimming pool construction", "steel-fabrication": "steel fabrication & structural",
   };
   const tradeName = tradeNames[trade] ?? trade;
 
@@ -156,7 +161,7 @@ const demoSchema = {
 export const demoRouter = router({
   // Public demo — no login required, rate-limited by IP via trade selection
   runDemo: publicProcedure.input(z.object({
-    trade: z.enum(["electrical", "plumbing", "carpentry", "concreting", "hvac", "flooring", "landscaping", "cabinetry", "rendering", "cabinet-making"]),
+    trade: z.enum(["electrical", "plumbing", "carpentry", "concreting", "hvac", "flooring", "landscaping", "cabinetry", "rendering", "painting", "bricklaying", "roofing", "tiling", "waterproofing", "fire-protection", "glazing", "quantity-surveying", "demolition", "swimming-pool", "steel-fabrication"]),
     jobDescription: z.string().min(5).max(500).optional(),
     markupPercent: z.number().min(0).max(100).default(20),
     labourRate: z.number().min(30).max(250).default(95),

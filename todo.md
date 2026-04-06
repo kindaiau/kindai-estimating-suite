@@ -330,3 +330,40 @@
 - [ ] PDF/CSV export of order list for manual ordering
 - [ ] Material matching: AI suggests which supplier stocks each item based on trade and location
 - [ ] Price comparison: if user has multiple suppliers for same trade, show cheapest option per item
+
+## Sprint: Send Quote + Acceptance + Variations + Demo Videos
+- [ ] Send Quote to Client email button in EstimateBuilder
+- [ ] Backend: sendQuote procedure — generate PDF, email to client with branded template
+- [ ] Public quote acceptance page /quote/[token] — no login required
+- [ ] Backend: quoteTokens table, createToken procedure, acceptQuote procedure
+- [ ] Variations register — per-project variations tab
+- [ ] Backend: variations table, CRUD router
+- [ ] Variations UI — add variation, approve/reject, running contract sum
+- [ ] Screen recording demo video — solo tradie (electrician, single house)
+- [ ] Screen recording demo video — $50M commercial build (multi-trade, enterprise)
+
+- [ ] AI Help Assistant — floating button on all authenticated pages
+- [ ] AI Help chat panel — trade-aware, knows pricing, compliance, how-to guides
+- [ ] System prompt includes all 10 trade sections, benchmarks, Australian compliance
+- [ ] Context-aware: knows which page/trade/estimate user is currently on
+
+## Trade Consolidation
+- [ ] Merge Cabinetry + Cabinet Making into single "Cabinetry & Cabinet Making" trade
+- [ ] Update shared trade constants (9 trades total now)
+- [ ] Update AI prompts in ai.ts to combine both sections
+- [ ] Update materials seed — merge both trade materials into one
+- [ ] Update compliance data, landing page trade cards, navigation
+- [ ] Update database migration to handle existing cabinetry/cabinet_making records
+
+## Complete Trade List Expansion
+- [ ] Research all licensed Australian construction trades (QBCC, VBA, NSW Fair Trading, SA CBS, WA Building & Energy)
+- [ ] Merge Cabinetry + Cabinet Making into single "Cabinetry & Joinery" trade
+- [ ] Add Surveying as standalone trade (Quantity Surveyor / Land Surveyor)
+- [ ] Add all missing trades identified from research
+- [ ] Update shared/trades.ts with complete trade list, compliance data, labour rates
+- [ ] Update server/routers/ai.ts with expert prompts for all new trades
+- [ ] Update server/pdfGenerator.ts compliance map for all trades
+- [ ] Update server/routers/demo.ts trade enum and scenarios
+- [ ] Update server/seedMaterials.ts with materials for all new trades
+- [ ] Update all client UI pages with new trade list
+- [ ] Update tests for new trade count

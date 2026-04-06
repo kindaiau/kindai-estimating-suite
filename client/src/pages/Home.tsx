@@ -19,7 +19,7 @@ const TRADES = [
   { id: "landscaping",name: "Landscaping",emoji: "🌿", colour: "from-green-400 to-emerald-600" },
   { id: "cabinetry",  name: "Cabinetry",  emoji: "🚪", colour: "from-orange-400 to-red-500" },
   { id: "rendering",  name: "Rendering",  emoji: "🧱", colour: "from-rose-400 to-pink-600" },
-  { id: "cabinet-making", name: "Cabinet Making", emoji: "🪵", colour: "from-teal-400 to-green-600" },
+  { id: "cabinetry", name: "Cabinet Making", emoji: "🪵", colour: "from-teal-400 to-green-600" },
 ];
 
 const FEATURES = [

@@ -416,3 +416,27 @@ export const supplierConnections = mysqlTable("supplier_connections", {
 
 export type SupplierConnection = typeof supplierConnections.$inferSelect;
 export type InsertSupplierConnection = typeof supplierConnections.$inferInsert;
+
+// ─── Quote Tokens (Public Quote Acceptance Links) ─────────────────────────────
+export const quoteTokens = mysqlTable("quote_tokens", {
+  id: int("id").autoincrement().primaryKey(),
+  estimateId: int("estimateId").notNull(),
+  userId: int("userId").notNull(),
+  token: varchar("token", { length: 128 }).notNull().unique(),
+  clientName: varchar("clientName", { length: 255 }),
+  clientEmail: varchar("clientEmail", { length: 320 }),
+  status: mysqlEnum("status", ["pending", "viewed", "accepted", "declined", "expired"]).default("pending").notNull(),
+  message: text("message"), // optional message to client
+  expiresAt: timestamp("expiresAt"),
+  viewedAt: timestamp("viewedAt"),
+  respondedAt: timestamp("respondedAt"),
+  clientSignature: text("clientSignature"), // base64 signature or name typed
+  clientNotes: text("clientNotes"),
+  pdfUrl: text("pdfUrl"), // S3 URL of the generated PDF
+  sentAt: timestamp("sentAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type QuoteToken = typeof quoteTokens.$inferSelect;
+export type InsertQuoteToken = typeof quoteTokens.$inferInsert;

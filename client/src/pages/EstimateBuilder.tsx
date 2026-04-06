@@ -8,11 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
   AlertTriangle, ArrowLeft, Bot, CheckCircle2, DollarSign, ExternalLink,
-  FileText, Loader2, Plus, Shield, Sparkles, Trash2, Download,
+  FileText, Loader2, Plus, Shield, Sparkles, Trash2, Download, Send, Copy,
 } from "lucide-react";
 import { useState } from "react";
 import { useLocation, useParams } from "wouter";
@@ -158,6 +158,10 @@ export default function EstimateBuilder() {
   const [aiDescription, setAiDescription] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState<any>(null);
+  const [sendQuoteOpen, setSendQuoteOpen] = useState(false);
+  const [sendForm, setSendForm] = useState({ clientName: "", clientEmail: "", message: "", expiryDays: "30" });
+  const [sentUrl, setSentUrl] = useState<string | null>(null);
+
   const [newItem, setNewItem] = useState({
     category: "Materials", description: "", unit: "ea",
     quantity: "", unitRate: "", wasteFactor: "0", notes: "",
@@ -204,6 +208,15 @@ export default function EstimateBuilder() {
       utils.estimates.get.invalidate();
     },
     onError: (e) => toast.error("PDF failed: " + e.message),
+  });
+
+  const sendQuote = trpc.quoteTokens.sendQuote.useMutation({
+    onSuccess: (data) => {
+      setSentUrl(data.quoteUrl);
+      toast.success("Quote link generated! Copy and send to your client.");
+      utils.estimates.get.invalidate();
+    },
+    onError: (e) => toast.error("Failed to send quote: " + e.message),
   });
 
   const analyzePlan = trpc.ai.analyzePlan.useMutation({
@@ -292,6 +305,13 @@ export default function EstimateBuilder() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                onClick={() => { setSentUrl(null); setSendQuoteOpen(true); }}
+                size="sm"
+                className="rounded-xl text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white h-8"
+              >
+                <Send className="w-3.5 h-3.5 mr-1.5" /> Send to Client
+              </Button>
               <Button
                 onClick={() => generatePdf.mutate({ id: estimateId })}
                 disabled={generatePdf.isPending}
@@ -754,6 +774,108 @@ export default function EstimateBuilder() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* ── Send Quote to Client Dialog ── */}
+      <Dialog open={sendQuoteOpen} onOpenChange={(o) => { setSendQuoteOpen(o); if (!o) setSentUrl(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="w-4 h-4 text-orange-500" /> Send Quote to Client
+            </DialogTitle>
+          </DialogHeader>
+          {sentUrl ? (
+            <div className="space-y-4 py-2">
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+                <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                <p className="font-semibold text-green-800">Quote link ready!</p>
+                <p className="text-sm text-green-600 mt-1">Share this link with your client</p>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  readOnly
+                  value={sentUrl}
+                  className="flex-1 text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 font-mono"
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => { navigator.clipboard.writeText(sentUrl); toast.success("Link copied!"); }}
+                  className="shrink-0"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+              <p className="text-xs text-zinc-500 text-center">Client can view and digitally accept the quote without logging in</p>
+            </div>
+          ) : (
+            <div className="space-y-4 py-2">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1.5">Client Name (optional)</label>
+                <input
+                  type="text"
+                  value={sendForm.clientName}
+                  onChange={e => setSendForm(f => ({ ...f, clientName: e.target.value }))}
+                  placeholder="John Smith"
+                  className="w-full text-sm border border-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1.5">Client Email (optional)</label>
+                <input
+                  type="email"
+                  value={sendForm.clientEmail}
+                  onChange={e => setSendForm(f => ({ ...f, clientEmail: e.target.value }))}
+                  placeholder="client@example.com"
+                  className="w-full text-sm border border-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1.5">Message to Client (optional)</label>
+                <Textarea
+                  value={sendForm.message}
+                  onChange={e => setSendForm(f => ({ ...f, message: e.target.value }))}
+                  placeholder="Hi, please find your quote attached. Let me know if you have any questions."
+                  rows={3}
+                  className="resize-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1.5">Link expires in</label>
+                <select
+                  value={sendForm.expiryDays}
+                  onChange={e => setSendForm(f => ({ ...f, expiryDays: e.target.value }))}
+                  className="w-full text-sm border border-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                >
+                  <option value="7">7 days</option>
+                  <option value="14">14 days</option>
+                  <option value="30">30 days</option>
+                  <option value="60">60 days</option>
+                  <option value="90">90 days</option>
+                </select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setSendQuoteOpen(false); setSentUrl(null); }}>Close</Button>
+            {!sentUrl && (
+              <Button
+                onClick={() => sendQuote.mutate({
+                  estimateId,
+                  clientName: sendForm.clientName || "Client",
+                  clientEmail: sendForm.clientEmail || "",
+                  origin: window.location.origin,
+                  message: sendForm.message || undefined,
+                  expiryDays: parseInt(sendForm.expiryDays),
+                })}
+                disabled={sendQuote.isPending}
+                className="bg-orange-500 hover:bg-orange-600 text-white"
+              >
+                {sendQuote.isPending ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Generating...</> : <><Send className="w-3.5 h-3.5 mr-1.5" /> Generate Quote Link</>}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }

@@ -14,6 +14,9 @@ import { tradeProfilesRouter } from "./routers/tradeProfiles";
 import { demoRouter } from "./routers/demo";
 import { emailFollowupRouter } from "./routers/emailFollowup";
 import { suppliersRouter } from "./routers/suppliers";
+import { helpAssistantRouter } from "./routers/helpAssistant";
+import { quoteTokensRouter } from "./routers/quoteTokens";
+import { variationsRouter } from "./routers/variations";
 
 export const appRouter = router({
   system: systemRouter,
@@ -37,6 +40,9 @@ export const appRouter = router({
   demo: demoRouter,
   emailFollowup: emailFollowupRouter,
   suppliers: suppliersRouter,
+  helpAssistant: helpAssistantRouter,
+  quoteTokens: quoteTokensRouter,
+  variations: variationsRouter,
 });
 
 export type AppRouter = typeof appRouter;

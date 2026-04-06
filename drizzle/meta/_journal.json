@@ -64,6 +64,13 @@
       "when": 1775511303209,
       "tag": "0008_special_hulk",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1775515749871,
+      "tag": "0009_mushy_james_howlett",
+      "breakpoints": true
     }
   ]
 }

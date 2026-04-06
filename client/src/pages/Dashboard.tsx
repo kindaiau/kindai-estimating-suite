@@ -22,7 +22,7 @@ const TRADES = [
   { id: "landscaping",     name: "Landscaping",     emoji: "🌿", gradient: "from-green-400 to-emerald-600" },
   { id: "cabinetry",       name: "Cabinetry",       emoji: "🚪", gradient: "from-orange-400 to-red-500" },
   { id: "rendering",       name: "Rendering",       emoji: "🧱", gradient: "from-rose-400 to-pink-600" },
-  { id: "cabinet-making",  name: "Cabinet Making",  emoji: "🪵", gradient: "from-teal-400 to-green-600" },
+  { id: "cabinetry",  name: "Cabinet Making",  emoji: "🪵", gradient: "from-teal-400 to-green-600" },
 ];
 
 export default function Dashboard() {

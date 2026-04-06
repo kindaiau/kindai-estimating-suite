@@ -116,7 +116,7 @@ describe("compliance.getProfile", () => {
 
   it("includes quote disclaimer for each trade", async () => {
     const caller = appRouter.createCaller(makePublicCtx());
-    const trades = ["electrical", "plumbing", "carpentry", "concreting", "hvac", "flooring", "landscaping", "cabinetry", "rendering", "cabinet-making"];
+    const trades = ["electrical", "plumbing", "carpentry", "concreting", "hvac", "flooring", "landscaping", "cabinetry", "rendering", "cabinetry"];
     for (const trade of trades) {
       const profile = await caller.compliance.getProfile({ trade });
       expect(profile?.quoteDisclaimer).toBeTruthy();
@@ -400,7 +400,7 @@ describe("PDF quote data structure", () => {
 describe("Materials seed data validation", () => {
   const EXPECTED_TRADES = [
     "electrical", "plumbing", "carpentry", "concreting", "hvac",
-    "flooring", "landscaping", "cabinetry", "rendering", "cabinet-making"
+    "flooring", "landscaping", "cabinetry", "rendering", "cabinetry"
   ];
 
   it("covers all 10 required trades", async () => {

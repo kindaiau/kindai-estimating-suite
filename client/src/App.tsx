@@ -20,6 +20,8 @@ import TradeProfile from "./pages/TradeProfile";
 import DemoMode from "./pages/DemoMode";
 import SupplierManager from "./pages/SupplierManager";
 import QuoteFollowups from "./pages/QuoteFollowups";
+import VariationsRegister from "./pages/VariationsRegister";
+import AIHelpAssistant from "./components/AIHelpAssistant";
 
 function Router() {
   return (
@@ -39,6 +41,7 @@ function Router() {
       <Route path="/demo" component={DemoMode} />
       <Route path="/suppliers" component={SupplierManager} />
       <Route path="/followups" component={QuoteFollowups} />
+      <Route path="/projects/:projectId/variations" component={VariationsRegister} />
       <Route path="/quote/accept/:token" component={QuoteAcceptance} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
@@ -53,6 +56,7 @@ function App() {
         <TooltipProvider>
           <Toaster position="top-right" richColors />
           <Router />
+          <AIHelpAssistant />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
