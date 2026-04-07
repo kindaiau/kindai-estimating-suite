@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import SEO from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -116,6 +117,12 @@ export default function Pricing() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
+      <SEO
+        title="Pricing | Kindai Estimating Suite"
+        description="Affordable AI estimating software for Australian trades. Plans from $149/month. Replace your $120K estimator. Free trial available. Solo tradies to $100M builders."
+        canonical="/pricing"
+        keywords="construction estimating software price Australia, estimating software cost, trade quoting software pricing, builder software subscription Australia, Buildxact alternative, Procore alternative"
+      />
       {/* Nav */}
       <nav className="border-b border-white/10 bg-slate-950/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">

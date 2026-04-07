@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import SEO from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -129,6 +131,12 @@ export default function DemoMode() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <SEO
+        title="Free AI Estimating Demo | Try Without Signing Up"
+        description="Try Kindai's AI construction estimating software free — no account needed. Enter a job description, pick your trade, and watch AI generate a full quote with materials, labour, and GST."
+        canonical="/demo"
+        keywords="free estimating software demo Australia, AI takeoff demo, try construction quoting software, builder software free trial, tradie quoting demo"
+      />
       {/* ── Nav ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -383,7 +391,7 @@ export default function DemoMode() {
                             </tr>
                           </thead>
                           <tbody>
-                            {result.items.map((item, i) => (
+                            {result.items.map((item: any, i: number) => (
                               <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                                 <td className="px-4 py-2.5">
                                   <div className="font-semibold text-gray-800 leading-tight">{item.description}</div>
@@ -451,7 +459,7 @@ export default function DemoMode() {
                           <CardContent className="p-4">
                             <h3 className="text-xs font-black text-gray-700 mb-2 uppercase tracking-wide">AI Assumptions</h3>
                             <ul className="space-y-1.5">
-                              {result.assumptions.map((a, i) => (
+                              {result.assumptions.map((a: string, i: number) => (
                                 <li key={i} className="flex items-start gap-2 text-xs text-gray-500">
                                   <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
                                   {a}

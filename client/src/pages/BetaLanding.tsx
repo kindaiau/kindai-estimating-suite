@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SEO from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,6 +91,12 @@ export default function BetaLanding() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
+      <SEO
+        title="Free Beta Access | Kindai Estimating Suite"
+        description="Join 100 Australian tradies and builders testing AI-powered estimating software free. Scan plans, get instant quotes with GST. Claim your founding member spot before it's gone."
+        canonical="/beta"
+        keywords="free estimating software Australia, beta access construction software, AI quoting software free trial, tradie software beta, builder estimating app Australia free"
+      />
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-950/90 backdrop-blur-md border-b border-white/5">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">

@@ -1,4 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import SEO from "@/components/SEO";
+import { SoftwareAppSchema, OrganizationSchema, FAQSchema } from "@/components/StructuredData";
 import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -78,6 +80,15 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO
+        title="Kindai Estimating Suite | AI-Powered Quoting for Australian Trades"
+        description="AI estimating software for Australian tradies and builders. Scan plans with your phone, get instant takeoffs, send branded quotes with GST in 60 seconds. 20 trades covered. Free beta access."
+        canonical="/"
+        keywords="construction estimating software Australia, AI estimating software, trade quoting software Australia, builder quoting app, electrical estimating software Australia, plumbing estimating software, tradie quoting app, construction takeoff software Australia, AI takeoff, quote builder tradies, GST quoting software, QBCC estimating, VBA builder software"
+      />
+      <SoftwareAppSchema />
+      <OrganizationSchema />
+      <FAQSchema />
       {/* ── Nav ── */}
       <motion.nav
         initial={{ y: -60, opacity: 0 }}
@@ -153,7 +164,7 @@ export default function Home() {
 
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/80 text-xs font-semibold mb-5 backdrop-blur-sm">
                 <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
-                AI Vision Takeoff — The Game Changer
+                AI Construction Estimating Software — Australia's Fastest Takeoff
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.05] mb-5">
@@ -161,8 +172,10 @@ export default function Home() {
                 <span className="kindai-gradient-text">Get your quote.</span>
               </h1>
               <p className="text-lg text-white/70 max-w-xl mb-8 leading-relaxed">
-                Photograph your plans on your phone. AI reads every symbol, counts every fixture,
-                calculates every material — and gives you retail vs trade pricing with your markup in seconds.
+                Australia's fastest <strong className="text-white">AI estimating software</strong> for tradies and builders.
+                Photograph your construction plans — AI reads every symbol, counts every fixture,
+                calculates materials and labour — and delivers a GST-compliant quote in 60 seconds.
+                Covers all 20 trades across NSW, VIC, QLD, WA, SA and beyond.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 items-start">
@@ -349,8 +362,8 @@ export default function Home() {
       <section className="py-20 px-4 bg-white">
         <div className="max-w-5xl mx-auto">
           <FadeUp className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3">
-              Three steps. <span className="kindai-gradient-text">One quote.</span>
+              <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3">
+              How AI estimating works. <span className="kindai-gradient-text">Three steps. One quote.</span>
             </h2>
             <p className="text-gray-500 text-base max-w-xl mx-auto">
               From plan to priced quote in under a minute. No spreadsheets. No guesswork.
@@ -385,7 +398,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <FadeUp className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3">
-              One platform. <span className="kindai-gradient-text">Every trade.</span>
+              One AI estimating platform. <span className="kindai-gradient-text">Every Australian trade.</span>
             </h2>
             <p className="text-gray-500 text-base max-w-xl mx-auto">
               Each trade gets its own AI model trained on industry-specific symbols, materials, and pricing.
@@ -419,7 +432,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <FadeUp className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3">
-              Everything a tradie needs to <span className="kindai-gradient-text">quote and win.</span>
+              Everything Australian tradies need to <span className="kindai-gradient-text">quote faster and win more jobs.</span>
             </h2>
             <p className="text-gray-500 text-base max-w-xl mx-auto">
               No fluff. No bloat. Just the tools that actually help you get the job.
@@ -457,7 +470,7 @@ export default function Home() {
             <Shield className="w-3.5 h-3.5" /> Australian Compliance Built-In
           </div>
           <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
-            Compliant quotes, every time.
+            GST-compliant construction quotes, every time.
           </h2>
           <p className="text-white/70 text-base max-w-2xl mx-auto mb-8">
             Auto GST (10%), QBCC, VBA, NSW Fair Trading, SA, WA, TAS, NT, ACT licensing prompts, WHS/OH&S notices, and AS/NZS standards references — all baked in automatically.
@@ -476,8 +489,8 @@ export default function Home() {
       <section className="py-20 px-4 bg-gray-50">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-black text-gray-900 mb-2">Tradies love it.</h2>
-            <p className="text-gray-500 text-sm">Real feedback from the field.</p>
+            <h2 className="text-3xl font-black text-gray-900 mb-2">Australian tradies love it.</h2>
+            <p className="text-gray-500 text-sm">Real feedback from electricians, plumbers, and builders across Australia.</p>
           </div>
           <div className="grid sm:grid-cols-3 gap-6">
             {TESTIMONIALS.map((t, i) => (
@@ -516,7 +529,7 @@ export default function Home() {
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           />
           <h2 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4">
-            Ready to scan your <span className="kindai-gradient-text">first plan?</span>
+            Ready to replace your estimator with <span className="kindai-gradient-text">AI?</span>
           </h2>
           <p className="text-gray-500 text-base mb-8">
             Join Australian tradies already using Kindai AI Vision to quote faster and win more jobs.

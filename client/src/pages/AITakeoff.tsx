@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import SEO from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -223,6 +224,13 @@ export default function AITakeoff() {
   // ─── RENDER ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50">
+      <SEO
+        title="AI Vision Takeoff | Scan Plans & Get Instant Quotes"
+        description="Upload or photograph your construction plans. Kindai AI reads every symbol, counts every fixture, and generates a full materials and labour quote with GST automatically. All 20 Australian trades."
+        canonical="/ai-takeoff"
+        keywords="AI takeoff software Australia, construction plan scanning, automated quantity takeoff, AI estimating from plans, scan plans get quote, electrical plan takeoff, plumbing takeoff software"
+        noIndex={false}
+      />
       {/* Hero Header */}
       <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
         <div className="absolute inset-0 opacity-20">
