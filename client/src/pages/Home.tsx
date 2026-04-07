@@ -158,7 +158,7 @@ export default function Home() {
                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-500/20 border border-orange-500/50 text-orange-300 text-xs font-black mb-3 cursor-pointer hover:bg-orange-500/30 transition-colors"
               >
                 <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
-                BETA ACCESS — 100 FREE SPOTS — Claim yours now
+                BETA ACCESS — ONLY 25 FREE SPOTS — Claim yours now
                 <ChevronRight className="w-3.5 h-3.5" />
               </motion.a>
 

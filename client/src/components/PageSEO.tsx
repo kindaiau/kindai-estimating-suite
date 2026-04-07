@@ -45,7 +45,7 @@ export const PAGE_SEO = {
   },
   beta: {
     title: "Free Beta Access | Kindai Estimating Suite",
-    description: "Join 100 Australian tradies and builders testing AI-powered estimating software free. Scan plans, get instant quotes with GST. Claim your founding member spot.",
+    description: "Join 25 Australian tradies and builders testing AI-powered estimating software free. Scan plans, get instant quotes with GST. Claim your founding member spot.",
     canonical: "/beta",
     keywords: "free estimating software Australia, AI quoting software free trial, tradie software beta, builder estimating app free",
   },

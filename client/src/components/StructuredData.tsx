@@ -66,7 +66,7 @@ export function SoftwareAppSchema() {
     },
     "screenshot": "https://kindaiestimator.com/og-image.png",
     "softwareVersion": "1.0",
-    "releaseNotes": "Beta launch — 100 founding member spots available free",
+    "releaseNotes": "Beta launch — 25 founding member spots available free",
     "inLanguage": "en-AU",
     "availableOnDevice": "Desktop, Mobile, Tablet",
     "countriesSupported": "AU"
@@ -144,7 +144,7 @@ export function FAQSchema() {
         "name": "How much does Kindai cost?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Kindai offers a free beta for the first 100 founding members. After beta, plans start at $149/month for solo tradies, $499/month for trade businesses, $1,499/month for commercial builders, and $3,999/month for enterprise. All plans include a free trial."
+          "text": "Kindai offers a free beta for the first 25 founding members. After beta, plans start at $149/month for solo tradies, $499/month for trade businesses, $1,499/month for commercial builders, and $3,999/month for enterprise. All plans include a free trial."
         }
       },
       {

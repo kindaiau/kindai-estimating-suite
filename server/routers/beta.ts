@@ -4,8 +4,10 @@ import { getDb } from "../db";
 import { betaSignups } from "../../drizzle/schema";
 import { eq, count, sql } from "drizzle-orm";
 import { notifyOwner } from "../_core/notification";
+import { createBetaSignupInHubSpot } from "../hubspot";
+import { sendBetaWelcomeEmail } from "../welcomeEmail";
 
-const BETA_SPOTS_TOTAL = 100;
+const BETA_SPOTS_TOTAL = 25;
 
 export const betaRouter = router({
   // Public: get current beta stats (spots claimed, spots remaining)
@@ -79,7 +81,28 @@ export const betaRouter = router({
         content: `${input.name} (${input.email}) from ${input.company ?? "unknown company"} just joined the Kindai beta. Trade: ${input.trade ?? "not specified"}. State: ${input.state ?? "not specified"}. Spot #${claimed + 1} of ${BETA_SPOTS_TOTAL}.`,
       });
 
-      return { success: true, alreadyRegistered: false, spotNumber: claimed + 1 };
+      const spotNumber = claimed + 1;
+
+      // Send welcome email via Gmail (fire-and-forget)
+      sendBetaWelcomeEmail({
+        name: input.name,
+        email: input.email,
+        spotNumber,
+        trade: input.trade,
+      }).catch((err: unknown) => console.error("[Email] Failed to send welcome email:", err));
+
+      // Push to HubSpot CRM (fire-and-forget — don't block the response)
+      createBetaSignupInHubSpot({
+        name: input.name,
+        email: input.email,
+        company: input.company,
+        trade: input.trade,
+        state: input.state,
+        projectSize: input.projectSize,
+        spotNumber,
+      }).catch((err: unknown) => console.error("[HubSpot] Failed to create CRM record:", err));
+
+      return { success: true, alreadyRegistered: false, spotNumber };
     }),
 
   // Admin: list all beta signups

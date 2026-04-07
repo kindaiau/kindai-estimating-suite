@@ -55,7 +55,7 @@ export default function BetaLanding() {
         return;
       }
       if (data.isFull) {
-        toast.error("Sorry — all 100 beta spots have been claimed. Join the waitlist and we'll notify you when spots open.");
+        toast.error("Sorry — all 25 beta spots have been claimed. Join the waitlist and we'll notify you when spots open.");
         return;
       }
       setSpotNumber(data.spotNumber ?? null);
@@ -87,13 +87,13 @@ export default function BetaLanding() {
 
   const claimed = stats?.claimed ?? 67;
   const remaining = stats?.remaining ?? 33;
-  const pct = Math.min(100, Math.round((claimed / 100) * 100));
+  const pct = Math.min(100, Math.round((claimed / 25) * 100));
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <SEO
         title="Free Beta Access | Kindai Estimating Suite"
-        description="Join 100 Australian tradies and builders testing AI-powered estimating software free. Scan plans, get instant quotes with GST. Claim your founding member spot before it's gone."
+        description="Join 25 Australian tradies and builders testing AI-powered estimating software free. Scan plans, get instant quotes with GST. Claim your founding member spot before it's gone."
         canonical="/beta"
         keywords="free estimating software Australia, beta access construction software, AI quoting software free trial, tradie software beta, builder estimating app Australia free"
       />
@@ -150,7 +150,7 @@ export default function BetaLanding() {
           >
             Kindai reads your plans, counts every item, and builds a full quote in 60 seconds —
             with real Australian trade pricing, GST, and compliance built in.
-            We're looking for <strong className="text-white">100 Australian tradies and builders</strong> to test it free.
+            We're looking for <strong className="text-white">25 Australian tradies and builders</strong> to test it free.
           </motion.p>
 
           {/* Live counter */}
@@ -162,7 +162,7 @@ export default function BetaLanding() {
           >
             <div className="flex justify-between items-center mb-3">
               <span className="text-sm font-bold text-gray-300">Beta spots claimed</span>
-              <span className="text-sm font-black text-white">{claimed} / 100</span>
+              <span className="text-sm font-black text-white">{claimed} / 25</span>
             </div>
             <div className="h-3 bg-white/10 rounded-full overflow-hidden">
               <motion.div
