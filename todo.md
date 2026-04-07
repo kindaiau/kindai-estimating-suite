@@ -367,3 +367,13 @@
 - [ ] Update server/seedMaterials.ts with materials for all new trades
 - [ ] Update all client UI pages with new trade list
 - [ ] Update tests for new trade count
+
+## Beta Launch System
+- [ ] Add betaSignups table to drizzle schema
+- [ ] Build betaSignups router (submit, count, check)
+- [ ] Build /beta landing page with live counter, form, urgency
+- [ ] Add "BETA" banner/badge to Home.tsx hero section
+- [ ] Add beta badge to user dashboard profile
+- [ ] Update Home.tsx hero CTA to include beta sign-up option
+- [ ] Produce beta launch ad video (30s, direct-to-camera style)
+- [ ] Write social ad copy for FB/Instagram/LinkedIn

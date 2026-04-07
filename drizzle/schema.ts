@@ -440,3 +440,23 @@ export const quoteTokens = mysqlTable("quote_tokens", {
 
 export type QuoteToken = typeof quoteTokens.$inferSelect;
 export type InsertQuoteToken = typeof quoteTokens.$inferInsert;
+
+// ─── Beta Signups ─────────────────────────────────────────────────────────────
+export const betaSignups = mysqlTable("beta_signups", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  company: varchar("company", { length: 255 }),
+  trade: varchar("trade", { length: 64 }),
+  state: mysqlEnum("state", ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"]),
+  projectSize: mysqlEnum("projectSize", ["sole_trader", "small_builder", "mid_tier", "enterprise"]),
+  source: varchar("source", { length: 64 }).default("website"), // fb_ad, linkedin, organic, etc.
+  utmCampaign: varchar("utmCampaign", { length: 128 }),
+  feedback: text("feedback"), // optional "what's your biggest quoting pain?"
+  status: mysqlEnum("status", ["pending", "approved", "active", "churned"]).default("pending").notNull(),
+  userId: int("userId"), // linked once they sign up
+  approvedAt: timestamp("approvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type BetaSignup = typeof betaSignups.$inferSelect;
+export type InsertBetaSignup = typeof betaSignups.$inferInsert;

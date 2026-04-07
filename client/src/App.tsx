@@ -21,6 +21,7 @@ import DemoMode from "./pages/DemoMode";
 import SupplierManager from "./pages/SupplierManager";
 import QuoteFollowups from "./pages/QuoteFollowups";
 import VariationsRegister from "./pages/VariationsRegister";
+import BetaLanding from "./pages/BetaLanding";
 import AIHelpAssistant from "./components/AIHelpAssistant";
 
 function Router() {
@@ -43,6 +44,7 @@ function Router() {
       <Route path="/followups" component={QuoteFollowups} />
       <Route path="/projects/:projectId/variations" component={VariationsRegister} />
       <Route path="/quote/accept/:token" component={QuoteAcceptance} />
+      <Route path="/beta" component={BetaLanding} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

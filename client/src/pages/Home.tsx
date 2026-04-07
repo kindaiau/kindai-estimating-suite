@@ -6,6 +6,25 @@ import { Zap, Shield, Brain, FileText, Users, BarChart3,
   ChevronRight, CheckCircle2, Star, ArrowRight, HardHat,
   Camera, Sparkles, DollarSign, Truck, Clock, Upload, Play
 } from "lucide-react";
+import { motion, useInView, AnimatePresence } from "framer-motion";
+import { useRef } from "react";
+
+// Reusable scroll-triggered fade-up wrapper
+function FadeUp({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 28 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
 
@@ -60,7 +79,12 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       {/* ── Nav ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
+      <motion.nav
+        initial={{ y: -60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={LOGO_URL} alt="Kindai" className="h-10 w-10 object-contain" />
@@ -91,7 +115,7 @@ export default function Home() {
             )}
           </div>
         </div>
-      </nav>
+      </motion.nav>
 
       {/* ── HERO: AI Vision Takeoff ── */}
       <section className="kindai-hero-bg pt-28 pb-20 px-4 relative overflow-hidden">
@@ -102,13 +126,30 @@ export default function Home() {
         <div className="max-w-6xl mx-auto relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left: Copy */}
-            <div>
+            <motion.div
+              initial={{ opacity: 0, x: -40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            >
               <div className="flex justify-start mb-6">
                 <div className="relative">
                   <div className="absolute inset-0 rounded-3xl blur-2xl opacity-40 kindai-gradient scale-110" />
                   <img src={LOGO_URL} alt="Kindai" className="relative w-20 h-20 object-contain drop-shadow-2xl" />
                 </div>
               </div>
+
+              {/* BETA BANNER */}
+              <motion.a
+                href="/beta"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-500/20 border border-orange-500/50 text-orange-300 text-xs font-black mb-3 cursor-pointer hover:bg-orange-500/30 transition-colors"
+              >
+                <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
+                BETA ACCESS — 100 FREE SPOTS — Claim yours now
+                <ChevronRight className="w-3.5 h-3.5" />
+              </motion.a>
 
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/80 text-xs font-semibold mb-5 backdrop-blur-sm">
                 <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
@@ -148,10 +189,15 @@ export default function Home() {
                 <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-400" /> No sign-up for demo</span>
                 <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-400" /> Real AI results</span>
               </div>
-            </div>
+            </motion.div>
 
             {/* Right: Visual mockup of the AI flow */}
-            <div className="hidden lg:block">
+            <motion.div
+              className="hidden lg:block"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.7, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            >
               <div className="relative">
                 {/* Phone mockup */}
                 <div className="bg-gray-800/50 backdrop-blur-xl rounded-3xl border border-white/10 p-6 shadow-2xl">
@@ -223,20 +269,30 @@ export default function Home() {
                 </div>
 
                 {/* Floating badges */}
-                <div className="absolute -top-3 -right-3 bg-white rounded-xl px-3 py-2 shadow-xl border border-gray-100">
+                <motion.div
+                  className="absolute -top-3 -right-3 bg-white rounded-xl px-3 py-2 shadow-xl border border-gray-100"
+                  initial={{ opacity: 0, scale: 0.7 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.75, ease: [0.34, 1.56, 0.64, 1] }}
+                >
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-orange-500" />
                     <span className="text-xs font-black text-gray-800">30 seconds</span>
                   </div>
-                </div>
-                <div className="absolute -bottom-3 -left-3 bg-white rounded-xl px-3 py-2 shadow-xl border border-gray-100">
+                </motion.div>
+                <motion.div
+                  className="absolute -bottom-3 -left-3 bg-white rounded-xl px-3 py-2 shadow-xl border border-gray-100"
+                  initial={{ opacity: 0, scale: 0.7 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.9, ease: [0.34, 1.56, 0.64, 1] }}
+                >
                   <div className="flex items-center gap-1.5">
                     <Shield className="w-3.5 h-3.5 text-blue-500" />
                     <span className="text-xs font-black text-gray-800">GST compliant</span>
                   </div>
-                </div>
+                </motion.div>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -292,24 +348,24 @@ export default function Home() {
       {/* ── How It Works ── */}
       <section className="py-20 px-4 bg-white">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
+          <FadeUp className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3">
               Three steps. <span className="kindai-gradient-text">One quote.</span>
             </h2>
             <p className="text-gray-500 text-base max-w-xl mx-auto">
               From plan to priced quote in under a minute. No spreadsheets. No guesswork.
             </p>
-          </div>
+          </FadeUp>
           <div className="grid md:grid-cols-3 gap-8">
-            {HOW_IT_WORKS.map((step) => (
-              <div key={step.step} className="text-center group">
+            {HOW_IT_WORKS.map((step, i) => (
+              <FadeUp key={step.step} delay={i * 0.12} className="text-center group">
                 <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${step.colour} flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
                   <step.icon className="w-7 h-7 text-white" />
                 </div>
                 <div className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Step {step.step}</div>
                 <h3 className="text-lg font-black text-gray-900 mb-2">{step.title}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
-              </div>
+              </FadeUp>
             ))}
           </div>
           <div className="text-center mt-10">
@@ -327,26 +383,32 @@ export default function Home() {
       {/* ── Trades Grid ── */}
       <section className="py-20 px-4 bg-gray-50">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
+          <FadeUp className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3">
               One platform. <span className="kindai-gradient-text">Every trade.</span>
             </h2>
             <p className="text-gray-500 text-base max-w-xl mx-auto">
               Each trade gets its own AI model trained on industry-specific symbols, materials, and pricing.
             </p>
-          </div>
+          </FadeUp>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            {TRADES.map((trade) => (
-              <button
-                key={trade.id}
+            {TRADES.map((trade, i) => (
+              <motion.button
+                key={trade.id + i}
                 onClick={handleGetStarted}
-                className="group bg-white rounded-2xl p-5 text-center shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
+                className="group bg-white rounded-2xl p-5 text-center shadow-sm border border-gray-100"
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.4, delay: (i % 5) * 0.06, ease: [0.22, 1, 0.36, 1] }}
+                whileHover={{ y: -4, boxShadow: "0 12px 32px rgba(0,0,0,0.10)" }}
+                whileTap={{ scale: 0.97 }}
               >
                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${trade.colour} flex items-center justify-center text-2xl mx-auto mb-3 shadow-sm group-hover:scale-110 transition-transform`}>
                   {trade.emoji}
                 </div>
                 <div className="text-sm font-bold text-gray-800">{trade.name}</div>
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
@@ -355,23 +417,31 @@ export default function Home() {
       {/* ── Features ── */}
       <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
+          <FadeUp className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3">
               Everything a tradie needs to <span className="kindai-gradient-text">quote and win.</span>
             </h2>
             <p className="text-gray-500 text-base max-w-xl mx-auto">
               No fluff. No bloat. Just the tools that actually help you get the job.
             </p>
-          </div>
+          </FadeUp>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {FEATURES.map((f) => (
-              <div key={f.title} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            {FEATURES.map((f, i) => (
+              <motion.div
+                key={f.title}
+                className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm"
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.5, delay: (i % 3) * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                whileHover={{ y: -3, boxShadow: "0 8px 24px rgba(0,0,0,0.09)" }}
+              >
                 <div className={`w-11 h-11 rounded-xl ${f.colour} flex items-center justify-center mb-4`}>
                   <f.icon className="w-5 h-5" />
                 </div>
                 <h3 className="text-base font-black text-gray-900 mb-2">{f.title}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -410,8 +480,15 @@ export default function Home() {
             <p className="text-gray-500 text-sm">Real feedback from the field.</p>
           </div>
           <div className="grid sm:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            {TESTIMONIALS.map((t, i) => (
+              <motion.div
+                key={t.name}
+                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-30px" }}
+                transition={{ duration: 0.5, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+              >
                 <div className="flex gap-0.5 mb-3">
                   {[...Array(t.stars)].map((_, i) => (
                     <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
@@ -422,7 +499,7 @@ export default function Home() {
                   <div className="text-sm font-bold text-gray-900">{t.name}</div>
                   <div className="text-xs text-gray-400">{t.trade}</div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -430,8 +507,14 @@ export default function Home() {
 
       {/* ── CTA ── */}
       <section className="py-24 px-4 bg-white">
-        <div className="max-w-2xl mx-auto text-center">
-          <img src={LOGO_URL} alt="Kindai" className="w-20 h-20 object-contain mx-auto mb-6" />
+        <FadeUp className="max-w-2xl mx-auto text-center">
+          <motion.img
+            src={LOGO_URL}
+            alt="Kindai"
+            className="w-20 h-20 object-contain mx-auto mb-6"
+            animate={{ y: [0, -6, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          />
           <h2 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4">
             Ready to scan your <span className="kindai-gradient-text">first plan?</span>
           </h2>
@@ -448,7 +531,7 @@ export default function Home() {
             <ChevronRight className="w-5 h-5 ml-2" />
           </Button>
           <p className="text-xs text-gray-400 mt-4">No credit card. No lock-in. Just better quotes.</p>
-        </div>
+        </FadeUp>
       </section>
 
       {/* ── Footer ── */}

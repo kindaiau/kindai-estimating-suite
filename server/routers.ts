@@ -17,6 +17,7 @@ import { suppliersRouter } from "./routers/suppliers";
 import { helpAssistantRouter } from "./routers/helpAssistant";
 import { quoteTokensRouter } from "./routers/quoteTokens";
 import { variationsRouter } from "./routers/variations";
+import { betaRouter } from "./routers/beta";
 
 export const appRouter = router({
   system: systemRouter,
@@ -43,6 +44,7 @@ export const appRouter = router({
   helpAssistant: helpAssistantRouter,
   quoteTokens: quoteTokensRouter,
   variations: variationsRouter,
+  beta: betaRouter,
 });
 
 export type AppRouter = typeof appRouter;
