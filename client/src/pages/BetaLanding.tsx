@@ -61,6 +61,15 @@ export default function BetaLanding() {
       setSpotNumber(data.spotNumber ?? null);
       setSubmitted(true);
       toast.success("You're in! Welcome to the Kindai beta.");
+      // Fire Meta Pixel Lead event
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('track', 'Lead', {
+          content_name: 'Beta Sign-up',
+          content_category: 'Kindai Estimating Suite',
+          value: 0,
+          currency: 'AUD',
+        });
+      }
     },
     onError: (err) => {
       toast.error(err.message || "Something went wrong. Please try again.");
