@@ -11,7 +11,8 @@ import {
   Calculator, TrendingUp, ChevronRight, Zap, Shield, AlertTriangle,
   DollarSign, Clock, FileText,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { pixelViewPricingPage, pixelInitiateCheckout } from "@/lib/metaPixel";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { getLoginUrl } from "@/const";
@@ -100,10 +101,21 @@ export default function Pricing() {
     onError: (err) => toast.error(err.message),
   });
 
+  // Fire ViewContent pixel event on mount
+  useEffect(() => { pixelViewPricingPage(); }, []);
+
   const handleSubscribe = (planId: string) => {
     if (!isAuthenticated) {
       window.location.href = getLoginUrl();
       return;
+    }
+    // Fire InitiateCheckout pixel event
+    const plan = displayPlans.find((p) => p.id === planId);
+    if (plan) {
+      pixelInitiateCheckout({
+        content_name: plan.name,
+        value: yearly ? (plan.priceYearly ?? plan.priceMonthly) : plan.priceMonthly,
+      });
     }
     checkoutMutation.mutate({
       planId: planId as "sole_trader" | "small_builder" | "mid_builder" | "enterprise",

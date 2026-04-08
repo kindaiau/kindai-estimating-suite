@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo } from "react";
+import { pixelUploadPlan, pixelRunTakeoff } from "@/lib/metaPixel";
 import { useAuth } from "@/_core/hooks/useAuth";
 import SEO from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
@@ -164,6 +165,7 @@ export default function AITakeoff() {
       });
       setUploadedImageUrl(uploaded.url);
       toast.success("Plan uploaded! Ready to analyse.");
+      pixelUploadPlan({ trade: selectedTrade });
     } catch (err) {
       toast.error("Upload failed. Please try again.");
     } finally {
@@ -200,6 +202,7 @@ export default function AITakeoff() {
 
       setResult(takeoffResult);
       toast.success(`Takeoff complete! ${takeoffResult.items.length} items found. Confidence: ${takeoffResult.confidence}%`);
+      pixelRunTakeoff({ trade: selectedTrade, job_type: mode });
     } catch (err: any) {
       toast.error(err.message || "Analysis failed. Please try again.");
     } finally {

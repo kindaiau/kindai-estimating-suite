@@ -10,6 +10,7 @@ import {
 import { useLocation, useSearch } from "wouter";
 import { toast } from "sonner";
 import { useEffect } from "react";
+import { pixelPurchase } from "@/lib/metaPixel";
 
 const TIER_COLOURS: Record<string, string> = {
   free: "bg-slate-100 text-slate-700 border-slate-200",
@@ -50,6 +51,11 @@ export default function Billing() {
     if (success === "true") {
       toast.success("Subscription activated! Welcome to Kindai Pro.");
       refetch();
+      // Fire Purchase pixel event when Stripe redirects back with success
+      pixelPurchase({
+        value: 0, // actual value tracked server-side via webhook
+        content_name: "Kindai Subscription",
+      });
     }
   }, [success]);
 

@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { pixelViewDemoPage, pixelStartTrial, pixelRunTakeoff } from "@/lib/metaPixel";
 import { useAuth } from "@/_core/hooks/useAuth";
 import SEO from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
@@ -95,11 +96,19 @@ export default function DemoMode() {
   const [result, setResult] = useState<DemoResult | null>(null);
   const [activeTab, setActiveTab] = useState<"materials" | "summary">("materials");
 
+  // Fire ViewDemoPage + StartTrial pixel events on mount
+  useEffect(() => {
+    pixelViewDemoPage();
+    pixelStartTrial();
+  }, []);
+
   const runDemo = trpc.demo.runDemo.useMutation({
     onSuccess: (data) => {
       setResult(data as DemoResult);
       setActiveTab("materials");
       toast.success("AI takeoff complete! Scroll down to see your quote.");
+      // Fire RunTakeoff custom event
+      pixelRunTakeoff({ trade: selectedTrade, job_type: "demo" });
     },
     onError: (err) => {
       toast.error("Demo failed: " + err.message);

@@ -15,6 +15,7 @@ import {
   FileText, Loader2, Plus, Shield, Sparkles, Trash2, Download, Send, Copy,
 } from "lucide-react";
 import { useState } from "react";
+import { pixelSendQuote } from "@/lib/metaPixel";
 import { useLocation, useParams } from "wouter";
 
 const CATEGORIES = ["Materials", "Labour", "Plant & Equipment", "Subcontract", "Preliminaries", "Other"];
@@ -215,6 +216,8 @@ export default function EstimateBuilder() {
       setSentUrl(data.quoteUrl);
       toast.success("Quote link generated! Copy and send to your client.");
       utils.estimates.get.invalidate();
+      // Fire SendQuote pixel event
+      pixelSendQuote({ trade: estimate?.trade });
     },
     onError: (e) => toast.error("Failed to send quote: " + e.message),
   });

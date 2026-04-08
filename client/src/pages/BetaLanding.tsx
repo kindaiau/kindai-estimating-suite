@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { pixelLead, pixelCompleteRegistration, pixelViewBetaPage } from "@/lib/metaPixel";
 import SEO from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,9 @@ export default function BetaLanding() {
   const [submitted, setSubmitted] = useState(false);
   const [spotNumber, setSpotNumber] = useState<number | null>(null);
 
+  // Fire ViewBetaPage pixel event on mount
+  useEffect(() => { pixelViewBetaPage(); }, []);
+
   const { data: stats } = trpc.beta.getStats.useQuery(undefined, {
     refetchInterval: 30000, // refresh every 30s
   });
@@ -61,15 +65,9 @@ export default function BetaLanding() {
       setSpotNumber(data.spotNumber ?? null);
       setSubmitted(true);
       toast.success("You're in! Welcome to the Kindai beta.");
-      // Fire Meta Pixel Lead event
-      if (typeof window !== 'undefined' && (window as any).fbq) {
-        (window as any).fbq('track', 'Lead', {
-          content_name: 'Beta Sign-up',
-          content_category: 'Kindai Estimating Suite',
-          value: 0,
-          currency: 'AUD',
-        });
-      }
+      // Fire Meta Pixel events
+      pixelLead({ content_name: "Beta Sign-up", content_category: "Kindai Estimating Suite", value: 0 });
+      pixelCompleteRegistration({ content_name: "Beta Founding Member", status: "confirmed" });
     },
     onError: (err) => {
       toast.error(err.message || "Something went wrong. Please try again.");
