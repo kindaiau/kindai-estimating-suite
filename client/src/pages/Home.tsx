@@ -334,7 +334,7 @@ export default function Home() {
               className="w-full h-full object-cover"
               style={{ display: 'block' }}
             >
-              <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai_script4_explainer_6ef6dea5.mp4" type="video/mp4" />
+              <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai_screen_recording_b058c5f4.mp4" type="video/mp4" />
               Your browser does not support the video tag.
             </video>
           </div>

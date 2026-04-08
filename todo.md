@@ -159,6 +159,7 @@
 - [x] "Try Demo" CTA on landing page (no sign-up required)
 - [x] Animated demo video showing scan-to-quote flow
 - [x] Embed demo video on landing page (Script 4 explainer — CDN hosted)
+- [x] Replace broken AI-generated video with real screen recording (no gibberish text)
 - [x] Update landing page bounce-rate CTAs
 
 ## PDF Quote Export (Most-Requested Feature)
@@ -377,3 +378,12 @@
 - [ ] Update Home.tsx hero CTA to include beta sign-up option
 - [ ] Produce beta launch ad video (30s, direct-to-camera style)
 - [ ] Write social ad copy for FB/Instagram/LinkedIn
+
+## Website Copy & Video Fix
+- [ ] Fix nonsensical/broken text in website explainer video
+- [ ] Audit all website copy for gibberish or AI-generated nonsense words
+
+## Meta Ads Campaign Creation (API)
+- [ ] Create Meta Ads Campaign 1 (Cold Traffic) via Facebook Marketing API
+- [ ] Create Meta Ads Campaign 2 (Retargeting) via Facebook Marketing API
+
