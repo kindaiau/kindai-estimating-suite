@@ -80,10 +80,10 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       <SEO
-        title="Kindai Estimating Suite | AI-Powered Quoting for Australian Trades"
-        description="AI estimating software for Australian tradies, builders, and cabinet makers. Scan plans, get faster first-pass takeoffs, and send review-ready quotes with GST. 20 trades covered."
+        title="Kindai | AI Estimating Software for Australian Trades"
+        description="AI estimating software for Australian tradies and builders. Scan plans, get instant takeoffs, send GST-compliant quotes in 60 seconds."
         canonical="/"
-        keywords="construction estimating software Australia, AI estimating software, trade quoting software Australia, builder quoting app, electrical estimating software Australia, plumbing estimating software, tradie quoting app, construction takeoff software Australia, AI takeoff, quote builder tradies, GST quoting software, QBCC estimating, VBA builder software"
+        keywords="AI estimating software Australia, construction quoting software, trade takeoff software, builder quoting app, AI construction estimating"
       />
       <SoftwareAppSchema />
       <OrganizationSchema />
