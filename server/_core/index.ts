@@ -7,7 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { getHealthSnapshot } from "./health";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
-import { getEnvironmentStatus, validateServerEnv } from "./env";
+import { validateServerEnv } from "./env";
 import { serveStatic, setupVite } from "./vite";
 import { registerStripeWebhook } from "../stripe/webhook";
 import { seedMaterials } from "../seedMaterials";
