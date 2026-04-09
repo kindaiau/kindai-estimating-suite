@@ -99,10 +99,10 @@ export default function BetaLanding() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <SEO
-        title="Free Beta Access | Kindai Estimating Suite"
-        description="Join 25 Australian tradies and builders testing AI-powered estimating software free. Scan plans, get instant quotes with GST. Claim your founding member spot before it's gone."
+        title="Free Pilot Access | Kindai Estimating Suite"
+        description="Join 25 Australian trades and construction businesses in Kindai's founding pilot program. AI-powered estimating, real pricing, GST-compliant quotes. Apply for your founding member spot."
         canonical="/beta"
-        keywords="free estimating software Australia, beta access construction software, AI quoting software free trial, tradie software beta, builder estimating app Australia free"
+        keywords="free estimating software Australia, AI estimating pilot program, AI quoting software free trial, construction estimating software Australia, builder estimating app Australia"
       />
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-950/90 backdrop-blur-md border-b border-white/5">
@@ -115,7 +115,7 @@ export default function BetaLanding() {
             </div>
           </a>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-orange-400 font-bold animate-pulse">● BETA OPEN</span>
+            <span className="text-xs text-orange-400 font-bold animate-pulse">● PILOT PROGRAM OPEN</span>
             <span className="text-xs text-gray-500">{remaining} spots left</span>
           </div>
         </div>
@@ -136,7 +136,7 @@ export default function BetaLanding() {
             className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/30 rounded-full px-4 py-1.5 text-sm font-bold text-orange-400 mb-6"
           >
             <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
-            FOUNDING BETA — LIMITED SPOTS
+            FOUNDING PILOT — LIMITED SPOTS
           </motion.div>
 
           <motion.h1
@@ -157,7 +157,7 @@ export default function BetaLanding() {
           >
             Kindai reads your plans, counts every item, and builds a full quote in 60 seconds —
             with real Australian trade pricing, GST, and compliance built in.
-            We're looking for <strong className="text-white">25 Australian tradies and builders</strong> to test it free.
+            We're selecting <strong className="text-white">25 Australian construction businesses</strong> for our founding pilot program — full platform access, free.
           </motion.p>
 
           {/* Live counter */}
@@ -168,7 +168,7 @@ export default function BetaLanding() {
             className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-8 max-w-md mx-auto"
           >
             <div className="flex justify-between items-center mb-3">
-              <span className="text-sm font-bold text-gray-300">Beta spots claimed</span>
+              <span className="text-sm font-bold text-gray-300">Pilot spots claimed</span>
               <span className="text-sm font-black text-white">{claimed} / 25</span>
             </div>
             <div className="h-3 bg-white/10 rounded-full overflow-hidden">
@@ -238,8 +238,8 @@ export default function BetaLanding() {
                   className="space-y-4"
                 >
                   <div>
-                    <h2 className="text-2xl font-black text-white mb-1">Claim your free beta spot</h2>
-                    <p className="text-gray-400 text-sm">No credit card. No lock-in. Just better quotes.</p>
+                    <h2 className="text-2xl font-black text-white mb-1">Apply for your free pilot spot</h2>
+                    <p className="text-gray-400 text-sm">No credit card. No lock-in. Full platform access during the pilot.</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -339,7 +339,7 @@ export default function BetaLanding() {
                     {signupMutation.isPending ? (
                       <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Claiming your spot...</span>
                     ) : (
-                      <span className="flex items-center gap-2">Claim My Free Beta Spot <ChevronRight className="w-5 h-5" /></span>
+                      <span className="flex items-center gap-2">Apply for Free Pilot Access <ChevronRight className="w-5 h-5" /></span>
                     )}
                   </Button>
 
@@ -360,7 +360,7 @@ export default function BetaLanding() {
           >
             {/* What you get */}
             <div>
-              <h3 className="text-lg font-black text-white mb-4">What beta members get:</h3>
+              <h3 className="text-lg font-black text-white mb-4">What pilot members get:</h3>
               <div className="space-y-3">
                 {BETA_PERKS.map((perk, i) => (
                   <motion.div
@@ -459,16 +459,16 @@ export default function BetaLanding() {
             <img src={LOGO_URL} alt="Kindai" className="w-16 h-16 object-contain mx-auto mb-6" />
           </motion.div>
           <h2 className="text-3xl font-black text-white mb-4">
-            {remaining > 0 ? `${remaining} spots left. Don't miss out.` : "Beta is full — join the waitlist."}
+            {remaining > 0 ? `${remaining} pilot spots remaining.` : "Pilot is full — join the waitlist."}
           </h2>
           <p className="text-gray-400 mb-8">
-            When beta closes, pricing starts at $149/month. Right now it's free.
+            Pilot members get full platform access free. When the pilot closes, pricing starts at $149/month.
           </p>
           <Button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className="kindai-btn-primary px-10 py-4 rounded-full text-base font-black h-auto"
           >
-            Claim My Free Spot <ChevronRight className="w-5 h-5 ml-2" />
+            Apply for Free Pilot Access <ChevronRight className="w-5 h-5 ml-2" />
           </Button>
         </div>
       </section>

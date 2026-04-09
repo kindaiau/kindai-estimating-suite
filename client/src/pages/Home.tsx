@@ -46,8 +46,8 @@ const FEATURES = [
   { icon: Camera, title: "Scan Plans with AI Vision", desc: "Photograph or upload your plans. AI reads every symbol, counts every fixture, measures every room — and generates a full takeoff in seconds.", colour: "text-pink-500 bg-pink-50" },
   { icon: DollarSign, title: "Retail vs Trade Pricing", desc: "See both retail (Bunnings) and trade supplier pricing side-by-side. Know exactly how much you save buying trade — and set your markup.", colour: "text-green-500 bg-green-50" },
   { icon: Truck, title: "Supplier Recommendations", desc: "Get matched with the best trade suppliers for your state. Send material orders directly and get the best pricing on every job.", colour: "text-orange-500 bg-orange-50" },
-  { icon: Shield, title: "Australian Compliance", desc: "Auto GST (10%), state licensing prompts (QBCC, VBA, NSW Fair Trading), WHS notices, and AS/NZS standards baked into every quote.", colour: "text-blue-500 bg-blue-50" },
-  { icon: Users, title: "Fair Work Labour Rates", desc: "Pre-loaded Award rates for all 20 trades. Overtime, Saturday, Sunday, and public holiday penalty rates calculated automatically.", colour: "text-cyan-500 bg-cyan-50" },
+  { icon: Shield, title: "Australian Compliance", desc: "Draft quotes with GST, configurable Award labour rates, state licensing prompts, and WHS notices. Every quote reviewed by your team before sending.", colour: "text-blue-500 bg-blue-50" },
+  { icon: Users, title: "Fair Work Labour Rates", desc: "Pre-loaded Award rates for all 20 trades as a starting point. Override with your own enterprise agreement rates, supplier price books, and custom markup rules.", colour: "text-cyan-500 bg-cyan-50" },
   { icon: BarChart3, title: "Win Rate Dashboard", desc: "Track every quote — sent, accepted, declined. See your win rate, average job value, and total revenue pipeline at a glance.", colour: "text-purple-500 bg-purple-50" },
 ];
 
@@ -469,17 +469,128 @@ export default function Home() {
             <Shield className="w-3.5 h-3.5" /> Australian Compliance Built-In
           </div>
           <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
-            GST-compliant construction quotes, every time.
+            Compliance-ready quotes, built for Australian construction.
           </h2>
           <p className="text-white/70 text-base max-w-2xl mx-auto mb-8">
-            Auto GST (10%), QBCC, VBA, NSW Fair Trading, SA, WA, TAS, NT, ACT licensing prompts, WHS/OH&S notices, and AS/NZS standards references — all baked in automatically.
+            Kindai generates draft quotes with GST, configurable labour rates, and compliance prompts pre-loaded for your state and trade. Your team reviews and approves before sending — always.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
-            {["GST 10%", "QBCC", "VBA", "NSW Fair Trading", "WHS/OH&S", "AS/NZS Standards", "Fair Work Act"].map((tag) => (
+            {["GST 10%", "QBCC", "VBA", "NSW Fair Trading", "WHS/OH&S", "AS/NZS Standards", "Award Rates (configurable)", "Human Review Step"].map((tag) => (
               <span key={tag} className="px-3 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-semibold backdrop-blur-sm">
                 {tag}
               </span>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Cabinet Making Proof Section ── */}
+      <section className="py-20 px-4 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <FadeUp className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-50 border border-teal-200 text-teal-700 text-xs font-bold mb-4">
+              <span>🪵</span> Cabinet Making & Joinery
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3">
+              Built for commercial joinery firms. <span className="kindai-gradient-text">Not just residential kitchens.</span>
+            </h2>
+            <p className="text-gray-500 text-base max-w-2xl mx-auto">
+              Kindai understands cabinet-native language: sheet goods, door profiles, Blum hardware systems, Laminex and Polytec finishes, Caesarstone benchtops, and commercial joinery labour models.
+            </p>
+          </FadeUp>
+          <div className="grid md:grid-cols-2 gap-8 items-start">
+            {/* Left: Sample output */}
+            <div className="bg-gray-950 rounded-2xl p-6 border border-white/10 shadow-xl">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-xs text-white/50 font-mono">AI Takeoff — Commercial Kitchen Joinery</span>
+              </div>
+              <div className="space-y-2 text-xs">
+                {[
+                  { item: "Laminex Chalk Matt 16mm MDF board", qty: "48 sheets", price: "$94.50/sheet" },
+                  { item: "Polytec Ravine Natural Oak 18mm", qty: "24 sheets", price: "$118.00/sheet" },
+                  { item: "Blum TANDEM plus BLUMOTION 550mm", qty: "96 runners", price: "$38.40/pair" },
+                  { item: "Blum CLIP top BLUMOTION 110° hinges", qty: "144 hinges", price: "$6.20 ea" },
+                  { item: "Caesarstone 6131 Bianco Drift 20mm", qty: "18 lineal m", price: "$485/lm" },
+                  { item: "Soft-close drawer inserts (Hettich)", qty: "48 sets", price: "$22.80/set" },
+                ].map((row, i) => (
+                  <div key={i} className="flex items-center justify-between gap-3 bg-white/5 rounded-lg px-3 py-2 border border-white/5">
+                    <span className="text-white/70 flex-1">{row.item}</span>
+                    <span className="text-white/50 w-16 text-right">{row.qty}</span>
+                    <span className="text-green-400 font-bold w-24 text-right">{row.price}</span>
+                  </div>
+                ))}
+                <div className="h-px bg-white/10 my-2" />
+                <div className="flex justify-between items-center bg-gradient-to-r from-teal-500/20 to-green-500/20 rounded-lg px-3 py-2 border border-teal-500/30">
+                  <span className="text-white font-black text-sm">Total Quote (inc GST)</span>
+                  <span className="text-teal-400 font-black text-lg">$187,420</span>
+                </div>
+                <p className="text-white/30 text-[10px] text-center pt-1">AI draft — reviewed and approved by estimator before sending</p>
+              </div>
+            </div>
+            {/* Right: Feature list */}
+            <div className="space-y-4">
+              {[
+                { icon: "🏭", title: "Commercial-scale joinery", desc: "Office fitouts, hotel joinery, retail shopfitting, multi-residential kitchens. Kindai handles projects from $50K to $5M+." },
+                { icon: "📦", title: "Your supplier price book", desc: "Import your negotiated rates from Laminex, Polytec, Blum, Häfele, and Caesarstone. Your prices, your margins — not generic retail." },
+                { icon: "👷", title: "Cabinet-specific labour models", desc: "Workshop fabrication hours, site installation, delivery and crane, and finishing — all calculated separately with your rates." },
+                { icon: "📋", title: "Shop drawing integration", desc: "Upload your shop drawings or describe the scope. AI extracts every component: carcasses, doors, drawers, hardware, and benchtops." },
+                { icon: "✏️", title: "Always your call", desc: "Every AI output is a draft for your estimator to review. Override any item, adjust any quantity, change any price before sending." },
+              ].map((item, i) => (
+                <div key={i} className="flex gap-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <span className="text-2xl flex-shrink-0">{item.icon}</span>
+                  <div>
+                    <h3 className="font-black text-gray-900 text-sm mb-1">{item.title}</h3>
+                    <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Enterprise Trust Block ── */}
+      <section className="py-20 px-4 bg-gray-950">
+        <div className="max-w-5xl mx-auto">
+          <FadeUp className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/70 text-xs font-bold mb-4">
+              <Shield className="w-3.5 h-3.5 text-blue-400" /> Enterprise & Data Security
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
+              Built for businesses that take <span className="kindai-gradient-text">data seriously.</span>
+            </h2>
+            <p className="text-white/60 text-base max-w-2xl mx-auto">
+              Your plans, pricing, and client data never leave your control. Kindai is designed for construction businesses that can't afford a data breach or a compliance failure.
+            </p>
+          </FadeUp>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[
+              { icon: "🔒", title: "Your data is yours", desc: "We never use your uploaded plans or job data to train AI models. Your business data is not shared with any third party." },
+              { icon: "🛡️", title: "Encrypted at rest & in transit", desc: "AES-256 encryption at rest. TLS 1.3 in transit. Files stored in secure Australian and US-based cloud infrastructure." },
+              { icon: "👥", title: "Role-based access controls", desc: "Admin, estimator, and viewer roles. Control who can create, edit, approve, and send quotes within your organisation." },
+              { icon: "📄", title: "Data Processing Agreement", desc: "Enterprise accounts can request a DPA for GDPR, Privacy Act, and internal compliance requirements. Available on request." },
+              { icon: "🤝", title: "Dedicated enterprise onboarding", desc: "Your own onboarding session, custom price book import, EA labour rate setup, and team training before day one." },
+              { icon: "✅", title: "Human review — always", desc: "No quote is ever sent without your team's approval. Kindai generates drafts. Your estimators make the call." },
+            ].map((item, i) => (
+              <motion.div
+                key={i}
+                className="bg-white/5 rounded-xl p-5 border border-white/10"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-30px" }}
+                transition={{ duration: 0.4, delay: (i % 3) * 0.08 }}
+              >
+                <span className="text-2xl mb-3 block">{item.icon}</span>
+                <h3 className="font-black text-white text-sm mb-2">{item.title}</h3>
+                <p className="text-white/50 text-sm leading-relaxed">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+          <div className="mt-10 text-center">
+            <a href="/support" className="inline-flex items-center gap-2 text-orange-400 hover:text-orange-300 text-sm font-bold transition-colors">
+              Talk to our enterprise team <ArrowRight className="w-4 h-4" />
+            </a>
           </div>
         </div>
       </section>
@@ -528,10 +639,10 @@ export default function Home() {
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           />
           <h2 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4">
-            Ready to replace your estimator with <span className="kindai-gradient-text">AI?</span>
+            Give your estimators an <span className="kindai-gradient-text">unfair advantage.</span>
           </h2>
           <p className="text-gray-500 text-base mb-8">
-            Join Australian tradies already using Kindai AI Vision to quote faster and win more jobs.
+            Kindai cuts first-pass takeoff time by up to 80%. Your team quotes more jobs, wins more work, and controls every margin — without changing how they work.
           </p>
           <Button
             onClick={handleTryAI}
@@ -539,10 +650,10 @@ export default function Home() {
             className="kindai-btn-primary px-10 py-4 rounded-full text-base font-black h-auto shadow-xl"
           >
             <Camera className="w-5 h-5 mr-2" />
-            Start Scanning — It's Free
+            Start Your Pilot — Free
             <ChevronRight className="w-5 h-5 ml-2" />
           </Button>
-          <p className="text-xs text-gray-400 mt-4">No credit card. No lock-in. Just better quotes.</p>
+          <p className="text-xs text-gray-400 mt-4">No lock-in. Enterprise onboarding included. Cancel anytime.</p>
         </FadeUp>
       </section>
 
@@ -561,8 +672,8 @@ export default function Home() {
           </p>
           <div className="flex gap-4 text-xs text-gray-500">
             <a href="/privacy-policy" className="hover:text-gray-300 transition-colors">Privacy</a>
-            <span>Terms</span>
-            <span>Support</span>
+            <a href="/terms" className="hover:text-gray-300 transition-colors">Terms</a>
+            <a href="/support" className="hover:text-gray-300 transition-colors">Support</a>
           </div>
         </div>
       </footer>
