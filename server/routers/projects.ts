@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { projects } from "../../drizzle/schema";
@@ -6,16 +7,14 @@ import { eq, and, desc } from "drizzle-orm";
 
 export const projectsRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) return [];
+    const db = requireDatabase(await getDb());
     return db.select().from(projects)
       .where(eq(projects.userId, ctx.user.id))
       .orderBy(desc(projects.createdAt));
   }),
 
   get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) return null;
+    const db = requireDatabase(await getDb());
     const result = await db.select().from(projects)
       .where(and(eq(projects.id, input.id), eq(projects.userId, ctx.user.id)))
       .limit(1);
@@ -34,8 +33,7 @@ export const projectsRouter = router({
     trade: z.string().min(1),
     notes: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     const result = await db.insert(projects).values({
       ...input,
       userId: ctx.user.id,
@@ -57,23 +55,20 @@ export const projectsRouter = router({
     status: z.enum(["draft", "quoted", "accepted", "declined", "invoiced", "completed"]).optional(),
     notes: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     const { id, ...data } = input;
     await db.update(projects).set(data).where(and(eq(projects.id, id), eq(projects.userId, ctx.user.id)));
     return { success: true };
   }),
 
   delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     await db.delete(projects).where(and(eq(projects.id, input.id), eq(projects.userId, ctx.user.id)));
     return { success: true };
   }),
 
   stats: protectedProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) return { total: 0, draft: 0, quoted: 0, accepted: 0, completed: 0 };
+    const db = requireDatabase(await getDb());
     const all = await db.select().from(projects).where(eq(projects.userId, ctx.user.id));
     return {
       total: all.length,

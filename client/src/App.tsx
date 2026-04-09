@@ -1,3 +1,4 @@
+import Analytics from "./components/Analytics";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
@@ -67,6 +68,7 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster position="top-right" richColors />
+          <Analytics />
           <Router />
           <AIHelpAssistant />
         </TooltipProvider>

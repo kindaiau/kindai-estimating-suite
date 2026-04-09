@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -7,15 +7,49 @@ let _db: ReturnType<typeof drizzle> | null = null;
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
+  if (!_db && ENV.databaseUrl) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _db = drizzle(ENV.databaseUrl);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
     }
   }
   return _db;
+}
+
+export async function checkDatabaseReadiness() {
+  if (!ENV.databaseUrl) {
+    return {
+      configured: false,
+      ready: false,
+      error: "DATABASE_URL is not configured",
+    };
+  }
+
+  const db = await getDb();
+  if (!db) {
+    return {
+      configured: true,
+      ready: false,
+      error: "Database client could not be created",
+    };
+  }
+
+  try {
+    await db.execute(sql`select 1`);
+    return {
+      configured: true,
+      ready: true,
+    };
+  } catch (error) {
+    console.error("[Database] Readiness check failed:", error);
+    return {
+      configured: true,
+      ready: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {

@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
+import { requireDatabase } from "../_core/errors";
 import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import { getDb } from "../db";
 import { users } from "../../drizzle/schema";
@@ -32,8 +34,7 @@ export const billingRouter = router({
 
   /** Get current user's subscription status */
   getSubscription: protectedProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) return { tier: "free", status: "none" };
+    const db = requireDatabase(await getDb());
 
     const [user] = await db
       .select({
@@ -46,7 +47,9 @@ export const billingRouter = router({
       .where(eq(users.id, ctx.user.id))
       .limit(1);
 
-    if (!user) return { tier: "free", status: "none" };
+    if (!user) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+    }
 
     // If there's an active subscription, fetch latest status from Stripe
     let currentPeriodEnd: number | null = null;
@@ -85,8 +88,7 @@ export const billingRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) throw new Error("Database not available");
+      const db = requireDatabase(await getDb());
 
       // Get user's current Stripe customer ID
       const [user] = await db
@@ -99,7 +101,7 @@ export const billingRouter = router({
         .where(eq(users.id, ctx.user.id))
         .limit(1);
 
-      if (!user) throw new Error("User not found");
+      if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
 
       // Find or create Stripe customer
       const customerId = await findOrCreateCustomer({
@@ -120,7 +122,7 @@ export const billingRouter = router({
       // Create the price in Stripe on-the-fly (or use existing)
       const stripe = getStripe();
       const plan = getPlanById(input.planId);
-      if (!plan) throw new Error("Invalid plan");
+      if (!plan) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid plan" });
 
       const priceAmount =
         input.interval === "yearly"
@@ -176,8 +178,7 @@ export const billingRouter = router({
   createPortal: protectedProcedure
     .input(z.object({ origin: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) throw new Error("Database not available");
+      const db = requireDatabase(await getDb());
 
       const [user] = await db
         .select({ stripeCustomerId: users.stripeCustomerId })
@@ -186,7 +187,10 @@ export const billingRouter = router({
         .limit(1);
 
       if (!user?.stripeCustomerId) {
-        throw new Error("No billing account found. Please subscribe to a plan first.");
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "No billing account found. Please subscribe to a plan first.",
+        });
       }
 
       const url = await createPortalSession({

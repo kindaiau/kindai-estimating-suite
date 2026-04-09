@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { estimates, lineItems, users } from "../../drizzle/schema";
@@ -10,16 +11,14 @@ import { storagePut } from "../storage";
 
 export const estimatesRouter = router({
   list: protectedProcedure.input(z.object({ projectId: z.number().optional() })).query(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) return [];
+    const db = requireDatabase(await getDb());
     const conditions = [eq(estimates.userId, ctx.user.id)];
     if (input.projectId) conditions.push(eq(estimates.projectId, input.projectId));
     return db.select().from(estimates).where(and(...conditions)).orderBy(desc(estimates.createdAt));
   }),
 
   get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) return null;
+    const db = requireDatabase(await getDb());
     const result = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)))
       .limit(1);
@@ -27,8 +26,7 @@ export const estimatesRouter = router({
   }),
 
   getWithLineItems: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) return null;
+    const db = requireDatabase(await getDb());
     const [estimate] = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)))
       .limit(1);
@@ -45,8 +43,7 @@ export const estimatesRouter = router({
     complianceState: z.enum(["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"]).optional(),
     notes: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     const quoteNumber = `KAI-${new Date().getFullYear()}-${nanoid(6).toUpperCase()}`;
     const acceptanceToken = nanoid(32);
     const result = await db.insert(estimates).values({
@@ -76,8 +73,7 @@ export const estimatesRouter = router({
     quoteTerms: z.string().optional(),
     notes: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     const { id, margin, ...rest } = input;
     const data: Record<string, unknown> = { ...rest };
     if (margin !== undefined) data.margin = margin.toString();
@@ -86,8 +82,7 @@ export const estimatesRouter = router({
   }),
 
   recalculate: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     const [estimate] = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)))
       .limit(1);
@@ -127,8 +122,7 @@ export const estimatesRouter = router({
     notes: z.string().optional(),
     isFromAi: z.boolean().optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     // Verify ownership
     const [est] = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
@@ -161,8 +155,7 @@ export const estimatesRouter = router({
     wasteFactor: z.number().min(0).max(100).optional(),
     notes: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     const [est] = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
       .limit(1);
@@ -187,8 +180,7 @@ export const estimatesRouter = router({
   }),
 
   deleteLineItem: protectedProcedure.input(z.object({ id: z.number(), estimateId: z.number() })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     const [est] = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
       .limit(1);
@@ -198,8 +190,7 @@ export const estimatesRouter = router({
   }),
 
   getLineItems: protectedProcedure.input(z.object({ estimateId: z.number() })).query(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) return [];
+    const db = requireDatabase(await getDb());
     const [est] = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
       .limit(1);
@@ -208,16 +199,14 @@ export const estimatesRouter = router({
   }),
 
   delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     await db.delete(lineItems).where(eq(lineItems.estimateId, input.id));
     await db.delete(estimates).where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)));
     return { success: true };
   }),
 
   stats: protectedProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) return { total: 0, draft: 0, sent: 0, accepted: 0, totalValue: 0 };
+    const db = requireDatabase(await getDb());
     const all = await db.select().from(estimates).where(eq(estimates.userId, ctx.user.id));
     const totalValue = all.filter(e => e.status === "accepted").reduce((sum, e) => sum + parseFloat(e.total as string), 0);
     return {
@@ -233,8 +222,7 @@ export const estimatesRouter = router({
   getBenchmark: protectedProcedure.input(z.object({
     id: z.number(),
   })).query(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) return null;
+    const db = requireDatabase(await getDb());
     const [estimate] = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)))
       .limit(1);
@@ -305,8 +293,7 @@ export const estimatesRouter = router({
   }),
 
   generatePdf: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
 
     // Load estimate
     const [estimate] = await db.select().from(estimates)

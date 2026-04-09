@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { variations } from "../../drizzle/schema";
@@ -9,8 +10,7 @@ export const variationsRouter = router({
   list: protectedProcedure.input(z.object({
     projectId: z.number().int().positive(),
   })).query(async ({ input, ctx }) => {
-    const db = await getDb();
-    if (!db) return [];
+    const db = requireDatabase(await getDb());
     return db
       .select()
       .from(variations)
@@ -118,8 +118,7 @@ export const variationsRouter = router({
     projectId: z.number().int().positive(),
     originalContractValue: z.number().default(0),
   })).query(async ({ input, ctx }) => {
-    const db = await getDb();
-    if (!db) return { originalValue: input.originalContractValue, totalVariations: 0, approvedVariations: 0, revisedContractSum: input.originalContractValue, pendingVariations: 0, variationCount: 0 };
+    const db = requireDatabase(await getDb());
 
     const allVariations = await db
       .select()

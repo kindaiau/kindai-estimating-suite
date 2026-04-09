@@ -1,4 +1,5 @@
 import z from "zod";
+import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { tradeProfiles, emailTemplates } from "../../drizzle/schema";
@@ -139,8 +140,7 @@ const supplierSchema = z.object({
 export const tradeProfilesRouter = router({
   // Get trade profile for a specific trade
   get: protectedProcedure.input(z.object({ trade: z.string() })).query(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) return null;
+    const db = requireDatabase(await getDb());
     const result = await db.select().from(tradeProfiles)
       .where(and(eq(tradeProfiles.userId, ctx.user.id), eq(tradeProfiles.trade, input.trade)))
       .limit(1);
@@ -149,8 +149,7 @@ export const tradeProfilesRouter = router({
 
   // Get all trade profiles for the user
   list: protectedProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) return [];
+    const db = requireDatabase(await getDb());
     return db.select().from(tradeProfiles).where(eq(tradeProfiles.userId, ctx.user.id));
   }),
 
@@ -181,8 +180,7 @@ export const tradeProfilesRouter = router({
     reminderDays: z.number().min(1).max(60).optional(),
     suppliers: z.array(supplierSchema).optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
 
     const { trade, ...data } = input;
     const existing = await db.select().from(tradeProfiles)
@@ -211,8 +209,7 @@ export const tradeProfilesRouter = router({
 
   // Get email templates for a trade
   getEmailTemplates: protectedProcedure.input(z.object({ trade: z.string().optional() })).query(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) return [];
+    const db = requireDatabase(await getDb());
     const all = await db.select().from(emailTemplates).where(eq(emailTemplates.userId, ctx.user.id));
     if (input.trade) {
       return all.filter(t => !t.trade || t.trade === input.trade);
@@ -229,8 +226,7 @@ export const tradeProfilesRouter = router({
     bodyHtml: z.string().min(1),
     isActive: z.boolean().optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
 
     if (input.id) {
       await db.update(emailTemplates).set({
