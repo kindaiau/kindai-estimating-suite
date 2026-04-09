@@ -4,13 +4,35 @@ import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
-import { getHealthSnapshot } from "./health";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
-import { validateServerEnv } from "./env";
 import { serveStatic, setupVite } from "./vite";
 import { registerStripeWebhook } from "../stripe/webhook";
 import { seedMaterials } from "../seedMaterials";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+
+// Rate limiter for public LLM endpoints — prevents API cost abuse
+const publicLLMRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // max 20 requests per IP per 15 min on public AI endpoints
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please wait 15 minutes before trying again." },
+  skip: (req) => {
+    // Skip rate limiting for authenticated users (they have their own subscription limits)
+    return !!req.headers.cookie?.includes("session");
+  },
+});
+
+// General API rate limiter
+const generalRateLimit = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 300, // 300 requests per minute per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests. Please slow down." },
+});
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -32,29 +54,32 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
-  const envStatus = validateServerEnv();
-  const warnings = Object.entries(envStatus).filter(([, status]) => !status.ready);
-  console.info("[Startup] Environment validation passed for required features.");
-  if (warnings.length > 0) {
-    console.warn(
-      "[Startup] Optional feature configuration gaps:",
-      warnings.map(([key, status]) => `${key}: ${status.missingRequired.join(", ")}`).join(" | ")
-    );
-  }
-
   const app = express();
   const server = createServer(app);
+
+  // Security headers — must be first
+  app.use(helmet({
+    contentSecurityPolicy: false, // Disabled to allow Vite HMR and CDN assets
+    crossOriginEmbedderPolicy: false, // Disabled to allow embedded content
+  }));
+
+  // General rate limiting on all API routes
+  app.use("/api", generalRateLimit);
+
   // Stripe webhook MUST be registered BEFORE json body parser
   registerStripeWebhook(app);
-  app.get("/healthz", async (_req, res) => {
-    const snapshot = await getHealthSnapshot();
-    res.status(snapshot.ok ? 200 : 503).json(snapshot);
-  });
-  // Configure body parser with larger size limit for file uploads
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // Configure body parser — 10MB is sufficient for plan images (base64 encoded)
+  app.use(express.json({ limit: "10mb" }));
+  app.use(express.urlencoded({ limit: "10mb", extended: true }));
+
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+
+  // Apply stricter rate limiting to public LLM endpoints
+  app.use("/api/trpc/demo.runDemo", publicLLMRateLimit);
+  app.use("/api/trpc/helpAssistant.chat", publicLLMRateLimit);
+
   // tRPC API
   app.use(
     "/api/trpc",
@@ -63,6 +88,7 @@ async function startServer() {
       createContext,
     })
   );
+
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
@@ -79,15 +105,9 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
-    console.log(
-      `[Startup] Readiness endpoint available at http://localhost:${port}/healthz`
-    );
     // Seed default materials library on startup (idempotent)
     seedMaterials().catch(err => console.warn("[Seed] Materials seed failed:", err.message));
   });
 }
 
-startServer().catch((error) => {
-  console.error("[Startup] Server failed to start", error);
-  process.exitCode = 1;
-});
+startServer().catch(console.error);

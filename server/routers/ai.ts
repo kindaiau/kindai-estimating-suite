@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { getDb } from "../db";
@@ -645,13 +646,18 @@ type TakeoffResult = {
 export const aiRouter = router({
   // Upload plan image/PDF to S3
   uploadPlan: protectedProcedure.input(z.object({
-    fileName: z.string(),
-    fileBase64: z.string(),
-    contentType: z.string(),
+    fileName: z.string().max(255),
+    fileBase64: z.string().max(22_000_000), // ~16MB base64 encoded
+    contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
   })).mutation(async ({ ctx, input }) => {
+    // Validate file size (max 16MB decoded)
+    const buffer = Buffer.from(input.fileBase64, "base64");
+    const MAX_FILE_SIZE = 16 * 1024 * 1024; // 16MB
+    if (buffer.length > MAX_FILE_SIZE) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: `File too large. Maximum size is 16MB. Your file is ${(buffer.length / 1024 / 1024).toFixed(1)}MB.` });
+    }
     const ext = input.fileName.split(".").pop() ?? "png";
     const key = `plans/${ctx.user.id}/${nanoid()}.${ext}`;
-    const buffer = Buffer.from(input.fileBase64, "base64");
     const { url } = await storagePut(key, buffer, input.contentType);
     return { url, key };
   }),

@@ -157,7 +157,7 @@ export default function AITakeoff() {
       const uploaded = await uploadPlan.mutateAsync({
         fileName: file.name,
         fileBase64: base64,
-        contentType: file.type,
+        contentType: file.type as "image/jpeg" | "image/png" | "image/webp" | "application/pdf",
       });
       setUploadedImageUrl(uploaded.url);
       toast.success("Plan uploaded! Ready to analyse.");

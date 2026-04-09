@@ -34,7 +34,11 @@ export const billingRouter = router({
 
   /** Get current user's subscription status */
   getSubscription: protectedProcedure.query(async ({ ctx }) => {
-    const db = requireDatabase(await getDb());
+    const rawDb = await getDb();
+    if (!rawDb) {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    }
+    const db = rawDb;
 
     const [user] = await db
       .select({
