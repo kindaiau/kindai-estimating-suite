@@ -141,10 +141,6 @@ export default function AITakeoff() {
   }
 
   async function handleFileSelect(file: File) {
-    if (!selectedTrade) {
-      toast.error("Select your trade first");
-      return;
-    }
     if (!isAuthenticated) {
       window.location.href = getLoginUrl();
       return;
@@ -282,8 +278,8 @@ export default function AITakeoff() {
               </CardHeader>
               <CardContent className="px-4 pb-4">
                 <Select value={selectedTrade} onValueChange={setSelectedTrade}>
-                  <SelectTrigger className="rounded-xl border-gray-200">
-                    <SelectValue placeholder="Choose your trade..." />
+                  <SelectTrigger className={`rounded-xl ${!selectedTrade ? 'border-orange-400 ring-2 ring-orange-200' : 'border-gray-200'}`}>
+                    <SelectValue placeholder="👇 Choose your trade first..." />
                   </SelectTrigger>
                   <SelectContent>
                     {TRADES.map(t => (
@@ -409,13 +405,23 @@ export default function AITakeoff() {
                   />
                 )}
 
+                {!selectedTrade && (mode === "vision" ? uploadedImageUrl : textDescription.length >= 10) && (
+                  <div className="flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded-xl text-xs text-orange-700 font-semibold">
+                    <span>⚠️</span> Select your trade above to run the analysis
+                  </div>
+                )}
                 <Button
-                  className="w-full rounded-xl font-black text-sm bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-500 border-0 text-white shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 transition-all"
+                  className="w-full rounded-xl font-black text-sm bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-500 border-0 text-white shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={handleAnalyse}
                   disabled={isAnalysing || !selectedTrade || (mode === "vision" && !uploadedImageUrl) || (mode === "text" && textDescription.length < 10)}
+                  title={!selectedTrade ? 'Select your trade first' : (mode === 'vision' && !uploadedImageUrl) ? 'Upload a plan first' : ''}
                 >
                   {isAnalysing ? (
                     <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Analysing Plan...</>
+                  ) : !selectedTrade ? (
+                    <><Zap className="w-4 h-4 mr-2" /> Select Trade to Analyse</>
+                  ) : (mode === "vision" && !uploadedImageUrl) ? (
+                    <><Upload className="w-4 h-4 mr-2" /> Upload Plan to Analyse</>
                   ) : (
                     <><Sparkles className="w-4 h-4 mr-2" /> Analyse &amp; Generate Takeoff</>
                   )}

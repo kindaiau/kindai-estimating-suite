@@ -395,3 +395,6 @@
 - [x] Replace all beta/replace-estimator language site-wide
 - [x] Add real cabinet estimate proof block to cabinet landing page
 - [x] Add /cabinet-joinery route to App.tsx
+
+## Bug Fixes
+- [x] AI Takeoff plan upload does nothing — fixed: removed trade-required gate on upload, added visual orange highlight on trade selector, dynamic button label guides user through steps
