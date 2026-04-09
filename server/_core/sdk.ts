@@ -6,7 +6,7 @@ import type { Request } from "express";
 import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
-import { ENV } from "./env";
+import { ENV, requireEnvValue } from "./env";
 import type {
   ExchangeTokenRequest,
   ExchangeTokenResponse,
@@ -48,7 +48,7 @@ class OAuthService {
     state: string
   ): Promise<ExchangeTokenResponse> {
     const payload: ExchangeTokenRequest = {
-      clientId: ENV.appId,
+      clientId: requireEnvValue(ENV.appId, "VITE_APP_ID"),
       grantType: "authorization_code",
       code,
       redirectUri: this.decodeState(state),
@@ -169,11 +169,11 @@ class SDKServer {
     options: { expiresInMs?: number; name?: string } = {}
   ): Promise<string> {
     return this.signSession(
-      {
-        openId,
-        appId: ENV.appId,
-        name: options.name || "",
-      },
+        {
+          openId,
+          appId: requireEnvValue(ENV.appId, "VITE_APP_ID"),
+          name: options.name || "",
+        },
       options
     );
   }
@@ -237,7 +237,7 @@ class SDKServer {
   ): Promise<GetUserInfoWithJwtResponse> {
     const payload: GetUserInfoWithJwtRequest = {
       jwtToken,
-      projectId: ENV.appId,
+      projectId: requireEnvValue(ENV.appId, "VITE_APP_ID"),
     };
 
     const { data } = await this.client.post<GetUserInfoWithJwtResponse>(

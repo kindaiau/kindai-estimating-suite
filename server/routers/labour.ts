@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { labourRates } from "../../drizzle/schema";
@@ -7,8 +8,7 @@ import { DEFAULT_LABOUR_RATES } from "../../shared/trades";
 
 export const labourRouter = router({
   list: protectedProcedure.input(z.object({ trade: z.string().optional() })).query(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) return [];
+    const db = requireDatabase(await getDb());
     const conditions = [or(isNull(labourRates.userId), eq(labourRates.userId, ctx.user.id))];
     if (input.trade) conditions.push(eq(labourRates.trade, input.trade));
     const rows = await db.select().from(labourRates)
@@ -17,8 +17,7 @@ export const labourRouter = router({
   }),
 
   seedDefaults: protectedProcedure.input(z.object({ trade: z.string() })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     const defaults = DEFAULT_LABOUR_RATES[input.trade];
     if (!defaults) return { seeded: 0 };
 
@@ -55,8 +54,7 @@ export const labourRouter = router({
     travelAllowance: z.number().nonnegative().optional(),
     toolAllowance: z.number().nonnegative().optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     const result = await db.insert(labourRates).values({
       userId: ctx.user.id,
       trade: input.trade,
@@ -83,8 +81,7 @@ export const labourRouter = router({
     travelAllowance: z.number().nonnegative().optional(),
     toolAllowance: z.number().nonnegative().optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     const { id, ...rest } = input;
     const data: Record<string, unknown> = {};
     if (rest.classification) data.classification = rest.classification;
@@ -101,8 +98,7 @@ export const labourRouter = router({
   }),
 
   delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     await db.update(labourRates).set({ isActive: false })
       .where(and(eq(labourRates.id, input.id), eq(labourRates.userId, ctx.user.id)));
     return { success: true };

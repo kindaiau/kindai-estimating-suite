@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { teamMembers, auditLogs } from "../../drizzle/schema";
@@ -38,8 +39,7 @@ async function writeAudit(params: {
 export const teamRouter = router({
   // Get all team members for the current owner
   getTeam: protectedProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) return [];
+    const db = requireDatabase(await getDb());
     const members = await db
       .select()
       .from(teamMembers)

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { materials } from "../../drizzle/schema";
@@ -6,8 +7,7 @@ import { eq, and, or, isNull, desc } from "drizzle-orm";
 
 export const materialsRouter = router({
   list: protectedProcedure.input(z.object({ trade: z.string().optional() })).query(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) return [];
+    const db = requireDatabase(await getDb());
     const conditions = [or(isNull(materials.userId), eq(materials.userId, ctx.user.id))];
     if (input.trade) conditions.push(eq(materials.trade, input.trade));
     return db.select().from(materials)
@@ -26,8 +26,7 @@ export const materialsRouter = router({
     supplierCode: z.string().optional(),
     wasteFactor: z.number().min(0).max(100).optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     const result = await db.insert(materials).values({
       ...input,
       userId: ctx.user.id,
@@ -47,8 +46,7 @@ export const materialsRouter = router({
     wasteFactor: z.number().min(0).max(100).optional(),
     isActive: z.boolean().optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     const { id, unitPrice, wasteFactor, ...rest } = input;
     const data: Record<string, unknown> = { ...rest };
     if (unitPrice !== undefined) data.unitPrice = unitPrice.toString();
@@ -59,8 +57,7 @@ export const materialsRouter = router({
   }),
 
   delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     await db.update(materials).set({ isActive: false })
       .where(and(eq(materials.id, input.id), eq(materials.userId, ctx.user.id)));
     return { success: true };

@@ -16,6 +16,7 @@ import { emailFollowupRouter } from "./routers/emailFollowup";
 import { suppliersRouter } from "./routers/suppliers";
 import { helpAssistantRouter } from "./routers/helpAssistant";
 import { quoteTokensRouter } from "./routers/quoteTokens";
+import { teamRouter } from "./routers/team";
 import { variationsRouter } from "./routers/variations";
 import { betaRouter } from "./routers/beta";
 
@@ -43,6 +44,7 @@ export const appRouter = router({
   suppliers: suppliersRouter,
   helpAssistant: helpAssistantRouter,
   quoteTokens: quoteTokensRouter,
+  team: teamRouter,
   variations: variationsRouter,
   beta: betaRouter,
 });

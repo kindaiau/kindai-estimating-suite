@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { estimates, quoteFollowups } from "../../drizzle/schema";
@@ -98,8 +99,7 @@ export const emailFollowupRouter = router({
   getFollowups: protectedProcedure.input(z.object({
     estimateId: z.number(),
   })).query(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) return [];
+    const db = requireDatabase(await getDb());
     const [est] = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
       .limit(1);
@@ -114,8 +114,7 @@ export const emailFollowupRouter = router({
     clientName: z.string(),
     projectAddress: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
 
     const [est] = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
@@ -158,8 +157,7 @@ export const emailFollowupRouter = router({
     clientName: z.string(),
     projectAddress: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
 
     const [est] = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
@@ -199,8 +197,7 @@ export const emailFollowupRouter = router({
     estimateId: z.number(),
     customBody: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
 
     const [followup] = await db.select().from(quoteFollowups)
       .where(and(eq(quoteFollowups.id, input.followupId), eq(quoteFollowups.userId, ctx.user.id)))
@@ -265,8 +262,7 @@ export const emailFollowupRouter = router({
   cancelFollowup: protectedProcedure.input(z.object({
     followupId: z.number(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     await db.update(quoteFollowups).set({ status: "cancelled" } as any)
       .where(and(eq(quoteFollowups.id, input.followupId), eq(quoteFollowups.userId, ctx.user.id)));
     return { success: true };

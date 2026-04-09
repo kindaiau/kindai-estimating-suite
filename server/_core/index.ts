@@ -4,8 +4,10 @@ import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
+import { getHealthSnapshot } from "./health";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
+import { validateServerEnv } from "./env";
 import { serveStatic, setupVite } from "./vite";
 import { registerStripeWebhook } from "../stripe/webhook";
 import { seedMaterials } from "../seedMaterials";
@@ -30,10 +32,24 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  const envStatus = validateServerEnv();
+  const warnings = Object.entries(envStatus).filter(([, status]) => !status.ready);
+  console.info("[Startup] Environment validation passed for required features.");
+  if (warnings.length > 0) {
+    console.warn(
+      "[Startup] Optional feature configuration gaps:",
+      warnings.map(([key, status]) => `${key}: ${status.missingRequired.join(", ")}`).join(" | ")
+    );
+  }
+
   const app = express();
   const server = createServer(app);
   // Stripe webhook MUST be registered BEFORE json body parser
   registerStripeWebhook(app);
+  app.get("/healthz", async (_req, res) => {
+    const snapshot = await getHealthSnapshot();
+    res.status(snapshot.ok ? 200 : 503).json(snapshot);
+  });
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -63,9 +79,15 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    console.log(
+      `[Startup] Readiness endpoint available at http://localhost:${port}/healthz`
+    );
     // Seed default materials library on startup (idempotent)
     seedMaterials().catch(err => console.warn("[Seed] Materials seed failed:", err.message));
   });
 }
 
-startServer().catch(console.error);
+startServer().catch((error) => {
+  console.error("[Startup] Server failed to start", error);
+  process.exitCode = 1;
+});

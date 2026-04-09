@@ -237,12 +237,13 @@ describe("Billing Router", () => {
     expect(free?.popular).toBe(false);
   });
 
-  it("getSubscription requires authentication", async () => {
+  it("getSubscription surfaces database outages instead of returning a fake free tier", async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
-    const sub = await caller.billing.getSubscription();
-    expect(sub).toBeDefined();
-    expect(sub.tier).toBeDefined();
+    await expect(caller.billing.getSubscription()).rejects.toMatchObject({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Database unavailable",
+    });
   });
 });
 

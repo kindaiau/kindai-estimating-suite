@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { supplierConnections, lineItems, estimates } from "../../drizzle/schema";
@@ -8,8 +9,7 @@ import { AUSTRALIAN_SUPPLIERS } from "./ai";
 export const suppliersRouter = router({
   // List user's connected suppliers
   list: protectedProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) return [];
+    const db = requireDatabase(await getDb());
     return db.select().from(supplierConnections)
       .where(and(eq(supplierConnections.userId, ctx.user.id), eq(supplierConnections.isActive, true)));
   }),
@@ -27,8 +27,7 @@ export const suppliersRouter = router({
     discountPercent: z.number().min(0).max(60).default(0),
     notes: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     const result = await db.insert(supplierConnections).values({
       ...input,
       userId: ctx.user.id,
@@ -51,8 +50,7 @@ export const suppliersRouter = router({
     notes: z.string().optional(),
     isActive: z.boolean().optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     const { id, discountPercent, ...rest } = input;
     const data: Record<string, unknown> = { ...rest };
     if (discountPercent !== undefined) data.discountPercent = discountPercent.toString();
@@ -63,8 +61,7 @@ export const suppliersRouter = router({
 
   // Delete a supplier connection
   delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     await db.update(supplierConnections).set({ isActive: false } as any)
       .where(and(eq(supplierConnections.id, input.id), eq(supplierConnections.userId, ctx.user.id)));
     return { success: true };
@@ -87,8 +84,7 @@ export const suppliersRouter = router({
     estimateId: z.number(),
     supplierId: z.number().optional(), // if specified, apply that supplier's discount
   })).query(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) return null;
+    const db = requireDatabase(await getDb());
 
     const [est] = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))

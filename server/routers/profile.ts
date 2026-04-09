@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { users } from "../../drizzle/schema";
@@ -6,8 +7,7 @@ import { eq } from "drizzle-orm";
 
 export const profileRouter = router({
   get: protectedProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) return ctx.user;
+    const db = requireDatabase(await getDb());
     const [user] = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
     return user ?? ctx.user;
   }),
@@ -20,8 +20,7 @@ export const profileRouter = router({
     licenseNumber: z.string().optional(),
     defaultTrade: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
-    const db = await getDb();
-    if (!db) throw new Error("Database not available");
+    const db = requireDatabase(await getDb());
     await db.update(users).set(input as any).where(eq(users.id, ctx.user.id));
     return { success: true };
   }),
