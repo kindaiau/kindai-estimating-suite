@@ -81,7 +81,7 @@ export default function Home() {
     <div className="min-h-screen bg-white">
       <SEO
         title="Kindai Estimating Suite | AI-Powered Quoting for Australian Trades"
-        description="AI estimating software for Australian tradies and builders. Scan plans with your phone, get instant takeoffs, send branded quotes with GST in 60 seconds. 20 trades covered. Free beta access."
+        description="AI estimating software for Australian tradies, builders, and cabinet makers. Scan plans, get faster first-pass takeoffs, and send review-ready quotes with GST. 20 trades covered."
         canonical="/"
         keywords="construction estimating software Australia, AI estimating software, trade quoting software Australia, builder quoting app, electrical estimating software Australia, plumbing estimating software, tradie quoting app, construction takeoff software Australia, AI takeoff, quote builder tradies, GST quoting software, QBCC estimating, VBA builder software"
       />
@@ -157,7 +157,7 @@ export default function Home() {
                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-500/20 border border-orange-500/50 text-orange-300 text-xs font-black mb-3 cursor-pointer hover:bg-orange-500/30 transition-colors"
               >
                 <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
-                BETA ACCESS — ONLY 25 FREE SPOTS — Claim yours now
+                PILOT PROGRAM — ONLY 25 FOUNDING SPOTS — Claim yours now
                 <ChevronRight className="w-3.5 h-3.5" />
               </motion.a>
 

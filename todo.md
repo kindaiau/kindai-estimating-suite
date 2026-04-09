@@ -387,3 +387,11 @@
 - [ ] Create Meta Ads Campaign 1 (Cold Traffic) via Facebook Marketing API
 - [ ] Create Meta Ads Campaign 2 (Retargeting) via Facebook Marketing API
 
+
+## Enterprise Readiness — Cabinet/Joinery Brief (Apr 2026)
+- [x] Create dedicated /cabinet-joinery landing page with correct copy and CTAs
+- [x] Rewrite Pricing page: Pro A$299/mo + Enterprise Pilot + Enterprise custom
+- [x] Remove all unverified claims (cut lists, CNC-ready, best supplier pricing, guaranteed compliance)
+- [x] Replace all beta/replace-estimator language site-wide
+- [x] Add real cabinet estimate proof block to cabinet landing page
+- [x] Add /cabinet-joinery route to App.tsx

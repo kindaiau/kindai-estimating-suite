@@ -13,7 +13,7 @@ export const PAGE_SEO = {
   },
   pricing: {
     title: "Pricing | Kindai Estimating Suite",
-    description: "Affordable AI estimating software for Australian trades. From solo tradies to $100M builders. Free trial available. Plans from $149/month. Replace your $120K estimator.",
+    description: "AI estimating software for Australian trades and cabinet makers. Faster first-pass takeoffs, review-ready quotes, and consistent pricing for your whole team. Plans from A$299/month.",
     canonical: "/pricing",
     keywords: "construction estimating software price Australia, estimating software cost, trade quoting software pricing, builder software subscription Australia",
   },
