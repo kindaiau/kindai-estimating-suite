@@ -1,0 +1,103 @@
+{
+  "base": "http://localhost:3001",
+  "results": [
+    {
+      "route": "/",
+      "status": 200,
+      "buttons": 1,
+      "clicked": 1,
+      "errors": []
+    },
+    {
+      "route": "/pricing",
+      "status": 200,
+      "buttons": 1,
+      "clicked": 1,
+      "errors": []
+    },
+    {
+      "route": "/support",
+      "status": 200,
+      "buttons": 6,
+      "clicked": 6,
+      "errors": []
+    },
+    {
+      "route": "/privacy-policy",
+      "status": 200,
+      "buttons": 1,
+      "clicked": 1,
+      "errors": []
+    },
+    {
+      "route": "/terms",
+      "status": 200,
+      "buttons": 1,
+      "clicked": 1,
+      "errors": []
+    },
+    {
+      "route": "/data-deletion",
+      "status": 200,
+      "buttons": 2,
+      "clicked": 2,
+      "errors": []
+    },
+    {
+      "route": "/cabinet-joinery",
+      "status": 200,
+      "buttons": 8,
+      "clicked": 8,
+      "errors": []
+    },
+    {
+      "route": "/dashboard",
+      "status": 200,
+      "buttons": 1,
+      "clicked": 1,
+      "errors": []
+    },
+    {
+      "route": "/projects",
+      "status": 200,
+      "buttons": 1,
+      "clicked": 1,
+      "errors": []
+    },
+    {
+      "route": "/materials",
+      "status": 200,
+      "buttons": 1,
+      "clicked": 1,
+      "errors": []
+    },
+    {
+      "route": "/labour",
+      "status": 200,
+      "buttons": 1,
+      "clicked": 1,
+      "errors": []
+    },
+    {
+      "route": "/trade-profiles",
+      "status": 200,
+      "buttons": 1,
+      "clicked": 1,
+      "errors": []
+    },
+    {
+      "route": "/billing",
+      "status": 200,
+      "buttons": 1,
+      "clicked": 1,
+      "errors": []
+    },
+    {
+      "route": "/ai-takeoff",
+      "status": 200,
+      "buttons": 1,
+      "clicked": 1,
+      "errors": []
+    }
+  ]
+}
