@@ -20,9 +20,8 @@ const TRADES = [
   { id: "hvac",            name: "HVAC",            emoji: "❄️", gradient: "from-sky-400 to-blue-600" },
   { id: "flooring",        name: "Flooring",        emoji: "🟫", gradient: "from-purple-400 to-violet-600" },
   { id: "landscaping",     name: "Landscaping",     emoji: "🌿", gradient: "from-green-400 to-emerald-600" },
-  { id: "cabinetry",       name: "Cabinetry",       emoji: "🚪", gradient: "from-orange-400 to-red-500" },
+  { id: "cabinetry",       name: "Cabinet Making & Joinery", emoji: "🪵", gradient: "from-teal-400 to-green-600" },
   { id: "rendering",       name: "Rendering",       emoji: "🧱", gradient: "from-rose-400 to-pink-600" },
-  { id: "cabinetry",  name: "Cabinet Making",  emoji: "🪵", gradient: "from-teal-400 to-green-600" },
 ];
 
 export default function Dashboard() {

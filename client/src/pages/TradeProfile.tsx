@@ -25,9 +25,8 @@ const TRADES = [
   { id: "hvac", name: "HVAC", emoji: "❄️" },
   { id: "flooring", name: "Flooring", emoji: "🪵" },
   { id: "landscaping", name: "Landscaping", emoji: "🌿" },
-  { id: "cabinetry", name: "Cabinetry", emoji: "🗄️" },
+  { id: "cabinetry", name: "Cabinet Making & Joinery", emoji: "🪵" },
   { id: "rendering", name: "Rendering", emoji: "🏠" },
-  { id: "cabinetry", name: "Cabinet Making", emoji: "🔨" },
 ];
 
 const EMAIL_TYPES = [

@@ -87,7 +87,7 @@ export function OrganizationSchema() {
     "url": "https://kindaiestimator.com",
     "logo": "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png",
     "description": "Kindai builds AI-powered tools for Australian trades and construction businesses.",
-    "foundingDate": "2025",
+    "foundingDate": "2026",
     "areaServed": "AU",
     "knowsAbout": [
       "Construction estimating",
@@ -128,7 +128,7 @@ export function FAQSchema() {
         "name": "Which Australian trades does Kindai support?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Kindai covers 20 Australian trades: Electrical, Plumbing, Carpentry, Concreting, HVAC, Flooring, Landscaping, Cabinetry, Rendering, Painting, Bricklaying, Roofing, Tiling, Waterproofing, Fire Protection, Glazing, Quantity Surveying, Demolition, Swimming Pool Construction, and Steel Fabrication."
+          "text": "Kindai covers 20 Australian trades: Electrical, Plumbing, Carpentry, Concreting, HVAC, Flooring, Landscaping, Cabinet Making & Joinery, Rendering, Painting, Bricklaying, Roofing, Tiling, Waterproofing, Fire Protection, Glazing, Quantity Surveying, Demolition, Swimming Pool Construction, and Steel Fabrication."
         }
       },
       {

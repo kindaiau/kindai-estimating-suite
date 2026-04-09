@@ -80,7 +80,7 @@ const TRADE_COMPLIANCE: Record<string, { body: string; disclaimer: string }> = {
   },
   cabinetry: {
     body: "QBCC (QLD) / VBA (VIC) / NSW Fair Trading / SA Consumer & Business Services",
-    disclaimer: "Cabinetry and joinery must comply with AS 4386 (Domestic Kitchen Assemblies). All materials must comply with relevant Australian Standards for formaldehyde emissions.",
+    disclaimer: "Cabinet making and joinery must comply with AS/NZS 4386 (Domestic Kitchen Assemblies) and AWISA standards. All sheet materials must comply with AS/NZS 1859 for formaldehyde emissions (E0/E1 rating). Commercial joinery must comply with relevant BCA/NCC requirements. All work is carried out by a licensed cabinetmaking contractor. Prices are valid for 30 days from the date of issue.",
   },
   rendering: {
     body: "QBCC (QLD) / VBA (VIC) / NSW Fair Trading / SA Consumer & Business Services",

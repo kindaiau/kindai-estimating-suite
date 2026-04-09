@@ -38,9 +38,8 @@ const TRADES = [
   { id: "hvac",       name: "HVAC",       emoji: "❄️", colour: "from-sky-400 to-blue-600" },
   { id: "flooring",   name: "Flooring",   emoji: "🟫", colour: "from-purple-500 to-violet-600" },
   { id: "landscaping",name: "Landscaping",emoji: "🌿", colour: "from-green-400 to-emerald-600" },
-  { id: "cabinetry",  name: "Cabinetry",  emoji: "🚪", colour: "from-orange-400 to-red-500" },
+  { id: "cabinetry",  name: "Cabinet Making & Joinery", emoji: "🪵", colour: "from-teal-400 to-green-600" },
   { id: "rendering",  name: "Rendering",  emoji: "🧱", colour: "from-rose-400 to-pink-600" },
-  { id: "cabinetry", name: "Cabinet Making", emoji: "🪵", colour: "from-teal-400 to-green-600" },
 ];
 
 const FEATURES = [
@@ -48,7 +47,7 @@ const FEATURES = [
   { icon: DollarSign, title: "Retail vs Trade Pricing", desc: "See both retail (Bunnings) and trade supplier pricing side-by-side. Know exactly how much you save buying trade — and set your markup.", colour: "text-green-500 bg-green-50" },
   { icon: Truck, title: "Supplier Recommendations", desc: "Get matched with the best trade suppliers for your state. Send material orders directly and get the best pricing on every job.", colour: "text-orange-500 bg-orange-50" },
   { icon: Shield, title: "Australian Compliance", desc: "Auto GST (10%), state licensing prompts (QBCC, VBA, NSW Fair Trading), WHS notices, and AS/NZS standards baked into every quote.", colour: "text-blue-500 bg-blue-50" },
-  { icon: Users, title: "Fair Work Labour Rates", desc: "Pre-loaded Award rates for all 10 trades. Overtime, Saturday, Sunday, and public holiday penalty rates calculated automatically.", colour: "text-cyan-500 bg-cyan-50" },
+  { icon: Users, title: "Fair Work Labour Rates", desc: "Pre-loaded Award rates for all 20 trades. Overtime, Saturday, Sunday, and public holiday penalty rates calculated automatically.", colour: "text-cyan-500 bg-cyan-50" },
   { icon: BarChart3, title: "Win Rate Dashboard", desc: "Track every quote — sent, accepted, declined. See your win rate, average job value, and total revenue pipeline at a glance.", colour: "text-purple-500 bg-purple-50" },
 ];
 
@@ -558,10 +557,10 @@ export default function Home() {
             </div>
           </div>
           <p className="text-xs text-gray-500 text-center">
-            &copy; 2025 Kindai. Built for Australian tradies. GST-compliant by default.
+            &copy; 2026 Kindai. Built for Australian tradies. GST-compliant by default.
           </p>
           <div className="flex gap-4 text-xs text-gray-500">
-            <span>Privacy</span>
+            <a href="/privacy-policy" className="hover:text-gray-300 transition-colors">Privacy</a>
             <span>Terms</span>
             <span>Support</span>
           </div>

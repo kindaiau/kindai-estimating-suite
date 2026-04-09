@@ -74,6 +74,56 @@ const DEMO_SCENARIOS: Record<string, {
     ],
     planNotes: "Standard residential plan. Bathroom and kitchen locations clearly marked.",
   },
+  cabinetry: {
+    trade: "cabinetry",
+    planDescription: "Commercial office fitout — 12 workstation joinery units, boardroom credenza, reception joinery, kitchen/breakout cabinetry. 450m² total floor area.",
+    sampleItems: [
+      // Sheet Materials
+      { description: "Laminex MDF 18mm 2400x1200 — Polar White", unit: "sheet", quantity: 85, retailPrice: 98.00, tradePrice: 62.00, category: "Materials", labourMinutes: 0, wasteFactor: 15 },
+      { description: "Laminex MDF 16mm 2400x1200 — Polar White", unit: "sheet", quantity: 40, retailPrice: 88.00, tradePrice: 55.00, category: "Materials", labourMinutes: 0, wasteFactor: 15 },
+      { description: "Polytec Ravine door panel 2100x600mm — Chalk", unit: "ea", quantity: 48, retailPrice: 195.00, tradePrice: 128.00, category: "Materials", labourMinutes: 20, wasteFactor: 5 },
+      { description: "Laminex Compact Laminate 13mm 2400x1200 — Chalk", unit: "sheet", quantity: 12, retailPrice: 185.00, tradePrice: 118.00, category: "Materials", labourMinutes: 0, wasteFactor: 10 },
+      // Benchtops
+      { description: "Caesarstone 20mm Cloudburst Concrete benchtop", unit: "lm", quantity: 28, retailPrice: 680.00, tradePrice: 420.00, category: "Materials", labourMinutes: 45, wasteFactor: 5 },
+      { description: "Laminex 33mm postform benchtop — White", unit: "lm", quantity: 14, retailPrice: 195.00, tradePrice: 125.00, category: "Materials", labourMinutes: 30, wasteFactor: 5 },
+      // Hardware — Blum
+      { description: "Blum CLIP top BLUMOTION hinge 110° soft-close", unit: "ea", quantity: 192, retailPrice: 18.50, tradePrice: 11.80, category: "Materials", labourMinutes: 8, wasteFactor: 0 },
+      { description: "Blum TANDEM 500mm soft-close drawer runner", unit: "pair", quantity: 64, retailPrice: 68.00, tradePrice: 43.00, category: "Materials", labourMinutes: 15, wasteFactor: 0 },
+      { description: "Blum LEGRABOX pure 500mm drawer system", unit: "set", quantity: 32, retailPrice: 185.00, tradePrice: 118.00, category: "Materials", labourMinutes: 25, wasteFactor: 0 },
+      { description: "Hafele cabinet handle 160mm c/c — Brushed Nickel", unit: "ea", quantity: 96, retailPrice: 22.00, tradePrice: 14.00, category: "Materials", labourMinutes: 5, wasteFactor: 0 },
+      { description: "Hafele shelf pin 5mm (pack 50)", unit: "pack", quantity: 12, retailPrice: 18.50, tradePrice: 11.50, category: "Materials", labourMinutes: 0, wasteFactor: 5 },
+      // Edging
+      { description: "Laminex ABS edging 22mm Polar White 50m roll", unit: "roll", quantity: 18, retailPrice: 42.00, tradePrice: 26.50, category: "Materials", labourMinutes: 0, wasteFactor: 10 },
+      { description: "Laminex ABS edging 22mm Chalk 50m roll", unit: "roll", quantity: 8, retailPrice: 42.00, tradePrice: 26.50, category: "Materials", labourMinutes: 0, wasteFactor: 10 },
+      // Fixings & Consumables
+      { description: "Confirmat screw 7x50mm (box 200)", unit: "box", quantity: 8, retailPrice: 22.00, tradePrice: 14.00, category: "Consumables", labourMinutes: 0, wasteFactor: 5 },
+      { description: "PVA cabinet glue 1L", unit: "ea", quantity: 6, retailPrice: 14.50, tradePrice: 9.00, category: "Consumables", labourMinutes: 0, wasteFactor: 0 },
+      { description: "Cam lock connector 15mm (box 100)", unit: "box", quantity: 6, retailPrice: 28.00, tradePrice: 17.50, category: "Consumables", labourMinutes: 0, wasteFactor: 5 },
+      // Labour
+      { description: "Cabinet maker — manufacture & machining labour", unit: "hr", quantity: 180, retailPrice: 115.00, tradePrice: 95.00, category: "Labour", labourMinutes: 60, wasteFactor: 0 },
+      { description: "Cabinet maker — site installation labour", unit: "hr", quantity: 80, retailPrice: 115.00, tradePrice: 95.00, category: "Labour", labourMinutes: 60, wasteFactor: 0 },
+      { description: "Apprentice cabinetmaker — workshop assist", unit: "hr", quantity: 60, retailPrice: 55.00, tradePrice: 45.00, category: "Labour", labourMinutes: 60, wasteFactor: 0 },
+      // Preliminaries
+      { description: "Site measure & shop drawing preparation", unit: "lot", quantity: 1, retailPrice: 1800.00, tradePrice: 1400.00, category: "Preliminaries", labourMinutes: 0, wasteFactor: 0 },
+      { description: "Delivery & crane lift to level 3", unit: "lot", quantity: 1, retailPrice: 850.00, tradePrice: 650.00, category: "Preliminaries", labourMinutes: 0, wasteFactor: 0 },
+    ],
+    confidence: 91,
+    assumptions: [
+      "Commercial office fitout — 450m² floor area, Level 3",
+      "12 workstation joinery units @ approx 1800mm wide each",
+      "Boardroom credenza 4200mm long with overhead storage",
+      "Reception joinery — curved front panel, 3600mm wide",
+      "Breakout kitchen — 6.2 linear metres of cabinetry",
+      "All doors: Polytec Ravine profile in Chalk finish",
+      "All carcasses: Laminex MDF Polar White",
+      "Benchtops: Caesarstone 20mm Cloudburst Concrete (boardroom + reception), Laminex postform (kitchen)",
+      "Hardware: Blum soft-close throughout (BLUMOTION hinges, TANDEM runners, LEGRABOX drawers)",
+      "Handles: Hafele 160mm brushed nickel bar handles",
+      "Delivery includes crane lift — building access confirmed",
+      "Electrical cutouts (power, data) by others — allow PS",
+    ],
+    planNotes: "Commercial fitout drawings at 1:50. All dimensions confirmed. Joinery schedule provided. Structural fixings to be confirmed with builder prior to installation.",
+  },
 };
 
 // ─── Build text prompt for demo (same as main AI router) ─────────────────────
@@ -81,7 +131,7 @@ function buildDemoPrompt(trade: string): string {
   const tradeNames: Record<string, string> = {
     electrical: "electrical", plumbing: "plumbing & drainage", carpentry: "carpentry & joinery",
     concreting: "concreting", hvac: "HVAC", flooring: "flooring",
-    landscaping: "landscaping & irrigation", cabinetry: "cabinetry & joinery",
+    landscaping: "landscaping & irrigation", cabinetry: "cabinet making & joinery",
     rendering: "rendering & plastering", painting: "painting & decorating",
     bricklaying: "bricklaying & blocklaying", roofing: "roofing",
     tiling: "wall & floor tiling", waterproofing: "waterproofing",

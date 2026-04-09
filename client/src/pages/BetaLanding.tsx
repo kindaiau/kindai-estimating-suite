@@ -27,7 +27,7 @@ const TESTIMONIAL_PREVIEWS = [
 
 const TRADES = [
   "Electrical", "Plumbing & Drainage", "Carpentry & Joinery", "Concreting",
-  "HVAC", "Flooring", "Landscaping & Irrigation", "Cabinetry & Joinery",
+  "HVAC", "Flooring", "Landscaping & Irrigation", "Cabinet Making & Joinery",
   "Rendering & Plastering", "Painting & Decorating", "Bricklaying & Blocklaying",
   "Roofing", "Tiling", "Waterproofing", "Fire Protection",
   "Glazing & Aluminium", "Quantity Surveying", "Demolition & Excavation",
@@ -476,7 +476,7 @@ export default function BetaLanding() {
       {/* Footer */}
       <footer className="border-t border-white/5 py-8 px-4">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-600">
-          <span>© 2025 Kindai. Built for Australian tradies.</span>
+          <span>© 2026 Kindai. Built for Australian tradies.</span>
           <span>GST-compliant by default. All 8 states/territories.</span>
           <a href="/" className="hover:text-gray-400 transition-colors">← Back to main site</a>
         </div>

@@ -28,7 +28,7 @@ const TRADES = [
   { id: "hvac",              name: "HVAC",                 emoji: "❄️",  colour: "from-sky-400 to-blue-600" },
   { id: "flooring",          name: "Flooring",             emoji: "🟫",  colour: "from-purple-500 to-violet-600" },
   { id: "landscaping",       name: "Landscaping",          emoji: "🌿",  colour: "from-green-400 to-emerald-600" },
-  { id: "cabinetry",         name: "Cabinetry & Joinery",  emoji: "🚪",  colour: "from-orange-400 to-red-500" },
+  { id: "cabinetry",         name: "Cabinet Making & Joinery",  emoji: "🪵",  colour: "from-teal-400 to-green-600" },
   { id: "rendering",         name: "Rendering & Plastering",emoji: "🧱",  colour: "from-rose-400 to-pink-600" },
   { id: "painting",          name: "Painting & Decorating",emoji: "🎨",  colour: "from-purple-400 to-pink-500" },
   { id: "bricklaying",       name: "Bricklaying",          emoji: "🧱",  colour: "from-red-400 to-orange-500" },
@@ -53,7 +53,7 @@ const DEMO_PROMPTS: Record<string, string> = {
   hvac: "3-bedroom house, 180m². Ducted reverse-cycle air conditioning system with 5 outlets and zoning.",
   flooring: "Open-plan living area 80m² plus 3 bedrooms 40m² total. Hybrid flooring with underlay.",
   landscaping: "Backyard 120m². Includes lawn, garden beds, retaining wall, paving, and irrigation system.",
-  cabinetry: "Kitchen renovation. 4.2m run of base and overhead cabinets, island bench, pantry.",
+  cabinetry: "Commercial kitchen fitout. 6.4m run of 18mm Laminex MDF base cabinets (900mm high x 600mm deep), 6.4m overhead cabinets (700mm high x 350mm deep), 3.2m island bench with 40mm Caesarstone top, full-height pantry unit (2400mm), 2 x 4-drawer towers. Polytec Ravine doors throughout, Blum CLIP top BLUMOTION hinges, Blum Legrabox drawers, stainless steel handles.",
   rendering: "Double brick house, external render 280m². Acrylic texture coat finish.",
 
 };

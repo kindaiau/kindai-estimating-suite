@@ -14,8 +14,8 @@ const TRADES = [
   { id: "electrical", name: "Electrical", emoji: "⚡" }, { id: "plumbing", name: "Plumbing", emoji: "🔧" },
   { id: "carpentry", name: "Carpentry", emoji: "🪚" }, { id: "concreting", name: "Concreting", emoji: "🏗️" },
   { id: "hvac", name: "HVAC", emoji: "❄️" }, { id: "flooring", name: "Flooring", emoji: "🟫" },
-  { id: "landscaping", name: "Landscaping", emoji: "🌿" }, { id: "cabinetry", name: "Cabinetry", emoji: "🚪" },
-  { id: "rendering", name: "Rendering & Plastering", emoji: "🧱" }, { id: "cabinetry", name: "Cabinet Making", emoji: "🪵" },
+  { id: "landscaping", name: "Landscaping", emoji: "🌿" }, { id: "cabinetry", name: "Cabinet Making & Joinery", emoji: "🪵" },
+  { id: "rendering", name: "Rendering & Plastering", emoji: "🧱" },
 ];
 
 export default function LabourRates() {

@@ -56,11 +56,14 @@ export const AUSTRALIAN_SUPPLIERS: Record<string, Array<{
     { name: "Bunnings Warehouse", type: "retail", website: "https://www.bunnings.com.au", trades: ["landscaping"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Retail landscaping supplies." },
   ],
   cabinetry: [
-    { name: "Laminex", type: "trade", website: "https://www.laminex.com.au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Australia's leading laminate and panel supplier. Trade pricing available." },
-    { name: "Polytec", type: "trade", website: "https://www.polytec.com.au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Premium decorative surfaces and panels." },
-    { name: "Hafele", type: "trade", website: "https://www.hafele.com.au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Cabinet hardware and fittings specialist." },
-    { name: "Blum", type: "trade", website: "https://www.blum.com/au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Premium cabinet hardware — hinges, drawer systems, lift systems." },
-    { name: "Bunnings Warehouse", type: "retail", website: "https://www.bunnings.com.au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Retail hardware and basic panel products." },
+    { name: "Laminex", type: "trade", website: "https://www.laminex.com.au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Australia's leading laminate and panel supplier. MDF, melamine, compact laminate, ABS edging. Trade pricing available." },
+    { name: "Polytec", type: "trade", website: "https://www.polytec.com.au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Premium decorative surfaces, door panels, and wall panels. Ravine, Linear, and Shaker profiles." },
+    { name: "Caesarstone", type: "trade", website: "https://www.caesarstone.com.au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Premium engineered stone benchtops. 20mm and 30mm slabs. Trade pricing with fabrication network." },
+    { name: "Quantum Quartz", type: "trade", website: "https://www.quantumquartz.com.au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Engineered stone benchtops. Competitive pricing vs Caesarstone." },
+    { name: "Hafele", type: "trade", website: "https://www.hafele.com.au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Cabinet hardware and fittings specialist. Handles, hinges, runners, shelf pins, cam locks." },
+    { name: "Blum", type: "trade", website: "https://www.blum.com/au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Premium cabinet hardware — CLIP top BLUMOTION hinges, TANDEM/LEGRABOX drawer systems, AVENTOS lift systems." },
+    { name: "Big River Timbers", type: "trade", website: "https://www.bigrivertimbers.com.au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Structural and decorative plywood, formply, and timber panels. Trade accounts." },
+    { name: "Bunnings Warehouse", type: "retail", website: "https://www.bunnings.com.au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Retail hardware and basic panel products. Good for small quantities." },
   ],
   rendering: [
     { name: "CSR Gyprock", type: "trade", website: "https://www.csr.com.au", trades: ["rendering"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Australia's leading plasterboard and render supplier." },
@@ -135,12 +138,12 @@ export const INDUSTRY_BENCHMARKS: Record<string, {
     sections: ["Preliminaries", "Demolition & Clearing", "Earthworks & Drainage", "Retaining Walls", "Paving & Paths", "Turf & Planting", "Irrigation", "Fencing", "Outdoor Lighting", "Commissioning"],
   },
   cabinetry: {
-    labourRateRange: { min: 75, max: 110, median: 90 },
-    marginRange: { min: 20, max: 40, median: 30 },
-    costPerM2: { residential: { min: 800, max: 2200 } },
+    labourRateRange: { min: 75, max: 115, median: 92 },
+    marginRange: { min: 20, max: 45, median: 32 },
+    costPerM2: { residential: { min: 800, max: 2200 }, commercial: { min: 1200, max: 4500 } },
     winRateBenchmark: 60,
-    avgQuoteValue: { small: 4500, medium: 22000, large: 85000 },
-    sections: ["Preliminaries", "Kitchen Cabinets", "Bathroom Vanities", "Laundry Cabinets", "Wardrobes & Robes", "Benchtops", "Splashbacks", "Hardware & Accessories", "Installation Labour"],
+    avgQuoteValue: { small: 4500, medium: 28000, large: 185000 },
+    sections: ["Preliminaries & Shop Drawings", "Sheet Materials & Panels", "Kitchen Cabinets", "Commercial Joinery Units", "Bathroom Vanities", "Wardrobes & Robes", "Benchtops & Stone", "Door Panels & Profiles", "Hardware (Blum/Hafele)", "Edging & Accessories", "Splashbacks", "Workshop Labour", "Site Installation Labour", "Delivery & Crane"],
   },
   rendering: {
     labourRateRange: { min: 60, max: 95, median: 78 },
@@ -414,24 +417,85 @@ function buildTradePrompt(mode: "vision" | "text", trade: string): string {
 - Plants: list species, pot size, and quantity from landscape plan`,
     },
     cabinetry: {
-      title: "cabinetry and joinery",
-      specialist: "senior Australian cabinet maker and joinery estimator with 20+ years experience on residential kitchen, bathroom, and commercial joinery projects",
+      title: "cabinetry, joinery and cabinet making",
+      specialist: "senior Australian cabinet maker and commercial joinery estimator with 20+ years experience on residential, commercial, and large-scale manufacturing projects including kitchens, bathrooms, office fitouts, retail joinery, and custom furniture",
       pricingBenchmarks: `PRICING BENCHMARKS (2024-25 Australian trade pricing):
-- Flat-pack cabinet (600mm base): $85-140 trade
-- Flat-pack cabinet (900mm base): $120-180 trade
-- Custom cabinet (per linear metre): $350-650 trade
-- 40mm Caesarstone benchtop: $380-580/lm trade
-- 20mm laminate benchtop: $120-220/lm trade
-- Blum soft-close hinge (pair): $8-14 trade
-- Blum Tandembox drawer system: $85-140 trade
-- Laminex MDF board (2400x1200x18mm): $55-75/sheet trade
-- Polytec door (per door): $85-180 trade
-- Cabinetmaker labour: $${labourRate.min}-${labourRate.max}/hr`,
-      criticalRules: `- Count every cabinet from the plan — list each one with dimensions
-- Benchtops: measure total linear metres including corners and returns
-- Hardware: count every hinge, drawer runner, and handle
-- Appliance cutouts: include labour for oven, cooktop, dishwasher, rangehood
-- Include scribing, filler panels, and end panels`,
+
+SHEET MATERIALS:
+- Laminex MDF 16mm 2400x1200: $52-68/sheet trade
+- Laminex MDF 18mm 2400x1200: $62-78/sheet trade
+- Laminex MDF 25mm 2400x1200: $72-92/sheet trade
+- Laminex Compact Laminate 13mm: $115-145/sheet trade
+- Polytec melamine board 16mm: $58-72/sheet trade
+- Plywood 12mm birch 2400x1200: $85-110/sheet trade
+- Plywood 18mm structural 2400x1200: $95-125/sheet trade
+
+DOOR PANELS:
+- Polytec Ravine door (per door): $95-195 trade
+- Polytec flat panel door (per door): $75-145 trade
+- Custom painted MDF door (per door): $120-280 trade
+- 2-pac polyurethane door (per door): $180-380 trade
+
+BENCHTOPS:
+- Caesarstone 20mm engineered stone: $380-580/lm trade
+- Caesarstone 30mm engineered stone: $480-720/lm trade
+- Quantum Quartz 20mm: $320-480/lm trade
+- Laminex 33mm postform benchtop: $120-195/lm trade
+- Laminex 40mm square edge benchtop: $165-245/lm trade
+- Solid timber benchtop 40mm blackbutt: $320-480/lm trade
+- Stainless steel benchtop 1.2mm: $380-580/lm trade
+
+HARDWARE (BLUM — PREMIUM):
+- Blum CLIP top BLUMOTION hinge 110°: $10-15/ea trade
+- Blum CLIP top BLUMOTION hinge 165° (corner): $18-26/ea trade
+- Blum TANDEM 500mm soft-close runner: $42-58/pair trade
+- Blum LEGRABOX pure drawer system 500mm: $105-148/set trade
+- Blum AVENTOS HF lift system: $145-195/set trade
+
+HARDWARE (HAFELE — MID-RANGE):
+- Hafele soft-close hinge: $6-10/ea trade
+- Hafele drawer runner 500mm: $22-35/pair trade
+- Hafele shelf pin 5mm: $0.40-0.65/ea trade
+- Hafele cam lock 15mm: $0.75-1.20/ea trade
+- Hafele handle 128-160mm c/c: $8-22/ea trade
+
+EDGING:
+- Laminex ABS edging 22mm (50m roll): $24-38/roll trade
+- Laminex ABS edging 42mm (50m roll): $32-48/roll trade
+- Iron-on PVC edging 22mm (50m roll): $14-22/roll trade
+
+CONSUMABLES:
+- Confirmat screw 7x50mm (box 200): $12-18/box trade
+- Dowel 8x35mm (box 200): $8-14/box trade
+- PVA cabinet glue 1L: $8-14/ea trade
+- Silicone sealant clear (310ml): $8-14/ea trade
+
+LABOUR:
+- Cabinet maker — qualified: $${labourRate.min}-${labourRate.max}/hr
+- Cabinet maker — advanced/leading hand: $${Math.round(labourRate.max * 1.1)}-${Math.round(labourRate.max * 1.25)}/hr
+- Apprentice cabinetmaker 3rd/4th year: $45-65/hr
+- Site installation labour: $${labourRate.min}-${labourRate.max}/hr
+
+PROJECT BENCHMARKS:
+- Residential kitchen (standard): $12,000-28,000 supply & install
+- Residential kitchen (premium): $28,000-85,000 supply & install
+- Commercial office workstation joinery (per unit): $2,800-6,500
+- Retail shopfit joinery (per lm): $850-2,200
+- Bathroom vanity (standard): $1,800-4,500
+- Wardrobe system (per lm): $650-1,800`,
+      criticalRules: `- ALWAYS list every individual cabinet/unit with its dimensions (W x H x D)
+- Sheet materials: calculate total sheets needed based on cabinet dimensions + 15% waste for machining
+- Benchtops: measure TOTAL linear metres including all returns, corners, and islands
+- Hardware: count EVERY hinge (2 per door minimum), EVERY drawer runner pair, EVERY handle
+- Appliance cutouts (oven, cooktop, dishwasher, rangehood, sink): include labour for each
+- Include ALL scribing strips, filler panels, end panels, and plinths
+- Edging: calculate total linear metres of all exposed edges
+- Preliminaries: ALWAYS include site measure, shop drawings, and delivery
+- For commercial projects: include site protection, rubbish removal, and touch-up paint
+- For large projects (>$50K): include a Provisional Sum for variations and site conditions
+- Specify finish for every item: laminate colour/code, door profile, hardware brand and finish
+- Labour: separate manufacture/workshop labour from site installation labour
+- Always include a Provisional Sum for electrical/plumbing cutouts (done by other trades)`,
     },
     rendering: {
       title: "rendering and plastering",

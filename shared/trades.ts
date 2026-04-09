@@ -61,10 +61,10 @@ export const TRADES = [
   },
   {
     id: "cabinetry",
-    name: "Cabinetry & Joinery",
+    name: "Cabinet Making & Joinery",
     icon: "Package",
-    color: "#D97706",
-    description: "Kitchens, bathrooms, wardrobes & custom joinery",
+    color: "#0D9488",
+    description: "Kitchens, commercial joinery, wardrobes, shopfitting & custom cabinetry",
     unit: "lm",
   },
   {

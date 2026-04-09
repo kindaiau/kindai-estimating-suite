@@ -578,7 +578,7 @@ export default function Pricing() {
             AS/NZS standards, and AUD pricing. Not an American tool with a currency converter bolted on.
           </p>
           <div className="flex flex-wrap justify-center gap-2">
-            {["Electrical", "Plumbing", "Carpentry", "HVAC", "Flooring", "Concreting", "Landscaping", "Cabinetry", "Rendering", "Cabinet Making"].map((trade) => (
+            {["Electrical", "Plumbing", "Carpentry", "HVAC", "Flooring", "Concreting", "Landscaping", "Cabinet Making & Joinery", "Rendering", "Painting", "Bricklaying", "Roofing", "Tiling", "Waterproofing", "Fire Protection", "Glazing", "Quantity Surveying", "Demolition", "Swimming Pool", "Steel Fabrication"].map((trade) => (
               <Badge key={trade} className="bg-slate-800 text-slate-300 border-slate-700 rounded-full text-xs font-bold px-3 py-1">
                 {trade}
               </Badge>
