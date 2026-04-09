@@ -4,9 +4,9 @@ AI-assisted estimating and quoting software for Australian trades and joinery te
 
 ## What this repo contains
 
-- React + Vite frontend in `/home/runner/work/kindai-estimating-suite/kindai-estimating-suite/client`
-- Express + tRPC backend in `/home/runner/work/kindai-estimating-suite/kindai-estimating-suite/server`
-- Drizzle schema in `/home/runner/work/kindai-estimating-suite/kindai-estimating-suite/drizzle`
+- React + Vite frontend in `./client`
+- Express + tRPC backend in `./server`
+- Drizzle schema in `./drizzle`
 
 ## Current product status
 
@@ -39,7 +39,7 @@ AI-assisted estimating and quoting software for Australian trades and joinery te
 
 ### Setup
 
-1. Copy `/home/runner/work/kindai-estimating-suite/kindai-estimating-suite/.env.example` to `.env`
+1. Copy `.env.example` to `.env`
 2. Fill in at least the startup-required variables:
    - `VITE_APP_ID`
    - `JWT_SECRET`
