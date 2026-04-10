@@ -412,3 +412,9 @@
 - [x] Create og:image (1200x630) for social share previews
 - [x] Wire og:image into all public pages
 - [x] Upload all ad assets to CDN
+
+## Ad Creative Rebranding & Teaser Videos
+- [ ] Fix branding on existing ad creatives (kindai.com.au → kindaiestimator.com)
+- [ ] Create teaser videos from animated logo and city explosion footage
+- [ ] Build Meta Ads Campaign 1 — Lead Generation targeting AU tradies/builders
+- [ ] Test full beta signup funnel (Brevo welcome email + HubSpot contact/deal)
