@@ -406,3 +406,9 @@
 - [ ] Wire Calendly booking link into Book Enterprise Pilot buttons
 - [ ] Add cabinet making demo video to /cabinet-joinery page
 - [x] Wire matt@kindaiestimator.com into all Book Enterprise Pilot buttons (CabinetJoinery, Pricing, Home, Support, Terms, Privacy, DataDeletion)
+- [x] Create static image ad creatives (1080x1080) for FB/IG feed ads
+- [x] Create 15-second vertical video ad (9:16) for Stories/Reels
+- [x] Create 30-second square video ad (1:1) for Feed placement
+- [x] Create og:image (1200x630) for social share previews
+- [x] Wire og:image into all public pages
+- [x] Upload all ad assets to CDN
