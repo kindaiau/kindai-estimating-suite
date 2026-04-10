@@ -6,6 +6,7 @@ import { eq, count, sql } from "drizzle-orm";
 import { notifyOwner } from "../_core/notification";
 import { createBetaSignupInHubSpot } from "../hubspot";
 import { sendBetaWelcomeEmail } from "../welcomeEmail";
+import { scheduleNurtureForSignup } from "./betaNurture";
 
 const BETA_SPOTS_TOTAL = 25;
 
@@ -62,7 +63,7 @@ export const betaRouter = router({
       }
 
       // Insert signup
-      await db!.insert(betaSignups).values({
+      const insertResult = await db!.insert(betaSignups).values({
         name: input.name,
         email: input.email,
         company: input.company,
@@ -74,6 +75,7 @@ export const betaRouter = router({
         utmCampaign: input.utmCampaign,
         status: "pending",
       });
+      const signupId = Number((insertResult as any)[0]?.insertId ?? (insertResult as any).insertId ?? claimed + 1);
 
       // Notify owner
       await notifyOwner({
@@ -90,6 +92,15 @@ export const betaRouter = router({
         spotNumber,
         trade: input.trade,
       }).catch((err: unknown) => console.error("[Email] Failed to send welcome email:", err));
+
+      // Schedule nurture email sequence (fire-and-forget)
+      scheduleNurtureForSignup({
+        id: signupId,
+        name: input.name,
+        email: input.email,
+        spotNumber,
+        trade: input.trade,
+      }).catch((err: unknown) => console.error("[Nurture] Failed to schedule nurture sequence:", err));
 
       // Push to HubSpot CRM (fire-and-forget — don't block the response)
       createBetaSignupInHubSpot({

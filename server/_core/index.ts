@@ -9,6 +9,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerStripeWebhook } from "../stripe/webhook";
 import { seedMaterials } from "../seedMaterials";
+import { processDueNurtureEmails } from "../routers/betaNurture";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 
@@ -108,6 +109,19 @@ async function startServer() {
     console.log(`Server running on http://localhost:${port}/`);
     // Seed default materials library on startup (idempotent)
     seedMaterials().catch(err => console.warn("[Seed] Materials seed failed:", err.message));
+
+    // Process due nurture emails every 15 minutes
+    setInterval(() => {
+      processDueNurtureEmails().catch(err =>
+        console.warn("[Nurture] Cron processing failed:", err.message)
+      );
+    }, 15 * 60 * 1000);
+    // Also run once on startup (after 30s delay to let DB connect)
+    setTimeout(() => {
+      processDueNurtureEmails().catch(err =>
+        console.warn("[Nurture] Initial processing failed:", err.message)
+      );
+    }, 30_000);
   });
 }
 

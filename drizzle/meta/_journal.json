@@ -78,6 +78,13 @@
       "when": 1775523464537,
       "tag": "0010_tearful_garia",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1775806419132,
+      "tag": "0011_true_warbound",
+      "breakpoints": true
     }
   ]
 }

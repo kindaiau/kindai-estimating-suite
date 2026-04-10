@@ -440,3 +440,24 @@
 
 ## HubSpot CRM Fix
 - [x] Fix HubSpot API key scopes so beta signups create contacts + deals correctly
+
+## Meta Ads Campaign Setup
+- [ ] Check FB content folder for uploaded images/videos
+- [ ] Build Campaign 1 — Lead Generation targeting AU tradies
+- [ ] Build Ad Sets with correct targeting
+- [ ] Create Ads with uploaded creatives
+- [ ] Verify full funnel: ad → landing → beta signup → HubSpot + Brevo
+
+## Beta Signup Nurture Email Sequence
+- [x] Design 5-email nurture sequence strategy (Day 0 welcome already exists)
+- [x] Write Email 2: Day 1 — "Your first quote in 60 seconds" (activation push)
+- [x] Write Email 3: Day 3 — "What other tradies are saying" (social proof + case study)
+- [x] Write Email 4: Day 7 — "The $120K question" (ROI/value reinforcement)
+- [x] Write Email 5: Day 14 — "Your beta access expires soon" (urgency close)
+- [x] Create server/betaNurture.ts with all email HTML templates
+- [x] Create server/routers/betaNurture.ts with scheduling + sending procedures
+- [x] Add beta_nurture_emails table to track sent/scheduled emails per signup
+- [x] Wire nurture scheduling into beta signup flow (auto-schedule on signup)
+- [ ] Add admin UI to view nurture email status per signup (future)
+- [x] Write vitest tests for nurture sequence (55 tests passing)
+- [x] AU Spam Act compliance: unsubscribe handling in every email

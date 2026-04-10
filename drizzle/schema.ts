@@ -460,3 +460,22 @@ export const betaSignups = mysqlTable("beta_signups", {
 });
 export type BetaSignup = typeof betaSignups.$inferSelect;
 export type InsertBetaSignup = typeof betaSignups.$inferInsert;
+
+// ─── Beta Nurture Emails ─────────────────────────────────────────────────────
+export const betaNurtureEmails = mysqlTable("beta_nurture_emails", {
+  id: int("id").autoincrement().primaryKey(),
+  betaSignupId: int("betaSignupId").notNull(), // FK → beta_signups.id
+  email: varchar("email", { length: 320 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  trade: varchar("trade", { length: 64 }),
+  spotNumber: int("spotNumber").notNull(),
+  emailKey: mysqlEnum("emailKey", ["day1_activation", "day3_social_proof", "day7_roi", "day14_urgency"]).notNull(),
+  scheduledAt: bigint("scheduledAt", { mode: "number" }).notNull(), // UTC ms
+  sentAt: bigint("sentAt", { mode: "number" }),
+  status: mysqlEnum("status", ["scheduled", "sent", "failed", "cancelled"]).default("scheduled").notNull(),
+  brevoMessageId: varchar("brevoMessageId", { length: 255 }),
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type BetaNurtureEmail = typeof betaNurtureEmails.$inferSelect;
+export type InsertBetaNurtureEmail = typeof betaNurtureEmails.$inferInsert;

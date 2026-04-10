@@ -19,6 +19,7 @@ import { quoteTokensRouter } from "./routers/quoteTokens";
 import { teamRouter } from "./routers/team";
 import { variationsRouter } from "./routers/variations";
 import { betaRouter } from "./routers/beta";
+import { betaNurtureRouter } from "./routers/betaNurture";
 
 export const appRouter = router({
   system: systemRouter,
@@ -47,6 +48,7 @@ export const appRouter = router({
   team: teamRouter,
   variations: variationsRouter,
   beta: betaRouter,
+  betaNurture: betaNurtureRouter,
 });
 
 export type AppRouter = typeof appRouter;
