@@ -334,7 +334,7 @@ function buildDay7(data: NurtureEmailData): EmailContent {
     </p>
     ${ctaButton("Quote a Job Now", `${BASE_URL}/dashboard`)}
     <p style="margin:0;color:#666666;font-size:14px;">
-      P.S. Your founding member pricing is locked in for life. But the beta won't be open forever. Make the most of it while you can.
+      P.S. Your founding member pricing is locked in for life. The beta closes <strong style="color:#ff6b35;">May 15, 2026</strong> — make the most of it while you can.
     </p>
     ${signoff()}
   `);
@@ -357,7 +357,7 @@ You've got the tool. You've got founding member access. The only thing left is t
 
 Quote a job now: ${BASE_URL}/dashboard
 
-P.S. Your founding member pricing is locked in for life. But the beta won't be open forever. Make the most of it while you can.
+P.S. Your founding member pricing is locked in for life. The beta closes May 15, 2026 — make the most of it while you can.
 
 Cheers,
 Matt Symons
@@ -411,7 +411,7 @@ function buildDay14(data: NurtureEmailData): EmailContent {
     </table>
 
     <p style="margin:0 0 16px;color:#cccccc;font-size:16px;line-height:1.7;">
-      Once the beta closes, pricing goes to standard rates and the founding member perks are gone. I'm not saying that to pressure you — I'm saying it because I don't want you to miss out.
+      The beta closes on <strong style="color:#ff6b35;">May 15, 2026</strong>. After that, pricing goes to standard rates and the founding member perks are gone. I'm not saying that to pressure you — I'm saying it because I don't want you to miss out.
     </p>
     <p style="margin:0 0 16px;color:#cccccc;font-size:16px;line-height:1.7;">
       If Kindai isn't for you, no hard feelings at all. But if you've been meaning to try it and just haven't got around to it — now's the time. One quote. Five minutes. See if it's worth it.
@@ -435,7 +435,7 @@ Here's what you've got right now that won't last forever:
 - Direct line to the founder (me) for feedback
 - AI that's learning ${trade} from real Australian jobs
 
-Once the beta closes, pricing goes to standard rates and the founding member perks are gone.
+The beta closes on May 15, 2026. After that, pricing goes to standard rates and the founding member perks are gone.
 
 If Kindai isn't for you, no hard feelings at all. But if you've been meaning to try it and just haven't got around to it — now's the time. One quote. Five minutes. See if it's worth it.
 

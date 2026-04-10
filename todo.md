@@ -461,3 +461,8 @@
 - [ ] Add admin UI to view nurture email status per signup (future)
 - [x] Write vitest tests for nurture sequence (55 tests passing)
 - [x] AU Spam Act compliance: unsubscribe handling in every email
+
+## Beta End Date (May 15, 2026)
+- [x] Add beta end date countdown to beta signup page
+- [x] Update nurture email templates with beta deadline urgency
+- [ ] Create reusable Meta Ads campaign creation skill

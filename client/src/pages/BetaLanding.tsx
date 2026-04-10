@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { pixelLead, pixelCompleteRegistration, pixelViewBetaPage } from "@/lib/metaPixel";
 import SEO from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
@@ -11,6 +11,22 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
+
+const BETA_END_DATE = new Date("2026-05-15T23:59:59+09:30"); // May 15, 2026 ACST
+
+function useCountdown(target: Date) {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const diff = Math.max(0, target.getTime() - now.getTime());
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const minutes = Math.floor((diff % 3600000) / 60000);
+  const seconds = Math.floor((diff % 60000) / 1000);
+  return { days, hours, minutes, seconds, expired: diff <= 0 };
+}
 
 const BETA_PERKS = [
   { icon: Zap, text: "Full platform access — free during beta (normally $149–$499/mo)" },
@@ -95,6 +111,7 @@ export default function BetaLanding() {
   const claimed = stats?.claimed ?? 67;
   const remaining = stats?.remaining ?? 33;
   const pct = Math.min(100, Math.round((claimed / 25) * 100));
+  const countdown = useCountdown(BETA_END_DATE);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -116,7 +133,7 @@ export default function BetaLanding() {
           </a>
           <div className="flex items-center gap-2">
             <span className="text-xs text-orange-400 font-bold animate-pulse">● PILOT PROGRAM OPEN</span>
-            <span className="text-xs text-gray-500">{remaining} spots left</span>
+            <span className="text-xs text-gray-500">{remaining} spots left — closes May 15</span>
           </div>
         </div>
       </nav>
@@ -184,6 +201,35 @@ export default function BetaLanding() {
               <span className="text-orange-400 font-black text-lg">{remaining}</span>
               <span className="text-gray-400"> spots remaining</span>
             </p>
+          </motion.div>
+
+          {/* Countdown timer */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="bg-red-500/5 border border-red-500/20 rounded-2xl p-4 max-w-md mx-auto"
+          >
+            <p className="text-xs font-bold text-red-400 uppercase tracking-wider text-center mb-3">
+              Pilot closes May 15, 2026
+            </p>
+            {countdown.expired ? (
+              <p className="text-center text-red-400 font-black text-lg">Pilot has closed</p>
+            ) : (
+              <div className="grid grid-cols-4 gap-2 text-center">
+                {[
+                  { val: countdown.days, label: "Days" },
+                  { val: countdown.hours, label: "Hours" },
+                  { val: countdown.minutes, label: "Mins" },
+                  { val: countdown.seconds, label: "Secs" },
+                ].map(({ val, label }) => (
+                  <div key={label}>
+                    <div className="text-2xl sm:text-3xl font-black text-white tabular-nums">{String(val).padStart(2, "0")}</div>
+                    <div className="text-[10px] text-gray-500 uppercase tracking-wider">{label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </motion.div>
         </div>
       </section>
@@ -462,7 +508,8 @@ export default function BetaLanding() {
             {remaining > 0 ? `${remaining} pilot spots remaining.` : "Pilot is full — join the waitlist."}
           </h2>
           <p className="text-gray-400 mb-8">
-            Pilot members get full platform access free. When the pilot closes, pricing starts at $149/month.
+            Pilot closes <strong className="text-white">May 15, 2026</strong>. After that, pricing starts at $149/month.
+            {countdown.days > 0 && <span className="text-red-400 font-bold"> Only {countdown.days} days left.</span>}
           </p>
           <Button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
