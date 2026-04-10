@@ -38,7 +38,7 @@ export default function PrivacyPolicy() {
             </p>
             <p className="mt-3">
               If you have any questions about this Privacy Policy, please contact us at{" "}
-              <a href="mailto:matt@kindaiestimator.com?subject=Privacy%20%26%20Data" className="text-orange-400 hover:underline">matt@kindaiestimator.com</a>.
+              <a href="mailto:hello@kindaiestimator.com?subject=Privacy%20%26%20Data" className="text-orange-400 hover:underline">hello@kindaiestimator.com</a>.
             </p>
           </section>
 
@@ -129,7 +129,7 @@ export default function PrivacyPolicy() {
             </ul>
             <p className="mt-3">
               To exercise any of these rights, email us at{" "}
-              <a href="mailto:matt@kindaiestimator.com?subject=Privacy%20%26%20Data" className="text-orange-400 hover:underline">matt@kindaiestimator.com</a>{" "}
+              <a href="mailto:hello@kindaiestimator.com?subject=Privacy%20%26%20Data" className="text-orange-400 hover:underline">hello@kindaiestimator.com</a>{" "}
               or use our{" "}
               <a href="/data-deletion" className="text-orange-400 hover:underline">Data Deletion Request</a> page.
             </p>
@@ -163,7 +163,7 @@ export default function PrivacyPolicy() {
             <h2 className="text-xl font-semibold text-white mb-3">11. Contact Us</h2>
             <div className="bg-white/5 rounded-lg p-5 border border-white/10">
               <p className="font-semibold text-white mb-2">Kindai Pty Ltd</p>
-              <p className="text-gray-400 text-sm">Email: <a href="mailto:matt@kindaiestimator.com?subject=Privacy%20%26%20Data" className="text-orange-400 hover:underline">matt@kindaiestimator.com</a></p>
+              <p className="text-gray-400 text-sm">Email: <a href="mailto:hello@kindaiestimator.com?subject=Privacy%20%26%20Data" className="text-orange-400 hover:underline">hello@kindaiestimator.com</a></p>
               <p className="text-gray-400 text-sm mt-1">Website: <a href="https://kindaiestimator.com" className="text-orange-400 hover:underline">kindaiestimator.com</a></p>
               <p className="text-gray-400 text-sm mt-1">Data Deletion: <a href="/data-deletion" className="text-orange-400 hover:underline">kindaiestimator.com/data-deletion</a></p>
             </div>
@@ -176,7 +176,7 @@ export default function PrivacyPolicy() {
           <a href="/" className="hover:text-orange-400 transition-colors">Home</a>
           <a href="/beta" className="hover:text-orange-400 transition-colors">Beta Sign-up</a>
           <a href="/data-deletion" className="hover:text-orange-400 transition-colors">Data Deletion</a>
-          <a href="mailto:matt@kindaiestimator.com?subject=Privacy%20%26%20Data" className="hover:text-orange-400 transition-colors">Contact</a>
+          <a href="mailto:hello@kindaiestimator.com?subject=Privacy%20%26%20Data" className="hover:text-orange-400 transition-colors">Contact</a>
         </div>
       </div>
     </div>
