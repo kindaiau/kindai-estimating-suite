@@ -48,6 +48,7 @@ const TRADES = [
   "Roofing", "Tiling", "Waterproofing", "Fire Protection",
   "Glazing & Aluminium", "Quantity Surveying", "Demolition & Excavation",
   "Swimming Pool Construction", "Steel Fabrication & Structural",
+  "Gas Installation & Gasfitting", "Gas Maintenance & Servicing",
   "General Building / Builder", "Other",
 ];
 
@@ -457,7 +458,7 @@ export default function BetaLanding() {
 
             {/* Trust signals */}
             <div className="flex flex-wrap gap-4 text-xs text-gray-500">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> 20 Australian trades</span>
+              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> 22 Australian trades</span>
               <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> GST compliant</span>
               <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> All 8 states/territories</span>
               <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> No credit card required</span>

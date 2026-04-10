@@ -18,6 +18,8 @@ import {
   Users, TrendingUp, Zap, Star, Lock, BarChart3,
   Upload, FileImage, X, ScanLine
 } from "lucide-react";
+import ScopingQuestionsPanel from "@/components/ScopingQuestions";
+import { formatScopingAnswers, getScopingQuestions } from "../../../shared/scopingQuestions";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
 
@@ -42,6 +44,8 @@ const TRADES = [
   { id: "demolition",        name: "Demolition & Excavation",emoji: "⛏️", colour: "from-stone-400 to-gray-500" },
   { id: "swimming-pool",     name: "Swimming Pool",        emoji: "🏊",  colour: "from-cyan-400 to-teal-500" },
   { id: "steel-fabrication", name: "Steel Fabrication",    emoji: "🔩",  colour: "from-zinc-500 to-slate-600" },
+  { id: "gas-install",       name: "Gas Installation",     emoji: "🔥",  colour: "from-orange-400 to-red-500" },
+  { id: "gas-maintenance",   name: "Gas Maintenance",      emoji: "🛠️",  colour: "from-amber-400 to-orange-500" },
 ] as const;
 
 type TradeId = typeof TRADES[number]["id"];
@@ -56,7 +60,8 @@ const DEMO_PROMPTS: Record<string, string> = {
   landscaping: "Backyard 120m². Includes lawn, garden beds, retaining wall, paving, and irrigation system.",
   cabinetry: "Commercial kitchen fitout. 6.4m run of 18mm Laminex MDF base cabinets (900mm high x 600mm deep), 6.4m overhead cabinets (700mm high x 350mm deep), 3.2m island bench with 40mm Caesarstone top, full-height pantry unit (2400mm), 2 x 4-drawer towers. Polytec Ravine doors throughout, Blum CLIP top BLUMOTION hinges, Blum Legrabox drawers, stainless steel handles.",
   rendering: "Double brick house, external render 280m². Acrylic texture coat finish.",
-
+  "gas-install": "New residential house, 3 gas appliance connections. Natural gas. Cooktop, instantaneous hot water unit, and gas ducted heater. 15m total pipe run from meter.",
+  "gas-maintenance": "Annual gas service for residential property. 4 gas appliances: cooktop, oven, instantaneous hot water, and ducted heater. Include leak test and compliance certificate.",
 };
 
 type DemoResult = {
@@ -100,6 +105,7 @@ export default function DemoMode() {
   const [planPreviewUrl, setPlanPreviewUrl] = useState<string | null>(null);
   const [uploadedPlanUrl, setUploadedPlanUrl] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [scopingAnswers, setScopingAnswers] = useState<Record<string, string | string[] | number>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fire ViewDemoPage + StartTrial pixel events on mount
@@ -178,6 +184,7 @@ export default function DemoMode() {
   const handleTradeSelect = (tradeId: TradeId) => {
     setSelectedTrade(tradeId);
     setJobDescription(DEMO_PROMPTS[tradeId] ?? "");
+    setScopingAnswers({});
     setResult(null);
   };
 
@@ -190,9 +197,12 @@ export default function DemoMode() {
       toast.error("Plan is still uploading, please wait a moment.");
       return;
     }
+    // Inject scoping answers into the job description for the AI
+    const scopingContext = formatScopingAnswers(getScopingQuestions(selectedTrade), scopingAnswers);
+    const enrichedDescription = (jobDescription || "") + scopingContext;
     runDemo.mutate({
       trade: selectedTrade,
-      jobDescription: jobDescription || undefined,
+      jobDescription: enrichedDescription || undefined,
       markupPercent,
       labourRate,
       useTradePrice,
@@ -335,6 +345,14 @@ export default function DemoMode() {
                 </CardContent>
               </Card>
 
+              {/* Scoping Questions */}
+              {selectedTrade && (
+                <ScopingQuestionsPanel
+                  tradeId={selectedTrade}
+                  onChange={setScopingAnswers}
+                />
+              )}
+
               {/* Job Description */}
               <Card className="border-gray-200 shadow-sm">
                 <CardContent className="p-4">
@@ -352,7 +370,7 @@ export default function DemoMode() {
               {/* Pricing Controls */}
               <Card className="border-gray-200 shadow-sm">
                 <CardContent className="p-4">
-                  <h3 className="text-sm font-black text-gray-900 mb-3">3. Set your pricing</h3>
+                  <h3 className="text-sm font-black text-gray-900 mb-3">4. Set your pricing</h3>
                   <div className="space-y-4">
                     <div>
                       <div className="flex justify-between text-xs mb-1.5">

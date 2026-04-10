@@ -66,6 +66,19 @@ export const AUSTRALIAN_SUPPLIERS: Record<string, Array<{
     { name: "Big River Timbers", type: "trade", website: "https://www.bigrivertimbers.com.au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Structural and decorative plywood, formply, and timber panels. Trade accounts." },
     { name: "Bunnings Warehouse", type: "retail", website: "https://www.bunnings.com.au", trades: ["cabinetry"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Retail hardware and basic panel products. Good for small quantities." },
   ],
+  "gas-install": [
+    { name: "Elgas", type: "trade", website: "https://www.elgas.com.au", trades: ["gas-install", "gas-maintenance"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Australia's largest LP Gas supplier. Gas equipment, regulators, and cylinders. Trade accounts available." },
+    { name: "Reece Plumbing", type: "trade", website: "https://www.reece.com.au", trades: ["gas-install", "plumbing"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "National plumbing and gas supplier. Copper pipe, fittings, regulators, gas valves. Trade pricing." },
+    { name: "Tradelink", type: "trade", website: "https://www.tradelink.com.au", trades: ["gas-install", "plumbing"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Gas and plumbing supplies. Rinnai, Rheem, Bosch gas appliances." },
+    { name: "Samios", type: "trade", website: "https://www.samios.net.au", trades: ["gas-install", "plumbing"], regions: ["QLD", "NSW", "VIC"], notes: "Plumbing and gas specialist. Competitive trade pricing on gas fittings." },
+    { name: "Bunnings Warehouse", type: "retail", website: "https://www.bunnings.com.au", trades: ["gas-install"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Retail gas fittings and basic supplies only. Not suitable for trade quantities." },
+  ],
+  "gas-maintenance": [
+    { name: "Reece Plumbing", type: "trade", website: "https://www.reece.com.au", trades: ["gas-maintenance", "plumbing"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Replacement parts, thermocouples, pilot assemblies, gas valves. Trade pricing." },
+    { name: "Elgas", type: "trade", website: "https://www.elgas.com.au", trades: ["gas-maintenance", "gas-install"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "LP Gas specialist. Regulators, cylinders, and service parts." },
+    { name: "Rinnai Australia", type: "trade", website: "https://www.rinnai.com.au", trades: ["gas-maintenance"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "OEM parts for Rinnai gas appliances. Warranty and service support." },
+    { name: "Rheem Australia", type: "trade", website: "https://www.rheem.com.au", trades: ["gas-maintenance"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "OEM parts for Rheem gas hot water systems. Warranty and service support." },
+  ],
   rendering: [
     { name: "CSR Gyprock", type: "trade", website: "https://www.csr.com.au", trades: ["rendering"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Australia's leading plasterboard and render supplier." },
     { name: "Dulux AcraTex", type: "trade", website: "https://www.dulux.com.au", trades: ["rendering"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Specialist texture and render coatings." },
@@ -242,6 +255,22 @@ export const INDUSTRY_BENCHMARKS: Record<string, {
     avgQuoteValue: { small: 8500, medium: 55000, large: 450000 },
     sections: ["Preliminaries", "Structural Steel Supply", "Fabrication", "Surface Treatment (Galvanising/Painting)", "Erection & Installation", "Connections & Bolting", "Welding", "Commissioning & Inspection"],
   },
+  "gas-install": {
+    labourRateRange: { min: 95, max: 140, median: 115 },
+    marginRange: { min: 20, max: 40, median: 28 },
+    costPerM2: { residential: { min: 35, max: 85 }, commercial: { min: 55, max: 140 } },
+    winRateBenchmark: 60,
+    avgQuoteValue: { small: 1800, medium: 8500, large: 45000 },
+    sections: ["Preliminaries & Compliance", "Gas Main & Meter Connection", "Gas Pipe Runs (Internal)", "Gas Pipe Runs (External/Underground)", "Regulators & Valves", "Appliance Connections — Cooktop/Oven", "Appliance Connections — Hot Water", "Appliance Connections — Heating", "Appliance Connections — BBQ/Outdoor", "Leak Testing & Commissioning", "Gas Compliance Certificate"],
+  },
+  "gas-maintenance": {
+    labourRateRange: { min: 95, max: 140, median: 115 },
+    marginRange: { min: 25, max: 45, median: 35 },
+    costPerM2: { residential: { min: 8, max: 25 } },
+    winRateBenchmark: 72,
+    avgQuoteValue: { small: 280, medium: 1200, large: 5500 },
+    sections: ["Call-Out & Assessment", "Gas Leak Detection & Testing", "Appliance Servicing — Cooktop/Oven", "Appliance Servicing — Hot Water", "Appliance Servicing — Heating", "Appliance Servicing — Commercial", "Pipe Repair & Replacement", "Regulator Replacement", "Carbon Monoxide Testing", "Gas Compliance Certificate"],
+  },
 };
 
 // ─── Shared prompt structure for all trades ──────────────────────────────────
@@ -285,9 +314,9 @@ function buildTradePrompt(mode: "vision" | "text", trade: string): string {
 - Data points: include Cat6 cable, wall plates, and patch panel
 - All labour as separate line items per section`,
     },
-    plumbing: {
-      title: "plumbing",
-      specialist: "senior Australian licensed plumber and hydraulic estimator with 25+ years experience on residential and commercial developments, specialising in multi-dwelling projects",
+     plumbing: {
+      title: "plumbing and drainage (WATER ONLY — NOT GAS)",
+      specialist: "senior Australian plumber with 20+ years experience on residential and commercial plumbing projects, specialising in multi-dwelling projects. You are a PLUMBER, not a gasfitter. You ONLY price water supply, drainage, and sewer work",
       pricingBenchmarks: `PRICING BENCHMARKS (2024-25 Australian trade pricing):
 - uPVC 100mm sewer pipe: $18-22/lm trade
 - uPVC 150mm sewer pipe: $32-40/lm trade
@@ -307,7 +336,9 @@ function buildTradePrompt(mode: "vision" | "text", trade: string): string {
 - Include ALL consumables: solvent cement, flux, solder, thread tape, pipe clips, brackets, penetration seals
 - Include ALL labour as separate line items in the relevant section
 - Provisional sums: if rock excavation or unusual site conditions are possible, add a PS item
-- Exclusions to flag: gas work, electrical to hot water, council fees, hydraulic engineer fees`,
+- Exclusions to flag: gas work, electrical to hot water, council fees, hydraulic engineer fees
+- CRITICAL: If the user mentions gas lines, gas pipes, gas appliances, gasfitting, cooktop gas, or ANY gas-related work, you MUST flag this as a SEPARATE estimate under "Gas Installation" or "Gas Maintenance" trade. Do NOT price any gas items in a plumbing estimate.
+- WATER AND DRAINAGE ONLY — no gas regulators, no gas bayonets, no gas pipe, no gas compliance certificates`,
     },
     carpentry: {
       title: "carpentry and timber framing",
@@ -497,6 +528,82 @@ PROJECT BENCHMARKS:
 - Specify finish for every item: laminate colour/code, door profile, hardware brand and finish
 - Labour: separate manufacture/workshop labour from site installation labour
 - Always include a Provisional Sum for electrical/plumbing cutouts (done by other trades)`,
+    },
+    "gas-install": {
+      title: "gas installation and gasfitting",
+      specialist: "senior Australian licensed gasfitter with 20+ years experience on residential and commercial gas installations, certified to AS/NZS 5601.1:2022",
+      pricingBenchmarks: `PRICING BENCHMARKS (2024-25 Australian trade pricing):
+- 20mm copper gas pipe (per lm): $18-28 trade, $32-45 retail
+- 25mm copper gas pipe (per lm): $24-38 trade, $42-58 retail
+- 32mm copper gas pipe (per lm): $32-48 trade, $55-72 retail
+- PE gas pipe 25mm (per lm underground): $8-14 trade, $15-22 retail
+- PE gas pipe 32mm (per lm underground): $12-18 trade, $20-28 retail
+- Gas regulator (standard residential): $85-140 trade, $150-220 retail
+- Gas regulator (high capacity/commercial): $180-320 trade, $280-450 retail
+- Gas bayonet fitting (indoor): $28-45 trade, $48-68 retail
+- Gas bayonet fitting (outdoor/BBQ): $35-55 trade, $55-82 retail
+- Gas isolation valve (ball valve): $18-32 trade, $32-48 retail
+- Gas meter connection/upgrade: $350-850 (utility fee varies by state)
+- Cooktop gas connection (standard): $180-350 labour + materials
+- Gas oven connection: $180-320 labour + materials
+- Gas hot water unit connection (instantaneous): $280-550 labour + materials
+- Gas hot water unit connection (storage): $220-450 labour + materials
+- Gas ducted heater connection: $350-650 labour + materials
+- Gas log fire connection: $280-550 labour + materials
+- BBQ/outdoor gas point: $250-480 labour + materials
+- Gas leak test (per installation): $120-250
+- Gas compliance certificate: $80-180
+- Trenching for underground gas (per lm): $45-85
+- Core drilling through slab (per penetration): $120-280
+- Gasfitter labour: $\${labourRate.min}-\${labourRate.max}/hr
+- Labourer: $45-65/hr`,
+      criticalRules: `- ONLY price GAS work — do NOT include any water, drainage, or sewer items
+- If the user mentions water pipes, hot water PLUMBING, or drainage, flag these as EXCLUSIONS requiring a separate Plumbing estimate
+- Gas pipe sizing: calculate based on MJ/hr demand of ALL connected appliances using AS/NZS 5601.1 Table 5.1
+- ALWAYS include: gas meter assessment, pipe run measurements, number of appliance connections, regulator sizing
+- Underground PE pipe: include trenching, sand bedding, tracer wire, and backfill
+- Internal copper pipe: include clips every 1.2m, fire-rated penetrations through walls/floors
+- EVERY appliance connection needs: isolation valve, flex connector (if applicable), and test point
+- Compliance: ALWAYS include gas leak testing (standing pressure test) and Gas Compliance Certificate as separate line items
+- For new builds: include gas meter box, regulator, and main run from meter to first appliance
+- For renovations: assess existing pipe capacity — flag if main needs upgrading
+- Include Provisional Sum for any builder's work (chasing, patching, making good)
+- State-specific: check if LP Gas or Natural Gas — pricing differs significantly`,
+    },
+    "gas-maintenance": {
+      title: "gas maintenance, servicing and compliance",
+      specialist: "senior Australian licensed gasfitter specialising in gas appliance servicing, leak detection, and compliance inspections per AS/NZS 5601.1:2022 and AS 4575",
+      pricingBenchmarks: `PRICING BENCHMARKS (2024-25 Australian trade pricing):
+- Call-out fee (standard): $80-150
+- Call-out fee (after hours/emergency): $180-350
+- Gas leak detection (electronic sniffer test): $120-250
+- Standing pressure test (full system): $150-320
+- Cooktop service (clean burners, check ignition, test gas pressure): $120-220
+- Gas oven service (check thermostat, ignition, door seal, flue): $150-280
+- Gas hot water service — instantaneous (descale, check burner, test safety): $180-350
+- Gas hot water service — storage (check anode, thermocouple, pilot, flue): $180-320
+- Gas ducted heater service (clean heat exchanger, check flue, test CO): $220-420
+- Gas log fire service (clean logs, check pilot, test CO): $180-320
+- Commercial gas appliance service (per unit): $250-550
+- Thermocouple replacement: $85-180 (parts + labour)
+- Pilot assembly replacement: $120-280 (parts + labour)
+- Gas valve replacement: $180-380 (parts + labour)
+- Regulator replacement (residential): $180-350 (parts + labour)
+- Flex connector replacement: $65-140 (parts + labour)
+- Carbon monoxide (CO) testing (per appliance): $45-85
+- Gas compliance certificate: $80-180
+- Gasfitter labour: $\${labourRate.min}-\${labourRate.max}/hr`,
+      criticalRules: `- ONLY price GAS MAINTENANCE work — do NOT include new installation items
+- For each appliance: list the specific service tasks (clean, test, adjust, replace parts)
+- ALWAYS include carbon monoxide testing for ANY enclosed gas appliance (heaters, ovens, hot water in cupboards)
+- ALWAYS include a gas leak test as a separate line item
+- Include Gas Compliance Certificate if any work alters the gas installation
+- For hot water services: check and report anode rod condition, thermocouple, pilot assembly
+- For heaters: check and report heat exchanger condition, flue integrity, CO levels
+- Flag any appliances that are beyond repair or non-compliant — recommend replacement as a Provisional Sum
+- Include travel/call-out as a separate line item
+- For multi-unit/commercial: price per appliance with a site assessment fee
+- State-specific: some states require annual gas compliance checks for rental properties`,
     },
     rendering: {
       title: "rendering and plastering",

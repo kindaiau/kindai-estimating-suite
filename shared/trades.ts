@@ -163,6 +163,22 @@ export const TRADES = [
     description: "Structural steel, metal fabrication & erection",
     unit: "tonne",
   },
+  {
+    id: "gas-install",
+    name: "Gas Installation",
+    icon: "Flame",
+    color: "#EA580C",
+    description: "Gas pipe runs, appliance connections, regulators, compliance & certification",
+    unit: "points",
+  },
+  {
+    id: "gas-maintenance",
+    name: "Gas Maintenance & Service",
+    icon: "Flame",
+    color: "#D97706",
+    description: "Gas leak testing, appliance servicing, safety inspections & compliance checks",
+    unit: "ea",
+  },
 ] as const;
 
 export type TradeId = (typeof TRADES)[number]["id"];
@@ -213,6 +229,46 @@ export const COMPLIANCE_DATA: Record<
     ],
     whsNotice: "All electrical work must be performed by a licensed electrician. A Certificate of Compliance for Electrical Work (CCEW) must be issued upon completion. Ensure all WHS obligations under the Work Health and Safety Act 2011 are met.",
     quoteDisclaimer: "This estimate is prepared by a licensed electrical contractor. All work will comply with AS/NZS 3000:2018 Wiring Rules. GST of 10% is included where marked. A Certificate of Compliance for Electrical Work (CCEW) will be provided upon completion. Prices are valid for 30 days from the date of issue.",
+  },
+  "gas-install": {
+    licensingBodies: {
+      NSW: { body: "NSW Fair Trading", type: "Gasfitting Contractor Licence", url: "https://www.fairtrading.nsw.gov.au/trades-and-businesses/licensing/gasfitting-contractor-licence" },
+      VIC: { body: "Victorian Building Authority (VBA)", type: "Gasfitting Licence", url: "https://www.vba.vic.gov.au/plumbers/licences" },
+      QLD: { body: "QBCC", type: "Gasfitting Licence", url: "https://www.qbcc.qld.gov.au/licences/types/gasfitting" },
+      SA: { body: "Consumer and Business Services SA", type: "Gas Fitting Contractor Licence", url: "https://www.cbs.sa.gov.au/licences/gasfitting" },
+      WA: { body: "Building and Energy WA", type: "Gasfitting Permit", url: "https://www.commerce.wa.gov.au/building-and-energy/gasfitting-permits" },
+      TAS: { body: "CBOS Tasmania", type: "Gasfitting Contractor Licence", url: "https://www.cbos.tas.gov.au/topics/licensing/gasfitting" },
+      NT: { body: "NT WorkSafe", type: "Gasfitting Contractor Licence", url: "https://worksafe.nt.gov.au/licences-and-registrations/gasfitting" },
+      ACT: { body: "Access Canberra", type: "Gasfitting Contractor Licence", url: "https://www.accesscanberra.act.gov.au/s/article/gasfitting-contractor-licence" },
+    },
+    standards: [
+      { code: "AS/NZS 5601.1:2022", title: "Gas Installations — General Installations" },
+      { code: "AS/NZS 5601.2", title: "Gas Installations — LP Gas Installations in Caravans and Boats" },
+      { code: "AS 4670", title: "Commercial Catering Gas Equipment" },
+      { code: "AS/NZS 5263.1.1", title: "Gas Appliances — General Requirements" },
+    ],
+    whsNotice: "All gas installation work must be performed by a licensed gasfitter. A Gas Compliance Certificate must be issued upon completion of all gas work. Gas leak testing is mandatory before commissioning. Ensure compliance with AS/NZS 5601.1:2022 and relevant state gas safety regulations.",
+    quoteDisclaimer: "This estimate is prepared by a licensed gasfitting contractor. All work will comply with AS/NZS 5601.1:2022 Gas Installations. GST of 10% is included where marked. A Gas Compliance Certificate will be provided upon completion. Prices are valid for 30 days from the date of issue.",
+  },
+  "gas-maintenance": {
+    licensingBodies: {
+      NSW: { body: "NSW Fair Trading", type: "Gasfitting Contractor Licence", url: "https://www.fairtrading.nsw.gov.au/trades-and-businesses/licensing/gasfitting-contractor-licence" },
+      VIC: { body: "Victorian Building Authority (VBA)", type: "Gasfitting Licence", url: "https://www.vba.vic.gov.au/plumbers/licences" },
+      QLD: { body: "QBCC", type: "Gasfitting Licence", url: "https://www.qbcc.qld.gov.au/licences/types/gasfitting" },
+      SA: { body: "Consumer and Business Services SA", type: "Gas Fitting Contractor Licence", url: "https://www.cbs.sa.gov.au/licences/gasfitting" },
+      WA: { body: "Building and Energy WA", type: "Gasfitting Permit", url: "https://www.commerce.wa.gov.au/building-and-energy/gasfitting-permits" },
+      TAS: { body: "CBOS Tasmania", type: "Gasfitting Contractor Licence", url: "https://www.cbos.tas.gov.au/topics/licensing/gasfitting" },
+      NT: { body: "NT WorkSafe", type: "Gasfitting Contractor Licence", url: "https://worksafe.nt.gov.au/licences-and-registrations/gasfitting" },
+      ACT: { body: "Access Canberra", type: "Gasfitting Contractor Licence", url: "https://www.accesscanberra.act.gov.au/s/article/gasfitting-contractor-licence" },
+    },
+    standards: [
+      { code: "AS/NZS 5601.1:2022", title: "Gas Installations — General Installations" },
+      { code: "AS 4575", title: "Gas Appliance Servicing" },
+      { code: "AS/NZS 5263.1.1", title: "Gas Appliances — General Requirements" },
+      { code: "AS 3814", title: "Industrial and Commercial Gas-Fired Appliances" },
+    ],
+    whsNotice: "All gas maintenance and servicing must be performed by a licensed gasfitter. Gas leak detection testing must be performed before and after any maintenance work. A Gas Compliance Certificate must be issued for any work that alters the gas installation. Carbon monoxide testing is mandatory for all enclosed gas appliances.",
+    quoteDisclaimer: "This estimate is prepared by a licensed gasfitting contractor. All maintenance and servicing work will comply with AS/NZS 5601.1:2022 and AS 4575. GST of 10% is included where marked. A Gas Compliance Certificate will be provided where required. Prices are valid for 30 days from the date of issue.",
   },
   plumbing: {
     licensingBodies: {
@@ -747,5 +803,18 @@ export const DEFAULT_LABOUR_RATES: Record<
     { classification: "Boilermaker / Welder - Qualified", baseRate: 46.00, overtimeRate: 69.00, saturdayRate: 69.00, sundayRate: 92.00, publicHolidayRate: 115.00, travelAllowance: 17.00, toolAllowance: 1.80 },
     { classification: "Structural Steel Erector", baseRate: 52.00, overtimeRate: 78.00, saturdayRate: 78.00, sundayRate: 104.00, publicHolidayRate: 130.00, travelAllowance: 17.00, toolAllowance: 1.80 },
     { classification: "Steel Fabrication Supervisor", baseRate: 62.00, overtimeRate: 93.00, saturdayRate: 93.00, sundayRate: 124.00, publicHolidayRate: 155.00, travelAllowance: 17.00, toolAllowance: 1.80 },
+  ],
+  "gas-install": [
+    { classification: "Gasfitter - Apprentice 1st Year", baseRate: 16.50, overtimeRate: 24.75, saturdayRate: 24.75, sundayRate: 33.00, publicHolidayRate: 41.25, travelAllowance: 0, toolAllowance: 0 },
+    { classification: "Gasfitter - Apprentice 4th Year", baseRate: 28.00, overtimeRate: 42.00, saturdayRate: 42.00, sundayRate: 56.00, publicHolidayRate: 70.00, travelAllowance: 16.00, toolAllowance: 1.40 },
+    { classification: "Gasfitter - Qualified (CPC32420)", baseRate: 48.00, overtimeRate: 72.00, saturdayRate: 72.00, sundayRate: 96.00, publicHolidayRate: 120.00, travelAllowance: 17.00, toolAllowance: 1.80 },
+    { classification: "Gasfitter - Leading Hand", baseRate: 54.00, overtimeRate: 81.00, saturdayRate: 81.00, sundayRate: 108.00, publicHolidayRate: 135.00, travelAllowance: 17.00, toolAllowance: 1.80 },
+    { classification: "Gasfitter - Contractor/Supervisor", baseRate: 65.00, overtimeRate: 97.50, saturdayRate: 97.50, sundayRate: 130.00, publicHolidayRate: 162.50, travelAllowance: 17.00, toolAllowance: 1.80 },
+  ],
+  "gas-maintenance": [
+    { classification: "Gas Service Technician - Junior", baseRate: 38.00, overtimeRate: 57.00, saturdayRate: 57.00, sundayRate: 76.00, publicHolidayRate: 95.00, travelAllowance: 16.00, toolAllowance: 1.40 },
+    { classification: "Gas Service Technician - Qualified", baseRate: 48.00, overtimeRate: 72.00, saturdayRate: 72.00, sundayRate: 96.00, publicHolidayRate: 120.00, travelAllowance: 17.00, toolAllowance: 1.80 },
+    { classification: "Gas Compliance Inspector", baseRate: 58.00, overtimeRate: 87.00, saturdayRate: 87.00, sundayRate: 116.00, publicHolidayRate: 145.00, travelAllowance: 17.00, toolAllowance: 1.80 },
+    { classification: "Gas Service Supervisor", baseRate: 65.00, overtimeRate: 97.50, saturdayRate: 97.50, sundayRate: 130.00, publicHolidayRate: 162.50, travelAllowance: 17.00, toolAllowance: 1.80 },
   ],
 };

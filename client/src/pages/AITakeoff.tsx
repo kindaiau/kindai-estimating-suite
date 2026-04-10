@@ -21,6 +21,8 @@ import {
   Sparkles, ShieldCheck, ArrowRight, BarChart3, Truck,
 } from "lucide-react";
 import { TRADES } from "../../../shared/trades";
+import ScopingQuestionsPanel from "@/components/ScopingQuestions";
+import { formatScopingAnswers, getScopingQuestions } from "../../../shared/scopingQuestions";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
 
@@ -62,6 +64,7 @@ export default function AITakeoff() {
   const [labourRate, setLabourRate] = useState(85);
   const [useTradePrice, setUseTradePrice] = useState(true);
   const [tempEstimateId, setTempEstimateId] = useState<number | null>(null);
+  const [scopingAnswers, setScopingAnswers] = useState<Record<string, string | string[] | number>>({});
   const [activeTab, setActiveTab] = useState<"materials" | "labour" | "suppliers" | "summary">("materials");
 
   const uploadPlan = trpc.ai.uploadPlan.useMutation();
@@ -180,18 +183,23 @@ export default function AITakeoff() {
       const estimateId = await ensureEstimate();
       let takeoffResult: TakeoffResult;
 
+      // Inject scoping answers into the context for better accuracy
+      const scopingContext = formatScopingAnswers(getScopingQuestions(selectedTrade), scopingAnswers);
+      const enrichedContext = (additionalContext || "") + scopingContext;
+      const enrichedText = textDescription + scopingContext;
+
       if (mode === "vision" && uploadedImageUrl) {
         takeoffResult = await visionTakeoff.mutateAsync({
           estimateId,
           trade: selectedTrade,
           imageUrl: uploadedImageUrl,
-          additionalContext: additionalContext || undefined,
+          additionalContext: enrichedContext || undefined,
         });
       } else {
         takeoffResult = await textTakeoff.mutateAsync({
           estimateId,
           trade: selectedTrade,
-          planDescription: textDescription,
+          planDescription: enrichedText,
           projectDetails: additionalContext || undefined,
         }) as TakeoffResult;
       }
@@ -389,20 +397,36 @@ export default function AITakeoff() {
                       className="hidden"
                       onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
                     />
+                    {/* Scoping Questions */}
+                    {selectedTrade && (
+                      <ScopingQuestionsPanel
+                        tradeId={selectedTrade}
+                        onChange={setScopingAnswers}
+                      />
+                    )}
                     <Textarea
-                      placeholder="Optional: Add context (e.g. '3-bed house, 180m², standard residential')"
+                      placeholder="Optional: Add extra context (e.g. '3-bed house, 180m², standard residential')"
                       value={additionalContext}
                       onChange={(e) => setAdditionalContext(e.target.value)}
                       className="rounded-xl border-gray-200 text-sm min-h-[60px]"
                     />
                   </div>
                 ) : (
-                  <Textarea
-                    placeholder="Describe the job in detail. E.g.: '3-bedroom house, 180m². Need 20 power points, 15 light points, 1 switchboard upgrade, smoke alarms to all bedrooms and hallway. Standard residential wiring.'"
-                    value={textDescription}
-                    onChange={(e) => setTextDescription(e.target.value)}
-                    className="rounded-xl border-gray-200 text-sm min-h-[140px]"
-                  />
+                  <div className="space-y-3">
+                    {/* Scoping Questions for text mode */}
+                    {selectedTrade && (
+                      <ScopingQuestionsPanel
+                        tradeId={selectedTrade}
+                        onChange={setScopingAnswers}
+                      />
+                    )}
+                    <Textarea
+                      placeholder="Describe the job in detail. E.g.: '3-bedroom house, 180m². Need 20 power points, 15 light points, 1 switchboard upgrade, smoke alarms to all bedrooms and hallway. Standard residential wiring.'"
+                      value={textDescription}
+                      onChange={(e) => setTextDescription(e.target.value)}
+                      className="rounded-xl border-gray-200 text-sm min-h-[140px]"
+                    />
+                  </div>
                 )}
 
                 {!selectedTrade && (mode === "vision" ? uploadedImageUrl : textDescription.length >= 10) && (

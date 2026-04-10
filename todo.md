@@ -465,4 +465,22 @@
 ## Beta End Date (May 15, 2026)
 - [x] Add beta end date countdown to beta signup page
 - [x] Update nurture email templates with beta deadline urgency
-- [ ] Create reusable Meta Ads campaign creation skill
+- [x] Create reusable Meta Ads campaign creation skill
+
+## Facebook Lead Form + Campaign Fix
+- [ ] Delete draft "Kindai Beta - Cold Traffic - Leads" campaign
+- [ ] Create Facebook Instant Lead Form on Kindai page (email, name, trade type)
+- [ ] Update 3 existing ads to use lead form as destination
+- [ ] Wire lead form submissions to beta signup + nurture sequence
+- [ ] Re-encode yuv444p teaser videos to yuv420p for Facebook upload
+
+## Estimating Accuracy Fix — Gas Separation + Scoping Questions
+- [x] Audit current estimating prompts and benchmark data for gas vs water confusion
+- [x] Separate gas install from general plumbing in trade categories
+- [x] Add "Gas Install" trade category with gas-specific line items
+- [x] Add "Gas Maintenance" trade category with service/repair line items
+- [x] Build trade-specific scoping/pre-fill questions for all trades (gas install, gas maintenance, electrical, plumbing, HVAC, carpentry, concreting, cabinetry + default for others)
+- [x] Update AI prompt to only quote what was asked (gas ≠ water) — plumbing now explicitly excludes gas
+- [x] Add accurate gas benchmarks (AU pricing for gas lines, hot plates, HWS, meters, compliance certs)
+- [ ] Allow companies to set their own rates/margins per trade category
+- [ ] Test gas-specific estimate accuracy (manual testing needed)

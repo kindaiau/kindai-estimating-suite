@@ -140,6 +140,7 @@ function buildDemoPrompt(trade: string): string {
     "fire-protection": "fire protection", glazing: "glazing & aluminium",
     "quantity-surveying": "quantity surveying", demolition: "demolition & excavation",
     "swimming-pool": "swimming pool construction", "steel-fabrication": "steel fabrication & structural",
+    "gas-install": "gas installation & gasfitting", "gas-maintenance": "gas maintenance, servicing & compliance",
   };
   const tradeName = tradeNames[trade] ?? trade;
 
@@ -230,7 +231,7 @@ export const demoRouter = router({
 
   // Public demo — no login required, rate-limited by IP via trade selection
   runDemo: publicProcedure.input(z.object({
-    trade: z.enum(["electrical", "plumbing", "carpentry", "concreting", "hvac", "flooring", "landscaping", "cabinetry", "rendering", "painting", "bricklaying", "roofing", "tiling", "waterproofing", "fire-protection", "glazing", "quantity-surveying", "demolition", "swimming-pool", "steel-fabrication"]),
+    trade: z.enum(["electrical", "plumbing", "carpentry", "concreting", "hvac", "flooring", "landscaping", "cabinetry", "rendering", "painting", "bricklaying", "roofing", "tiling", "waterproofing", "fire-protection", "glazing", "quantity-surveying", "demolition", "swimming-pool", "steel-fabrication", "gas-install", "gas-maintenance"]),
     jobDescription: z.string().min(5).max(500).optional(),
     markupPercent: z.number().min(0).max(100).default(20),
     labourRate: z.number().min(30).max(250).default(95),
