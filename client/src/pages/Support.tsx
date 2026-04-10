@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { pixelViewContent, pixelContact } from "@/lib/metaPixel";
 
 const FAQ_ITEMS = [
   {
@@ -26,6 +27,7 @@ const FAQ_ITEMS = [
 export default function Support() {
   useEffect(() => {
     window.scrollTo(0, 0);
+    pixelViewContent({ content_name: "Support Page", content_category: "Support" });
   }, []);
 
   const [openFaq, setOpenFaq] = useState<number | null>(null);

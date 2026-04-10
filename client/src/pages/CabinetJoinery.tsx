@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
+import { useEffect } from "react";
+import { pixelViewContent } from "@/lib/metaPixel";
 import { Button } from "@/components/ui/button";
 import SEO from "@/components/SEO";
 import { CheckCircle2, ArrowRight, Shield, Clock, Users, FileText, ChevronRight } from "lucide-react";
@@ -46,6 +48,10 @@ const PROOF_ITEMS = [
 
 export default function CabinetJoinery() {
   const [, navigate] = useLocation();
+
+  useEffect(() => {
+    pixelViewContent({ content_name: "Cabinet Joinery Landing", content_category: "Landing" });
+  }, []);
 
   return (
     <div className="min-h-screen bg-white text-gray-900">

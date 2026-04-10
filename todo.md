@@ -418,3 +418,15 @@
 - [ ] Create teaser videos from animated logo and city explosion footage
 - [ ] Build Meta Ads Campaign 1 — Lead Generation targeting AU tradies/builders
 - [ ] Test full beta signup funnel (Brevo welcome email + HubSpot contact/deal)
+
+## Meta Pixel Retargeting
+- [ ] Set up Meta Pixel retargeting to capture visitors who didn't sign up
+- [ ] Fire PageView on all pages, Lead event on beta signup completion
+- [ ] Build custom audience logic: all visitors minus converters = retarget pool
+
+## Welcome Email Fixes
+- [x] Add Kindai origami crane logo to email header
+- [x] Remove emoji from subject line (spam filter risk)
+- [x] Trade-aware CTA link (Cabinet Making goes to /cabinet-joinery, others to /dashboard)
+- [x] Add unsubscribe footer (AU Spam Act compliance)
+- [x] Remove all emojis from email body (checkmarks replaced with dashes)

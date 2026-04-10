@@ -9,7 +9,8 @@ import { Zap, Shield, Brain, FileText, Users, BarChart3,
   Camera, Sparkles, DollarSign, Truck, Clock, Upload, Play
 } from "lucide-react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
+import { pixelViewContent } from "@/lib/metaPixel";
 
 // Reusable scroll-triggered fade-up wrapper
 function FadeUp({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
@@ -66,6 +67,10 @@ const HOW_IT_WORKS = [
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
+
+  useEffect(() => {
+    pixelViewContent({ content_name: "Home Page", content_category: "Landing" });
+  }, []);
 
   const handleGetStarted = () => {
     if (isAuthenticated) navigate("/ai-takeoff");
