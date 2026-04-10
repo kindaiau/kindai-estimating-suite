@@ -588,7 +588,7 @@ export default function Home() {
             ))}
           </div>
           <div className="mt-10 text-center">
-            <a href="/support" className="inline-flex items-center gap-2 text-orange-400 hover:text-orange-300 text-sm font-bold transition-colors">
+            <a href="mailto:matt@kindaiestimator.com?subject=Enterprise%20Enquiry" className="inline-flex items-center gap-2 text-orange-400 hover:text-orange-300 text-sm font-bold transition-colors">
               Talk to our enterprise team <ArrowRight className="w-4 h-4" />
             </a>
           </div>

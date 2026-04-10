@@ -202,8 +202,8 @@ export default function TermsOfService() {
             <h2 className="text-xl font-semibold text-white mb-3">12. Contact Us</h2>
             <div className="bg-white/5 rounded-lg p-5 border border-white/10">
               <p className="font-semibold text-white mb-2">Kindai Pty Ltd</p>
-              <p className="text-gray-400 text-sm">Email: <a href="mailto:legal@kindai.com.au" className="text-orange-400 hover:underline">legal@kindai.com.au</a></p>
-              <p className="text-gray-400 text-sm mt-1">Support: <a href="mailto:support@kindai.com.au" className="text-orange-400 hover:underline">support@kindai.com.au</a></p>
+              <p className="text-gray-400 text-sm">Email: <a href="mailto:matt@kindaiestimator.com?subject=Legal" className="text-orange-400 hover:underline">matt@kindaiestimator.com</a></p>
+              <p className="text-gray-400 text-sm mt-1">Support: <a href="mailto:matt@kindaiestimator.com" className="text-orange-400 hover:underline">matt@kindaiestimator.com</a></p>
               <p className="text-gray-400 text-sm mt-1">Website: <a href="https://kindaiestimator.com" className="text-orange-400 hover:underline">kindaiestimator.com</a></p>
             </div>
           </section>
@@ -216,7 +216,7 @@ export default function TermsOfService() {
           <a href="/privacy-policy" className="hover:text-orange-400 transition-colors">Privacy Policy</a>
           <a href="/support" className="hover:text-orange-400 transition-colors">Support</a>
           <a href="/data-deletion" className="hover:text-orange-400 transition-colors">Data Deletion</a>
-          <a href="mailto:legal@kindai.com.au" className="hover:text-orange-400 transition-colors">Contact</a>
+          <a href="mailto:matt@kindaiestimator.com?subject=Legal" className="hover:text-orange-400 transition-colors">Contact</a>
         </div>
       </div>
     </div>

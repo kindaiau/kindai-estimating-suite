@@ -249,7 +249,7 @@ export default function Pricing() {
                   A structured pilot with onboarding, pricing-rule setup, sample data import, and weekly review. Success criteria agreed upfront.
                 </p>
                 <Button
-                  onClick={() => navigate("/support")}
+                  onClick={() => window.location.href = 'mailto:matt@kindaiestimator.com?subject=Enterprise%20Pilot%20Enquiry'}
                   className="w-full bg-teal-500 hover:bg-teal-400 text-white py-3 rounded-full font-black text-base h-auto mb-5"
                 >
                   Book Enterprise Pilot <ArrowRight className="w-4 h-4 ml-2" />
@@ -291,7 +291,7 @@ export default function Pricing() {
                   For larger cabinet and joinery teams that need rollout support, workflow setup, and higher usage.
                 </p>
                 <Button
-                  onClick={() => navigate("/support")}
+                  onClick={() => window.location.href = 'mailto:matt@kindaiestimator.com?subject=Enterprise%20Enquiry'}
                   variant="outline"
                   className="w-full py-3 rounded-full font-black text-base h-auto mb-5 border-gray-200 text-gray-700 hover:bg-gray-50"
                 >
@@ -408,7 +408,7 @@ export default function Pricing() {
               Start Pro — A$299/mo
             </Button>
             <Button
-              onClick={() => navigate("/support")}
+              onClick={() => window.location.href = 'mailto:matt@kindaiestimator.com?subject=Enterprise%20Pilot%20Enquiry'}
               size="lg"
               variant="outline"
               className="px-10 py-4 rounded-full text-base font-black h-auto border-white/20 text-white hover:bg-white/10 bg-transparent"

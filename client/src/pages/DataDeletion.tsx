@@ -27,7 +27,7 @@ export default function DataDeletion() {
       });
       setSubmitted(true);
     } catch {
-      toast.error("Something went wrong. Please email us directly at privacy@kindai.com.au");
+      toast.error("Something went wrong. Please email us directly at matt@kindaiestimator.com");
     }
   };
 
@@ -126,8 +126,8 @@ export default function DataDeletion() {
 
             <p className="text-xs text-white/30 mt-6 text-center">
               Alternatively, email us directly at{" "}
-              <a href="mailto:privacy@kindai.com.au" className="text-orange-400 hover:underline">
-                privacy@kindai.com.au
+              <a href="mailto:matt@kindaiestimator.com?subject=Privacy%20%26%20Data" className="text-orange-400 hover:underline">
+                matt@kindaiestimator.com
               </a>
             </p>
           </>
@@ -159,7 +159,7 @@ export default function DataDeletion() {
         <div className="mt-16 pt-8 border-t border-white/10 flex flex-wrap gap-4 text-sm text-white/40">
           <a href="/" className="hover:text-orange-400 transition-colors">Home</a>
           <a href="/privacy-policy" className="hover:text-orange-400 transition-colors">Privacy Policy</a>
-          <a href="mailto:privacy@kindai.com.au" className="hover:text-orange-400 transition-colors">Contact</a>
+          <a href="mailto:matt@kindaiestimator.com?subject=Privacy%20%26%20Data" className="hover:text-orange-400 transition-colors">Contact</a>
         </div>
       </div>
     </div>

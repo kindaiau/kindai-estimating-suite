@@ -55,6 +55,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 
 async function startServer() {
   const app = express();
+  app.set('trust proxy', 1); // Trust first proxy (Manus/CDN) for correct IP in rate limiting
   const server = createServer(app);
 
   // Security headers — must be first

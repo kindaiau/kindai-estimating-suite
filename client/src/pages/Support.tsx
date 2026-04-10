@@ -68,7 +68,7 @@ export default function Support() {
                   </div>
                   <h3 className="font-semibold text-white">Email Support</h3>
                 </div>
-                <a href="mailto:support@kindai.com.au" className="text-orange-400 hover:underline text-sm">support@kindai.com.au</a>
+                <a href="mailto:matt@kindaiestimator.com" className="text-orange-400 hover:underline text-sm">matt@kindaiestimator.com</a>
                 <p className="text-gray-500 text-xs mt-2">Standard response: within 24 business hours</p>
               </div>
 
@@ -81,7 +81,7 @@ export default function Support() {
                   </div>
                   <h3 className="font-semibold text-white">Enterprise Support</h3>
                 </div>
-                <a href="mailto:enterprise@kindai.com.au" className="text-orange-400 hover:underline text-sm">enterprise@kindai.com.au</a>
+                <a href="mailto:matt@kindaiestimator.com?subject=Enterprise%20Enquiry" className="text-orange-400 hover:underline text-sm">matt@kindaiestimator.com</a>
                 <p className="text-orange-300/70 text-xs mt-2">Priority response: within 4 business hours</p>
               </div>
             </div>
@@ -111,7 +111,7 @@ export default function Support() {
               </ul>
               <div className="mt-5 pt-4 border-t border-white/10">
                 <p className="text-sm text-gray-400">To arrange enterprise onboarding, contact us at{" "}
-                  <a href="mailto:enterprise@kindai.com.au" className="text-orange-400 hover:underline">enterprise@kindai.com.au</a>
+                  <a href="mailto:matt@kindaiestimator.com?subject=Enterprise%20Enquiry" className="text-orange-400 hover:underline">matt@kindaiestimator.com</a>
                 </p>
               </div>
             </div>
@@ -185,10 +185,10 @@ export default function Support() {
             <div className="bg-white/5 rounded-lg p-5 border border-white/10">
               <p className="font-semibold text-white mb-3">Kindai Pty Ltd</p>
               <div className="space-y-2 text-sm text-gray-400">
-                <p>General support: <a href="mailto:support@kindai.com.au" className="text-orange-400 hover:underline">support@kindai.com.au</a></p>
-                <p>Enterprise enquiries: <a href="mailto:enterprise@kindai.com.au" className="text-orange-400 hover:underline">enterprise@kindai.com.au</a></p>
-                <p>Privacy & data: <a href="mailto:privacy@kindai.com.au" className="text-orange-400 hover:underline">privacy@kindai.com.au</a></p>
-                <p>Legal: <a href="mailto:legal@kindai.com.au" className="text-orange-400 hover:underline">legal@kindai.com.au</a></p>
+                <p>General support: <a href="mailto:matt@kindaiestimator.com" className="text-orange-400 hover:underline">matt@kindaiestimator.com</a></p>
+                <p>Enterprise enquiries: <a href="mailto:matt@kindaiestimator.com?subject=Enterprise%20Enquiry" className="text-orange-400 hover:underline">matt@kindaiestimator.com</a></p>
+                <p>Privacy & data: <a href="mailto:matt@kindaiestimator.com?subject=Privacy%20%26%20Data" className="text-orange-400 hover:underline">matt@kindaiestimator.com</a></p>
+                <p>Legal: <a href="mailto:matt@kindaiestimator.com?subject=Legal" className="text-orange-400 hover:underline">matt@kindaiestimator.com</a></p>
                 <p className="pt-2">Website: <a href="https://kindaiestimator.com" className="text-orange-400 hover:underline">kindaiestimator.com</a></p>
               </div>
             </div>

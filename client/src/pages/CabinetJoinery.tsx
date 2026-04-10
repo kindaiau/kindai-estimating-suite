@@ -76,9 +76,9 @@ export default function CabinetJoinery() {
               See a Cabinet Estimate
             </Button>
             <Button
+              onClick={() => window.location.href = 'mailto:matt@kindaiestimator.com?subject=Enterprise%20Pilot%20Enquiry%20%E2%80%93%20Cabinet%20Making'}
               size="sm"
-              onClick={() => navigate("/support")}
-              className="kindai-btn-primary text-sm font-bold px-5"
+              className="kindai-btn-primary text-xs font-bold px-4"
             >
               Book Enterprise Pilot
             </Button>
@@ -146,7 +146,7 @@ export default function CabinetJoinery() {
             className="flex flex-wrap gap-4"
           >
             <Button
-              onClick={() => navigate("/support")}
+              onClick={() => window.location.href = 'mailto:matt@kindaiestimator.com?subject=Enterprise%20Pilot%20Enquiry%20%E2%80%93%20Cabinet%20Making'}
               size="lg"
               className="kindai-btn-primary px-8 py-4 rounded-full text-base font-black h-auto shadow-xl"
             >
@@ -160,6 +160,29 @@ export default function CabinetJoinery() {
             >
               See a Cabinet Estimate
             </Button>
+          </motion.div>
+
+          {/* Demo Video with Voiceover */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.5 }}
+            className="mt-14 rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-gray-900"
+          >
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              controls
+              className="w-full aspect-video"
+              poster=""
+            >
+              <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai_cabinet_demo_voiceover_50c05dcb.mp4" type="video/mp4" />
+            </video>
+            <div className="px-4 py-3 bg-gray-900/80 text-center">
+              <p className="text-sm text-gray-400">Real screen recording — Cabinet Making AI takeoff demo with voiceover</p>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -340,9 +363,9 @@ export default function CabinetJoinery() {
             ))}
           </div>
           <Button
-            onClick={() => navigate("/support")}
+onClick={() => window.location.href = 'mailto:matt@kindaiestimator.com?subject=30-Day%20Pilot%20Enquiry%20%E2%80%93%20Cabinet%20Making'}
             size="lg"
-            className="kindai-btn-primary px-10 py-4 rounded-full text-base font-black h-auto shadow-xl"
+            className="kindai-btn-primary px-8 py-4 rounded-full text-base font-black h-auto shadow-xl"
           >
             Book a 30-Day Pilot <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
@@ -360,19 +383,11 @@ export default function CabinetJoinery() {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button
-              onClick={() => navigate("/support")}
+              onClick={() => window.location.href = 'mailto:matt@kindaiestimator.com?subject=Enterprise%20Pilot%20Enquiry%20%E2%80%93%20Cabinet%20Making'}
               size="lg"
               className="kindai-btn-primary px-10 py-4 rounded-full text-base font-black h-auto shadow-xl"
             >
               Book an Enterprise Pilot <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-            <Button
-              onClick={() => navigate("/pricing")}
-              size="lg"
-              variant="outline"
-              className="px-10 py-4 rounded-full text-base font-black h-auto border-gray-200 text-gray-700 hover:bg-gray-50"
-            >
-              View Pricing <ChevronRight className="w-5 h-5 ml-1" />
             </Button>
           </div>
         </div>

@@ -398,3 +398,11 @@
 
 ## Bug Fixes
 - [x] AI Takeoff plan upload does nothing — fixed: removed trade-required gate on upload, added visual orange highlight on trade selector, dynamic button label guides user through steps
+
+## Cabinet Making Demo Video & Enterprise Polish
+- [ ] Record cabinet making demo screen recording (full AI takeoff flow)
+- [ ] Process recording into polished MP4 and upload to CDN
+- [ ] Add ElevenLabs voiceover when user provides cloned voice
+- [ ] Wire Calendly booking link into Book Enterprise Pilot buttons
+- [ ] Add cabinet making demo video to /cabinet-joinery page
+- [x] Wire matt@kindaiestimator.com into all Book Enterprise Pilot buttons (CabinetJoinery, Pricing, Home, Support, Terms, Privacy, DataDeletion)
