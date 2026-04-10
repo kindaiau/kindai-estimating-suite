@@ -437,3 +437,6 @@
 ## Demo Plan Upload
 - [x] Add real plan upload (PDF/image) to demo page with AI processing
 - [x] Show partial result, gate full quote behind beta signup CTA
+
+## HubSpot CRM Fix
+- [x] Fix HubSpot API key scopes so beta signups create contacts + deals correctly
