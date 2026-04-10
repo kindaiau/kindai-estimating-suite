@@ -430,3 +430,6 @@
 - [x] Trade-aware CTA link (Cabinet Making goes to /cabinet-joinery, others to /dashboard)
 - [x] Add unsubscribe footer (AU Spam Act compliance)
 - [x] Remove all emojis from email body (checkmarks replaced with dashes)
+
+## About Us
+- [ ] Create /about page with approved copy and add to navigation

@@ -120,6 +120,9 @@ export default function Home() {
               </>
             ) : (
               <>
+                <a href="/about" className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors hidden sm:block">
+                  About
+                </a>
                 <button onClick={() => window.location.href = getLoginUrl()} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors hidden sm:block">
                   Sign In
                 </button>
@@ -676,6 +679,7 @@ export default function Home() {
             &copy; 2026 Kindai. Built for Australian tradies. GST-compliant by default.
           </p>
           <div className="flex gap-4 text-xs text-gray-500">
+            <a href="/about" className="hover:text-gray-300 transition-colors">About</a>
             <a href="/privacy-policy" className="hover:text-gray-300 transition-colors">Privacy</a>
             <a href="/terms" className="hover:text-gray-300 transition-colors">Terms</a>
             <a href="/support" className="hover:text-gray-300 transition-colors">Support</a>
