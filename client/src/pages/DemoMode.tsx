@@ -15,7 +15,8 @@ import { getLoginUrl } from "@/const";
 import {
   Camera, Sparkles, Loader2, CheckCircle2, DollarSign,
   Clock, Shield, ChevronRight, ArrowRight, Package,
-  Users, TrendingUp, Zap, Star, Lock, BarChart3
+  Users, TrendingUp, Zap, Star, Lock, BarChart3,
+  Upload, FileImage, X, ScanLine
 } from "lucide-react";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
@@ -95,12 +96,71 @@ export default function DemoMode() {
   const [useTradePrice, setUseTradePrice] = useState(true);
   const [result, setResult] = useState<DemoResult | null>(null);
   const [activeTab, setActiveTab] = useState<"materials" | "summary">("materials");
+  const [planFile, setPlanFile] = useState<File | null>(null);
+  const [planPreviewUrl, setPlanPreviewUrl] = useState<string | null>(null);
+  const [uploadedPlanUrl, setUploadedPlanUrl] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fire ViewDemoPage + StartTrial pixel events on mount
   useEffect(() => {
     pixelViewDemoPage();
     pixelStartTrial();
   }, []);
+
+  const uploadPlan = trpc.demo.uploadDemoPlan.useMutation({
+    onSuccess: (data) => {
+      setUploadedPlanUrl(data.url);
+      toast.success("Plan uploaded! Hit Generate to analyse it.");
+    },
+    onError: (err) => {
+      toast.error("Upload failed: " + err.message);
+    },
+  });
+
+  const handleFileSelect = (file: File) => {
+    const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    if (!allowed.includes(file.type)) {
+      toast.error("Please upload a JPG, PNG, WebP, or PDF file.");
+      return;
+    }
+    if (file.size > 16 * 1024 * 1024) {
+      toast.error("File too large. Max 16MB.");
+      return;
+    }
+    setPlanFile(file);
+    setUploadedPlanUrl(null);
+    if (file.type !== "application/pdf") {
+      setPlanPreviewUrl(URL.createObjectURL(file));
+    } else {
+      setPlanPreviewUrl(null);
+    }
+    // Upload immediately
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = (e.target?.result as string).split(",")[1];
+      uploadPlan.mutate({
+        fileBase64: base64,
+        fileName: file.name,
+        contentType: file.type as "image/jpeg" | "image/png" | "image/webp" | "application/pdf",
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileSelect(file);
+  };
+
+  const clearPlan = () => {
+    setPlanFile(null);
+    setPlanPreviewUrl(null);
+    setUploadedPlanUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const runDemo = trpc.demo.runDemo.useMutation({
     onSuccess: (data) => {
@@ -126,12 +186,17 @@ export default function DemoMode() {
       toast.error("Please select a trade first.");
       return;
     }
+    if (planFile && !uploadedPlanUrl) {
+      toast.error("Plan is still uploading, please wait a moment.");
+      return;
+    }
     runDemo.mutate({
       trade: selectedTrade,
       jobDescription: jobDescription || undefined,
       markupPercent,
       labourRate,
       useTradePrice,
+      planImageUrl: uploadedPlanUrl || undefined,
     });
   };
 
@@ -212,11 +277,69 @@ export default function DemoMode() {
                 </CardContent>
               </Card>
 
+              {/* Plan Upload */}
+              <Card className="border-gray-200 shadow-sm">
+                <CardContent className="p-4">
+                  <h3 className="text-sm font-black text-gray-900 mb-1 flex items-center gap-2">
+                    <ScanLine className="w-4 h-4 text-pink-500" />
+                    2. Upload your plans <span className="text-xs font-normal text-gray-400">(optional)</span>
+                  </h3>
+                  <p className="text-xs text-gray-400 mb-3">JPG, PNG, WebP or PDF — max 16MB. AI will read the actual plan.</p>
+
+                  {!planFile ? (
+                    <div
+                      className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
+                        isDragOver ? "border-pink-400 bg-pink-50" : "border-gray-200 hover:border-pink-300 hover:bg-pink-50/30"
+                      }`}
+                      onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                      onDragLeave={() => setIsDragOver(false)}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="w-7 h-7 text-gray-300 mx-auto mb-2" />
+                      <p className="text-xs font-semibold text-gray-500">Drop your plan here or <span className="text-pink-500">browse</span></p>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,application/pdf"
+                        className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="relative border border-gray-200 rounded-xl overflow-hidden">
+                      {planPreviewUrl ? (
+                        <img src={planPreviewUrl} alt="Plan preview" className="w-full h-32 object-cover" />
+                      ) : (
+                        <div className="h-16 bg-gray-50 flex items-center justify-center gap-2">
+                          <FileImage className="w-5 h-5 text-gray-400" />
+                          <span className="text-xs text-gray-500 font-semibold">{planFile.name}</span>
+                        </div>
+                      )}
+                      <div className="p-2 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          {uploadPlan.isPending ? (
+                            <><Loader2 className="w-3.5 h-3.5 animate-spin text-pink-500" /><span className="text-xs text-gray-500">Uploading...</span></>
+                          ) : uploadedPlanUrl ? (
+                            <><CheckCircle2 className="w-3.5 h-3.5 text-green-500" /><span className="text-xs text-green-600 font-semibold">Ready to analyse</span></>
+                          ) : (
+                            <span className="text-xs text-gray-400">Processing...</span>
+                          )}
+                        </div>
+                        <button onClick={clearPlan} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+                          <X className="w-3.5 h-3.5 text-gray-400" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Job Description */}
               <Card className="border-gray-200 shadow-sm">
                 <CardContent className="p-4">
-                  <h3 className="text-sm font-black text-gray-900 mb-2">2. Describe the job</h3>
-                  <p className="text-xs text-gray-400 mb-3">Or use the pre-loaded example below</p>
+                  <h3 className="text-sm font-black text-gray-900 mb-2">3. Describe the job</h3>
+                  <p className="text-xs text-gray-400 mb-3">{planFile ? "Add any extra context for the AI" : "Or use the pre-loaded example below"}</p>
                   <Textarea
                     value={jobDescription}
                     onChange={(e) => setJobDescription(e.target.value)}

@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
+import { storagePut } from "../storage";
+import { nanoid } from "nanoid";
 
 // ─── Pre-built demo results for instant display ───────────────────────────────
 // These are shown while the real AI runs, or as fallback if AI is slow
@@ -209,6 +211,23 @@ const demoSchema = {
 };
 
 export const demoRouter = router({
+  // Public plan upload for demo — no login required, 16MB limit
+  uploadDemoPlan: publicProcedure.input(z.object({
+    fileBase64: z.string(),
+    fileName: z.string(),
+    contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
+  })).mutation(async ({ input }) => {
+    const buffer = Buffer.from(input.fileBase64, "base64");
+    const MAX_SIZE = 16 * 1024 * 1024;
+    if (buffer.length > MAX_SIZE) {
+      throw new Error(`File too large. Max 16MB. Your file is ${(buffer.length / 1024 / 1024).toFixed(1)}MB.`);
+    }
+    const ext = input.fileName.split(".").pop() ?? "png";
+    const key = `demo-plans/${nanoid()}.${ext}`;
+    const { url } = await storagePut(key, buffer, input.contentType);
+    return { url, key };
+  }),
+
   // Public demo — no login required, rate-limited by IP via trade selection
   runDemo: publicProcedure.input(z.object({
     trade: z.enum(["electrical", "plumbing", "carpentry", "concreting", "hvac", "flooring", "landscaping", "cabinetry", "rendering", "painting", "bricklaying", "roofing", "tiling", "waterproofing", "fire-protection", "glazing", "quantity-surveying", "demolition", "swimming-pool", "steel-fabrication"]),
@@ -216,16 +235,35 @@ export const demoRouter = router({
     markupPercent: z.number().min(0).max(100).default(20),
     labourRate: z.number().min(30).max(250).default(95),
     useTradePrice: z.boolean().default(true),
+    planImageUrl: z.string().url().optional(), // CDN URL of uploaded plan image
   })).mutation(async ({ input }) => {
     // Use real AI if job description provided, else use pre-built scenario
     let result;
 
-    if (input.jobDescription && input.jobDescription.length > 10) {
+    if (input.planImageUrl || (input.jobDescription && input.jobDescription.length > 10)) {
       try {
+        // Build user message — include plan image if uploaded
+        const userContent: Array<{ type: string; text?: string; image_url?: { url: string; detail: string } }> = [];
+        if (input.planImageUrl) {
+          userContent.push({
+            type: "image_url",
+            image_url: { url: input.planImageUrl, detail: "high" },
+          });
+          userContent.push({
+            type: "text",
+            text: `Trade: ${input.trade}\nAnalyse this construction plan image and generate a complete materials takeoff with 2024-25 Australian pricing.${input.jobDescription ? `\nAdditional context: ${input.jobDescription}` : ""}`,
+          });
+        } else {
+          userContent.push({
+            type: "text",
+            text: `Trade: ${input.trade}\nJob: ${input.jobDescription}\n\nGenerate complete takeoff with 2024-25 Australian pricing.`,
+          });
+        }
+
         const response = await invokeLLM({
           messages: [
             { role: "system", content: buildDemoPrompt(input.trade) },
-            { role: "user", content: `Trade: ${input.trade}\nJob: ${input.jobDescription}\n\nGenerate complete takeoff with 2024-25 Australian pricing.` },
+            { role: "user", content: userContent as any },
           ],
           response_format: demoSchema,
         });
