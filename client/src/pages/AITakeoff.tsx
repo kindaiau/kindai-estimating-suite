@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { pixelUploadPlan, pixelRunTakeoff } from "@/lib/metaPixel";
 import { useAuth } from "@/_core/hooks/useAuth";
 import SEO from "@/components/SEO";
@@ -66,6 +66,21 @@ export default function AITakeoff() {
   const [tempEstimateId, setTempEstimateId] = useState<number | null>(null);
   const [scopingAnswers, setScopingAnswers] = useState<Record<string, string | string[] | number>>({});
   const [activeTab, setActiveTab] = useState<"materials" | "labour" | "suppliers" | "summary">("materials");
+
+  // Fetch saved trade profile defaults when trade is selected
+  const tradeProfileQuery = trpc.tradeProfiles.get.useQuery(
+    { trade: selectedTrade },
+    { enabled: !!selectedTrade && isAuthenticated, staleTime: 60_000 }
+  );
+
+  // Apply saved rates when trade profile loads
+  useEffect(() => {
+    const profile = tradeProfileQuery.data;
+    if (profile) {
+      if (profile.defaultMarkup) setMarkupPercent(parseFloat(profile.defaultMarkup));
+      if (profile.defaultLabourRate) setLabourRate(parseFloat(profile.defaultLabourRate));
+    }
+  }, [tradeProfileQuery.data]);
 
   const uploadPlan = trpc.ai.uploadPlan.useMutation();
   const visionTakeoff = trpc.ai.visionTakeoff.useMutation();

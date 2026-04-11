@@ -224,3 +224,160 @@ describe("Trade profile rate field validation", () => {
     expect(-1 >= 0).toBe(false);
   });
 });
+
+// ── Custom Rates Prompt Injection Tests ──────────────────────────────────────
+
+interface CustomRates {
+  defaultLabourRate?: string | null;
+  defaultMarkup?: string | null;
+  materialMarkup?: string | null;
+  overheadPercent?: string | null;
+  profitMargin?: string | null;
+  defaultWasteFactor?: string | null;
+  mobilisationRate?: string | null;
+  contingencyPercent?: string | null;
+}
+
+function buildCustomRatesSection(rates: CustomRates): string {
+  const lines: string[] = [];
+  lines.push("\nCOMPANY-SPECIFIC RATES (use these instead of industry defaults):");
+  
+  if (rates.defaultLabourRate && parseFloat(rates.defaultLabourRate) > 0) {
+    lines.push(`- Company labour rate: $${rates.defaultLabourRate}/hr`);
+  }
+  if (rates.materialMarkup && parseFloat(rates.materialMarkup) > 0) {
+    lines.push(`- Material markup: ${rates.materialMarkup}%`);
+  }
+  if (rates.defaultMarkup && parseFloat(rates.defaultMarkup) > 0) {
+    lines.push(`- Overall markup: ${rates.defaultMarkup}%`);
+  }
+  if (rates.overheadPercent && parseFloat(rates.overheadPercent) > 0) {
+    lines.push(`- Overhead/prelims: ${rates.overheadPercent}%`);
+  }
+  if (rates.profitMargin && parseFloat(rates.profitMargin) > 0) {
+    lines.push(`- Target profit margin: ${rates.profitMargin}%`);
+  }
+  if (rates.defaultWasteFactor && parseFloat(rates.defaultWasteFactor) > 0) {
+    lines.push(`- Default waste factor: ${rates.defaultWasteFactor}%`);
+  }
+  if (rates.mobilisationRate && parseFloat(rates.mobilisationRate) > 0) {
+    lines.push(`- Mobilisation/travel: $${rates.mobilisationRate} flat`);
+  }
+  if (rates.contingencyPercent && parseFloat(rates.contingencyPercent) > 0) {
+    lines.push(`- Contingency: ${rates.contingencyPercent}%`);
+  }
+  
+  if (lines.length <= 1) return "";
+  
+  lines.push("NOTE: These are the estimator's company rates. Use the labour rate above for labour line items. Material pricing should still reflect current AU market prices — the markup/margin is applied separately by the estimator.");
+  return lines.join("\n");
+}
+
+describe("Custom rates prompt injection", () => {
+  it("returns empty string when no rates are set", () => {
+    const result = buildCustomRatesSection({});
+    expect(result).toBe("");
+  });
+
+  it("returns empty string when all rates are null", () => {
+    const result = buildCustomRatesSection({
+      defaultLabourRate: null,
+      defaultMarkup: null,
+      materialMarkup: null,
+      overheadPercent: null,
+      profitMargin: null,
+      defaultWasteFactor: null,
+      mobilisationRate: null,
+      contingencyPercent: null,
+    });
+    expect(result).toBe("");
+  });
+
+  it("returns empty string when all rates are zero", () => {
+    const result = buildCustomRatesSection({
+      defaultLabourRate: "0",
+      defaultMarkup: "0",
+      materialMarkup: "0",
+    });
+    expect(result).toBe("");
+  });
+
+  it("includes labour rate when set", () => {
+    const result = buildCustomRatesSection({ defaultLabourRate: "65" });
+    expect(result).toContain("Company labour rate: $65/hr");
+  });
+
+  it("includes material markup when set", () => {
+    const result = buildCustomRatesSection({ materialMarkup: "25" });
+    expect(result).toContain("Material markup: 25%");
+  });
+
+  it("includes overhead when set", () => {
+    const result = buildCustomRatesSection({ overheadPercent: "12" });
+    expect(result).toContain("Overhead/prelims: 12%");
+  });
+
+  it("includes profit margin when set", () => {
+    const result = buildCustomRatesSection({ profitMargin: "18" });
+    expect(result).toContain("Target profit margin: 18%");
+  });
+
+  it("includes waste factor when set", () => {
+    const result = buildCustomRatesSection({ defaultWasteFactor: "5" });
+    expect(result).toContain("Default waste factor: 5%");
+  });
+
+  it("includes mobilisation rate when set", () => {
+    const result = buildCustomRatesSection({ mobilisationRate: "150" });
+    expect(result).toContain("Mobilisation/travel: $150 flat");
+  });
+
+  it("includes contingency when set", () => {
+    const result = buildCustomRatesSection({ contingencyPercent: "5" });
+    expect(result).toContain("Contingency: 5%");
+  });
+
+  it("includes the COMPANY-SPECIFIC RATES header when any rate is set", () => {
+    const result = buildCustomRatesSection({ defaultLabourRate: "55" });
+    expect(result).toContain("COMPANY-SPECIFIC RATES");
+  });
+
+  it("includes the NOTE about estimator rates when any rate is set", () => {
+    const result = buildCustomRatesSection({ profitMargin: "20" });
+    expect(result).toContain("NOTE: These are the estimator's company rates");
+  });
+
+  it("builds full section with all rates set", () => {
+    const result = buildCustomRatesSection({
+      defaultLabourRate: "65",
+      defaultMarkup: "20",
+      materialMarkup: "25",
+      overheadPercent: "12",
+      profitMargin: "18",
+      defaultWasteFactor: "5",
+      mobilisationRate: "150",
+      contingencyPercent: "5",
+    });
+    expect(result).toContain("$65/hr");
+    expect(result).toContain("Material markup: 25%");
+    expect(result).toContain("Overall markup: 20%");
+    expect(result).toContain("Overhead/prelims: 12%");
+    expect(result).toContain("Target profit margin: 18%");
+    expect(result).toContain("Default waste factor: 5%");
+    expect(result).toContain("$150 flat");
+    expect(result).toContain("Contingency: 5%");
+  });
+
+  it("skips rates that are zero but includes non-zero ones", () => {
+    const result = buildCustomRatesSection({
+      defaultLabourRate: "0",
+      materialMarkup: "25",
+      overheadPercent: "0",
+      profitMargin: "18",
+    });
+    expect(result).not.toContain("Company labour rate:");
+    expect(result).toContain("Material markup: 25%");
+    expect(result).not.toContain("Overhead/prelims:");
+    expect(result).toContain("Target profit margin: 18%");
+  });
+});

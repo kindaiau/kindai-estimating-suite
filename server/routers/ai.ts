@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { getDb } from "../db";
-import { estimates } from "../../drizzle/schema";
+import { estimates, tradeProfiles } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { storagePut } from "../storage";
 import { nanoid } from "nanoid";
@@ -273,8 +273,56 @@ export const INDUSTRY_BENCHMARKS: Record<string, {
   },
 };
 
+// ─── Custom Rates Interface ──────────────────────────────────────────────────
+interface CustomRates {
+  defaultLabourRate?: string | null;
+  defaultMarkup?: string | null;
+  materialMarkup?: string | null;
+  overheadPercent?: string | null;
+  profitMargin?: string | null;
+  defaultWasteFactor?: string | null;
+  mobilisationRate?: string | null;
+  contingencyPercent?: string | null;
+}
+
+function buildCustomRatesSection(rates: CustomRates): string {
+  const lines: string[] = [];
+  lines.push("\nCOMPANY-SPECIFIC RATES (use these instead of industry defaults):");
+  
+  if (rates.defaultLabourRate && parseFloat(rates.defaultLabourRate) > 0) {
+    lines.push(`- Company labour rate: $${rates.defaultLabourRate}/hr`);
+  }
+  if (rates.materialMarkup && parseFloat(rates.materialMarkup) > 0) {
+    lines.push(`- Material markup: ${rates.materialMarkup}%`);
+  }
+  if (rates.defaultMarkup && parseFloat(rates.defaultMarkup) > 0) {
+    lines.push(`- Overall markup: ${rates.defaultMarkup}%`);
+  }
+  if (rates.overheadPercent && parseFloat(rates.overheadPercent) > 0) {
+    lines.push(`- Overhead/prelims: ${rates.overheadPercent}%`);
+  }
+  if (rates.profitMargin && parseFloat(rates.profitMargin) > 0) {
+    lines.push(`- Target profit margin: ${rates.profitMargin}%`);
+  }
+  if (rates.defaultWasteFactor && parseFloat(rates.defaultWasteFactor) > 0) {
+    lines.push(`- Default waste factor: ${rates.defaultWasteFactor}%`);
+  }
+  if (rates.mobilisationRate && parseFloat(rates.mobilisationRate) > 0) {
+    lines.push(`- Mobilisation/travel: $${rates.mobilisationRate} flat`);
+  }
+  if (rates.contingencyPercent && parseFloat(rates.contingencyPercent) > 0) {
+    lines.push(`- Contingency: ${rates.contingencyPercent}%`);
+  }
+  
+  // Only return the section if there are actual custom rates set
+  if (lines.length <= 1) return "";
+  
+  lines.push("NOTE: These are the estimator's company rates. Use the labour rate above for labour line items. Material pricing should still reflect current AU market prices — the markup/margin is applied separately by the estimator.");
+  return lines.join("\n");
+}
+
 // ─── Shared prompt structure for all trades ──────────────────────────────────
-function buildTradePrompt(mode: "vision" | "text", trade: string): string {
+function buildTradePrompt(mode: "vision" | "text", trade: string, customRates?: CustomRates): string {
   const inputDesc = mode === "vision"
     ? "Analyze this construction plan image (architectural drawings, trade-specific drawings, or site plans)"
     : "Based on the job description provided";
@@ -664,18 +712,40 @@ ${config.criticalRules}
 - Provisional Sums: add PS items for anything that cannot be accurately quantified from the plans
 - Margin/markup is NOT included in your pricing — the estimator will apply their own margin
 - Industry benchmark for this trade: labour rate $${labourRate.min}-${labourRate.max}/hr, typical margin ${benchmark?.marginRange.min ?? 15}-${benchmark?.marginRange.max ?? 35}%
-
+${customRates ? buildCustomRatesSection(customRates) : ""}
 Return ONLY valid JSON matching the schema. No markdown, no explanation outside the JSON.`;
 }
 
-// ─── Vision Takeoff Prompts (per trade) ──────────────────────────────────────
-function buildVisionPrompt(trade: string): string {
-  return buildTradePrompt("vision", trade);
+// ─── Vision Takeoff Prompts (per trade) ──────────────────────────────────
+function buildVisionPrompt(trade: string, customRates?: CustomRates): string {
+  return buildTradePrompt("vision", trade, customRates);
 }
 
-// ─── Text-based Takeoff Prompts ───────────────────────────────────────────────
-function buildTextPrompt(trade: string): string {
-  return buildTradePrompt("text", trade);
+// ─── Text-based Takeoff Prompts ───────────────────────────────────────
+function buildTextPrompt(trade: string, customRates?: CustomRates): string {
+  return buildTradePrompt("text", trade, customRates);
+}
+
+// ─── Fetch user's custom rates for a trade ──────────────────────────────
+async function fetchCustomRates(db: any, userId: number, trade: string): Promise<CustomRates | undefined> {
+  try {
+    const [profile] = await db.select({
+      defaultLabourRate: tradeProfiles.defaultLabourRate,
+      defaultMarkup: tradeProfiles.defaultMarkup,
+      materialMarkup: tradeProfiles.materialMarkup,
+      overheadPercent: tradeProfiles.overheadPercent,
+      profitMargin: tradeProfiles.profitMargin,
+      defaultWasteFactor: tradeProfiles.defaultWasteFactor,
+      mobilisationRate: tradeProfiles.mobilisationRate,
+      contingencyPercent: tradeProfiles.contingencyPercent,
+    }).from(tradeProfiles)
+      .where(and(eq(tradeProfiles.userId, userId), eq(tradeProfiles.trade, trade)))
+      .limit(1);
+    return profile ?? undefined;
+  } catch (e) {
+    console.warn("[AI] Failed to fetch custom rates:", e);
+    return undefined;
+  }
 }
 
 // ─── JSON Schema for structured AI response (includes section field) ──────────
@@ -785,7 +855,9 @@ export const aiRouter = router({
       .limit(1);
     if (!est) throw new Error("Estimate not found");
 
-    const systemPrompt = buildVisionPrompt(input.trade);
+    // Fetch user's custom rates for this trade
+    const customRates = await fetchCustomRates(db, ctx.user.id, input.trade);
+    const systemPrompt = buildVisionPrompt(input.trade, customRates);
     const userContent: Array<{ type: string; text?: string; image_url?: { url: string; detail?: string } }> = [
       {
         type: "image_url",
@@ -835,7 +907,9 @@ export const aiRouter = router({
       .limit(1);
     if (!est) throw new Error("Estimate not found");
 
-    const systemPrompt = buildTextPrompt(input.trade);
+    // Fetch user's custom rates for this trade
+    const customRates = await fetchCustomRates(db, ctx.user.id, input.trade);
+    const systemPrompt = buildTextPrompt(input.trade, customRates);
     const userMessage = `Project Details: ${input.projectDetails ?? "Standard residential project"}
 
 Job Description:

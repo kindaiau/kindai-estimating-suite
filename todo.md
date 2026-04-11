@@ -505,4 +505,22 @@
 - [x] Add AU market benchmark comparison indicators
 - [x] Add gas-install and gas-maintenance to Trade Profile page trade selector
 - [x] Fix stale trade lists in LabourRates and Profile pages (missing gas trades)
-- [ ] Wire custom rates into the AI estimating prompt
+- [x] Wire custom rates into the AI estimating prompt
+
+## Wire Custom Rates into AI Estimating Prompts
+- [x] Fetch user's trade profile rates when generating AI estimate
+- [x] Inject custom material markup, labour rates, overhead, profit margin, waste factor into AI prompt
+- [x] Fall back to AU benchmark defaults when user hasn't set custom rates
+- [x] Wire saved trade profile defaults into AITakeoff UI (markup % and labour rate)
+- [x] Test that custom rates flow through to AI output (35 tests passing)
+
+## Fix beta.getStats Polling
+- [x] Add staleTime to beta.getStats useQuery to prevent 298+ unnecessary API calls per session
+- [x] Fix misleading fallback values (was showing 67/33 while loading, now shows 0/25)
+
+## Facebook/Instagram Ad Campaign Strategy
+- [x] Build targeting spec for AU tradies (electricians, plumbers, builders)
+- [x] Create campaign structure recommendation with budget allocation
+- [x] Provide ad creative recommendations and copy
+- [x] Audited Meta Ads account — campaign exists but PAUSED, $0 spend, 0 impressions
+- [x] Identified 3 ads ready to go (Cost Comparison, Underquoting Fear, Speed Hook)

@@ -65,7 +65,8 @@ export default function BetaLanding() {
   useEffect(() => { pixelViewBetaPage(); }, []);
 
   const { data: stats } = trpc.beta.getStats.useQuery(undefined, {
-    refetchInterval: 30000, // refresh every 30s
+    staleTime: 60_000, // cache for 60s to prevent excessive polling
+    refetchInterval: 60_000, // refresh every 60s (was 30s)
   });
 
   const signupMutation = trpc.beta.signup.useMutation({
@@ -109,8 +110,8 @@ export default function BetaLanding() {
     });
   };
 
-  const claimed = stats?.claimed ?? 67;
-  const remaining = stats?.remaining ?? 33;
+  const claimed = stats?.claimed ?? 0;
+  const remaining = stats?.remaining ?? 25;
   const pct = Math.min(100, Math.round((claimed / 25) * 100));
   const countdown = useCountdown(BETA_END_DATE);
 
