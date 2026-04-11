@@ -484,3 +484,25 @@
 - [x] Add accurate gas benchmarks (AU pricing for gas lines, hot plates, HWS, meters, compliance certs)
 - [ ] Allow companies to set their own rates/margins per trade category
 - [ ] Test gas-specific estimate accuracy (manual testing needed)
+
+## Website Analytics Audit
+- [x] Pull real user traffic data and session behaviour
+- [x] Identify bottlenecks in user journey (drop-offs, errors, slow pages)
+- [x] Report findings to user
+
+## Gas Estimate Accuracy Test
+- [ ] Run a gas install estimate through the demo and verify pricing accuracy
+
+## Video Re-encoding for Facebook
+- [x] Re-encode teaser_city_logo_square.mp4 (yuv444p → yuv420p)
+- [x] Re-encode teaser_city_logo_vertical.mp4 (yuv444p → yuv420p)
+- [x] Re-encode all 6 teaser videos with yuv420p + silent audio for Facebook compatibility
+
+## Company Rates/Margins Settings UI
+- [x] Database already has tradeProfiles table with defaultMarkup, defaultLabourRate fields
+- [x] Upgrade Defaults tab in Trade Profiles with comprehensive rates panel
+- [x] Add material markup %, overhead/prelims %, profit margin %, waste factor, mobilisation rate
+- [x] Add AU market benchmark comparison indicators
+- [x] Add gas-install and gas-maintenance to Trade Profile page trade selector
+- [x] Fix stale trade lists in LabourRates and Profile pages (missing gas trades)
+- [ ] Wire custom rates into the AI estimating prompt

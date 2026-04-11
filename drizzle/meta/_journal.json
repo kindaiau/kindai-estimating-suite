@@ -85,6 +85,13 @@
       "when": 1775806419132,
       "tag": "0011_true_warbound",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1775869561243,
+      "tag": "0012_luxuriant_stone_men",
+      "breakpoints": true
     }
   ]
 }

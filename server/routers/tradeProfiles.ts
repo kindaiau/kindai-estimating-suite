@@ -170,6 +170,14 @@ export const tradeProfilesRouter = router({
     defaultValidDays: z.number().min(1).max(365).optional(),
     defaultTerms: z.string().optional(),
     defaultState: z.enum(["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"]).optional(),
+    // Advanced rate/margin settings
+    materialMarkup: z.number().min(0).max(200).optional(),
+    overheadPercent: z.number().min(0).max(100).optional(),
+    profitMargin: z.number().min(0).max(100).optional(),
+    defaultWasteFactor: z.number().min(0).max(50).optional(),
+    mobilisationRate: z.number().min(0).optional(),
+    contingencyPercent: z.number().min(0).max(50).optional(),
+    // Email automation
     emailFromName: z.string().optional(),
     emailFromAddress: z.string().email().optional().or(z.literal("")),
     emailSignature: z.string().optional(),
@@ -193,6 +201,12 @@ export const tradeProfilesRouter = router({
       trade,
       defaultMarkup: data.defaultMarkup?.toString(),
       defaultLabourRate: data.defaultLabourRate?.toString(),
+      materialMarkup: data.materialMarkup?.toString(),
+      overheadPercent: data.overheadPercent?.toString(),
+      profitMargin: data.profitMargin?.toString(),
+      defaultWasteFactor: data.defaultWasteFactor?.toString(),
+      mobilisationRate: data.mobilisationRate?.toString(),
+      contingencyPercent: data.contingencyPercent?.toString(),
       email: data.email || undefined,
       emailFromAddress: data.emailFromAddress || undefined,
     };

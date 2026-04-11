@@ -202,6 +202,13 @@ export const tradeProfiles = mysqlTable("trade_profiles", {
   defaultValidDays: int("defaultValidDays").default(30),
   defaultTerms: text("defaultTerms"),
   defaultState: mysqlEnum("defaultState", ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"]),
+  // Advanced rate/margin settings
+  materialMarkup: decimal("materialMarkup", { precision: 5, scale: 2 }).default("20.00"), // % markup on materials
+  overheadPercent: decimal("overheadPercent", { precision: 5, scale: 2 }).default("10.00"), // prelims/overhead %
+  profitMargin: decimal("profitMargin", { precision: 5, scale: 2 }).default("15.00"), // profit margin %
+  defaultWasteFactor: decimal("defaultWasteFactor", { precision: 5, scale: 2 }).default("5.00"), // waste %
+  mobilisationRate: decimal("mobilisationRate", { precision: 8, scale: 2 }).default("0.00"), // flat $ mobilisation/travel
+  contingencyPercent: decimal("contingencyPercent", { precision: 5, scale: 2 }).default("5.00"), // contingency %
   // Email automation
   emailFromName: varchar("emailFromName", { length: 255 }),
   emailFromAddress: varchar("emailFromAddress", { length: 320 }),
