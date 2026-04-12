@@ -104,7 +104,14 @@ fbLeadWebhookRouter.post("/fb-lead", async (req: Request, res: Response) => {
 
   const company = extractCompany(payload);
   const trade = payload.trade ?? undefined;
-  const state = payload.state as "NSW" | "VIC" | "QLD" | "SA" | "WA" | "TAS" | "NT" | "ACT" | undefined;
+
+  // Sanitise state — must be a valid AU state enum or null (invalid values crash MySQL ENUM insert)
+  const VALID_STATES = ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"] as const;
+  type AuState = typeof VALID_STATES[number];
+  const rawState = (payload.state ?? "").toUpperCase().trim();
+  const state: AuState | undefined = VALID_STATES.includes(rawState as AuState)
+    ? (rawState as AuState)
+    : undefined;
 
   try {
     const db = await getDb();
