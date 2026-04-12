@@ -543,3 +543,10 @@
 - [x] Add /admin/fb-leads route to App.tsx
 - [x] Add admin-only "FB Leads" nav item to DashboardLayout sidebar
 - [x] Write 17 vitest tests for fbLeads feature (203 total passing)
+
+## Website Signup → HubSpot Sync (Organic Leads)
+- [x] Confirm website beta.signup already calls HubSpot, welcome email, and nurture
+- [x] Fix HubSpot IDs not being saved back to DB row after creation
+- [x] Verify beta_nurture_emails table and hubspot columns exist in production DB
+- [x] Live end-to-end test: organic signup → HubSpot contact + deal + email + nurture all fire
+- [x] Write 11 vitest tests for HubSpot sync behaviour (214 total passing)

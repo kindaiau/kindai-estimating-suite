@@ -102,7 +102,7 @@ export const betaRouter = router({
         trade: input.trade,
       }).catch((err: unknown) => console.error("[Nurture] Failed to schedule nurture sequence:", err));
 
-      // Push to HubSpot CRM (fire-and-forget — don't block the response)
+      // Push to HubSpot CRM — save IDs back to DB row so admin dashboard shows them
       createBetaSignupInHubSpot({
         name: input.name,
         email: input.email,
@@ -111,7 +111,22 @@ export const betaRouter = router({
         state: input.state,
         projectSize: input.projectSize,
         spotNumber,
-      }).catch((err: unknown) => console.error("[HubSpot] Failed to create CRM record:", err));
+      }).then(async (hubspotResult) => {
+        if (hubspotResult && signupId) {
+          try {
+            const dbForUpdate = (await getDb())!;
+            await dbForUpdate.update(betaSignups)
+              .set({
+                hubspotContactId: hubspotResult.contactId,
+                hubspotDealId: hubspotResult.dealId,
+              })
+              .where(eq(betaSignups.id, signupId));
+            console.log(`[HubSpot] Saved contactId=${hubspotResult.contactId}, dealId=${hubspotResult.dealId} for signup #${signupId}`);
+          } catch (updateErr: unknown) {
+            console.error("[HubSpot] Failed to save IDs to DB:", updateErr instanceof Error ? updateErr.message : String(updateErr));
+          }
+        }
+      }).catch((err: unknown) => console.error("[HubSpot] Failed to create CRM record:", err instanceof Error ? err.message : String(err)));
 
       return { success: true, alreadyRegistered: false, spotNumber };
     }),
