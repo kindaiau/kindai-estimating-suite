@@ -29,6 +29,7 @@ import TermsOfService from "./pages/TermsOfService";
 import Support from "./pages/Support";
 import CabinetJoinery from "./pages/CabinetJoinery";
 import About from "./pages/About";
+import FbLeadsDashboard from "./pages/FbLeadsDashboard";
 import AIHelpAssistant from "./components/AIHelpAssistant";
 
 function Router() {
@@ -58,6 +59,7 @@ function Router() {
       <Route path="/support" component={Support} />
       <Route path="/cabinet-joinery" component={CabinetJoinery} />
       <Route path="/about" component={About} />
+      <Route path="/admin/fb-leads" component={FbLeadsDashboard} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

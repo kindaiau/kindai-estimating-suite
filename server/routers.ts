@@ -20,6 +20,7 @@ import { teamRouter } from "./routers/team";
 import { variationsRouter } from "./routers/variations";
 import { betaRouter } from "./routers/beta";
 import { betaNurtureRouter } from "./routers/betaNurture";
+import { fbLeadsRouter } from "./routers/fbLeads";
 
 export const appRouter = router({
   system: systemRouter,
@@ -49,6 +50,7 @@ export const appRouter = router({
   variations: variationsRouter,
   beta: betaRouter,
   betaNurture: betaNurtureRouter,
+  fbLeads: fbLeadsRouter,
 });
 
 export type AppRouter = typeof appRouter;

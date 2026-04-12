@@ -532,3 +532,14 @@
 - [ ] Update betaNurture.ts to use Gmail SMTP
 - [ ] Test welcome email fires to matthew@getgas.net.au
 - [ ] Save checkpoint
+
+## FB Leads Admin Dashboard
+- [x] Add hubspotContactId and hubspotDealId columns to betaSignups schema
+- [x] Apply migration for new HubSpot columns
+- [x] Update fbLeadWebhook to save HubSpot IDs to DB after creation
+- [x] Create fbLeads tRPC router (list, getById, approve, stats — admin-only)
+- [x] Register fbLeadsRouter in main routers.ts
+- [x] Build FbLeadsDashboard admin page (stat cards, filterable table, nurture progress)
+- [x] Add /admin/fb-leads route to App.tsx
+- [x] Add admin-only "FB Leads" nav item to DashboardLayout sidebar
+- [x] Write 17 vitest tests for fbLeads feature (203 total passing)

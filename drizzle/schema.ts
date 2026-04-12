@@ -462,6 +462,8 @@ export const betaSignups = mysqlTable("beta_signups", {
   feedback: text("feedback"), // optional "what's your biggest quoting pain?"
   status: mysqlEnum("status", ["pending", "approved", "active", "churned"]).default("pending").notNull(),
   userId: int("userId"), // linked once they sign up
+  hubspotContactId: varchar("hubspotContactId", { length: 64 }), // HubSpot contact ID
+  hubspotDealId: varchar("hubspotDealId", { length: 64 }), // HubSpot deal ID
   approvedAt: timestamp("approvedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

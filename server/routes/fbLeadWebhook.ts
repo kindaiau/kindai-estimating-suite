@@ -160,6 +160,15 @@ fbLeadWebhookRouter.post("/fb-lead", async (req: Request, res: Response) => {
       });
       if (hubspotResult) {
         console.log(`[FB Lead Webhook] HubSpot: contactId=${hubspotResult.contactId}, dealId=${hubspotResult.dealId}`);
+        // Persist HubSpot IDs back to the beta_signups row
+        if (signupId) {
+          await db.update(betaSignups)
+            .set({
+              hubspotContactId: hubspotResult.contactId,
+              hubspotDealId: hubspotResult.dealId,
+            })
+            .where(eq(betaSignups.id, signupId));
+        }
       }
     } catch (err: unknown) {
       console.error("[FB Lead Webhook] HubSpot failed (non-fatal):", err instanceof Error ? err.message : String(err));
