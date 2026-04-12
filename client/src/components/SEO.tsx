@@ -14,7 +14,7 @@ interface SEOProps {
 const BASE_URL = "https://kindaiestimator.com";
 const DEFAULT_TITLE = "Kindai Estimating Suite | AI-Powered Quoting for Australian Trades";
 const DEFAULT_DESCRIPTION =
-  "AI-powered estimating and quoting software for Australian trades and builders. Scan plans, get instant takeoffs, send branded quotes with GST. 20 trades covered. Free beta access.";
+  "AI-powered estimating and quoting software for Australian trades and builders. Scan plans, get instant takeoffs, send branded quotes with GST. 10 trades covered. Free beta access.";
 const DEFAULT_KEYWORDS =
   "construction estimating software Australia, trade quoting software, AI estimating, building estimator Australia, electrical estimating software, plumbing estimating software, tradie quoting app, builder software Australia, construction takeoff software, quote builder Australia, GST quoting software, QBCC estimating";
 

@@ -7,7 +7,7 @@ export { default as SEO } from "./SEO";
 export const PAGE_SEO = {
   home: {
     title: "Kindai Estimating Suite | AI-Powered Quoting for Australian Trades",
-    description: "AI estimating software for Australian tradies and builders. Scan plans with your phone, get instant takeoffs, send branded quotes with GST in 60 seconds. 20 trades covered.",
+    description: "AI estimating software for Australian tradies and builders. Scan plans with your phone, get instant takeoffs, send branded quotes with GST in 60 seconds. 10 trades covered.",
     canonical: "/",
     keywords: "construction estimating software Australia, AI estimating software, trade quoting software Australia, builder quoting app, electrical estimating, plumbing estimating, tradie quoting, construction takeoff software, AI takeoff, GST quoting software",
   },

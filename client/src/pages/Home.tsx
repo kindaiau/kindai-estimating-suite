@@ -50,7 +50,7 @@ const FEATURES = [
   { icon: DollarSign, title: "Retail vs Trade Pricing", desc: "See both retail (Bunnings) and trade supplier pricing side-by-side. Know exactly how much you save buying trade — and set your markup.", colour: "text-green-500 bg-green-50" },
   { icon: Truck, title: "Supplier Recommendations", desc: "Get matched with the best trade suppliers for your state. Send material orders directly and get the best pricing on every job.", colour: "text-orange-500 bg-orange-50" },
   { icon: Shield, title: "Australian Compliance", desc: "Draft quotes with GST, configurable Award labour rates, state licensing prompts, and WHS notices. Every quote reviewed by your team before sending.", colour: "text-blue-500 bg-blue-50" },
-  { icon: Users, title: "Fair Work Labour Rates", desc: "Pre-loaded Award rates for all 22 trades as a starting point. Override with your own enterprise agreement rates, supplier price books, and custom markup rules.", colour: "text-cyan-500 bg-cyan-50" },
+  { icon: Users, title: "Fair Work Labour Rates", desc: "Pre-loaded Award rates for all 10 trades as a starting point. Override with your own enterprise agreement rates, supplier price books, and custom markup rules.", colour: "text-cyan-500 bg-cyan-50" },
   { icon: BarChart3, title: "Win Rate Dashboard", desc: "Track every quote — sent, accepted, declined. See your win rate, average job value, and total revenue pipeline at a glance.", colour: "text-purple-500 bg-purple-50" },
 ];
 
@@ -184,7 +184,7 @@ export default function Home() {
                 Australia's fastest <strong className="text-white">AI estimating software</strong> for tradies and builders.
                 Photograph your construction plans — AI reads every symbol, counts every fixture,
                 calculates materials and labour — and delivers a GST-compliant quote in 60 seconds.
-                Covers all 22 trades across NSW, VIC, QLD, WA, SA and beyond.
+                Covers all 10 trades across NSW, VIC, QLD, WA, SA and beyond.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 items-start">
