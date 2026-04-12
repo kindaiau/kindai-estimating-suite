@@ -8,7 +8,8 @@
  *   Email 4 (Day 14): Urgency close — "Your beta access won't last forever"
  *
  * All emails written in Matt Symons' voice: direct, warm, Aussie, no-fluff.
- * Sent via Brevo transactional API. AU Spam Act compliant.
+ * Sent via Gmail SMTP (nodemailer). AU Spam Act compliant.
+ * NOTE: Brevo was suspended — switched to Gmail App Password.
  */
 
 const LOGO_URL =
@@ -469,54 +470,40 @@ export function buildNurtureEmail(
   return EMAIL_BUILDERS[key](data);
 }
 
-// ─── Send via Brevo ──────────────────────────────────────────────────────────
+// ─── Send via Gmail SMTP ─────────────────────────────────────────────────────
 
 export async function sendNurtureEmail(
   key: NurtureEmailKey,
   data: NurtureEmailData
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
-  const brevoApiKey = process.env.BREVO_API_KEY;
-  if (!brevoApiKey) {
-    console.warn("[Nurture] BREVO_API_KEY not set — skipping nurture email");
-    return { success: false, error: "BREVO_API_KEY not configured" };
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPass = process.env.GMAIL_APP_PASSWORD;
+
+  if (!gmailUser || !gmailPass) {
+    console.warn("[Nurture] GMAIL_USER or GMAIL_APP_PASSWORD not set — skipping nurture email");
+    return { success: false, error: "Gmail credentials not configured" };
   }
 
   const content = buildNurtureEmail(key, data);
 
-  const payload = {
-    sender: {
-      name: "Matt Symons — Kindai",
-      email: "noreply@kindaiestimator.com",
-    },
-    to: [{ email: data.email, name: data.name }],
-    replyTo: { email: "matt@kindaiestimator.com", name: "Matt Symons" },
-    subject: content.subject,
-    htmlContent: content.html,
-    textContent: content.text,
-    tags: ["beta-nurture", key],
-  };
-
   try {
-    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
-      headers: {
-        "api-key": brevoApiKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
+    const { sendEmail } = await import("./gmailSender.js");
+
+    const sent = await sendEmail({
+      to: data.email,
+      subject: content.subject,
+      html: content.html,
+      fromName: "Matt Symons — Kindai",
+      replyTo: "matt@kindaiestimator.com",
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[Nurture] Brevo error ${response.status}: ${errorText}`);
-      return { success: false, error: `Brevo ${response.status}: ${errorText}` };
+    if (!sent) {
+      return { success: false, error: "Gmail SMTP send failed" };
     }
 
-    const result = (await response.json()) as { messageId?: string };
-    console.log(
-      `[Nurture] ${key} sent to ${data.email} — messageId: ${result.messageId}`
-    );
-    return { success: true, messageId: result.messageId };
+    const msgId = `gmail-${Date.now()}`;
+    console.log(`[Nurture] ${key} sent to ${data.email} via Gmail SMTP — id: ${msgId}`);
+    return { success: true, messageId: msgId };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`[Nurture] Send failed: ${msg}`);

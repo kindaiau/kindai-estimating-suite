@@ -1,7 +1,8 @@
 /**
  * Beta Welcome Email — Kindai Estimating Suite
- * Sends a branded welcome email via Brevo transactional API.
+ * Sends a branded welcome email via Gmail SMTP (nodemailer).
  * Fires on every successful beta sign-up.
+ * NOTE: Brevo was suspended — switched to Gmail App Password.
  */
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
@@ -243,48 +244,29 @@ To unsubscribe, reply with "unsubscribe" to matt@kindaiestimator.com.`;
 }
 
 export async function sendBetaWelcomeEmail(data: WelcomeEmailData): Promise<void> {
-  const brevoApiKey = process.env.BREVO_API_KEY;
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPass = process.env.GMAIL_APP_PASSWORD;
 
-  if (!brevoApiKey) {
-    console.warn("[Email] BREVO_API_KEY not set — skipping welcome email");
+  if (!gmailUser || !gmailPass) {
+    console.warn("[Email] GMAIL_USER or GMAIL_APP_PASSWORD not set — skipping welcome email");
     return;
   }
 
-  const firstName = getFirstName(data.name);
+  const { sendEmail } = await import("./gmailSender.js");
+
   const subject = `Founding Member #${data.spotNumber} — Welcome to Kindai Beta`;
 
-  const payload = {
-    sender: {
-      name: "Matt Symons — Kindai",
-      email: "noreply@kindaiestimator.com",
-    },
-    to: [{ email: data.email, name: data.name }],
-    replyTo: { email: "matt@kindaiestimator.com", name: "Matt Symons" },
+  const sent = await sendEmail({
+    to: data.email,
     subject,
-    htmlContent: buildHtmlEmail(data),
-    textContent: buildTextEmail(data),
-    tags: ["beta-welcome", "founding-member"],
-    params: {
-      firstName,
-      spotNumber: data.spotNumber,
-      trade: data.trade || "General",
-    },
-  };
-
-  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: {
-      "api-key": brevoApiKey,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
+    html: buildHtmlEmail(data),
+    fromName: "Matt Symons — Kindai",
+    replyTo: "matt@kindaiestimator.com",
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Brevo API error ${response.status}: ${errorText}`);
+  if (!sent) {
+    throw new Error(`[Email] Failed to send welcome email to ${data.email}`);
   }
 
-  const result = await response.json() as { messageId?: string };
-  console.log(`[Email] Welcome email sent to ${data.email} (spot #${data.spotNumber}) — messageId: ${result.messageId}`);
+  console.log(`[Email] Welcome email sent to ${data.email} (spot #${data.spotNumber}) via Gmail SMTP`);
 }

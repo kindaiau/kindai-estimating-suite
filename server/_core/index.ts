@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerStripeWebhook } from "../stripe/webhook";
+import { fbLeadWebhookRouter } from "../routes/fbLeadWebhook";
 import { seedMaterials } from "../seedMaterials";
 import { processDueNurtureEmails } from "../routers/betaNurture";
 import helmet from "helmet";
@@ -74,6 +75,9 @@ async function startServer() {
   // Configure body parser — 10MB is sufficient for plan images (base64 encoded)
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ limit: "10mb", extended: true }));
+
+  // Facebook Lead Ads webhook (from Zapier) — registered after body parser
+  app.use("/api/webhooks", fbLeadWebhookRouter);
 
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);

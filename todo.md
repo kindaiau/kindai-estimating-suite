@@ -524,3 +524,11 @@
 - [x] Provide ad creative recommendations and copy
 - [x] Audited Meta Ads account — campaign exists but PAUSED, $0 spend, 0 impressions
 - [x] Identified 3 ads ready to go (Cost Comparison, Underquoting Fear, Speed Hook)
+
+## Gmail SMTP Email Wiring (replacing Brevo — suspended)
+- [ ] Store Gmail App Password as GMAIL_APP_PASSWORD secret
+- [ ] Install nodemailer and wire into email sender
+- [ ] Update welcomeEmail.ts to use Gmail SMTP
+- [ ] Update betaNurture.ts to use Gmail SMTP
+- [ ] Test welcome email fires to matthew@getgas.net.au
+- [ ] Save checkpoint
