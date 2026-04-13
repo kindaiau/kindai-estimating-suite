@@ -1,12 +1,14 @@
 import { describe, it, expect } from "vitest";
 
+const apiKey = process.env.RUNWAY_API_KEY;
+
 /**
  * Test Runway API key validity by making a lightweight API call
- * This validates the secret before we use it in production
+ * This validates the secret before we use it in production.
+ * Tests are skipped when RUNWAY_API_KEY is not configured.
  */
-describe("Runway API Integration", () => {
+describe.skipIf(!apiKey)("Runway API Integration", () => {
   it("should validate Runway API key format and connectivity", async () => {
-    const apiKey = process.env.RUNWAY_API_KEY;
     expect(apiKey).toBeDefined();
     expect(apiKey?.length).toBeGreaterThan(10);
 
@@ -30,7 +32,6 @@ describe("Runway API Integration", () => {
   });
 
   it("should have proper Runway API key format", () => {
-    const apiKey = process.env.RUNWAY_API_KEY;
     // Runway keys start with "key_" and are hex-encoded
     expect(apiKey).toMatch(/^key_[a-f0-9]{128,}$/);
   });
