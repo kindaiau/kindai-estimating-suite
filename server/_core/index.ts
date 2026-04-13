@@ -114,18 +114,23 @@ async function startServer() {
     // Seed default materials library on startup (idempotent)
     seedMaterials().catch(err => console.warn("[Seed] Materials seed failed:", err.message));
 
-    // Process due nurture emails every 15 minutes
+    // ── DISABLED: Nurture email cron — all emails now via HubSpot ──
+    // The 15-minute interval and startup processing have been turned off
+    // to prevent Gmail SMTP emails from being sent alongside HubSpot workflows.
+    // To re-enable, uncomment the setInterval and setTimeout blocks below.
+    console.log("[Nurture] Gmail SMTP nurture cron DISABLED — emails now handled by HubSpot");
+    /*
     setInterval(() => {
       processDueNurtureEmails().catch(err =>
         console.warn("[Nurture] Cron processing failed:", err.message)
       );
     }, 15 * 60 * 1000);
-    // Also run once on startup (after 30s delay to let DB connect)
     setTimeout(() => {
       processDueNurtureEmails().catch(err =>
         console.warn("[Nurture] Initial processing failed:", err.message)
       );
     }, 30_000);
+    */
   });
 }
 

@@ -550,3 +550,13 @@
 - [x] Verify beta_nurture_emails table and hubspot columns exist in production DB
 - [x] Live end-to-end test: organic signup → HubSpot contact + deal + email + nurture all fire
 - [x] Write 11 vitest tests for HubSpot sync behaviour (214 total passing)
+
+## Email System Fix — Disable Gmail SMTP, HubSpot Only
+- [x] Disable Gmail SMTP welcome email (welcomeEmail.ts) — logs only, no send
+- [x] Disable Gmail SMTP nurture emails (betaNurture.ts) — logs only, no send
+- [x] Disable 15-min nurture cron job (server/_core/index.ts) — commented out
+- [x] Verify server restarts with "DISABLED" log message confirmed
+- [x] HubSpot CRM contact + deal creation still working (unchanged)
+- [x] Create lead flow diagram (before/after) for Matthew
+- [ ] Set up HubSpot email workflows to replace Gmail SMTP sequences (future)
+- [ ] Remove "free for Australian trades" from all ad copy (rule saved to skill)

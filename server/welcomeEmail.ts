@@ -244,6 +244,14 @@ To unsubscribe, reply with "unsubscribe" to matt@kindaiestimator.com.`;
 }
 
 export async function sendBetaWelcomeEmail(data: WelcomeEmailData): Promise<void> {
+  // ── DISABLED: All transactional emails now handled by HubSpot workflows ──
+  // Gmail SMTP welcome emails have been turned off to prevent duplicates/bounces.
+  // HubSpot CRM contact creation still happens separately (see hubspot.ts).
+  // To re-enable, uncomment the sending logic below.
+  console.log(`[Email] Welcome email SKIPPED for ${data.email} (spot #${data.spotNumber}) — emails now via HubSpot`);
+  return;
+
+  /* --- ORIGINAL GMAIL SMTP SENDING (disabled) ---
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
 
@@ -269,4 +277,5 @@ export async function sendBetaWelcomeEmail(data: WelcomeEmailData): Promise<void
   }
 
   console.log(`[Email] Welcome email sent to ${data.email} (spot #${data.spotNumber}) via Gmail SMTP`);
+  */
 }

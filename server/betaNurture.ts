@@ -476,6 +476,13 @@ export async function sendNurtureEmail(
   key: NurtureEmailKey,
   data: NurtureEmailData
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  // ── DISABLED: All transactional emails now handled by HubSpot workflows ──
+  // Gmail SMTP nurture emails have been turned off to prevent duplicates/bounces.
+  // HubSpot handles all email communication now.
+  console.log(`[Nurture] ${key} SKIPPED for ${data.email} — emails now via HubSpot`);
+  return { success: true, messageId: `hubspot-deferred-${Date.now()}` };
+
+  /* --- ORIGINAL GMAIL SMTP SENDING (disabled) ---
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
 
@@ -509,6 +516,7 @@ export async function sendNurtureEmail(
     console.error(`[Nurture] Send failed: ${msg}`);
     return { success: false, error: msg };
   }
+  */
 }
 
 // ─── Schedule all 4 nurture emails ───────────────────────────────────────────
