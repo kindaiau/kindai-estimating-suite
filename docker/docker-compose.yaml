@@ -1,0 +1,54 @@
+# =============================================================================
+# Kindai Estimating Suite — Docker Compose (Local Dev)
+# =============================================================================
+# Spins up: API server, Prometheus, Grafana
+# Usage:  docker compose -f docker/docker-compose.yaml up --build
+# =============================================================================
+
+version: "3.9"
+
+services:
+  # --- Kindai API -----------------------------------------------------------
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+    environment:
+      - KINDAI_DEBUG=true
+      - KINDAI_MODEL_WEIGHTS=/app/data/models/yolov5_custom.pt
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health').raise_for_status()"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # --- Prometheus -----------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - api
+
+  # --- Grafana --------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:10.2.2
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=kindai2024
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/kindai.json
+    volumes:
+      - ../dashboards/kindai-dashboard.json:/var/lib/grafana/dashboards/kindai.json:ro
+      - ./grafana-datasource.yaml:/etc/grafana/provisioning/datasources/ds.yaml:ro
+      - ./grafana-dashboard-provider.yaml:/etc/grafana/provisioning/dashboards/dp.yaml:ro
+    depends_on:
+      - prometheus

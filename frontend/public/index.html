@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kindai Estimating Suite</title>
+    <style>
+        /* ================================================================
+           Kindai Estimating Suite — UI Styles
+           ================================================================ */
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #16a34a;
+            --error: #dc2626;
+            --warning: #f59e0b;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .header h1 { font-size: 1.5rem; font-weight: 700; }
+        .header .badge {
+            background: rgba(255,255,255,0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Main layout */
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Upload card */
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .card h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        /* Drop zone */
+        .dropzone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f8fafc;
+        }
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+        .dropzone .icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+        .dropzone p { color: var(--text-muted); margin-top: 0.5rem; font-size: 0.9rem; }
+        .dropzone .formats { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; }
+
+        /* Upload button */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-primary:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        /* Processing modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 2.5rem;
+            max-width: 480px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 56px;
+            height: 56px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Progress bar */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #3b82f6);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .stage-text {
+            font-size: 0.95rem;
+            color: var(--text);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        .time-estimate {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Status indicator */
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .status-dot.connected { background: var(--success); }
+        .status-dot.disconnected { background: var(--error); }
+        .status-dot.processing { background: var(--warning); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        /* Results */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 0.75rem;
+        }
+        .result-item {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .result-item .label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: capitalize;
+        }
+        .result-item .count {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Summary stats */
+        .stats-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            flex: 1;
+            min-width: 120px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .stat-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .stat-card .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Success/error states */
+        .success-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+        .error-text { color: var(--error); font-weight: 500; }
+
+        /* File info */
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: #f1f5f9;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        .file-info .name { font-weight: 500; }
+        .file-info .size { color: var(--text-muted); font-size: 0.85rem; }
+        .file-info .remove {
+            margin-left: auto;
+            color: var(--error);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Connection status bar */
+        .connection-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            padding: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>Kindai Estimating Suite</h1>
+        <span class="badge">AI-Powered</span>
+        <div style="margin-left:auto" class="connection-bar">
+            <span class="status-dot" id="connDot"></span>
+            <span id="connText">Ready</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Upload Card -->
+        <div class="card" id="uploadCard">
+            <h2>Upload Construction Plans</h2>
+            <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+                <div class="icon">📐</div>
+                <strong>Drop your floorplan here or click to browse</strong>
+                <p>AI will detect doors, windows, power points, lights, and more</p>
+                <div class="formats">Supported: PDF, PNG, JPG, TIFF</div>
+            </div>
+            <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.tiff" hidden>
+
+            <div id="filePreview" style="display:none">
+                <div class="file-info">
+                    <span>📄</span>
+                    <span class="name" id="fileName"></span>
+                    <span class="size" id="fileSize"></span>
+                    <span class="remove" onclick="clearFile()">✕</span>
+                </div>
+                <button class="btn btn-primary" id="uploadBtn" onclick="startUpload()">
+                    Analyse Plan
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Card (hidden initially) -->
+        <div class="card" id="resultsCard" style="display:none">
+            <h2>Detection Results</h2>
+            <div class="stats-row" id="statsRow"></div>
+            <div class="results-grid" id="resultsGrid"></div>
+        </div>
+    </div>
+
+    <!-- Processing Modal -->
+    <div class="modal-overlay" id="processingModal">
+        <div class="modal">
+            <div id="modalSpinner" class="spinner"></div>
+            <div id="modalIcon" class="success-icon" style="display:none"></div>
+            <div class="stage-text" id="stageText">Uploading plan...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="time-estimate" id="timeEstimate"></div>
+            <button class="btn btn-primary" id="modalCloseBtn" style="display:none; margin-top:1.5rem" onclick="closeModal()">
+                View Results
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        // Kindai UI — Upload, WebSocket Status, Polling Fallback
+        // ================================================================
+
+        const API_BASE = window.location.origin;
+        let selectedFile = null;
+        let ws = null;
+        let pollInterval = null;
+
+        // --- Drag & Drop ---
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) handleFile(fileInput.files[0]);
+        });
+
+        function handleFile(file) {
+            selectedFile = file;
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatBytes(file.size);
+            document.getElementById('filePreview').style.display = 'block';
+            dropzone.style.display = 'none';
+        }
+
+        function clearFile() {
+            selectedFile = null;
+            fileInput.value = '';
+            document.getElementById('filePreview').style.display = 'none';
+            dropzone.style.display = 'block';
+        }
+
+        function formatBytes(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        // --- Upload ---
+        async function startUpload() {
+            if (!selectedFile) return;
+
+            const btn = document.getElementById('uploadBtn');
+            btn.disabled = true;
+
+            // Show modal
+            showModal();
+            updateModal('Uploading plan...', 0.05, null);
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('user_id', 'web-user');
+
+            try {
+                const resp = await fetch(`${API_BASE}/api/v1/upload`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    throw new Error(err.detail || 'Upload failed');
+                }
+
+                const data = await resp.json();
+                const jobId = data.job_id;
+                const estSeconds = data.estimated_seconds;
+
+                updateModal('Connecting to processing pipeline...', 0.1, estSeconds);
+
+                // Try WebSocket first, fall back to polling
+                connectWebSocket(jobId, estSeconds);
+
+            } catch (err) {
+                showError(err.message);
+                btn.disabled = false;
+            }
+        }
+
+        // --- WebSocket ---
+        function connectWebSocket(jobId, estSeconds) {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${wsProtocol}//${window.location.host}/ws/jobs/${jobId}`;
+
+            setConnectionStatus('processing', 'Connecting...');
+
+            try {
+                ws = new WebSocket(wsUrl);
+
+                ws.onopen = () => {
+                    setConnectionStatus('connected', 'Live connection');
+                };
+
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    handleStatusUpdate(data, estSeconds);
+                };
+
+                ws.onerror = () => {
+                    console.log('WebSocket failed, falling back to polling');
+                    startPolling(jobId, estSeconds);
+                };
+
+                ws.onclose = () => {
+                    setConnectionStatus('disconnected', 'Disconnected');
+                };
+
+            } catch (e) {
+                // WebSocket not available — use polling
+                startPolling(jobId, estSeconds);
+            }
+        }
+
+        // --- Polling fallback ---
+        function startPolling(jobId, estSeconds) {
+            setConnectionStatus('processing', 'Polling...');
+
+            pollInterval = setInterval(async () => {
+                try {
+                    const resp = await fetch(`${API_BASE}/api/v1/jobs/${jobId}`);
+                    const data = await resp.json();
+                    handleStatusUpdate(data, estSeconds);
+
+                    if (data.status === 'complete' || data.status === 'error') {
+                        clearInterval(pollInterval);
+                    }
+                } catch (e) {
+                    console.error('Poll error:', e);
+                }
+            }, 1000);
+        }
+
+        // --- Status handler ---
+        function handleStatusUpdate(data, estSeconds) {
+            if (data.error && data.status !== 'error') return; // ignore heartbeat errors
+
+            const progress = data.progress || 0;
+            const stage = data.stage || 'Processing...';
+            const elapsed = data.elapsed_seconds;
+            const estimated = data.estimated_seconds || estSeconds;
+
+            if (data.status === 'complete') {
+                updateModal('Analysis complete!', 1.0, null);
+                showSuccess(data.result);
+                return;
+            }
+
+            if (data.status === 'error') {
+                showError(data.error || 'Processing failed');
+                return;
+            }
+
+            // Calculate remaining time
+            let timeText = '';
+            if (estimated && elapsed != null) {
+                const remaining = Math.max(0, Math.round(estimated - elapsed));
+                timeText = remaining > 0
+                    ? `Estimated time remaining: ${remaining}s`
+                    : 'Almost done...';
+            } else if (estimated) {
+                timeText = `Estimated time: ~${Math.round(estimated)}s`;
+            }
+
+            updateModal(stage, progress, null, timeText);
+        }
+
+        // --- Modal helpers ---
+        function showModal() {
+            document.getElementById('processingModal').classList.add('active');
+            document.getElementById('modalSpinner').style.display = 'block';
+            document.getElementById('modalIcon').style.display = 'none';
+            document.getElementById('modalCloseBtn').style.display = 'none';
+        }
+
+        function updateModal(stage, progress, estSeconds, timeText) {
+            document.getElementById('stageText').textContent = stage;
+            document.getElementById('progressFill').style.width = `${Math.round(progress * 100)}%`;
+
+            if (timeText) {
+                document.getElementById('timeEstimate').textContent = timeText;
+            } else if (estSeconds) {
+                document.getElementById('timeEstimate').textContent =
+                    `Estimated time: ~${Math.round(estSeconds)}s`;
+            }
+        }
+
+        function showSuccess(result) {
+            document.getElementById('modalSpinner').style.display = 'none';
+            document.getElementById('modalIcon').style.display = 'block';
+            document.getElementById('modalIcon').textContent = '✅';
+            document.getElementById('stageText').textContent = 'Analysis Complete!';
+            document.getElementById('timeEstimate').textContent =
+                `Processed in ${(result.latency_ms / 1000).toFixed(1)}s — ${result.total_items} items detected`;
+            document.getElementById('modalCloseBtn').style.display = 'inline-flex';
+
+            // Populate results
+            renderResults(result);
+        }
+
+        function showError(message) {
+            document.getElementById('modalSpinner').style.display = 'none';
+            document.getElementById('modalIcon').style.display = 'block';
+            document.getElementById('modalIcon').textContent = '❌';
+            document.getElementById('stageText').innerHTML =
+                `<span class="error-text">${message}</span>`;
+            document.getElementById('timeEstimate').textContent = '';
+            document.getElementById('modalCloseBtn').style.display = 'inline-flex';
+            document.getElementById('modalCloseBtn').textContent = 'Close';
+        }
+
+        function closeModal() {
+            document.getElementById('processingModal').classList.remove('active');
+            document.getElementById('uploadBtn').disabled = false;
+            clearFile();
+        }
+
+        function renderResults(result) {
+            const statsRow = document.getElementById('statsRow');
+            const grid = document.getElementById('resultsGrid');
+            const card = document.getElementById('resultsCard');
+
+            // Stats
+            statsRow.innerHTML = `
+                <div class="stat-card">
+                    <div class="value">${result.total_items}</div>
+                    <div class="label">Total Items</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">${Object.keys(result.counts).length}</div>
+                    <div class="label">Item Types</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value">${(result.latency_ms / 1000).toFixed(1)}s</div>
+                    <div class="label">Processing Time</div>
+                </div>
+                ${result.scale ? `
+                <div class="stat-card">
+                    <div class="value">${result.scale.scale_ratio}</div>
+                    <div class="label">Detected Scale</div>
+                </div>` : ''}
+            `;
+
+            // Item counts
+            const sorted = Object.entries(result.counts).sort((a, b) => b[1] - a[1]);
+            grid.innerHTML = sorted.map(([label, count]) => `
+                <div class="result-item">
+                    <span class="label">${label.replace(/_/g, ' ')}</span>
+                    <span class="count">${count}</span>
+                </div>
+            `).join('');
+
+            card.style.display = 'block';
+        }
+
+        function setConnectionStatus(state, text) {
+            const dot = document.getElementById('connDot');
+            const label = document.getElementById('connText');
+            dot.className = `status-dot ${state}`;
+            label.textContent = text;
+        }
+    </script>
+</body>
+</html>
