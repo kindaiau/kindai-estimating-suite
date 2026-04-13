@@ -207,7 +207,7 @@ export const estimatesRouter = router({
       .limit(1);
     if (!est) throw new Error("Estimate not found");
     await db.delete(lineItems).where(eq(lineItems.estimateId, input.id));
-    await db.delete(estimates).where(eq(estimates.id, input.id));
+    await db.delete(estimates).where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)));
     return { success: true };
   }),
 
