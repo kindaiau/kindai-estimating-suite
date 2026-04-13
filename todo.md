@@ -559,4 +559,20 @@
 - [x] HubSpot CRM contact + deal creation still working (unchanged)
 - [x] Create lead flow diagram (before/after) for Matthew
 - [ ] Set up HubSpot email workflows to replace Gmail SMTP sequences (future)
-- [ ] Remove "free for Australian trades" from all ad copy (rule saved to skill)
+- [x] Remove "free for Australian trades" from all ad copy (rule saved to skill + ad-creatives.md)
+
+## Test Lead Cleanup
+- [x] Find all test leads in beta_signups database table
+- [x] Delete test leads from database (beta_signups + beta_nurture_emails)
+- [x] Delete test contacts/deals from HubSpot CRM
+- [x] Verify email fix working end-to-end (no Gmail SMTP sends)
+- [x] Create email-system-audit reusable skill
+
+## Email Template Branding Audit
+- [x] Audit all email templates in codebase (5 systems found: welcome, nurture, followup, trade profiles, PDF)
+- [x] Create shared emailBrand.ts module with brand colours, logo, reusable components
+- [x] Update welcomeEmail.ts to use shared branded template
+- [x] Update betaNurture.ts to use shared branded template
+- [x] Update emailFollowup.ts with wrapFollowupInBrand() function
+- [x] Verify trade profile templates already on-brand (correct gradient)
+- [x] Validate email-system-audit skill with branding section added

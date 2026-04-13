@@ -5,6 +5,26 @@ import { getDb } from "../db";
 import { estimates, quoteFollowups } from "../../drizzle/schema";
 import { eq, and, lte, isNull } from "drizzle-orm";
 import { invokeLLM } from "../_core/llm";
+import { brandedEmailWrap, brandedCta, BRAND } from "../emailBrand";
+
+/**
+ * Wraps AI-generated follow-up email body in the Kindai branded template.
+ * Uses the minimal footer ("Powered by Kindai") since these are client-facing.
+ */
+function wrapFollowupInBrand(bodyText: string, ctaUrl?: string): string {
+  // Convert plain text body to HTML paragraphs
+  const htmlBody = bodyText
+    .split("\n\n")
+    .map(p => `<p style="margin:0 0 16px;color:${BRAND.textBody};font-size:16px;line-height:1.7;">${p.replace(/\n/g, "<br/>")}</p>`)
+    .join("");
+
+  const cta = ctaUrl ? brandedCta("View Quote", ctaUrl) : "";
+
+  return brandedEmailWrap({
+    bodyHtml: htmlBody + cta,
+    minimalFooter: true,
+  });
+}
 
 // ─── Email templates for each follow-up day ──────────────────────────────────
 const FOLLOWUP_TEMPLATES = {

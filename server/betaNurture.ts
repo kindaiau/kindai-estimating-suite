@@ -12,9 +12,15 @@
  * NOTE: Brevo was suspended — switched to Gmail App Password.
  */
 
-const LOGO_URL =
-  "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
-const BASE_URL = "https://kindaiestimator.com";
+import {
+  brandedEmailWrap,
+  brandedCta,
+  brandedInfoBox,
+  brandedSignature,
+  BRAND,
+} from "./emailBrand";
+
+const BASE_URL = BRAND.baseUrl;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -47,77 +53,22 @@ function tradeLabel(trade?: string): string {
   return trade || "your trade";
 }
 
-// ─── Shared email wrapper ────────────────────────────────────────────────────
+// ─── Shared email wrapper (uses brandedEmailWrap from emailBrand.ts) ────────
 
 function wrapHtml(bodyHtml: string): string {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kindai Estimating Suite</title>
-</head>
-<body style="margin:0;padding:0;background:#0a0a0a;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
-          <!-- Header -->
-          <tr>
-            <td style="background:#111111;border-radius:16px 16px 0 0;padding:32px 48px 24px;text-align:center;border-bottom:1px solid #222;">
-              <img src="${LOGO_URL}" alt="Kindai" width="120" style="display:block;margin:0 auto 16px;height:auto;" />
-            </td>
-          </tr>
-          <!-- Body -->
-          <tr>
-            <td style="background:#111111;padding:32px 48px;">
-              ${bodyHtml}
-            </td>
-          </tr>
-          <!-- Footer -->
-          <tr>
-            <td style="background:#0d0d0d;border-radius:0 0 16px 16px;padding:24px 48px;text-align:center;border-top:1px solid #1a1a1a;">
-              <p style="margin:0 0 8px;color:#444444;font-size:13px;">
-                <a href="${BASE_URL}" style="color:#ff6b35;text-decoration:none;font-weight:600;">kindaiestimator.com</a>
-                &nbsp;&middot;&nbsp;
-                <a href="mailto:matt@kindaiestimator.com" style="color:#444444;text-decoration:none;">matt@kindaiestimator.com</a>
-              </p>
-              <p style="margin:0 0 8px;color:#333333;font-size:12px;">
-                Kindai Estimating Suite &middot; Australia's fastest AI estimating software for tradies
-              </p>
-              <p style="margin:0;color:#2a2a2a;font-size:11px;">
-                You received this because you signed up for the Kindai beta.
-                To stop these emails, reply "unsubscribe" to <a href="mailto:matt@kindaiestimator.com" style="color:#2a2a2a;text-decoration:none;">matt@kindaiestimator.com</a>.
-                Kindai Pty Ltd &middot; Australia
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+  return brandedEmailWrap({ bodyHtml });
 }
 
 function ctaButton(text: string, url: string): string {
-  return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0;">
-  <tr><td align="center">
-    <a href="${url}" style="display:inline-block;background:linear-gradient(135deg,#ff6b35,#ff8c42);color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;padding:16px 48px;border-radius:50px;letter-spacing:0.5px;">
-      ${text}
-    </a>
-  </td></tr>
-</table>`;
+  return brandedCta(text, url);
 }
 
 function signoff(): string {
-  return `<table width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a1a;border-radius:12px;border-left:3px solid #ff6b35;margin-top:28px;">
-  <tr><td style="padding:20px 24px;">
-    <p style="margin:0;color:#888888;font-size:14px;">
+  return brandedInfoBox(`
+    <p style="margin:0;color:${BRAND.textMuted};font-size:14px;">
       Cheers,<br/>Matt Symons<br/>Co-founder, Kindai
     </p>
-  </td></tr>
-</table>`;
+  `);
 }
 
 // ─── EMAIL 1: Day 1 — Activation Push ────────────────────────────────────────
