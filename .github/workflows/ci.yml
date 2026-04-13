@@ -15,7 +15,11 @@ jobs:
       contents: read
       pull-requests: read
     steps:
-      - uses: actions/dependency-review-action@v4.9.0
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4.9.0
 
   validate:
     runs-on: ubuntu-latest
