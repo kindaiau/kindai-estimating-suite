@@ -200,8 +200,26 @@ async def upload_plan(
     upload_dir.mkdir(parents=True, exist_ok=True)
     file_path = upload_dir / file.filename
 
-    content = await file.read()
-    file_path.write_bytes(content)
+    max_upload_size = 25 * 1024 * 1024  # 25 MiB
+    chunk_size = 1024 * 1024  # 1 MiB
+    total_size = 0
+    content = bytearray()
+
+    try:
+        with file_path.open("wb") as buffer:
+            while True:
+                chunk = await file.read(chunk_size)
+                if not chunk:
+                    break
+                total_size += len(chunk)
+                if total_size > max_upload_size:
+                    buffer.close()
+                    file_path.unlink(missing_ok=True)
+                    raise HTTPException(413, f"File too large. Maximum size is {max_upload_size} bytes.")
+                buffer.write(chunk)
+                content.extend(chunk)
+    finally:
+        await file.close()
 
     # Create job
     job = JobStatus(job_id=job_id, plan_id=plan_id, user_id=user_id)
@@ -209,7 +227,7 @@ async def upload_plan(
     _jobs[job_id] = job
 
     # Start background processing
-    asyncio.create_task(_process_job(job, file_path, content))
+    asyncio.create_task(_process_job(job, file_path, bytes(content)))
 
     return {
         "job_id": job_id,
