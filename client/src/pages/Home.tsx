@@ -12,6 +12,8 @@ import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useEffect } from "react";
 import { pixelViewContent } from "@/lib/metaPixel";
 
+// Design note: Australian workshop brutalism — blunt pain-first messaging, tradie-friendly proof, and a clear path from ad click to pilot sign-up.
+
 // Reusable scroll-triggered fade-up wrapper
 function FadeUp({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
   const ref = useRef(null);
@@ -76,12 +78,12 @@ export default function Home() {
 
   const handleGetStarted = () => {
     if (isAuthenticated) navigate("/ai-takeoff");
-    else window.location.href = getLoginUrl();
+    else navigate("/beta");
   };
 
   const handleTryAI = () => {
     if (isAuthenticated) navigate("/ai-takeoff");
-    else window.location.href = getLoginUrl();
+    else navigate("/beta");
   };
 
   return (
@@ -173,18 +175,17 @@ export default function Home() {
 
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/80 text-xs font-semibold mb-5 backdrop-blur-sm">
                 <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
-                AI Construction Estimating Software — Australia's Fastest Takeoff
+                Underquoting kills margin. Kindai helps you catch what you missed.
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.05] mb-5">
-                Scan your plans.<br />
-                <span className="kindai-gradient-text">Get your quote.</span>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.02] mb-5">
+                Are you underquoting your jobs?<br />
+                <span className="kindai-gradient-text">Stop losing money on every quote.</span>
               </h1>
               <p className="text-lg text-white/70 max-w-xl mb-8 leading-relaxed">
-                Australia's fastest <strong className="text-white">AI estimating software</strong> for tradies and builders.
-                Photograph your construction plans — AI reads every symbol, counts every fixture,
-                calculates materials and labour — and delivers a GST-compliant quote in 60 seconds.
-                Covers all 10 trades across NSW, VIC, QLD, WA, SA and beyond.
+                Every missed fitting, labour hour, or markup comes straight out of your pocket.
+                <strong className="text-white"> Kindai reads your plans, counts every item, and builds an Australian-priced, GST-ready quote in 60 seconds.</strong>
+                Built for builders, sparkies, plumbers, concreters, and every trade in between.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 items-start">
@@ -194,7 +195,7 @@ export default function Home() {
                   className="kindai-btn-primary px-8 py-4 rounded-full text-base font-black h-auto shadow-2xl"
                 >
                   <Camera className="w-5 h-5 mr-2" />
-                  Start Free
+                  Claim Free Pilot Spot
                   <ChevronRight className="w-5 h-5 ml-2" />
                 </Button>
                 <Button
@@ -204,13 +205,17 @@ export default function Home() {
                   className="px-8 py-4 rounded-full text-base font-black h-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
                 >
                   <Play className="w-5 h-5 mr-2" />
-                  Try Live Demo
+                  Watch 60-Second Demo
                 </Button>
               </div>
-              <div className="flex gap-4 text-white/60 text-sm mt-1">
-                <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-400" /> No sign-up for demo</span>
-                <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-400" /> Real AI results</span>
+              <div className="flex flex-wrap gap-3 text-white/70 text-sm mt-1">
+                <span className="flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 border border-white/10"><CheckCircle2 className="w-4 h-4 text-green-400" /> Australian pricing built in</span>
+                <span className="flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 border border-white/10"><CheckCircle2 className="w-4 h-4 text-green-400" /> All major trades supported</span>
+                <span className="flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 border border-white/10"><CheckCircle2 className="w-4 h-4 text-green-400" /> GST + labour ready quotes</span>
               </div>
+              <p className="text-sm text-white/55 mt-4 max-w-xl leading-relaxed">
+                "I photographed the plans on my phone and had a full quote in 3 minutes." — <span className="text-white font-semibold">Dave K., Electrician, QLD</span>
+              </p>
             </motion.div>
 
             {/* Right: Visual mockup of the AI flow */}
@@ -329,10 +334,10 @@ export default function Home() {
               See it in action
             </div>
             <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
-              Watch Kindai <span className="kindai-gradient-text">build a quote in 60 seconds.</span>
+              See how Kindai <span className="kindai-gradient-text">catches missed items in 60 seconds.</span>
             </h2>
             <p className="text-white/60 text-base max-w-xl mx-auto">
-              Real plans. Real AI. Real Australian pricing. No demo tricks.
+              Real plans. Real AI. Real Australian pricing. The speed matters because underquoting costs real money.
             </p>
           </div>
           <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-black aspect-video">
@@ -353,7 +358,7 @@ export default function Home() {
               size="lg"
               className="kindai-btn-primary px-8 py-4 rounded-full text-base font-black h-auto shadow-xl"
             >
-              <Camera className="w-5 h-5 mr-2" /> Try It Free
+              <Camera className="w-5 h-5 mr-2" /> Claim Free Pilot Spot
             </Button>
             <Button
               onClick={() => navigate("/demo")}
@@ -361,7 +366,7 @@ export default function Home() {
               variant="outline"
               className="px-8 py-4 rounded-full text-base font-black h-auto border-white/30 text-white hover:bg-white/10"
             >
-              <Play className="w-5 h-5 mr-2" /> Live Demo
+              <Play className="w-5 h-5 mr-2" /> Watch Demo
             </Button>
           </div>
         </div>

@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
+// Design note: Australian workshop brutalism — keep the assistant practical, sturdy, mobile-first, and friction-free for on-site tradies.
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   MessageCircle, X, Send, Loader2, Sparkles, ChevronDown,
   Bot, User, Lightbulb
@@ -128,8 +128,10 @@ export default function AIHelpAssistant({ trade, page, context }: AIHelpAssistan
       {isOpen && (
         <div
           className={cn(
-            "fixed bottom-6 right-6 z-50 w-[380px] bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl flex flex-col transition-all duration-200",
-            isMinimised ? "h-[56px]" : "h-[520px]"
+            "fixed z-50 bg-zinc-900/98 border border-zinc-700 shadow-2xl flex flex-col overflow-hidden transition-all duration-200 backdrop-blur-xl",
+            isMinimised
+              ? "left-3 right-3 bottom-3 top-auto h-[56px] rounded-2xl sm:left-auto sm:right-6 sm:w-[380px]"
+              : "inset-x-3 top-3 bottom-3 rounded-[1.6rem] sm:top-auto sm:left-auto sm:right-6 sm:bottom-6 sm:w-[380px] sm:h-[520px] sm:inset-x-auto sm:rounded-2xl"
           )}
         >
           {/* Header */}
@@ -164,8 +166,11 @@ export default function AIHelpAssistant({ trade, page, context }: AIHelpAssistan
           {!isMinimised && (
             <>
               {/* Messages */}
-              <ScrollArea className="flex-1 px-4 py-3" ref={scrollRef as React.RefObject<HTMLDivElement>}>
-                <div className="space-y-3">
+              <div
+                ref={scrollRef}
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-3"
+              >
+                <div className="space-y-3 pr-1">
                   {messages.map((msg, i) => (
                     <div
                       key={i}
@@ -183,7 +188,7 @@ export default function AIHelpAssistant({ trade, page, context }: AIHelpAssistan
                         }
                       </div>
                       <div className={cn(
-                        "max-w-[280px] rounded-xl px-3 py-2 text-sm leading-relaxed",
+                        "max-w-[85%] sm:max-w-[280px] rounded-xl px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words",
                         msg.role === "assistant"
                           ? "bg-zinc-800 text-zinc-100"
                           : "bg-orange-500 text-white"
@@ -205,7 +210,7 @@ export default function AIHelpAssistant({ trade, page, context }: AIHelpAssistan
                     </div>
                   )}
                 </div>
-              </ScrollArea>
+              </div>
 
               {/* Suggestions */}
               {messages.length <= 1 && suggestions.length > 0 && (
@@ -229,7 +234,7 @@ export default function AIHelpAssistant({ trade, page, context }: AIHelpAssistan
               )}
 
               {/* Input */}
-              <div className="px-4 pb-4 pt-2 border-t border-zinc-700">
+              <div className="px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 border-t border-zinc-700 bg-zinc-900/95">
                 <div className="flex gap-2">
                   <Textarea
                     ref={inputRef}
