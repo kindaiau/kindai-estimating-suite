@@ -1,6 +1,7 @@
 import puppeteer from "puppeteer-core";
+import { ENV } from "./_core/env";
 
-const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
+const LOGO_URL = ENV.appLogo ?? "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
 
 export type LineItemRow = {
   description: string;

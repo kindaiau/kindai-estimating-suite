@@ -8,6 +8,7 @@ import { nanoid } from "nanoid";
 import { GST_RATE } from "../../shared/trades";
 import { generateQuotePdf } from "../pdfGenerator";
 import { storagePut } from "../storage";
+import { INDUSTRY_BENCHMARKS } from "./ai";
 
 export const estimatesRouter = router({
   list: protectedProcedure.input(z.object({ projectId: z.number().optional() })).query(async ({ ctx, input }) => {
@@ -96,7 +97,7 @@ export const estimatesRouter = router({
       return sum + qty * rate * (1 + waste);
     }, 0);
 
-    const marginRate = parseFloat(estimate.margin as string) / 100;
+    const marginRate = (parseFloat(estimate.margin ?? "0") || 0) / 100;
     const subtotalWithMargin = subtotal * (1 + marginRate);
     const gstAmount = subtotalWithMargin * GST_RATE;
     const total = subtotalWithMargin + gstAmount;
@@ -105,7 +106,7 @@ export const estimatesRouter = router({
       subtotal: subtotalWithMargin.toFixed(2) as any,
       gstAmount: gstAmount.toFixed(2) as any,
       total: total.toFixed(2) as any,
-    }).where(eq(estimates.id, input.id));
+    }).where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)));
 
     return { subtotal: subtotalWithMargin, gstAmount, total };
   }),
@@ -200,6 +201,11 @@ export const estimatesRouter = router({
 
   delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
+    // Verify ownership before deleting associated line items
+    const [est] = await db.select({ id: estimates.id }).from(estimates)
+      .where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)))
+      .limit(1);
+    if (!est) throw new Error("Estimate not found");
     await db.delete(lineItems).where(eq(lineItems.estimateId, input.id));
     await db.delete(estimates).where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)));
     return { success: true };
@@ -228,7 +234,6 @@ export const estimatesRouter = router({
       .limit(1);
     if (!estimate) return null;
 
-    const { INDUSTRY_BENCHMARKS } = await import("../routers/ai");
     const benchmark = INDUSTRY_BENCHMARKS[estimate.trade];
     if (!benchmark) return null;
 

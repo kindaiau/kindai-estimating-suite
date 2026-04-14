@@ -10,10 +10,11 @@
  */
 
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { adminProcedure, router } from "../_core/trpc";
+import { requireDatabase } from "../_core/errors";
 import { getDb } from "../db";
 import { betaSignups, betaNurtureEmails } from "../../drizzle/schema";
-import { eq, desc, sql, and } from "drizzle-orm";
+import { eq, desc, sql, and, inArray } from "drizzle-orm";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -52,7 +53,7 @@ export const fbLeadsRouter = router({
   /**
    * Admin: list all FB leads (source = 'fb_ad') with nurture progress
    */
-  list: protectedProcedure
+  list: adminProcedure
     .input(
       z.object({
         status: z.enum(["all", "pending", "approved", "active", "churned"]).optional().default("all"),
@@ -60,9 +61,8 @@ export const fbLeadsRouter = router({
         offset: z.number().min(0).optional().default(0),
       }).optional()
     )
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") throw new Error("Forbidden");
-      const db = (await getDb())!;
+    .query(async ({ input }) => {
+      const db = requireDatabase(await getDb());
 
       const opts = input ?? { status: "all", limit: 100, offset: 0 };
 
@@ -104,9 +104,7 @@ export const fbLeadsRouter = router({
               sentAt: betaNurtureEmails.sentAt,
             })
             .from(betaNurtureEmails)
-            .where(
-              sql`${betaNurtureEmails.betaSignupId} IN (${sql.join(leadIds.map(id => sql`${id}`), sql`, `)})`
-            )
+            .where(inArray(betaNurtureEmails.betaSignupId, leadIds))
             .orderBy(betaNurtureEmails.scheduledAt)
         : [];
 
@@ -145,11 +143,10 @@ export const fbLeadsRouter = router({
   /**
    * Admin: get a single FB lead with full nurture history
    */
-  getById: protectedProcedure
+  getById: adminProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") throw new Error("Forbidden");
-      const db = (await getDb())!;
+    .query(async ({ input }) => {
+      const db = requireDatabase(await getDb());
 
       const [lead] = await db
         .select()
@@ -171,11 +168,10 @@ export const fbLeadsRouter = router({
   /**
    * Admin: approve a lead (status → approved)
    */
-  approve: protectedProcedure
+  approve: adminProcedure
     .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") throw new Error("Forbidden");
-      const db = (await getDb())!;
+    .mutation(async ({ input }) => {
+      const db = requireDatabase(await getDb());
       await db
         .update(betaSignups)
         .set({ status: "approved", approvedAt: new Date() })
@@ -186,9 +182,8 @@ export const fbLeadsRouter = router({
   /**
    * Admin: summary stats for the FB leads dashboard
    */
-  stats: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user.role !== "admin") throw new Error("Forbidden");
-    const db = (await getDb())!;
+  stats: adminProcedure.query(async () => {
+    const db = requireDatabase(await getDb());
 
     const [total] = await db
       .select({ count: sql<number>`count(*)` })

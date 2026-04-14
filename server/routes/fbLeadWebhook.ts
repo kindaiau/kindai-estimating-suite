@@ -91,7 +91,8 @@ fbLeadWebhookRouter.post("/fb-lead", async (req: Request, res: Response) => {
 
   // ── Parse payload ───────────────────────────────────────────────────────────
   const payload = req.body as FbLeadPayload;
-  console.log("[FB Lead Webhook] Received payload:", JSON.stringify(payload));
+  // Log only non-PII metadata to avoid storing personal data in logs
+  console.log("[FB Lead Webhook] Received payload: lead_id=%s form_id=%s", payload.lead_id ?? "n/a", payload.form_id ?? "n/a");
 
   const name = extractName(payload);
   const email = extractEmail(payload);
@@ -222,7 +223,7 @@ fbLeadWebhookRouter.post("/fb-lead", async (req: Request, res: Response) => {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`[FB Lead Webhook] Fatal error: ${msg}`);
-    res.status(500).json({ error: "Internal server error", details: msg });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

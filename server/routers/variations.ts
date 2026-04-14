@@ -92,7 +92,7 @@ export const variationsRouter = router({
       }
     }
 
-    await db.update(variations).set(updateData).where(eq(variations.id, input.id));
+    await db.update(variations).set(updateData).where(and(eq(variations.id, input.id), eq(variations.userId, ctx.user.id)));
     return { success: true };
   }),
 
@@ -109,7 +109,7 @@ export const variationsRouter = router({
 
     if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Variation not found" });
 
-    await db.delete(variations).where(eq(variations.id, input.id));
+    await db.delete(variations).where(and(eq(variations.id, input.id), eq(variations.userId, ctx.user.id)));
     return { success: true };
   }),
 
