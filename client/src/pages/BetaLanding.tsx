@@ -142,7 +142,7 @@ export default function BetaLanding() {
       <SEO
         title="Join Kindai Beta | AI Construction Estimating Software Australia"
         description="Get early access to Kindai — AI estimating software built for Australian trades and builders. Limited founding beta spots available."
-        canonical="https://kindaiestimator.com/beta"
+        canonical="/beta"
         keywords="Kindai beta, AI estimating software beta, construction estimating software Australia, trade quoting app beta"
       />
 
