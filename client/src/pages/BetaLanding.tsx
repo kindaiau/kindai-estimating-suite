@@ -1,5 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
-import { pixelLead, pixelCompleteRegistration, pixelViewBetaPage } from "@/lib/metaPixel";
+import { useEffect, useRef, useState } from "react";
+import {
+  generateMetaEventId,
+  getMetaBrowserContext,
+  pixelLead,
+  pixelViewBetaPage,
+} from "@/lib/metaPixel";
 import SEO from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -60,6 +65,7 @@ export default function BetaLanding() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [spotNumber, setSpotNumber] = useState<number | null>(null);
+  const leadEventIdRef = useRef<string | null>(null);
 
   // Fire ViewBetaPage pixel event on mount
   useEffect(() => { pixelViewBetaPage(); }, []);
@@ -74,21 +80,28 @@ export default function BetaLanding() {
       if (data.alreadyRegistered) {
         toast.info("You're already on the beta list! We'll be in touch.");
         setSubmitted(true);
+        leadEventIdRef.current = null;
         return;
       }
       if (data.isFull) {
         toast.error("Sorry — all 25 beta spots have been claimed. Join the waitlist and we'll notify you when spots open.");
+        leadEventIdRef.current = null;
         return;
       }
       setSpotNumber(data.spotNumber ?? null);
       setSubmitted(true);
       toast.success("You're in! Welcome to the Kindai beta.");
-      // Fire Meta Pixel events
-      pixelLead({ content_name: "Beta Sign-up", content_category: "Kindai Estimating Suite", value: 0 });
-      pixelCompleteRegistration({ content_name: "Beta Founding Member", status: "confirmed" });
+
+      const leadEventId = leadEventIdRef.current ?? generateMetaEventId("beta_lead");
+      pixelLead(
+        { content_name: "Beta Sign-up", content_category: "Kindai Estimating Suite", value: 0 },
+        { eventId: leadEventId }
+      );
+      leadEventIdRef.current = null;
     },
     onError: (err) => {
       toast.error(err.message || "Something went wrong. Please try again.");
+      leadEventIdRef.current = null;
     },
   });
 
@@ -98,6 +111,11 @@ export default function BetaLanding() {
       toast.error("Please enter your name and email.");
       return;
     }
+
+    const leadEventId = generateMetaEventId("beta_lead");
+    const metaContext = getMetaBrowserContext();
+    leadEventIdRef.current = leadEventId;
+
     signupMutation.mutate({
       name: form.name,
       email: form.email,
@@ -107,6 +125,10 @@ export default function BetaLanding() {
       projectSize: form.projectSize || undefined,
       feedback: form.feedback || undefined,
       source: "beta_page",
+      sourceUrl: metaContext.sourceUrl,
+      leadEventId,
+      fbp: metaContext.fbp,
+      fbc: metaContext.fbc,
     });
   };
 
@@ -118,418 +140,251 @@ export default function BetaLanding() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <SEO
-        title="Free Pilot Access | Kindai Estimating Suite"
-        description="Join 25 Australian trades and construction businesses in Kindai's founding pilot program. AI-powered estimating, real pricing, GST-compliant quotes. Apply for your founding member spot."
+        title="Join Kindai Beta | AI Construction Estimating Software Australia"
+        description="Get early access to Kindai — AI estimating software built for Australian trades and builders. Limited founding beta spots available."
         canonical="/beta"
-        keywords="free estimating software Australia, AI estimating pilot program, AI quoting software free trial, construction estimating software Australia, builder estimating app Australia"
+        keywords="Kindai beta, AI estimating software beta, construction estimating software Australia, trade quoting app beta"
       />
-      {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-950/90 backdrop-blur-md border-b border-white/5">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-3">
-            <img src={LOGO_URL} alt="Kindai" className="h-9 w-9 object-contain" />
-            <div>
-              <span className="font-black text-base kindai-gradient-text">kindai</span>
-              <div className="text-[10px] text-gray-500 uppercase tracking-widest">Estimating Suite</div>
-            </div>
-          </a>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-orange-400 font-bold animate-pulse">● PILOT PROGRAM OPEN</span>
-            <span className="text-xs text-gray-500">{remaining} spots left — closes May 15</span>
-          </div>
-        </div>
-      </nav>
 
-      {/* Hero */}
-      <section className="pt-28 pb-16 px-4 relative overflow-hidden">
-        {/* Background glow */}
-        <div className="absolute top-20 left-1/4 w-96 h-96 rounded-full opacity-10 blur-3xl" style={{ background: "oklch(0.58 0.28 0)" }} />
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full opacity-10 blur-3xl" style={{ background: "oklch(0.55 0.22 255)" }} />
-
-        <div className="max-w-3xl mx-auto text-center relative z-10">
-          {/* Beta badge */}
+      <section className="relative overflow-hidden border-b border-white/10 bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.15),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(59,130,246,0.15),transparent_30%)]" />
+        <div className="relative mx-auto flex max-w-7xl flex-col items-center px-6 pb-20 pt-8 lg:px-8">
+          <img src={LOGO_URL} alt="Kindai" className="mb-6 h-16 w-auto md:h-20" />
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/30 rounded-full px-4 py-1.5 text-sm font-bold text-orange-400 mb-6"
+            className="max-w-4xl text-center"
           >
-            <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
-            FOUNDING PILOT — LIMITED SPOTS
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-sm font-medium text-amber-300">
+              <Clock className="h-4 w-4" />
+              Beta closes in {countdown.days}d {countdown.hours}h {countdown.minutes}m {countdown.seconds}s
+            </div>
+            <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-7xl">
+              Quote jobs in <span className="text-amber-400">minutes</span>, not days.
+            </h1>
+            <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-gray-300 sm:text-xl">
+              Kindai turns plans, scope and labour into fast, accurate construction estimates — built for Australian trades, builders and quantity surveyors.
+            </p>
+
+            <div className="mx-auto mt-8 grid max-w-3xl gap-3 text-left sm:grid-cols-2">
+              {BETA_PERKS.map(({ icon: Icon, text }) => (
+                <div key={text} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                  <div className="mt-0.5 rounded-full bg-amber-400/15 p-2 text-amber-300"><Icon className="h-5 w-5" /></div>
+                  <p className="text-sm text-gray-200">{text}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <a href="#beta-form">
+                <Button size="lg" className="h-12 rounded-2xl bg-amber-400 px-8 text-base font-semibold text-gray-950 hover:bg-amber-300">
+                  Claim my spot <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </a>
+              <p className="text-sm text-gray-400">Only {remaining} founding beta spots remaining</p>
+            </div>
           </motion.div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight mb-6"
-          >
-            Stop losing money on quotes.<br />
-            <span className="kindai-gradient-text">We built the fix.</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-gray-400 text-lg sm:text-xl mb-8 max-w-2xl mx-auto"
-          >
-            Kindai reads your plans, counts every item, and builds a full quote in 60 seconds —
-            with real Australian trade pricing, GST, and compliance built in.
-            We're selecting <strong className="text-white">25 Australian construction businesses</strong> for our founding pilot program — full platform access, free.
-          </motion.p>
-
-          {/* Live counter */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-8 max-w-md mx-auto"
-          >
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-sm font-bold text-gray-300">Pilot spots claimed</span>
-              <span className="text-sm font-black text-white">{claimed} / 25</span>
+          <div className="mt-12 w-full max-w-3xl">
+            <div className="mb-3 flex items-center justify-between text-sm text-gray-400">
+              <span>{claimed}/25 spots claimed</span>
+              <span>{pct}% full</span>
             </div>
-            <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+            <div className="h-3 overflow-hidden rounded-full bg-white/10">
               <motion.div
-                className="h-full rounded-full"
-                style={{ background: "linear-gradient(90deg, oklch(0.58 0.28 0), oklch(0.65 0.22 30))" }}
                 initial={{ width: 0 }}
                 animate={{ width: `${pct}%` }}
-                transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+                transition={{ duration: 0.7, ease: "easeOut" }}
+                className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500"
               />
             </div>
-            <p className="text-center mt-3 text-sm">
-              <span className="text-orange-400 font-black text-lg">{remaining}</span>
-              <span className="text-gray-400"> spots remaining</span>
-            </p>
-          </motion.div>
-
-          {/* Countdown timer */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            className="bg-red-500/5 border border-red-500/20 rounded-2xl p-4 max-w-md mx-auto"
-          >
-            <p className="text-xs font-bold text-red-400 uppercase tracking-wider text-center mb-3">
-              Pilot closes May 15, 2026
-            </p>
-            {countdown.expired ? (
-              <p className="text-center text-red-400 font-black text-lg">Pilot has closed</p>
-            ) : (
-              <div className="grid grid-cols-4 gap-2 text-center">
-                {[
-                  { val: countdown.days, label: "Days" },
-                  { val: countdown.hours, label: "Hours" },
-                  { val: countdown.minutes, label: "Mins" },
-                  { val: countdown.seconds, label: "Secs" },
-                ].map(({ val, label }) => (
-                  <div key={label}>
-                    <div className="text-2xl sm:text-3xl font-black text-white tabular-nums">{String(val).padStart(2, "0")}</div>
-                    <div className="text-[10px] text-gray-500 uppercase tracking-wider">{label}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Main content: form + perks */}
-      <section className="pb-20 px-4">
-        <div className="max-w-5xl mx-auto grid lg:grid-cols-2 gap-12 items-start">
+      <section className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
+        <div className="grid gap-6 md:grid-cols-3">
+          {TESTIMONIAL_PREVIEWS.map((testimonial, index) => (
+            <motion.div
+              key={testimonial.name}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.45, delay: index * 0.08 }}
+              className="rounded-3xl border border-white/10 bg-white/5 p-6"
+            >
+              <div className="mb-3 flex items-center gap-1 text-amber-300">
+                {Array.from({ length: 5 }).map((_, i) => <Star key={i} className="h-4 w-4 fill-current" />)}
+              </div>
+              <p className="text-sm leading-7 text-gray-200">“{testimonial.text}”</p>
+              <div className="mt-4 text-sm text-gray-400">{testimonial.name} — {testimonial.trade}</div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
 
-          {/* Left: Sign-up form */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="bg-white/5 border border-white/10 rounded-3xl p-8"
-          >
+      <section id="beta-form" className="border-t border-white/10 bg-white/[0.03] py-16">
+        <div className="mx-auto grid max-w-7xl gap-10 px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-300">Founding Member Beta</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              Get in early and lock in the unfair advantage.
+            </h2>
+            <p className="mt-4 max-w-2xl text-base leading-8 text-gray-300">
+              We are accepting a small group of Australian trades, builders and estimating teams into the first release of Kindai. If you quote jobs, tender projects or waste too much time on takeoffs, this is for you.
+            </p>
+
+            <div className="mt-8 space-y-4">
+              {[
+                "Upload plans and generate takeoffs faster",
+                "Build estimates with labour, materials and margin in one workflow",
+                "Help shape the product with direct founder access",
+              ].map((item) => (
+                <div key={item} className="flex items-start gap-3 text-gray-200">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 text-amber-300" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-gray-950/70 p-6 shadow-2xl shadow-amber-950/20 backdrop-blur-xl sm:p-8">
             <AnimatePresence mode="wait">
               {submitted ? (
                 <motion.div
                   key="success"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="text-center py-8"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="text-center"
                 >
-                  <motion.div
-                    animate={{ scale: [1, 1.15, 1] }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                    className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6"
-                  >
-                    <CheckCircle2 className="w-10 h-10 text-green-400" />
-                  </motion.div>
-                  <h2 className="text-2xl font-black text-white mb-3">You're in! 🎉</h2>
-                  {spotNumber && (
-                    <p className="text-orange-400 font-bold text-lg mb-2">You're founding member #{spotNumber}</p>
-                  )}
-                  <p className="text-gray-400 text-sm mb-6">
-                    Check your email for your access link. We'll have you running your first AI takeoff within 5 minutes.
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
+                    <CheckCircle2 className="h-8 w-8" />
+                  </div>
+                  <h3 className="mt-5 text-2xl font-bold text-white">You’re on the list.</h3>
+                  <p className="mt-3 text-gray-300">
+                    Welcome to the Kindai beta. We’ll reach out with onboarding details and next steps shortly.
                   </p>
-                  <a href="/">
-                    <Button className="kindai-btn-primary px-8 py-3 rounded-full font-black">
-                      Open Kindai Now <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </a>
+                  {spotNumber ? (
+                    <p className="mt-4 inline-flex rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-sm font-medium text-amber-300">
+                      You claimed spot #{spotNumber}
+                    </p>
+                  ) : null}
                 </motion.div>
               ) : (
                 <motion.form
                   key="form"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
                   onSubmit={handleSubmit}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
                   className="space-y-4"
                 >
                   <div>
-                    <h2 className="text-2xl font-black text-white mb-1">Apply for your free pilot spot</h2>
-                    <p className="text-gray-400 text-sm">No credit card. No lock-in. Full platform access during the pilot.</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-bold text-gray-400 mb-1 block">Full Name *</label>
-                      <Input
-                        placeholder="Dave Smith"
-                        value={form.name}
-                        onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-600"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-gray-400 mb-1 block">Email *</label>
-                      <Input
-                        type="email"
-                        placeholder="dave@company.com.au"
-                        value={form.email}
-                        onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                        className="bg-white/5 border-white/10 text-white placeholder:text-gray-600"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-bold text-gray-400 mb-1 block">Company / Business Name</label>
+                    <label className="mb-2 block text-sm font-medium text-gray-200">Full name *</label>
                     <Input
-                      placeholder="Smith Electrical Pty Ltd"
-                      value={form.company}
-                      onChange={e => setForm(f => ({ ...f, company: e.target.value }))}
-                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-600"
+                      value={form.name}
+                      onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                      placeholder="Matthew Symons"
+                      className="h-12 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-gray-500"
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-bold text-gray-400 mb-1 block">Your Trade</label>
-                      <Select value={form.trade} onValueChange={v => setForm(f => ({ ...f, trade: v }))}>
-                        <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                          <SelectValue placeholder="Select trade" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {TRADES.map(t => (
-                            <SelectItem key={t} value={t}>{t}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-gray-400 mb-1 block">State</label>
-                      <Select value={form.state} onValueChange={v => setForm(f => ({ ...f, state: v as typeof form.state }))}>
-                        <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                          <SelectValue placeholder="State" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"].map(s => (
-                            <SelectItem key={s} value={s}>{s}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-200">Email *</label>
+                    <Input
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                      placeholder="you@company.com"
+                      className="h-12 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-gray-500"
+                    />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-gray-400 mb-1 block">Business size</label>
-                    <Select value={form.projectSize} onValueChange={v => setForm(f => ({ ...f, projectSize: v as typeof form.projectSize }))}>
-                      <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                        <SelectValue placeholder="How big is your operation?" />
+                    <label className="mb-2 block text-sm font-medium text-gray-200">Company</label>
+                    <Input
+                      value={form.company}
+                      onChange={(e) => setForm((prev) => ({ ...prev, company: e.target.value }))}
+                      placeholder="Kindai"
+                      className="h-12 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-gray-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-200">Trade</label>
+                    <Select value={form.trade} onValueChange={(value) => setForm((prev) => ({ ...prev, trade: value }))}>
+                      <SelectTrigger className="h-12 rounded-2xl border-white/10 bg-white/5 text-white">
+                        <SelectValue placeholder="Select your trade" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="sole_trader">Sole trader / 1–2 people</SelectItem>
-                        <SelectItem value="small_builder">Small builder / 3–15 staff</SelectItem>
-                        <SelectItem value="mid_tier">Mid-tier builder / 15–50 staff</SelectItem>
-                        <SelectItem value="enterprise">Enterprise / 50+ staff or $30M+ projects</SelectItem>
+                        {TRADES.map((trade) => (
+                          <SelectItem key={trade} value={trade}>{trade}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
 
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-200">State</label>
+                      <Select value={form.state} onValueChange={(value: typeof form.state) => setForm((prev) => ({ ...prev, state: value }))}>
+                        <SelectTrigger className="h-12 rounded-2xl border-white/10 bg-white/5 text-white">
+                          <SelectValue placeholder="Select state" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"] as const).map((state) => (
+                            <SelectItem key={state} value={state}>{state}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-200">Business size</label>
+                      <Select value={form.projectSize} onValueChange={(value: typeof form.projectSize) => setForm((prev) => ({ ...prev, projectSize: value }))}>
+                        <SelectTrigger className="h-12 rounded-2xl border-white/10 bg-white/5 text-white">
+                          <SelectValue placeholder="Select size" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sole_trader">Sole trader</SelectItem>
+                          <SelectItem value="small_builder">Small builder</SelectItem>
+                          <SelectItem value="mid_tier">Mid-tier / growing team</SelectItem>
+                          <SelectItem value="enterprise">Enterprise</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="text-xs font-bold text-gray-400 mb-1 block">What's your biggest quoting pain? <span className="text-gray-600">(optional)</span></label>
+                    <label className="mb-2 block text-sm font-medium text-gray-200">Biggest quoting pain right now?</label>
                     <Textarea
-                      placeholder="e.g. Takes too long, always underquote, can't keep up with demand..."
                       value={form.feedback}
-                      onChange={e => setForm(f => ({ ...f, feedback: e.target.value }))}
-                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 resize-none"
-                      rows={2}
+                      onChange={(e) => setForm((prev) => ({ ...prev, feedback: e.target.value }))}
+                      placeholder="Slow takeoffs, missed items, pricing inconsistency, tender pressure…"
+                      className="min-h-[120px] rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-gray-500"
                     />
                   </div>
 
                   <Button
                     type="submit"
                     disabled={signupMutation.isPending}
-                    className="w-full kindai-btn-primary py-4 rounded-full font-black text-base h-auto"
+                    className="h-12 w-full rounded-2xl bg-amber-400 text-base font-semibold text-gray-950 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {signupMutation.isPending ? (
-                      <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Claiming your spot...</span>
-                    ) : (
-                      <span className="flex items-center gap-2">Apply for Free Pilot Access <ChevronRight className="w-5 h-5" /></span>
-                    )}
+                    {signupMutation.isPending ? "Claiming your spot..." : "Claim my founding member spot"}
+                    <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
 
-                  <p className="text-center text-xs text-gray-600">
-                    No credit card. No lock-in. Unsubscribe anytime.
+                  <p className="text-center text-xs leading-6 text-gray-500">
+                    By joining the beta, you agree to receive onboarding and product update emails. No spam. Just the good stuff.
                   </p>
                 </motion.form>
               )}
             </AnimatePresence>
-          </motion.div>
-
-          {/* Right: Perks + testimonials */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="space-y-8"
-          >
-            {/* What you get */}
-            <div>
-              <h3 className="text-lg font-black text-white mb-4">What pilot members get:</h3>
-              <div className="space-y-3">
-                {BETA_PERKS.map((perk, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: 0.4 + i * 0.08 }}
-                    className="flex items-start gap-3"
-                  >
-                    <div className="w-8 h-8 rounded-xl bg-orange-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <perk.icon className="w-4 h-4 text-orange-400" />
-                    </div>
-                    <p className="text-gray-300 text-sm leading-relaxed">{perk.text}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="border-t border-white/10" />
-
-            {/* Early testimonials */}
-            <div>
-              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">What early users are saying:</h3>
-              <div className="space-y-4">
-                {TESTIMONIAL_PREVIEWS.map((t, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.6 + i * 0.1 }}
-                    className="bg-white/5 border border-white/8 rounded-2xl p-4"
-                  >
-                    <div className="flex gap-0.5 mb-2">
-                      {[...Array(5)].map((_, j) => (
-                        <Star key={j} className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-                      ))}
-                    </div>
-                    <p className="text-gray-300 text-sm italic mb-3">"{t.text}"</p>
-                    <div>
-                      <div className="text-xs font-bold text-white">{t.name}</div>
-                      <div className="text-xs text-gray-500">{t.trade}</div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            {/* Trust signals */}
-            <div className="flex flex-wrap gap-4 text-xs text-gray-500">
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> 22 Australian trades</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> GST compliant</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> All 8 states/territories</span>
-              <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-green-500" /> No credit card required</span>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* How it works — quick 3-step */}
-      <section className="py-16 px-4 bg-white/3 border-t border-white/5">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl font-black text-white mb-10">
-            From plans to quote in <span className="kindai-gradient-text">60 seconds</span>
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { step: "01", title: "Photograph your plans", desc: "Use your phone camera or upload a PDF. Any trade, any project size." },
-              { step: "02", title: "AI reads every detail", desc: "Kindai identifies every symbol, fixture, and material. Counts quantities automatically." },
-              { step: "03", title: "Full quote — ready to send", desc: "Materials, labour, markup, GST. Branded PDF. Send to client in one click." },
-            ].map((s, i) => (
-              <motion.div
-                key={s.step}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="text-center"
-              >
-                <div className="text-4xl font-black kindai-gradient-text mb-3">{s.step}</div>
-                <h3 className="font-black text-white mb-2">{s.title}</h3>
-                <p className="text-gray-500 text-sm">{s.desc}</p>
-              </motion.div>
-            ))}
           </div>
         </div>
       </section>
-
-      {/* Final CTA */}
-      <section className="py-20 px-4">
-        <div className="max-w-2xl mx-auto text-center">
-          <motion.div
-            animate={{ y: [0, -6, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <img src={LOGO_URL} alt="Kindai" className="w-16 h-16 object-contain mx-auto mb-6" />
-          </motion.div>
-          <h2 className="text-3xl font-black text-white mb-4">
-            {remaining > 0 ? `${remaining} pilot spots remaining.` : "Pilot is full — join the waitlist."}
-          </h2>
-          <p className="text-gray-400 mb-8">
-            Pilot closes <strong className="text-white">May 15, 2026</strong>. After that, pricing starts at $149/month.
-            {countdown.days > 0 && <span className="text-red-400 font-bold"> Only {countdown.days} days left.</span>}
-          </p>
-          <Button
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="kindai-btn-primary px-10 py-4 rounded-full text-base font-black h-auto"
-          >
-            Apply for Free Pilot Access <ChevronRight className="w-5 h-5 ml-2" />
-          </Button>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-white/5 py-8 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-600">
-          <span>© 2026 Kindai. Built for Australian tradies.</span>
-          <span>GST-compliant by default. All 8 states/territories.</span>
-          <a href="/" className="hover:text-gray-400 transition-colors">← Back to main site</a>
-        </div>
-      </footer>
     </div>
   );
 }

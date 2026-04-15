@@ -17,6 +17,7 @@ const DEFAULT_DESCRIPTION =
   "AI-powered estimating and quoting software for Australian trades and builders. Scan plans, get instant takeoffs, send branded quotes with GST. 10 trades covered. Free beta access.";
 const DEFAULT_KEYWORDS =
   "construction estimating software Australia, trade quoting software, AI estimating, building estimator Australia, electrical estimating software, plumbing estimating software, tradie quoting app, builder software Australia, construction takeoff software, quote builder Australia, GST quoting software, QBCC estimating";
+const META_DOMAIN_VERIFICATION = import.meta.env.VITE_META_DOMAIN_VERIFICATION as string | undefined;
 
 export default function SEO({
   title = DEFAULT_TITLE,
@@ -41,6 +42,9 @@ export default function SEO({
       <link rel="canonical" href={resolvedCanonical} />
       {noIndex && <meta name="robots" content="noindex, nofollow" />}
       {!noIndex && <meta name="robots" content="index, follow" />}
+      {META_DOMAIN_VERIFICATION ? (
+        <meta name="facebook-domain-verification" content={META_DOMAIN_VERIFICATION} />
+      ) : null}
 
       {/* Open Graph */}
       <meta property="og:type" content={ogType} />
