@@ -12,56 +12,131 @@ declare global {
   }
 }
 
+type PixelEventOptions = {
+  eventId?: string;
+};
+
 function fbq(...args: unknown[]): void {
   if (typeof window !== "undefined" && typeof window.fbq === "function") {
     window.fbq(...args);
   }
 }
 
+function trackStandardEvent(
+  eventName: string,
+  params?: Record<string, unknown>,
+  options?: PixelEventOptions
+) {
+  if (options?.eventId) {
+    fbq("track", eventName, params ?? {}, { eventID: options.eventId });
+    return;
+  }
+
+  fbq("track", eventName, params ?? {});
+}
+
+export function generateMetaEventId(prefix: string): string {
+  const randomPart =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+
+  return `${prefix}_${randomPart}`;
+}
+
+export function getMetaBrowserContext() {
+  if (typeof document === "undefined" || typeof window === "undefined") {
+    return {
+      sourceUrl: undefined,
+      fbp: undefined,
+      fbc: undefined,
+    };
+  }
+
+  const cookies = Object.fromEntries(
+    document.cookie
+      .split(";")
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .map((entry) => {
+        const index = entry.indexOf("=");
+        if (index === -1) return [entry, ""] as const;
+        return [entry.slice(0, index), decodeURIComponent(entry.slice(index + 1))] as const;
+      })
+  );
+
+  return {
+    sourceUrl: window.location.href,
+    fbp: typeof cookies._fbp === "string" && cookies._fbp ? cookies._fbp : undefined,
+    fbc: typeof cookies._fbc === "string" && cookies._fbc ? cookies._fbc : undefined,
+  };
+}
+
 // ─── Standard Events ────────────────────────────────────────────────────────
 
 /** Fires when someone views a key content page (e.g. Pricing, Demo, Beta) */
-export function pixelViewContent(params: {
-  content_name: string;
-  content_category?: string;
-  content_ids?: string[];
-  value?: number;
-  currency?: string;
-}) {
-  fbq("track", "ViewContent", {
-    currency: "AUD",
-    ...params,
-  });
+export function pixelViewContent(
+  params: {
+    content_name: string;
+    content_category?: string;
+    content_ids?: string[];
+    value?: number;
+    currency?: string;
+  },
+  options?: PixelEventOptions
+) {
+  trackStandardEvent(
+    "ViewContent",
+    {
+      currency: "AUD",
+      ...params,
+    },
+    options
+  );
 }
 
 /** Fires when someone submits the beta sign-up form successfully */
-export function pixelLead(params?: {
-  content_name?: string;
-  content_category?: string;
-  value?: number;
-}) {
-  fbq("track", "Lead", {
-    content_name: "Beta Sign-up",
-    content_category: "Kindai Estimating Suite",
-    value: 0,
-    currency: "AUD",
-    ...params,
-  });
+export function pixelLead(
+  params?: {
+    content_name?: string;
+    content_category?: string;
+    value?: number;
+  },
+  options?: PixelEventOptions
+) {
+  trackStandardEvent(
+    "Lead",
+    {
+      content_name: "Beta Sign-up",
+      content_category: "Kindai Estimating Suite",
+      value: 0,
+      currency: "AUD",
+      ...params,
+    },
+    options
+  );
 }
 
 /** Fires when someone completes registration (account created / beta confirmed) */
-export function pixelCompleteRegistration(params?: {
-  content_name?: string;
-  status?: string;
-  value?: number;
-}) {
-  fbq("track", "CompleteRegistration", {
-    content_name: "Beta Founding Member",
-    status: "confirmed",
-    value: 0,
-    currency: "AUD",
-    ...params,
-  });
+export function pixelCompleteRegistration(
+  params?: {
+    content_name?: string;
+    status?: string;
+    value?: number;
+  },
+  options?: PixelEventOptions
+) {
+  trackStandardEvent(
+    "CompleteRegistration",
+    {
+      content_name: "Beta Founding Member",
+      status: "confirmed",
+      value: 0,
+      currency: "AUD",
+      ...params,
+    },
+    options
+  );
 }
 
 /** Fires when someone clicks a pricing plan or starts checkout */
@@ -70,7 +145,7 @@ export function pixelInitiateCheckout(params: {
   value: number;
   num_items?: number;
 }) {
-  fbq("track", "InitiateCheckout", {
+  trackStandardEvent("InitiateCheckout", {
     currency: "AUD",
     num_items: 1,
     ...params,
@@ -83,7 +158,7 @@ export function pixelPurchase(params: {
   content_name: string;
   content_ids?: string[];
 }) {
-  fbq("track", "Purchase", {
+  trackStandardEvent("Purchase", {
     currency: "AUD",
     ...params,
   });
@@ -94,7 +169,7 @@ export function pixelStartTrial(params?: {
   predicted_ltv?: number;
   value?: number;
 }) {
-  fbq("track", "StartTrial", {
+  trackStandardEvent("StartTrial", {
     currency: "AUD",
     value: 0,
     ...params,
@@ -103,12 +178,12 @@ export function pixelStartTrial(params?: {
 
 /** Fires when someone submits a contact/enquiry form */
 export function pixelContact() {
-  fbq("track", "Contact");
+  trackStandardEvent("Contact");
 }
 
 /** Fires when someone searches within the app */
 export function pixelSearch(params: { search_string: string }) {
-  fbq("track", "Search", params);
+  trackStandardEvent("Search", params);
 }
 
 // ─── Custom Events ───────────────────────────────────────────────────────────
@@ -142,6 +217,11 @@ export function pixelSendQuote(params?: {
 
 /** Fires when someone views the /beta page */
 export function pixelViewBetaPage() {
+  pixelViewContent({
+    content_name: "Beta Landing Page",
+    content_category: "Lead Generation",
+  });
+
   fbq("trackCustom", "ViewBetaPage", {
     content_name: "Beta Landing Page",
     content_category: "Acquisition",
