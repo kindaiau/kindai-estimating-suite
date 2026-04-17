@@ -8,8 +8,8 @@ import { Zap, Shield, Brain, FileText, Users, BarChart3,
   ChevronRight, CheckCircle2, Star, ArrowRight, HardHat,
   Camera, Sparkles, DollarSign, Truck, Clock, Upload, Play
 } from "lucide-react";
-import { motion, useInView, AnimatePresence } from "framer-motion";
-import { useRef, useEffect } from "react";
+import { motion, useInView, AnimatePresence, useMotionValueEvent, useScroll } from "framer-motion";
+import { useRef, useEffect, useState } from "react";
 import { pixelViewContent } from "@/lib/metaPixel";
 
 // Design note: Australian workshop brutalism — blunt pain-first messaging, tradie-friendly proof, and a clear path from ad click to pilot sign-up.
@@ -28,6 +28,79 @@ function FadeUp({ children, delay = 0, className = "" }: { children: React.React
     >
       {children}
     </motion.div>
+  );
+}
+
+// Scroll-aware sticky nav — transparent at top, solid on scroll
+function ScrollNav({ isAuthenticated, navigate, handleGetStarted }: {
+  isAuthenticated: boolean;
+  navigate: (path: string) => void;
+  handleGetStarted: () => void;
+}) {
+  const [scrolled, setScrolled] = useState(false);
+  const { scrollY } = useScroll();
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    setScrolled(latest > 40);
+  });
+
+  return (
+    <motion.nav
+      initial={{ y: -60, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+      style={{
+        backgroundColor: scrolled ? "rgba(255,255,255,0.92)" : "transparent",
+        backdropFilter: scrolled ? "blur(16px)" : "blur(0px)",
+        borderBottom: scrolled ? "1px solid rgba(0,0,0,0.06)" : "1px solid transparent",
+        boxShadow: scrolled ? "0 1px 8px rgba(0,0,0,0.06)" : "none",
+      }}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <img src={LOGO_URL} alt="Kindai" className="h-10 w-10 object-contain" />
+          <div>
+            <span className="font-black text-xl tracking-tight kindai-gradient-text">kindai</span>
+            <div
+              className="text-[10px] uppercase tracking-[0.18em] -mt-0.5 font-extrabold"
+              style={{
+                background: "linear-gradient(90deg, oklch(0.58 0.28 0), oklch(0.68 0.22 40))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                letterSpacing: "0.18em",
+              }}
+            >
+              ESTIMATING SUITE
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {isAuthenticated ? (
+            <>
+              <Button onClick={() => navigate("/ai-takeoff")} className="kindai-btn-primary px-5 rounded-full text-sm font-bold">
+                <Camera className="w-4 h-4 mr-1.5" /> Scan a Plan
+              </Button>
+              <Button onClick={() => navigate("/dashboard")} variant="outline" className={`px-4 rounded-full text-sm font-bold hidden sm:flex ${scrolled ? '' : 'border-white/30 text-white hover:bg-white/10'}`}>
+                Dashboard
+              </Button>
+            </>
+          ) : (
+            <>
+              <a href="/about" className={`text-sm font-semibold transition-colors hidden sm:block ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-white/80 hover:text-white'}`}>
+                About
+              </a>
+              <button onClick={() => window.location.href = getLoginUrl()} className={`text-sm font-semibold transition-colors hidden sm:block ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-white/80 hover:text-white'}`}>
+                Sign In
+              </button>
+              <Button onClick={handleGetStarted} className="kindai-btn-primary px-5 rounded-full text-sm font-bold">
+                Get Started Free
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    </motion.nav>
   );
 }
 
@@ -98,97 +171,47 @@ export default function Home() {
       <OrganizationSchema />
       <FAQSchema />
       {/* ── Nav ── */}
-      <motion.nav
-        initial={{ y: -60, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={LOGO_URL} alt="Kindai" className="h-10 w-10 object-contain" />
-            <div>
-              <span className="font-black text-xl tracking-tight kindai-gradient-text">kindai</span>
-              <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest -mt-0.5">Estimating Suite</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {isAuthenticated ? (
-              <>
-                <Button onClick={() => navigate("/ai-takeoff")} className="kindai-btn-primary px-5 rounded-full text-sm font-bold">
-                  <Camera className="w-4 h-4 mr-1.5" /> Scan a Plan
-                </Button>
-                <Button onClick={() => navigate("/dashboard")} variant="outline" className="px-4 rounded-full text-sm font-bold hidden sm:flex">
-                  Dashboard
-                </Button>
-              </>
-            ) : (
-              <>
-                <a href="/about" className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors hidden sm:block">
-                  About
-                </a>
-                <button onClick={() => window.location.href = getLoginUrl()} className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors hidden sm:block">
-                  Sign In
-                </button>
-                <Button onClick={handleGetStarted} className="kindai-btn-primary px-5 rounded-full text-sm font-bold">
-                  Get Started Free
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </motion.nav>
+      <ScrollNav isAuthenticated={isAuthenticated} navigate={navigate} handleGetStarted={handleGetStarted} />
 
-      {/* ── HERO: AI Vision Takeoff ── */}
-      <section className="kindai-hero-bg pt-28 pb-20 px-4 relative overflow-hidden">
+
+      {/* ── HERO: Clean, spacious, mobile-first ── */}
+      <section className="kindai-hero-bg pt-32 sm:pt-36 pb-24 sm:pb-28 px-5 sm:px-6 relative overflow-hidden">
+        {/* Ambient glow orbs */}
         <div className="absolute top-20 left-10 w-72 h-72 rounded-full opacity-20 blur-3xl" style={{ background: "oklch(0.58 0.28 0)" }} />
         <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full opacity-15 blur-3xl" style={{ background: "oklch(0.55 0.22 255)" }} />
-        <div className="absolute top-40 right-1/3 w-48 h-48 rounded-full opacity-20 blur-2xl" style={{ background: "oklch(0.88 0.18 88)" }} />
 
         <div className="max-w-6xl mx-auto relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Left: Copy */}
             <motion.div
               initial={{ opacity: 0, x: -40 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+              className="text-center lg:text-left"
             >
-              <div className="flex justify-start mb-6">
-                <div className="relative">
-                  <div className="absolute inset-0 rounded-3xl blur-2xl opacity-40 kindai-gradient scale-110" />
-                  <img src={LOGO_URL} alt="Kindai" className="relative w-20 h-20 object-contain drop-shadow-2xl" />
-                </div>
-              </div>
-
               {/* BETA BANNER */}
               <motion.a
                 href="/beta"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-500/20 border border-orange-500/50 text-orange-300 text-xs font-black mb-3 cursor-pointer hover:bg-orange-500/30 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-500/20 border border-orange-500/50 text-orange-300 text-xs font-black mb-8 cursor-pointer hover:bg-orange-500/30 transition-colors"
               >
                 <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
-                PILOT PROGRAM — ONLY 25 FOUNDING SPOTS — Claim yours now
+                PILOT PROGRAM — ONLY 25 FOUNDING SPOTS
                 <ChevronRight className="w-3.5 h-3.5" />
               </motion.a>
 
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/80 text-xs font-semibold mb-5 backdrop-blur-sm">
-                <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
-                The AI that learns your business — and gets smarter every job.
-              </div>
-
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.02] mb-5">
-                From Plans to Quote in Minutes.<br />
-                <span className="kindai-gradient-text">AI That Learns Your Rates, Your Rules, Your Business.</span>
+              {/* HERO HEADLINE — only this in brand colours */}
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.05] mb-8">
+                <span className="kindai-gradient-text">From Plans to Quote<br className="hidden sm:block" /> in Minutes.</span>
               </h1>
-              <p className="text-lg text-white/70 max-w-xl mb-8 leading-relaxed">
-                Kindai reads your plans, applies your price book, and builds an Australian-priced, GST-ready quote in 60 seconds.
-                <strong className="text-white"> Every correction you make trains the AI — so it gets more accurate every single job.</strong>
-                Built for builders, sparkies, plumbers, concreters, and every trade in between.
+
+              <p className="text-lg sm:text-xl text-white/70 max-w-lg mx-auto lg:mx-0 mb-10 leading-relaxed">
+                Kindai reads your plans, applies your price book, and builds a GST-ready quote in 60 seconds. Built for Australian tradies.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 items-start">
+              <div className="flex flex-col sm:flex-row gap-4 items-center lg:items-start justify-center lg:justify-start">
                 <Button
                   onClick={handleTryAI}
                   size="lg"
@@ -205,16 +228,12 @@ export default function Home() {
                   className="px-8 py-4 rounded-full text-base font-black h-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
                 >
                   <Play className="w-5 h-5 mr-2" />
-                  Watch 60-Second Demo
+                  Watch Demo
                 </Button>
               </div>
-              <div className="flex flex-wrap gap-3 text-white/70 text-sm mt-1">
-                <span className="flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 border border-white/10"><CheckCircle2 className="w-4 h-4 text-green-400" /> Company memory — your prices, your rules</span>
-                <span className="flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 border border-white/10"><CheckCircle2 className="w-4 h-4 text-green-400" /> AI learns from every correction you make</span>
-                <span className="flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 border border-white/10"><CheckCircle2 className="w-4 h-4 text-green-400" /> Xero integration — quote to invoice in 1 click</span>
-              </div>
-              <p className="text-sm text-white/55 mt-4 max-w-xl leading-relaxed">
-                "I photographed the plans on my phone and had a full quote in 3 minutes." — <span className="text-white font-semibold">Dave K., Electrician, QLD</span>
+
+              <p className="text-sm text-white/45 mt-8 max-w-md mx-auto lg:mx-0">
+                "I photographed the plans on my phone and had a full quote in 3 minutes." — <span className="text-white/70 font-semibold">Dave K., Electrician, QLD</span>
               </p>
             </motion.div>
 
@@ -372,8 +391,33 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── AI That Learns — standout brand statement ── */}
+      <section className="py-20 sm:py-24 px-5 bg-white">
+        <FadeUp className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-[1.1] mb-6">
+            <span className="kindai-gradient-text">AI That Learns Your Rates,<br /> Your Rules, Your Business.</span>
+          </h2>
+          <p className="text-gray-500 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+            Every correction you make trains the AI — so it gets more accurate every single job.
+            Company memory stores your prices, your rules, and your supplier preferences.
+            Kindai doesn't just estimate — it <strong className="text-gray-800">learns how you work.</strong>
+          </p>
+          <div className="flex flex-wrap justify-center gap-3 mt-8">
+            <span className="flex items-center gap-2 rounded-full bg-gray-50 px-4 py-2 border border-gray-200 text-sm font-semibold text-gray-700">
+              <CheckCircle2 className="w-4 h-4 text-green-500" /> Company memory
+            </span>
+            <span className="flex items-center gap-2 rounded-full bg-gray-50 px-4 py-2 border border-gray-200 text-sm font-semibold text-gray-700">
+              <CheckCircle2 className="w-4 h-4 text-green-500" /> Correction learning
+            </span>
+            <span className="flex items-center gap-2 rounded-full bg-gray-50 px-4 py-2 border border-gray-200 text-sm font-semibold text-gray-700">
+              <CheckCircle2 className="w-4 h-4 text-green-500" /> Xero integration
+            </span>
+          </div>
+        </FadeUp>
+      </section>
+
       {/* ── How It Works ── */}
-      <section className="py-20 px-4 bg-white">
+      <section className="py-20 px-4 bg-gray-50">
         <div className="max-w-5xl mx-auto">
           <FadeUp className="text-center mb-14">
               <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3">
@@ -408,7 +452,7 @@ export default function Home() {
       </section>
 
       {/* ── Trades Grid ── */}
-      <section className="py-20 px-4 bg-gray-50">
+      <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <FadeUp className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3">
@@ -442,7 +486,7 @@ export default function Home() {
       </section>
 
       {/* ── Features ── */}
-      <section className="py-20 px-4 bg-white">
+      <section className="py-20 px-4 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <FadeUp className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3">

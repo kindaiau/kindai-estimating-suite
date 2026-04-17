@@ -686,3 +686,10 @@
 - [ ] Add "How It Works" section showing 5-step orchestrated workflow (future)
 - [ ] Update features section to include: Company Memory, Correction Learning, Xero Integration, Accuracy Dashboard (future)
 - [ ] Add social proof / trust signals section (future)
+
+## Mobile Hero & Header Cleanup
+- [x] Mobile hero: keep only "From Plans to Quote in Minutes" as large branded headline
+- [x] Mobile hero: move "AI That Learns Your Rates..." lower in page body with bold brand colouring
+- [x] Mobile hero: add more white space / breathing room
+- [x] Sticky header: transparent on scroll with blur transition
+- [x] Header: make "Estimating Suite" text bolder and better designed
