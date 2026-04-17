@@ -693,3 +693,4 @@
 - [x] Mobile hero: add more white space / breathing room
 - [x] Sticky header: transparent on scroll with blur transition
 - [x] Header: make "Estimating Suite" text bolder and better designed
+- [x] Add scroll-triggered scale-up animation to "AI That Learns" section

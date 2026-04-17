@@ -104,6 +104,49 @@ function ScrollNav({ isAuthenticated, navigate, handleGetStarted }: {
   );
 }
 
+// Scroll-triggered scale-up animation for the "AI That Learns" section
+function AIThatLearnsSection() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+
+  return (
+    <section className="py-20 sm:py-24 px-5 bg-white overflow-hidden">
+      <motion.div
+        ref={ref}
+        initial={{ opacity: 0, scale: 0.88, y: 40 }}
+        animate={inView ? { opacity: 1, scale: 1, y: 0 } : {}}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="max-w-3xl mx-auto text-center"
+      >
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-[1.1] mb-6">
+          <span className="kindai-gradient-text">AI That Learns Your Rates,<br /> Your Rules, Your Business.</span>
+        </h2>
+        <p className="text-gray-500 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+          Every correction you make trains the AI — so it gets more accurate every single job.
+          Company memory stores your prices, your rules, and your supplier preferences.
+          Kindai doesn't just estimate — it <strong className="text-gray-800">learns how you work.</strong>
+        </p>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          className="flex flex-wrap justify-center gap-3 mt-8"
+        >
+          <span className="flex items-center gap-2 rounded-full bg-gray-50 px-4 py-2 border border-gray-200 text-sm font-semibold text-gray-700">
+            <CheckCircle2 className="w-4 h-4 text-green-500" /> Company memory
+          </span>
+          <span className="flex items-center gap-2 rounded-full bg-gray-50 px-4 py-2 border border-gray-200 text-sm font-semibold text-gray-700">
+            <CheckCircle2 className="w-4 h-4 text-green-500" /> Correction learning
+          </span>
+          <span className="flex items-center gap-2 rounded-full bg-gray-50 px-4 py-2 border border-gray-200 text-sm font-semibold text-gray-700">
+            <CheckCircle2 className="w-4 h-4 text-green-500" /> Xero integration
+          </span>
+        </motion.div>
+      </motion.div>
+    </section>
+  );
+}
+
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
 
 const TRADES = [
@@ -391,30 +434,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── AI That Learns — standout brand statement ── */}
-      <section className="py-20 sm:py-24 px-5 bg-white">
-        <FadeUp className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black leading-[1.1] mb-6">
-            <span className="kindai-gradient-text">AI That Learns Your Rates,<br /> Your Rules, Your Business.</span>
-          </h2>
-          <p className="text-gray-500 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-            Every correction you make trains the AI — so it gets more accurate every single job.
-            Company memory stores your prices, your rules, and your supplier preferences.
-            Kindai doesn't just estimate — it <strong className="text-gray-800">learns how you work.</strong>
-          </p>
-          <div className="flex flex-wrap justify-center gap-3 mt-8">
-            <span className="flex items-center gap-2 rounded-full bg-gray-50 px-4 py-2 border border-gray-200 text-sm font-semibold text-gray-700">
-              <CheckCircle2 className="w-4 h-4 text-green-500" /> Company memory
-            </span>
-            <span className="flex items-center gap-2 rounded-full bg-gray-50 px-4 py-2 border border-gray-200 text-sm font-semibold text-gray-700">
-              <CheckCircle2 className="w-4 h-4 text-green-500" /> Correction learning
-            </span>
-            <span className="flex items-center gap-2 rounded-full bg-gray-50 px-4 py-2 border border-gray-200 text-sm font-semibold text-gray-700">
-              <CheckCircle2 className="w-4 h-4 text-green-500" /> Xero integration
-            </span>
-          </div>
-        </FadeUp>
-      </section>
+      {/* ── AI That Learns — standout brand statement with scale-up animation ── */}
+      <AIThatLearnsSection />
 
       {/* ── How It Works ── */}
       <section className="py-20 px-4 bg-gray-50">
