@@ -19,8 +19,8 @@ export default function About() {
             <img src={LOGO_URL} alt="Kindai Estimating Suite" className="h-8 w-auto cursor-pointer" />
           </Link>
           <div className="flex items-center gap-6">
-            <Link href="/pricing" className="text-sm text-white/60 hover:text-white transition-colors">Pricing</Link>
-            <Link href="/beta" className="bg-[#ff6b35] hover:bg-[#ff8c42] text-white text-sm font-semibold px-4 py-2 rounded-full transition-colors">
+            <Link href="/pricing" className="text-sm text-white/60 hover:text-white transition-colors hidden sm:inline">Pricing</Link>
+            <Link href="/beta" className="bg-[#ff6b35] hover:bg-[#ff8c42] text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 rounded-full transition-colors">
               Get Beta Access
             </Link>
           </div>
@@ -33,7 +33,7 @@ export default function About() {
           <div className="inline-block bg-[#ff6b35]/10 border border-[#ff6b35]/20 rounded-full px-4 py-1.5 mb-8">
             <span className="text-[#ff6b35] text-sm font-semibold tracking-wide uppercase">About Kindai</span>
           </div>
-          <h1 className="text-5xl md:text-6xl font-extrabold leading-tight mb-6">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-6">
             We built Kindai because tradies deserve{" "}
             <span className="text-[#ff6b35]">better tools.</span>
           </h1>
@@ -43,7 +43,7 @@ export default function About() {
       {/* Story */}
       <section className="pb-20 px-6">
         <div className="max-w-3xl mx-auto space-y-8">
-          <p className="text-xl text-white/70 leading-relaxed">
+          <p className="text-base sm:text-xl text-white/70 leading-relaxed">
             Every day, skilled tradespeople across Australia spend hours doing work that has nothing to do with their trade — writing up quotes, calculating materials, chasing numbers, second-guessing their margins. A full-time estimator costs $130,000 a year. Most small builders and sole traders can't afford that. So they guess. And guessing costs them jobs, money, and sleep.
           </p>
 
@@ -51,11 +51,11 @@ export default function About() {
             <p className="text-2xl font-bold text-white">Kindai changes that.</p>
           </div>
 
-          <p className="text-xl text-white/70 leading-relaxed">
+          <p className="text-base sm:text-xl text-white/70 leading-relaxed">
             We're an Australian AI startup built around one idea: the best tradies shouldn't lose work because they're slow at paperwork. Our estimating suite uses AI to read your plans, understand your trade, calculate your materials and labour, and deliver a GST-compliant quote in under 60 seconds — whether you're a cabinet maker in Brisbane, an electrician in Melbourne, or a concreter in Perth.
           </p>
 
-          <p className="text-xl text-white/70 leading-relaxed">
+          <p className="text-base sm:text-xl text-white/70 leading-relaxed">
             We cover all 10 major trades. We know Australian pricing, Australian compliance, and Australian conditions. We're not a US product bolted onto the local market — we were built here, for here.
           </p>
         </div>
@@ -64,7 +64,7 @@ export default function About() {
       {/* Underdog section */}
       <section className="py-20 px-6 bg-[#111111]">
         <div className="max-w-3xl mx-auto">
-          <div className="bg-gradient-to-br from-[#ff6b35]/10 to-[#ff8c42]/5 border border-[#ff6b35]/20 rounded-2xl p-10">
+          <div className="bg-gradient-to-br from-[#ff6b35]/10 to-[#ff8c42]/5 border border-[#ff6b35]/20 rounded-2xl p-6 sm:p-10">
             <h2 className="text-3xl md:text-4xl font-extrabold mb-6">
               Kindai is for the underdog.
             </h2>
@@ -81,9 +81,9 @@ export default function About() {
       {/* Founder note */}
       <section className="py-20 px-6">
         <div className="max-w-3xl mx-auto">
-          <div className="bg-[#111111] border border-white/5 rounded-2xl p-10">
-            <div className="flex items-start gap-6">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#ff6b35] to-[#ff8c42] flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
+          <div className="bg-[#111111] border border-white/5 rounded-2xl p-6 sm:p-10">
+            <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-[#ff6b35] to-[#ff8c42] flex items-center justify-center text-white font-bold text-lg sm:text-xl flex-shrink-0">
                 M
               </div>
               <div>

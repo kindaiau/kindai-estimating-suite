@@ -594,10 +594,10 @@ export default function Home() {
                   { item: "Caesarstone 6131 Bianco Drift 20mm", qty: "18 lineal m", price: "$485/lm" },
                   { item: "Soft-close drawer inserts (Hettich)", qty: "48 sets", price: "$22.80/set" },
                 ].map((row, i) => (
-                  <div key={i} className="flex items-center justify-between gap-3 bg-white/5 rounded-lg px-3 py-2 border border-white/5">
-                    <span className="text-white/70 flex-1">{row.item}</span>
-                    <span className="text-white/50 w-16 text-right">{row.qty}</span>
-                    <span className="text-green-400 font-bold w-24 text-right">{row.price}</span>
+                  <div key={i} className="flex items-center justify-between gap-2 sm:gap-3 bg-white/5 rounded-lg px-2 sm:px-3 py-2 border border-white/5">
+                    <span className="text-white/70 flex-1 min-w-0 truncate">{row.item}</span>
+                    <span className="text-white/50 shrink-0 text-right text-[10px] sm:text-xs">{row.qty}</span>
+                    <span className="text-green-400 font-bold shrink-0 text-right text-[10px] sm:text-xs">{row.price}</span>
                   </div>
                 ))}
                 <div className="h-px bg-white/10 my-2" />

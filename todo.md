@@ -694,3 +694,11 @@
 - [x] Sticky header: transparent on scroll with blur transition
 - [x] Header: make "Estimating Suite" text bolder and better designed
 - [x] Add scroll-triggered scale-up animation to "AI That Learns" section
+
+## Full Mobile Audit & Demo Prep
+- [x] Audit all landing page sections on mobile (375px) — no overflow, no clipping
+- [x] Fix AI chat widget positioning on mobile — no overlap with content
+- [x] Ensure all buttons are tap-friendly (min 44px touch targets)
+- [x] Verify all text is readable on mobile (no truncation, no overflow)
+- [x] Check all inner pages on mobile (dashboard, AI takeoff, pricing, demo, about, beta)
+- [x] Confirm site functions end-to-end for demo readiness

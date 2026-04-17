@@ -232,7 +232,7 @@ export default function DemoMode() {
             </div>
           </button>
           <div className="flex items-center gap-2">
-            <Badge className="bg-green-100 text-green-700 border-green-200 text-xs font-bold px-2.5 py-1">
+            <Badge className="bg-green-100 text-green-700 border-green-200 text-xs font-bold px-2.5 py-1 hidden sm:inline-flex">
               <Sparkles className="w-3 h-3 mr-1" /> Live AI Demo
             </Badge>
             <Button
@@ -273,14 +273,14 @@ export default function DemoMode() {
                       <button
                         key={trade.id}
                         onClick={() => handleTradeSelect(trade.id)}
-                        className={`flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all text-xs font-bold ${
+                        className={`flex items-center gap-1.5 sm:gap-2 p-2 sm:p-2.5 rounded-xl border text-left transition-all text-[11px] sm:text-xs font-bold ${
                           selectedTrade === trade.id
                             ? "border-pink-500 bg-pink-50 text-pink-700"
                             : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
                         }`}
                       >
-                        <span className="text-base">{trade.emoji}</span>
-                        <span className="leading-tight">{trade.name}</span>
+                        <span className="text-sm sm:text-base">{trade.emoji}</span>
+                        <span className="leading-tight line-clamp-2">{trade.name}</span>
                       </button>
                     ))}
                   </div>
