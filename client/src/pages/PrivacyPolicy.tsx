@@ -93,7 +93,7 @@ export default function PrivacyPolicy() {
             <h2 className="text-xl font-semibold text-white mb-3">4. How We Share Your Information</h2>
             <p className="mb-3">We do not sell your personal information. We may share your information with:</p>
             <ul className="list-disc list-inside space-y-2 text-gray-400 ml-2">
-              <li><strong className="text-white">Service providers</strong> — including Stripe (payments), AWS/S3 (file storage), Brevo (email), and HubSpot (CRM) who process data on our behalf under strict data processing agreements</li>
+              <li><strong className="text-white">Service providers</strong> — including Stripe (payments), AWS/S3 (file storage), Google (email via Gmail), and HubSpot (CRM) who process data on our behalf under strict data processing agreements</li>
               <li><strong className="text-white">Meta Platforms, Inc.</strong> — for advertising purposes via the Meta Pixel, subject to Meta's own Privacy Policy</li>
               <li><strong className="text-white">Legal authorities</strong> — where required by law, court order, or to protect our rights</li>
               <li><strong className="text-white">Business transfers</strong> — in the event of a merger, acquisition, or sale of assets, your data may be transferred as part of that transaction</li>

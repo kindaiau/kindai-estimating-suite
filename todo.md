@@ -526,12 +526,12 @@
 - [x] Identified 3 ads ready to go (Cost Comparison, Underquoting Fear, Speed Hook)
 
 ## Gmail SMTP Email Wiring (replacing Brevo — suspended)
-- [ ] Store Gmail App Password as GMAIL_APP_PASSWORD secret
-- [ ] Install nodemailer and wire into email sender
-- [ ] Update welcomeEmail.ts to use Gmail SMTP
-- [ ] Update betaNurture.ts to use Gmail SMTP
-- [ ] Test welcome email fires to matthew@getgas.net.au
-- [ ] Save checkpoint
+- [x] Store Gmail App Password as GMAIL_APP_PASSWORD secret
+- [x] Install nodemailer and wire into email sender
+- [x] Update welcomeEmail.ts to use Gmail SMTP
+- [x] Update betaNurture.ts to use Gmail SMTP (label field restored, 215 tests passing)
+- [x] Remove all Brevo references from codebase (brevoSender.ts deleted, Privacy Policy updated)
+- [x] Nurture cron re-enabled via Gmail SMTP (15-min interval)
 
 ## FB Leads Admin Dashboard
 - [x] Add hubspotContactId and hubspotDealId columns to betaSignups schema
@@ -576,3 +576,15 @@
 - [x] Update emailFollowup.ts with wrapFollowupInBrand() function
 - [x] Verify trade profile templates already on-brand (correct gradient)
 - [x] Validate email-system-audit skill with branding section added
+
+## AI Takeoff UX Overhaul
+- [ ] Fix duplicate job details input (Scan Plan + Describe Job both show scope questions)
+- [ ] Audit trade dropdown — identify and merge redundant trades (e.g., two gas trades, cabinetry + cabinet making)
+- [ ] Verify all trades in dropdown work correctly with AI analysis
+- [ ] Add more trade-specific scoping questions for accuracy
+- [ ] Support multi-plan upload (tradies need to upload all building plans, especially trade-specific ones)
+- [ ] Ensure plan upload is required OR job description is required (not both showing simultaneously)
+
+## Mobile Chat Bug Fix
+- [x] Fix AI chat widget on mobile — input field hidden behind keyboard, can't type follow-up messages
+- [x] Ensure chat input always visible above keyboard on iOS/Android (visualViewport translateY + dvh fix)

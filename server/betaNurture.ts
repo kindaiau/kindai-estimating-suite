@@ -9,7 +9,6 @@
  *
  * All emails written in Matt Symons' voice: direct, warm, Aussie, no-fluff.
  * Sent via Gmail SMTP (nodemailer). AU Spam Act compliant.
- * NOTE: Brevo was suspended — switched to Gmail App Password.
  */
 
 import {
@@ -19,6 +18,7 @@ import {
   brandedSignature,
   BRAND,
 } from "./emailBrand";
+import { sendEmail } from "./gmailSender";
 
 const BASE_URL = BRAND.baseUrl;
 
@@ -43,6 +43,19 @@ interface EmailContent {
   text: string;
 }
 
+// ─── Nurture sequence schedule ───────────────────────────────────────────────
+
+export const NURTURE_SEQUENCE: Array<{
+  emailKey: NurtureEmailKey;
+  dayOffset: number;
+  label: string;
+}> = [
+  { emailKey: "day1_activation", dayOffset: 1, label: "Day 1 — Activation Push" },
+  { emailKey: "day3_social_proof", dayOffset: 3, label: "Day 3 — Social Proof" },
+  { emailKey: "day7_roi", dayOffset: 7, label: "Day 7 — ROI Value" },
+  { emailKey: "day14_urgency", dayOffset: 14, label: "Day 14 — Urgency Close" },
+];
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function firstName(full: string): string {
@@ -53,7 +66,7 @@ function tradeLabel(trade?: string): string {
   return trade || "your trade";
 }
 
-// ─── Shared email wrapper (uses brandedEmailWrap from emailBrand.ts) ────────
+// ─── Shared email wrapper ────────────────────────────────────────────────────
 
 function wrapHtml(bodyHtml: string): string {
   return brandedEmailWrap({ bodyHtml });
@@ -263,7 +276,7 @@ function buildDay7(data: NurtureEmailData): EmailContent {
             <td style="padding:10px 0;border-bottom:1px solid #222;color:#ff6b35;font-size:15px;font-weight:700;text-align:right;">$95K–$150K/yr</td>
           </tr>
           <tr>
-            <td style="padding:10px 0;border-bottom:1px solid #222;color:#cccccc;font-size:15px;">Your time quoting (8hrs/wk × $100/hr × 48wks)</td>
+            <td style="padding:10px 0;border-bottom:1px solid #222;color:#cccccc;font-size:15px;">Your time quoting (8hrs/wk x $100/hr x 48wks)</td>
             <td style="padding:10px 0;border-bottom:1px solid #222;color:#ff6b35;font-size:15px;font-weight:700;text-align:right;">$38,400/yr</td>
           </tr>
           <tr>
@@ -295,11 +308,11 @@ function buildDay7(data: NurtureEmailData): EmailContent {
 
 Let me ask you something. How many hours a week do you spend quoting jobs?
 
-Most tradies I talk to say 5–10 hours. Some say more. That's time you're not on the tools, not earning, not with the family.
+Most tradies I talk to say 5-10 hours. Some say more. That's time you're not on the tools, not earning, not with the family.
 
 Here's the maths:
-- A full-time estimator costs $95K–$150K/yr
-- Your time quoting (8hrs/wk × $100/hr × 48wks) = $38,400/yr
+- A full-time estimator costs $95K-$150K/yr
+- Your time quoting (8hrs/wk x $100/hr x 48wks) = $38,400/yr
 - Quotes you lose from being too slow = $$$
 - Kindai (Founding Member rate) = Locked in forever
 
@@ -427,13 +440,8 @@ export async function sendNurtureEmail(
   key: NurtureEmailKey,
   data: NurtureEmailData
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
-  // ── DISABLED: All transactional emails now handled by HubSpot workflows ──
-  // Gmail SMTP nurture emails have been turned off to prevent duplicates/bounces.
-  // HubSpot handles all email communication now.
-  console.log(`[Nurture] ${key} SKIPPED for ${data.email} — emails now via HubSpot`);
-  return { success: true, messageId: `hubspot-deferred-${Date.now()}` };
+  const content = buildNurtureEmail(key, data);
 
-  /* --- ORIGINAL GMAIL SMTP SENDING (disabled) ---
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
 
@@ -442,45 +450,16 @@ export async function sendNurtureEmail(
     return { success: false, error: "Gmail credentials not configured" };
   }
 
-  const content = buildNurtureEmail(key, data);
+  const success = await sendEmail({
+    to: data.email,
+    subject: content.subject,
+    html: content.html,
+    fromName: "Matt from Kindai",
+    replyTo: "matt@kindaiestimator.com",
+  });
 
-  try {
-    const { sendEmail } = await import("./gmailSender.js");
-
-    const sent = await sendEmail({
-      to: data.email,
-      subject: content.subject,
-      html: content.html,
-      fromName: "Matt Symons — Kindai",
-      replyTo: "matt@kindaiestimator.com",
-    });
-
-    if (!sent) {
-      return { success: false, error: "Gmail SMTP send failed" };
-    }
-
-    const msgId = `gmail-${Date.now()}`;
-    console.log(`[Nurture] ${key} sent to ${data.email} via Gmail SMTP — id: ${msgId}`);
-    return { success: true, messageId: msgId };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(`[Nurture] Send failed: ${msg}`);
-    return { success: false, error: msg };
+  if (success) {
+    return { success: true, messageId: `gmail-${Date.now()}` };
   }
-  */
+  return { success: false, error: "Gmail SMTP send failed" };
 }
-
-// ─── Schedule all 4 nurture emails ───────────────────────────────────────────
-
-export interface NurtureScheduleItem {
-  emailKey: NurtureEmailKey;
-  dayOffset: number;
-  label: string;
-}
-
-export const NURTURE_SEQUENCE: NurtureScheduleItem[] = [
-  { emailKey: "day1_activation", dayOffset: 1, label: "Day 1 — Activation push" },
-  { emailKey: "day3_social_proof", dayOffset: 3, label: "Day 3 — Social proof" },
-  { emailKey: "day7_roi", dayOffset: 7, label: "Day 7 — ROI value" },
-  { emailKey: "day14_urgency", dayOffset: 14, label: "Day 14 — Urgency close" },
-];

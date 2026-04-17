@@ -1,7 +1,7 @@
 /**
  * Beta Welcome Email — Kindai Estimating Suite
  * Uses shared branded email template (emailBrand.ts).
- * NOTE: Sending is DISABLED — HubSpot handles all email now.
+ * Sent via Gmail SMTP (nodemailer).
  */
 
 import {
@@ -14,6 +14,7 @@ import {
   brandedSignature,
   BRAND,
 } from "./emailBrand";
+import { sendEmail } from "./gmailSender";
 
 const BASE_URL = BRAND.baseUrl;
 
@@ -28,7 +29,7 @@ function getFirstName(fullName: string): string {
   return fullName.trim().split(" ")[0] || fullName;
 }
 
-function getTradeUrl(trade?: string): string {
+function getTradeUrl(_trade?: string): string {
   return `${BASE_URL}/dashboard`;
 }
 
@@ -130,7 +131,25 @@ To unsubscribe, reply with "unsubscribe" to matt@kindaiestimator.com.`;
 }
 
 export async function sendBetaWelcomeEmail(data: WelcomeEmailData): Promise<void> {
-  // ── DISABLED: All transactional emails now handled by HubSpot workflows ──
-  console.log(`[Email] Welcome email SKIPPED for ${data.email} (spot #${data.spotNumber}) — emails now via HubSpot`);
-  return;
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPass = process.env.GMAIL_APP_PASSWORD;
+
+  if (!gmailUser || !gmailPass) {
+    console.warn(`[Email] GMAIL credentials not set — skipping welcome email for ${data.email}`);
+    return;
+  }
+
+  const subject = `G'day ${getFirstName(data.name)} — you're Founding Member #${data.spotNumber} of 25`;
+
+  const success = await sendEmail({
+    to: data.email,
+    subject,
+    html: buildHtmlEmail(data),
+    fromName: "Matt from Kindai",
+    replyTo: "matt@kindaiestimator.com",
+  });
+
+  if (!success) {
+    console.warn(`[Email] Welcome email failed for ${data.email} (spot #${data.spotNumber})`);
+  }
 }

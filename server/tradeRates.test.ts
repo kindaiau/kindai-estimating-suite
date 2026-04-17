@@ -11,8 +11,7 @@ const AU_BENCHMARKS: Record<string, {
 }> = {
   electrical: { labourRate: { low: 42, mid: 52, high: 65 }, markup: { low: 15, mid: 25, high: 40 }, overhead: { low: 8, mid: 12, high: 18 }, profit: { low: 10, mid: 15, high: 25 }, waste: { low: 3, mid: 5, high: 8 } },
   plumbing: { labourRate: { low: 43, mid: 54, high: 68 }, markup: { low: 15, mid: 25, high: 40 }, overhead: { low: 8, mid: 12, high: 18 }, profit: { low: 10, mid: 15, high: 25 }, waste: { low: 3, mid: 5, high: 8 } },
-  "gas-install": { labourRate: { low: 48, mid: 58, high: 72 }, markup: { low: 18, mid: 28, high: 42 }, overhead: { low: 10, mid: 14, high: 20 }, profit: { low: 12, mid: 18, high: 28 }, waste: { low: 3, mid: 5, high: 8 } },
-  "gas-maintenance": { labourRate: { low: 48, mid: 55, high: 68 }, markup: { low: 15, mid: 25, high: 38 }, overhead: { low: 8, mid: 12, high: 18 }, profit: { low: 12, mid: 18, high: 25 }, waste: { low: 2, mid: 4, high: 6 } },
+  gasfitting: { labourRate: { low: 48, mid: 58, high: 72 }, markup: { low: 15, mid: 28, high: 42 }, overhead: { low: 8, mid: 14, high: 20 }, profit: { low: 12, mid: 18, high: 28 }, waste: { low: 2, mid: 5, high: 8 } },
 };
 
 // ── Effective Margin Calculation (mirrors TradeProfile.tsx) ─────────────────
@@ -132,13 +131,12 @@ describe("Job breakdown calculation", () => {
 });
 
 describe("AU market benchmarks", () => {
-  it("has benchmarks for all gas trades", () => {
-    expect(AU_BENCHMARKS["gas-install"]).toBeDefined();
-    expect(AU_BENCHMARKS["gas-maintenance"]).toBeDefined();
+  it("has benchmarks for gasfitting", () => {
+    expect(AU_BENCHMARKS.gasfitting).toBeDefined();
   });
 
-  it("gas-install labour rate benchmark is higher than general carpentry", () => {
-    expect(AU_BENCHMARKS["gas-install"].labourRate.mid).toBeGreaterThan(AU_BENCHMARKS.electrical.labourRate.low);
+  it("gasfitting labour rate benchmark is higher than general electrical low", () => {
+    expect(AU_BENCHMARKS.gasfitting.labourRate.mid).toBeGreaterThan(AU_BENCHMARKS.electrical.labourRate.low);
   });
 
   it("all benchmark ranges have low < mid < high", () => {
@@ -151,39 +149,29 @@ describe("AU market benchmarks", () => {
   });
 });
 
-describe("DEFAULT_LABOUR_RATES includes gas trades", () => {
-  it("has gas-install labour rates", () => {
-    expect(DEFAULT_LABOUR_RATES["gas-install"]).toBeDefined();
-    expect(DEFAULT_LABOUR_RATES["gas-install"].length).toBeGreaterThan(0);
+describe("DEFAULT_LABOUR_RATES includes gasfitting", () => {
+  it("has gasfitting labour rates", () => {
+    expect(DEFAULT_LABOUR_RATES.gasfitting).toBeDefined();
+    expect(DEFAULT_LABOUR_RATES.gasfitting.length).toBeGreaterThan(0);
   });
 
-  it("has gas-maintenance labour rates", () => {
-    expect(DEFAULT_LABOUR_RATES["gas-maintenance"]).toBeDefined();
-    expect(DEFAULT_LABOUR_RATES["gas-maintenance"].length).toBeGreaterThan(0);
-  });
-
-  it("gas-install qualified rate is >= $48/hr", () => {
-    const qualified = DEFAULT_LABOUR_RATES["gas-install"].find(r => r.classification.includes("Qualified"));
+  it("gasfitting qualified rate is >= $48/hr", () => {
+    const qualified = DEFAULT_LABOUR_RATES.gasfitting.find(r => r.classification.includes("Qualified"));
     expect(qualified).toBeDefined();
     expect(qualified!.baseRate).toBeGreaterThanOrEqual(48);
   });
 
-  it("gas-maintenance supervisor rate is >= $60/hr", () => {
-    const supervisor = DEFAULT_LABOUR_RATES["gas-maintenance"].find(r => r.classification.includes("Supervisor"));
+  it("gasfitting supervisor rate is >= $60/hr", () => {
+    const supervisor = DEFAULT_LABOUR_RATES.gasfitting.find(r => r.classification.includes("Supervisor"));
     expect(supervisor).toBeDefined();
     expect(supervisor!.baseRate).toBeGreaterThanOrEqual(60);
   });
 
-  it("all gas rates have valid penalty rate multipliers", () => {
-    for (const tradeKey of ["gas-install", "gas-maintenance"]) {
-      for (const rate of DEFAULT_LABOUR_RATES[tradeKey]) {
-        // Overtime should be ~1.5x base
-        expect(rate.overtimeRate).toBeGreaterThanOrEqual(rate.baseRate * 1.4);
-        // Sunday should be ~2x base
-        expect(rate.sundayRate).toBeGreaterThanOrEqual(rate.baseRate * 1.8);
-        // Public holiday should be ~2.5x base
-        expect(rate.publicHolidayRate).toBeGreaterThanOrEqual(rate.baseRate * 2.0);
-      }
+  it("all gasfitting rates have valid penalty rate multipliers", () => {
+    for (const rate of DEFAULT_LABOUR_RATES.gasfitting) {
+      expect(rate.overtimeRate).toBeGreaterThanOrEqual(rate.baseRate * 1.4);
+      expect(rate.sundayRate).toBeGreaterThanOrEqual(rate.baseRate * 1.8);
+      expect(rate.publicHolidayRate).toBeGreaterThanOrEqual(rate.baseRate * 2.0);
     }
   });
 });
