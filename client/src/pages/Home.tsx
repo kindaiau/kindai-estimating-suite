@@ -175,16 +175,16 @@ export default function Home() {
 
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/80 text-xs font-semibold mb-5 backdrop-blur-sm">
                 <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
-                Underquoting kills margin. Kindai helps you catch what you missed.
+                The AI that learns your business — and gets smarter every job.
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-[1.02] mb-5">
-                Are you underquoting your jobs?<br />
-                <span className="kindai-gradient-text">Stop losing money on every quote.</span>
+                From Plans to Quote in Minutes.<br />
+                <span className="kindai-gradient-text">AI That Learns Your Rates, Your Rules, Your Business.</span>
               </h1>
               <p className="text-lg text-white/70 max-w-xl mb-8 leading-relaxed">
-                Every missed fitting, labour hour, or markup comes straight out of your pocket.
-                <strong className="text-white"> Kindai reads your plans, counts every item, and builds an Australian-priced, GST-ready quote in 60 seconds.</strong>
+                Kindai reads your plans, applies your price book, and builds an Australian-priced, GST-ready quote in 60 seconds.
+                <strong className="text-white"> Every correction you make trains the AI — so it gets more accurate every single job.</strong>
                 Built for builders, sparkies, plumbers, concreters, and every trade in between.
               </p>
 
@@ -209,9 +209,9 @@ export default function Home() {
                 </Button>
               </div>
               <div className="flex flex-wrap gap-3 text-white/70 text-sm mt-1">
-                <span className="flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 border border-white/10"><CheckCircle2 className="w-4 h-4 text-green-400" /> Australian pricing built in</span>
-                <span className="flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 border border-white/10"><CheckCircle2 className="w-4 h-4 text-green-400" /> All major trades supported</span>
-                <span className="flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 border border-white/10"><CheckCircle2 className="w-4 h-4 text-green-400" /> GST + labour ready quotes</span>
+                <span className="flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 border border-white/10"><CheckCircle2 className="w-4 h-4 text-green-400" /> Company memory — your prices, your rules</span>
+                <span className="flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 border border-white/10"><CheckCircle2 className="w-4 h-4 text-green-400" /> AI learns from every correction you make</span>
+                <span className="flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 border border-white/10"><CheckCircle2 className="w-4 h-4 text-green-400" /> Xero integration — quote to invoice in 1 click</span>
               </div>
               <p className="text-sm text-white/55 mt-4 max-w-xl leading-relaxed">
                 "I photographed the plans on my phone and had a full quote in 3 minutes." — <span className="text-white font-semibold">Dave K., Electrician, QLD</span>
@@ -672,25 +672,113 @@ export default function Home() {
         </FadeUp>
       </section>
 
-      {/* ── Footer ── */}
-      <footer className="bg-gray-900 py-10 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <img src={LOGO_URL} alt="Kindai" className="h-8 w-8 object-contain" />
-            <div>
-              <span className="font-black text-base kindai-gradient-text">kindai</span>
-              <div className="text-[10px] text-gray-500 uppercase tracking-widest">Estimating Suite</div>
+      {/* ── Premium Animated Footer ── */}
+      <footer className="relative overflow-hidden bg-gray-950 pt-20 pb-10 px-4">
+        {/* Animated gradient orbs */}
+        <div className="absolute inset-0 pointer-events-none">
+          <motion.div
+            animate={{ x: [0, 30, 0], y: [0, -20, 0], scale: [1, 1.1, 1] }}
+            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-gradient-to-br from-pink-600/20 to-orange-600/10 blur-3xl"
+          />
+          <motion.div
+            animate={{ x: [0, -40, 0], y: [0, 30, 0], scale: [1, 1.15, 1] }}
+            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+            className="absolute -bottom-20 -right-20 w-96 h-96 rounded-full bg-gradient-to-br from-blue-600/20 to-purple-600/10 blur-3xl"
+          />
+          <motion.div
+            animate={{ x: [0, 20, 0], y: [0, 15, 0] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 6 }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-gradient-to-br from-teal-600/10 to-cyan-600/5 blur-3xl"
+          />
+        </div>
+
+        <div className="relative max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-16">
+            {/* Brand */}
+            <FadeUp>
+              <div className="flex items-center gap-2.5 mb-4">
+                <img src={LOGO_URL} alt="Kindai" className="h-9 w-9" />
+                <span className="text-xl font-black kindai-gradient-text">kindai</span>
+              </div>
+              <p className="text-gray-400 text-sm leading-relaxed mb-5">
+                From Plans to Quote in Minutes. AI That Learns Your Rates, Your Rules, Your Business.
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                <span className="text-xs text-gray-500">All systems operational</span>
+              </div>
+            </FadeUp>
+
+            {/* Product */}
+            <FadeUp delay={0.1}>
+              <h4 className="text-white font-black text-sm mb-4 tracking-wide uppercase">Product</h4>
+              <ul className="space-y-2.5">
+                {["AI Takeoff", "Company Memory", "Xero Integration", "Accuracy Dashboard", "Pricing"].map(link => (
+                  <li key={link}>
+                    <a href="#" className="text-gray-400 text-sm hover:text-white transition-colors duration-200 inline-block">{link}</a>
+                  </li>
+                ))}
+              </ul>
+            </FadeUp>
+
+            {/* Trades */}
+            <FadeUp delay={0.2}>
+              <h4 className="text-white font-black text-sm mb-4 tracking-wide uppercase">Trades</h4>
+              <ul className="space-y-2.5">
+                {["Electrical", "Plumbing", "Concrete", "Painting", "Carpentry", "All Trades"].map(link => (
+                  <li key={link}>
+                    <a href="#" className="text-gray-400 text-sm hover:text-white transition-colors duration-200 inline-block">{link}</a>
+                  </li>
+                ))}
+              </ul>
+            </FadeUp>
+
+            {/* Legal */}
+            <FadeUp delay={0.3}>
+              <h4 className="text-white font-black text-sm mb-4 tracking-wide uppercase">Legal</h4>
+              <ul className="space-y-2.5">
+                {[
+                  { label: "Privacy Policy", href: "/privacy-policy" },
+                  { label: "Terms of Service", href: "/terms" },
+                  { label: "Support", href: "/support" },
+                  { label: "About", href: "/about" },
+                ].map(link => (
+                  <li key={link.label}>
+                    <a href={link.href} className="text-gray-400 text-sm hover:text-white transition-colors duration-200 inline-block">{link.label}</a>
+                  </li>
+                ))}
+              </ul>
+            </FadeUp>
+          </div>
+
+          {/* Animated divider */}
+          <motion.div
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 1, delay: 0.4 }}
+            className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8 origin-left"
+          />
+
+          {/* Bottom row */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="flex flex-col sm:flex-row items-center justify-between gap-4"
+          >
+            <span className="text-xs text-gray-600">
+              &copy; 2026 Kindai. Built for Australian construction businesses.
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-600">Powered by</span>
+              <span className="text-xs font-bold bg-gradient-to-r from-pink-400 to-orange-400 bg-clip-text text-transparent">
+                GPT-4o + Real Australian Pricing Data
+              </span>
             </div>
-          </div>
-          <p className="text-xs text-gray-500 text-center">
-            &copy; 2026 Kindai. Built for Australian tradies. GST-compliant by default.
-          </p>
-          <div className="flex gap-4 text-xs text-gray-500">
-            <a href="/about" className="hover:text-gray-300 transition-colors">About</a>
-            <a href="/privacy-policy" className="hover:text-gray-300 transition-colors">Privacy</a>
-            <a href="/terms" className="hover:text-gray-300 transition-colors">Terms</a>
-            <a href="/support" className="hover:text-gray-300 transition-colors">Support</a>
-          </div>
+          </motion.div>
         </div>
       </footer>
     </div>

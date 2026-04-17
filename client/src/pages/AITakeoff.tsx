@@ -15,11 +15,11 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { getLoginUrl } from "@/const";
-import {
-  Camera, Upload, Zap, Loader2, FileImage, DollarSign,
+import { Camera, Upload, Zap, Loader2, FileImage, DollarSign,
   TrendingUp, Clock, Package, Users, ExternalLink, ChevronRight,
   Sparkles, ShieldCheck, ArrowRight, BarChart3, Truck,
 } from "lucide-react";
+import { OrchestrationProgress } from "@/components/OrchestrationProgress";
 import { TRADES } from "../../../shared/trades";
 import ScopingQuestionsPanel from "@/components/ScopingQuestions";
 import { formatScopingAnswers, getScopingQuestions } from "../../../shared/scopingQuestions";
@@ -66,6 +66,7 @@ export default function AITakeoff() {
   const [tempEstimateId, setTempEstimateId] = useState<number | null>(null);
   const [scopingAnswers, setScopingAnswers] = useState<Record<string, string | string[] | number>>({});
   const [activeTab, setActiveTab] = useState<"materials" | "labour" | "suppliers" | "summary">("materials");
+  const [showOrchestration, setShowOrchestration] = useState(false);
 
   // Fetch saved trade profile defaults when trade is selected
   const tradeProfileQuery = trpc.tradeProfiles.get.useQuery(
@@ -196,37 +197,29 @@ export default function AITakeoff() {
     setResult(null);
     try {
       const estimateId = await ensureEstimate();
-      let takeoffResult: TakeoffResult;
-
-      // Inject scoping answers into the context for better accuracy
-      const scopingContext = formatScopingAnswers(getScopingQuestions(selectedTrade), scopingAnswers);
-      const enrichedContext = (additionalContext || "") + scopingContext;
-      const enrichedText = textDescription + scopingContext;
-
-      if (mode === "vision" && uploadedImageUrl) {
-        takeoffResult = await visionTakeoff.mutateAsync({
-          estimateId,
-          trade: selectedTrade,
-          imageUrl: uploadedImageUrl,
-          additionalContext: enrichedContext || undefined,
-        });
-      } else {
-        takeoffResult = await textTakeoff.mutateAsync({
-          estimateId,
-          trade: selectedTrade,
-          planDescription: enrichedText,
-          projectDetails: additionalContext || undefined,
-        }) as TakeoffResult;
-      }
-
-      setResult(takeoffResult);
-      toast.success(`Takeoff complete! ${takeoffResult.items.length} items found. Confidence: ${takeoffResult.confidence}%`);
-      pixelRunTakeoff({ trade: selectedTrade, job_type: mode });
+      // Show the orchestration progress UI
+      setShowOrchestration(true);
+      // The OrchestrationProgress component handles the SSE stream
+      // onComplete and onError callbacks will update state
     } catch (err: any) {
-      toast.error(err.message || "Analysis failed. Please try again.");
-    } finally {
+      toast.error(err.message || "Failed to start analysis. Please try again.");
       setIsAnalysing(false);
     }
+  }
+
+  function handleOrchestrationComplete(result: unknown) {
+    const takeoffResult = result as TakeoffResult;
+    setResult(takeoffResult);
+    setShowOrchestration(false);
+    setIsAnalysing(false);
+    toast.success(`Takeoff complete! ${takeoffResult.items.length} items found. Confidence: ${takeoffResult.confidence}%`);
+    pixelRunTakeoff({ trade: selectedTrade, job_type: mode });
+  }
+
+  function handleOrchestrationError(message: string) {
+    setShowOrchestration(false);
+    setIsAnalysing(false);
+    toast.error(message || "Analysis failed. Please try again.");
   }
 
   function fileToBase64(file: File): Promise<string> {
@@ -541,24 +534,38 @@ export default function AITakeoff() {
               </Card>
             )}
 
-            {isAnalysing && (
+            {isAnalysing && showOrchestration && tempEstimateId && (
+              <Card className="border-0 shadow-md rounded-2xl overflow-hidden">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center shrink-0">
+                      <Sparkles className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-black text-gray-900">AI Orchestration Running</h3>
+                      <p className="text-xs text-gray-500">5-step pipeline — takes 30-60 seconds</p>
+                    </div>
+                  </div>
+                  <OrchestrationProgress
+                    estimateId={tempEstimateId}
+                    trade={selectedTrade}
+                    mode={mode}
+                    imageUrl={mode === "vision" ? uploadedImageUrl ?? undefined : undefined}
+                    planDescription={mode === "text" ? textDescription : undefined}
+                    additionalContext={additionalContext || undefined}
+                    projectDetails={additionalContext || undefined}
+                    onComplete={handleOrchestrationComplete}
+                    onError={handleOrchestrationError}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {isAnalysing && !showOrchestration && (
               <Card className="border-0 shadow-md rounded-2xl overflow-hidden">
                 <CardContent className="p-12 text-center">
-                  <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center mx-auto mb-4 animate-pulse">
-                    <Sparkles className="w-10 h-10 text-white" />
-                  </div>
-                  <h3 className="text-xl font-black text-gray-800 mb-2">AI is Analysing Your Plan...</h3>
-                  <p className="text-sm text-gray-500 max-w-md mx-auto">
-                    Counting symbols, measuring dimensions, identifying materials, calculating quantities,
-                    and fetching current Australian market pricing. This takes 15-30 seconds.
-                  </p>
-                  <div className="mt-4 flex justify-center gap-2">
-                    {["Scanning", "Counting", "Pricing", "Calculating"].map((step, i) => (
-                      <Badge key={step} className="bg-gray-100 text-gray-500 border-0 text-xs animate-pulse" style={{ animationDelay: `${i * 0.3}s` }}>
-                        {step}...
-                      </Badge>
-                    ))}
-                  </div>
+                  <Loader2 className="w-10 h-10 text-pink-500 mx-auto mb-3 animate-spin" />
+                  <p className="text-sm text-gray-500">Preparing analysis...</p>
                 </CardContent>
               </Card>
             )}

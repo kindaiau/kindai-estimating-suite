@@ -642,3 +642,47 @@
 - [x] Dashboard navigation cards for Company Memory, Accuracy Dashboard, AI Takeoff
 - [x] Inline editing for line items (double-click to edit, correction auto-captured)
 - [x] 231 tests passing (all green)
+
+## Labour Productivity Data Injection + Multi-Step Orchestrated Workflow
+
+### Labour Productivity Data (scraped from Methvin, Resene, WireWise, Blacktown QS)
+- [x] Create labourProductivity.ts with task-level hours for all trades
+- [x] Inject electrical productivity data (hrs/GPO, hrs/light, hrs/panel, complexity multipliers)
+- [x] Inject plumbing productivity data (hrs/fixture from Methvin)
+- [x] Inject painting productivity data (hrs/m² by surface type from Resene)
+- [x] Inject tiling productivity data (m²/hr by tile size and room size)
+- [x] Inject plastering productivity data (hrs/m² render, hardwall, skim)
+- [x] Wire labourProductivity.ts into AI prompt builder (buildTradePrompt)
+
+### Multi-Step Orchestrated AI Workflow (5 steps with progress)
+- [x] Create orchestratedTakeoff.ts with 5-step pipeline (SSE streaming)
+- [x] Step 1: Plan Interpretation (project type, trades, scope detection)
+- [x] Step 2: Quantity Extraction (per-room/section with confidence flags)
+- [x] Step 3: Pricing Lookup (price book first, then market benchmarks)
+- [x] Step 4: Business Rules (margin floors, compliance, missing-data flags)
+- [x] Step 5: Draft Assembly (editable draft with per-item confidence scores)
+- [x] Replace single-shot analyzePlan/visionTakeoff with orchestrated pipeline
+- [x] Add streaming SSE endpoint for real-time step progress
+- [x] Build frontend progress UI (5-step stepper with live updates via OrchestrationProgress component)
+- [ ] Add per-item confidence indicators in estimate line items (future)
+
+## Pricing Restructure + Landing Page Premium Refresh
+
+### Pricing Tiers (Free / Pro / Business / Enterprise / Enterprise+)
+- [x] Update Pricing page with new 5-tier structure (Free / Pro $149 / Business $499 / Enterprise $1,499 / Enterprise+ custom)
+- [x] Free: 3 text takeoffs/mo, 1 vision/mo, 5 projects, no company memory
+- [x] Pro $149/mo: 20 text/10 vision, company memory, correction learning, PDF export, 50 projects
+- [x] Business $499/mo: unlimited takeoffs, orchestrated AI, Xero, accuracy dashboard, 3 team members
+- [x] Enterprise $1,499/mo: 10 team members, white-label branding, priority support
+- [x] Enterprise+ custom pricing: unlimited team, dedicated account manager, custom contract
+- [x] Enterprise+ shows "Talk to Us" CTA instead of price
+- [ ] Update Stripe products.ts with new tier names (future — requires Stripe product sync)
+
+### Landing Page Premium Refresh
+- [x] Update hero headline to: "From Plans to Quote in Minutes. AI That Learns Your Rates, Your Rules, Your Business."
+- [x] Update hero subheadline to reflect company memory + learning loop
+- [x] Update trust badges (company memory, correction learning, Xero integration)
+- [x] Build premium animated footer (framer-motion orbs, animated divider, 4-column layout, all systems status)
+- [ ] Add "How It Works" section showing 5-step orchestrated workflow (future)
+- [ ] Update features section to include: Company Memory, Correction Learning, Xero Integration, Accuracy Dashboard (future)
+- [ ] Add social proof / trust signals section (future)

@@ -7,6 +7,7 @@ import { estimates, tradeProfiles, companyProfiles, priceBookItems, estimateCorr
 import { eq, and, desc } from "drizzle-orm";
 import { storagePut } from "../storage";
 import { nanoid } from "nanoid";
+import { buildProductivityPromptSection } from "../labourProductivity";
 
 // ─── Australian Supplier Database ────────────────────────────────────────────
 export const AUSTRALIAN_SUPPLIERS: Record<string, Array<{
@@ -869,6 +870,7 @@ ${config.criticalRules}
 - Industry benchmark for this trade: labour rate $${labourRate.min}-${labourRate.max}/hr, typical margin ${benchmark?.marginRange.min ?? 15}-${benchmark?.marginRange.max ?? 35}%
 ${customRates ? buildCustomRatesSection(customRates) : ""}
 ${memory ? buildCompanyMemorySection(memory) : ""}
+${buildProductivityPromptSection(trade)}
 Return ONLY valid JSON matching the schema. No markdown, no explanation outside the JSON.`;
 }
 

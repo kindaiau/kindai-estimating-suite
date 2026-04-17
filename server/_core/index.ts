@@ -10,6 +10,7 @@ import { serveStatic, setupVite } from "./vite";
 import { registerStripeWebhook } from "../stripe/webhook";
 import { fbLeadWebhookRouter } from "../routes/fbLeadWebhook";
 import { xeroCallbackRouter } from "../routes/xeroCallback";
+import { orchestratedTakeoffRouter } from "../routes/orchestratedTakeoff";
 import { seedMaterials } from "../seedMaterials";
 import { processDueNurtureEmails } from "../routers/betaNurture";
 import helmet from "helmet";
@@ -85,6 +86,9 @@ async function startServer() {
 
   // Xero OAuth callback
   app.use(xeroCallbackRouter);
+
+  // Orchestrated AI Takeoff (SSE streaming)
+  app.use(orchestratedTakeoffRouter);
 
   // Apply stricter rate limiting to public LLM endpoints
   app.use("/api/trpc/demo.runDemo", publicLLMRateLimit);
