@@ -588,3 +588,57 @@
 ## Mobile Chat Bug Fix
 - [x] Fix AI chat widget on mobile — input field hidden behind keyboard, can't type follow-up messages
 - [x] Ensure chat input always visible above keyboard on iOS/Android (visualViewport translateY + dvh fix)
+
+## Advanced AI Premium Upgrade — 6 Features
+
+### Feature 1: Company Memory (Price Book, Saved Defaults, Per-Tenant Retrieval)
+- [x] Add companyProfiles table (exclusions, inclusions, quote tone, job templates)
+- [x] Add priceBookItems table (user's negotiated supplier pricing)
+- [x] Add jobTemplates table (reusable starting-point estimates)
+- [x] Build company profile settings page
+- [x] Build price book upload/management UI
+- [x] Build saved job templates UI
+- [x] Wire company memory into AI takeoff prompts (retrieval-augmented generation)
+
+### Feature 2: Human Correction Loop (Learning from Every Edit)
+- [x] Add estimateCorrections table (AI said X, human changed to Y, with reason)
+- [x] Wire correction capture into line item add/update/delete mutations
+- [x] Build accuracy tracking dashboard (AI accuracy % over time)
+- [x] Feed corrections back into AI prompts as retrieval hints
+- [ ] Surface "AI is learning" indicators in the UI
+
+### Feature 3: Multi-Step Orchestrated Workflow (Replace Single-Shot AI)
+- [ ] Step 1: Plan interpretation (project type, units, trades detected)
+- [ ] Step 2: Quantity extraction (per room/section with confidence flags)
+- [ ] Step 3: Pricing lookup (user price book first, then benchmarks)
+- [ ] Step 4: Business rules (margin floors, compliance, missing-data flags)
+- [ ] Step 5: Human review (editable draft with per-item confidence)
+- [ ] Step 6: Quote generation and export
+- [ ] Progress UI showing each step with status indicators
+- [ ] Multi-plan upload support (multiple pages per job)
+
+### Feature 4: Approval Workflow + Audit Log
+- [x] Extend estimate status to Draft → Under Review → Approved → Sent (updateEstimateStatus procedure)
+- [ ] Add approvedBy/approvedAt fields to estimates
+- [ ] Wire audit log entries for every estimate state change
+- [ ] Build approval UI with review comments
+- [ ] Manager dashboard: override rate, accuracy trends, approval bottlenecks
+
+### Feature 5: Estimated-vs-Actual Learning (Job Outcome Feedback)
+- [x] Add jobOutcomes table (actual cost, hours, materials vs quoted)
+- [x] Build "How did this job go?" outcome capture form (Accuracy Dashboard)
+- [x] Variance analysis: quoted vs actual by trade, item type
+- [x] Profitability dashboard: most/least profitable job types (Accuracy Dashboard)
+- [ ] Feed variance data back into future AI estimates
+
+### Feature 6: Xero Integration (OAuth, Contact Sync, Invoice Push)
+- [x] Store Xero OAuth credentials (Client ID + Secret)
+- [x] Build Xero OAuth connection flow (/api/xero/callback)
+- [x] Xero fields on companyProfiles (tokens, tenant ID, refresh logic)
+- [x] Contact sync: Kindai clients ↔ Xero contacts
+- [x] Invoice push: quote line items → Xero invoice draft
+- [x] Xero connection status in settings UI
+- [x] "Push to Xero" button on EstimateBuilder
+- [x] Dashboard navigation cards for Company Memory, Accuracy Dashboard, AI Takeoff
+- [x] Inline editing for line items (double-click to edit, correction auto-captured)
+- [x] 231 tests passing (all green)

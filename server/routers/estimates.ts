@@ -2,7 +2,7 @@ import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { estimates, lineItems, users } from "../../drizzle/schema";
+import { estimates, lineItems, users, estimateCorrections } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { GST_RATE } from "../../shared/trades";
@@ -177,6 +177,63 @@ export const estimatesRouter = router({
       wasteFactor: ((input.wasteFactor ?? parseFloat(existing.wasteFactor as string))).toString() as any,
       subtotal: subtotal.toFixed(2) as any,
     }).where(eq(lineItems.id, input.id));
+
+    // ── Correction capture: record every human edit to AI-generated items ──
+    if (existing.isFromAi) {
+      const corrections: any[] = [];
+      const oldQty = parseFloat(existing.quantity as string);
+      const oldRate = parseFloat(existing.unitRate as string);
+      const oldWaste = parseFloat(existing.wasteFactor as string);
+
+      if (input.quantity != null && Math.abs(input.quantity - oldQty) > 0.001) {
+        corrections.push({
+          estimateId: input.estimateId, lineItemId: input.id, userId: ctx.user.id, trade: est.trade,
+          correctionType: "quantity_change", fieldName: "quantity",
+          aiValue: oldQty.toString(), humanValue: input.quantity.toString(),
+          itemDescription: existing.description, createdAt: new Date(),
+        });
+      }
+      if (input.unitRate != null && Math.abs(input.unitRate - oldRate) > 0.01) {
+        corrections.push({
+          estimateId: input.estimateId, lineItemId: input.id, userId: ctx.user.id, trade: est.trade,
+          correctionType: "rate_change", fieldName: "unitRate",
+          aiValue: oldRate.toString(), humanValue: input.unitRate.toString(),
+          itemDescription: existing.description, createdAt: new Date(),
+        });
+      }
+      if (input.wasteFactor != null && Math.abs(input.wasteFactor - oldWaste) > 0.1) {
+        corrections.push({
+          estimateId: input.estimateId, lineItemId: input.id, userId: ctx.user.id, trade: est.trade,
+          correctionType: "waste_change", fieldName: "wasteFactor",
+          aiValue: oldWaste.toString(), humanValue: input.wasteFactor.toString(),
+          itemDescription: existing.description, createdAt: new Date(),
+        });
+      }
+      if (input.description && input.description !== existing.description) {
+        corrections.push({
+          estimateId: input.estimateId, lineItemId: input.id, userId: ctx.user.id, trade: est.trade,
+          correctionType: "description_change", fieldName: "description",
+          aiValue: existing.description, humanValue: input.description,
+          itemDescription: input.description, createdAt: new Date(),
+        });
+      }
+      if (input.unit && input.unit !== existing.unit) {
+        corrections.push({
+          estimateId: input.estimateId, lineItemId: input.id, userId: ctx.user.id, trade: est.trade,
+          correctionType: "unit_change", fieldName: "unit",
+          aiValue: existing.unit, humanValue: input.unit,
+          itemDescription: existing.description, createdAt: new Date(),
+        });
+      }
+
+      // Batch insert all corrections
+      for (const c of corrections) {
+        await db.insert(estimateCorrections).values(c).catch(err =>
+          console.warn("[Correction] Failed to record:", err.message)
+        );
+      }
+    }
+
     return { success: true };
   }),
 

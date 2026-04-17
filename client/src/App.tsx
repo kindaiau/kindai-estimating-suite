@@ -30,6 +30,8 @@ import Support from "./pages/Support";
 import CabinetJoinery from "./pages/CabinetJoinery";
 import About from "./pages/About";
 import FbLeadsDashboard from "./pages/FbLeadsDashboard";
+import CompanySettings from "./pages/CompanySettings";
+import AccuracyDashboard from "./pages/AccuracyDashboard";
 import AIHelpAssistant from "./components/AIHelpAssistant";
 
 function Router() {
@@ -60,6 +62,8 @@ function Router() {
       <Route path="/cabinet-joinery" component={CabinetJoinery} />
       <Route path="/about" component={About} />
       <Route path="/admin/fb-leads" component={FbLeadsDashboard} />
+      <Route path="/settings" component={CompanySettings} />
+      <Route path="/accuracy" component={AccuracyDashboard} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

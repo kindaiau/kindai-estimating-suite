@@ -3,8 +3,8 @@ import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { getDb } from "../db";
-import { estimates, tradeProfiles } from "../../drizzle/schema";
-import { eq, and } from "drizzle-orm";
+import { estimates, tradeProfiles, companyProfiles, priceBookItems, estimateCorrections } from "../../drizzle/schema";
+import { eq, and, desc } from "drizzle-orm";
 import { storagePut } from "../storage";
 import { nanoid } from "nanoid";
 
@@ -273,6 +273,161 @@ export const INDUSTRY_BENCHMARKS: Record<string, {
   },
 };
 
+// ─── Company Memory Context ─────────────────────────────────────────────────
+interface CompanyMemoryContext {
+  profile?: {
+    businessName?: string | null;
+    defaultExclusions?: string | null;
+    defaultInclusions?: string | null;
+    quoteTone?: string | null;
+    aiInstructions?: string | null;
+    preferredSuppliers?: any;
+  } | null;
+  priceBook?: Array<{
+    name: string;
+    category: string;
+    unit: string;
+    unitPrice: string;
+    supplierName?: string | null;
+  }>;
+  learningContext?: string[];
+}
+
+function buildCompanyMemorySection(memory: CompanyMemoryContext): string {
+  const lines: string[] = [];
+
+  // Company AI instructions (highest priority — user's own words)
+  if (memory.profile?.aiInstructions) {
+    lines.push(`\nCOMPANY AI INSTRUCTIONS (follow these exactly):\n${memory.profile.aiInstructions}`);
+  }
+
+  // Default inclusions/exclusions
+  if (memory.profile?.defaultInclusions) {
+    lines.push(`\nSTANDARD INCLUSIONS: ${memory.profile.defaultInclusions}`);
+  }
+  if (memory.profile?.defaultExclusions) {
+    lines.push(`\nSTANDARD EXCLUSIONS (do NOT include these items): ${memory.profile.defaultExclusions}`);
+  }
+
+  // Preferred suppliers
+  if (memory.profile?.preferredSuppliers && Array.isArray(memory.profile.preferredSuppliers) && memory.profile.preferredSuppliers.length > 0) {
+    lines.push(`\nPREFERRED SUPPLIERS (use these brands/suppliers when possible): ${(memory.profile.preferredSuppliers as string[]).join(", ")}`);
+  }
+
+  // Price book items (user's actual negotiated prices)
+  if (memory.priceBook && memory.priceBook.length > 0) {
+    lines.push(`\nCOMPANY PRICE BOOK (use these prices instead of market estimates where items match):`);
+    const grouped: Record<string, typeof memory.priceBook> = {};
+    for (const item of memory.priceBook) {
+      const cat = item.category || "Other";
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(item);
+    }
+    for (const [cat, items] of Object.entries(grouped)) {
+      lines.push(`  ${cat}:`);
+      for (const item of items.slice(0, 30)) { // Cap at 30 per category to avoid token overflow
+        const supplier = item.supplierName ? ` (${item.supplierName})` : "";
+        lines.push(`  - ${item.name}: $${item.unitPrice}/${item.unit}${supplier}`);
+      }
+    }
+  }
+
+  // Learning from past corrections
+  if (memory.learningContext && memory.learningContext.length > 0) {
+    lines.push(`\nLEARNING FROM PAST CORRECTIONS (adjust your estimates based on these patterns):`);
+    for (const insight of memory.learningContext) {
+      lines.push(`- ${insight}`);
+    }
+  }
+
+  // Quote tone
+  if (memory.profile?.quoteTone && memory.profile.quoteTone !== "professional") {
+    lines.push(`\nQUOTE STYLE: Use a ${memory.profile.quoteTone} tone in descriptions and notes.`);
+  }
+
+  return lines.length > 0 ? lines.join("\n") : "";
+}
+
+async function fetchCompanyMemory(db: any, userId: number, trade: string): Promise<CompanyMemoryContext> {
+  try {
+    // 1. Company profile
+    const [profile] = await db.select({
+      businessName: companyProfiles.businessName,
+      defaultExclusions: companyProfiles.defaultExclusions,
+      defaultInclusions: companyProfiles.defaultInclusions,
+      quoteTone: companyProfiles.quoteTone,
+      aiInstructions: companyProfiles.aiInstructions,
+      preferredSuppliers: companyProfiles.preferredSuppliers,
+    }).from(companyProfiles)
+      .where(eq(companyProfiles.userId, userId))
+      .limit(1);
+
+    // 2. Price book items for this trade
+    const priceBook = await db.select({
+      name: priceBookItems.name,
+      category: priceBookItems.category,
+      unit: priceBookItems.unit,
+      unitPrice: priceBookItems.unitPrice,
+      supplierName: priceBookItems.supplierName,
+    }).from(priceBookItems)
+      .where(and(
+        eq(priceBookItems.userId, userId),
+        eq(priceBookItems.isActive, true),
+        eq(priceBookItems.trade, trade),
+      ))
+      .limit(100);
+
+    // 3. Learning context from corrections
+    const corrections = await db.select().from(estimateCorrections)
+      .where(and(
+        eq(estimateCorrections.userId, userId),
+        eq(estimateCorrections.trade, trade),
+      ))
+      .orderBy(desc(estimateCorrections.createdAt))
+      .limit(50);
+
+    // Build learning insights from corrections
+    const patterns: Record<string, { count: number; avgDelta: number; examples: string[] }> = {};
+    for (const c of corrections) {
+      const key = `${c.correctionType}:${c.fieldName || "general"}`;
+      if (!patterns[key]) patterns[key] = { count: 0, avgDelta: 0, examples: [] };
+      patterns[key].count++;
+      if (c.aiValue && c.humanValue && (c.correctionType === "quantity_change" || c.correctionType === "rate_change")) {
+        const ai = parseFloat(c.aiValue);
+        const human = parseFloat(c.humanValue);
+        if (!isNaN(ai) && !isNaN(human) && ai > 0) {
+          const delta = ((human - ai) / ai) * 100;
+          patterns[key].avgDelta = (patterns[key].avgDelta * (patterns[key].count - 1) + delta) / patterns[key].count;
+        }
+      }
+      if (c.itemDescription && patterns[key].examples.length < 3) {
+        patterns[key].examples.push(c.itemDescription);
+      }
+    }
+
+    const learningContext: string[] = [];
+    for (const [key, data] of Object.entries(patterns)) {
+      const [type] = key.split(":");
+      if (data.count >= 2) {
+        if (type === "quantity_change" && Math.abs(data.avgDelta) > 5) {
+          learningContext.push(`User typically adjusts quantities by ${data.avgDelta > 0 ? "+" : ""}${data.avgDelta.toFixed(0)}% (${data.count} corrections). Items: ${data.examples.join(", ")}`);
+        } else if (type === "rate_change" && Math.abs(data.avgDelta) > 5) {
+          learningContext.push(`User typically adjusts rates by ${data.avgDelta > 0 ? "+" : ""}${data.avgDelta.toFixed(0)}% (${data.count} corrections). Items: ${data.examples.join(", ")}`);
+        } else if (type === "item_added" && data.count >= 3) {
+          learningContext.push(`User frequently adds items AI misses (${data.count}x). Common: ${data.examples.join(", ")}`);
+        } else if (type === "item_removed" && data.count >= 3) {
+          learningContext.push(`User frequently removes items AI includes (${data.count}x). Common: ${data.examples.join(", ")}`);
+        }
+      }
+    }
+
+    return { profile: profile ?? null, priceBook, learningContext };
+  } catch (e) {
+    console.warn("[AI] Failed to fetch company memory:", e);
+    return {};
+  }
+}
+
 // ─── Custom Rates Interface ──────────────────────────────────────────────────
 interface CustomRates {
   defaultLabourRate?: string | null;
@@ -322,7 +477,7 @@ function buildCustomRatesSection(rates: CustomRates): string {
 }
 
 // ─── Shared prompt structure for all trades ──────────────────────────────────
-function buildTradePrompt(mode: "vision" | "text", trade: string, customRates?: CustomRates): string {
+function buildTradePrompt(mode: "vision" | "text", trade: string, customRates?: CustomRates, memory?: CompanyMemoryContext): string {
   const inputDesc = mode === "vision"
     ? "Analyze this construction plan image (architectural drawings, trade-specific drawings, or site plans)"
     : "Based on the job description provided";
@@ -713,17 +868,17 @@ ${config.criticalRules}
 - Margin/markup is NOT included in your pricing — the estimator will apply their own margin
 - Industry benchmark for this trade: labour rate $${labourRate.min}-${labourRate.max}/hr, typical margin ${benchmark?.marginRange.min ?? 15}-${benchmark?.marginRange.max ?? 35}%
 ${customRates ? buildCustomRatesSection(customRates) : ""}
+${memory ? buildCompanyMemorySection(memory) : ""}
 Return ONLY valid JSON matching the schema. No markdown, no explanation outside the JSON.`;
 }
 
 // ─── Vision Takeoff Prompts (per trade) ──────────────────────────────────
-function buildVisionPrompt(trade: string, customRates?: CustomRates): string {
-  return buildTradePrompt("vision", trade, customRates);
+function buildVisionPrompt(trade: string, customRates?: CustomRates, memory?: CompanyMemoryContext): string {
+  return buildTradePrompt("vision", trade, customRates, memory);
 }
 
-// ─── Text-based Takeoff Prompts ───────────────────────────────────────
-function buildTextPrompt(trade: string, customRates?: CustomRates): string {
-  return buildTradePrompt("text", trade, customRates);
+function buildTextPrompt(trade: string, customRates?: CustomRates, memory?: CompanyMemoryContext): string {
+  return buildTradePrompt("text", trade, customRates, memory);
 }
 
 // ─── Fetch user's custom rates for a trade ──────────────────────────────
@@ -855,9 +1010,10 @@ export const aiRouter = router({
       .limit(1);
     if (!est) throw new Error("Estimate not found");
 
-    // Fetch user's custom rates for this trade
+    // Fetch user's custom rates and company memory for this trade
     const customRates = await fetchCustomRates(db, ctx.user.id, input.trade);
-    const systemPrompt = buildVisionPrompt(input.trade, customRates);
+    const memory = await fetchCompanyMemory(db, ctx.user.id, input.trade);
+    const systemPrompt = buildVisionPrompt(input.trade, customRates, memory);
     const userContent: Array<{ type: string; text?: string; image_url?: { url: string; detail?: string } }> = [
       {
         type: "image_url",
@@ -907,9 +1063,10 @@ export const aiRouter = router({
       .limit(1);
     if (!est) throw new Error("Estimate not found");
 
-    // Fetch user's custom rates for this trade
+    // Fetch user's custom rates and company memory for this trade
     const customRates = await fetchCustomRates(db, ctx.user.id, input.trade);
-    const systemPrompt = buildTextPrompt(input.trade, customRates);
+    const memory = await fetchCompanyMemory(db, ctx.user.id, input.trade);
+    const systemPrompt = buildTextPrompt(input.trade, customRates, memory);
     const userMessage = `Project Details: ${input.projectDetails ?? "Standard residential project"}
 
 Job Description:

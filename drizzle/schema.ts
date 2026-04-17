@@ -488,3 +488,143 @@ export const betaNurtureEmails = mysqlTable("beta_nurture_emails", {
 });
 export type BetaNurtureEmail = typeof betaNurtureEmails.$inferSelect;
 export type InsertBetaNurtureEmail = typeof betaNurtureEmails.$inferInsert;
+
+// ─── Company Profiles (Company-Wide Memory & Defaults) ──────────────────────
+export const companyProfiles = mysqlTable("company_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // account owner
+  businessName: varchar("businessName", { length: 255 }),
+  abn: varchar("abn", { length: 20 }),
+  acn: varchar("acn", { length: 20 }),
+  phone: varchar("phone", { length: 20 }),
+  email: varchar("email", { length: 320 }),
+  website: varchar("website", { length: 255 }),
+  address: text("address"),
+  suburb: varchar("suburb", { length: 100 }),
+  state: mysqlEnum("cpState", ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"]),
+  postcode: varchar("postcode", { length: 10 }),
+  logoUrl: text("logoUrl"),
+  // Quote defaults
+  defaultExclusions: text("defaultExclusions"), // e.g. "Asbestos removal, scaffolding, council permits"
+  defaultInclusions: text("defaultInclusions"), // e.g. "All materials, labour, GST, clean-up"
+  quoteTone: mysqlEnum("quoteTone", ["professional", "friendly", "detailed", "concise"]).default("professional"),
+  paymentTerms: varchar("paymentTerms", { length: 255 }).default("Payment within 14 days of invoice"),
+  warrantyTerms: text("warrantyTerms"),
+  insuranceDetails: text("insuranceDetails"),
+  // AI behaviour
+  aiInstructions: text("aiInstructions"), // custom instructions for AI, e.g. "Always include mobilisation"
+  preferredSuppliers: json("preferredSuppliers"), // array of supplier names to prioritise
+  // Xero
+  xeroTenantId: varchar("xeroTenantId", { length: 100 }),
+  xeroAccessToken: text("xeroAccessToken"),
+  xeroRefreshToken: text("xeroRefreshToken"),
+  xeroTokenExpiresAt: bigint("xeroTokenExpiresAt", { mode: "number" }),
+  xeroConnectedAt: timestamp("xeroConnectedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CompanyProfile = typeof companyProfiles.$inferSelect;
+export type InsertCompanyProfile = typeof companyProfiles.$inferInsert;
+
+// ─── Price Book Items (User's Negotiated Supplier Pricing) ──────────────────
+export const priceBookItems = mysqlTable("price_book_items", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  trade: varchar("trade", { length: 64 }),
+  category: varchar("category", { length: 100 }).notNull(), // "Materials", "Labour", "Plant"
+  itemCode: varchar("itemCode", { length: 50 }), // supplier SKU or internal code
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  unit: varchar("unit", { length: 30 }).notNull(),
+  unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).notNull(),
+  supplierName: varchar("supplierName", { length: 255 }),
+  supplierAccountNumber: varchar("supplierAccountNumber", { length: 100 }),
+  lastUpdated: timestamp("lastUpdated").defaultNow(),
+  isActive: boolean("isActive").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PriceBookItem = typeof priceBookItems.$inferSelect;
+export type InsertPriceBookItem = typeof priceBookItems.$inferInsert;
+
+// ─── Job Templates (Reusable Starting-Point Estimates) ──────────────────────
+export const jobTemplates = mysqlTable("job_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  trade: varchar("trade", { length: 64 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(), // e.g. "3-Bed Electrical Rough-In"
+  description: text("description"),
+  lineItems: json("lineItems"), // array of template line items
+  estimatedTotal: decimal("estimatedTotal", { precision: 12, scale: 2 }),
+  timesUsed: int("timesUsed").default(0),
+  isActive: boolean("isActive").default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type JobTemplate = typeof jobTemplates.$inferSelect;
+export type InsertJobTemplate = typeof jobTemplates.$inferInsert;
+
+// ─── Estimate Corrections (Human Correction Loop — AI Learning) ─────────────
+export const estimateCorrections = mysqlTable("estimate_corrections", {
+  id: int("id").autoincrement().primaryKey(),
+  estimateId: int("estimateId").notNull(),
+  lineItemId: int("lineItemId"), // null if item was added (not corrected)
+  userId: int("userId").notNull(),
+  trade: varchar("trade", { length: 64 }).notNull(),
+  // What changed
+  correctionType: mysqlEnum("correctionType", [
+    "quantity_change",   // AI said 20, human changed to 25
+    "rate_change",       // AI said $45/hr, human changed to $52/hr
+    "item_added",        // Human added an item AI missed
+    "item_removed",      // Human removed an item AI included incorrectly
+    "description_change",// Human refined the description
+    "unit_change",       // Changed unit type (e.g. m² to lm)
+    "waste_change",      // Changed waste factor
+  ]).notNull(),
+  fieldName: varchar("fieldName", { length: 64 }), // specific field: "quantity", "unitRate", etc.
+  aiValue: text("aiValue"), // what the AI originally said
+  humanValue: text("humanValue"), // what the human changed it to
+  reason: text("reason"), // optional: why they changed it
+  itemDescription: varchar("itemDescription", { length: 500 }), // for context
+  section: varchar("section", { length: 150 }),
+  category: varchar("category", { length: 100 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type EstimateCorrection = typeof estimateCorrections.$inferSelect;
+export type InsertEstimateCorrection = typeof estimateCorrections.$inferInsert;
+
+// ─── Job Outcomes (Estimated vs Actual Learning) ────────────────────────────
+export const jobOutcomes = mysqlTable("job_outcomes", {
+  id: int("id").autoincrement().primaryKey(),
+  estimateId: int("estimateId").notNull(),
+  projectId: int("projectId").notNull(),
+  userId: int("userId").notNull(),
+  trade: varchar("trade", { length: 64 }).notNull(),
+  // Quoted values (snapshot at time of outcome entry)
+  quotedTotal: decimal("quotedTotal", { precision: 12, scale: 2 }).notNull(),
+  quotedLabourHours: decimal("quotedLabourHours", { precision: 10, scale: 2 }),
+  quotedMaterialsCost: decimal("quotedMaterialsCost", { precision: 12, scale: 2 }),
+  // Actual values
+  actualTotal: decimal("actualTotal", { precision: 12, scale: 2 }).notNull(),
+  actualLabourHours: decimal("actualLabourHours", { precision: 10, scale: 2 }),
+  actualMaterialsCost: decimal("actualMaterialsCost", { precision: 12, scale: 2 }),
+  // Derived
+  varianceAmount: decimal("varianceAmount", { precision: 12, scale: 2 }), // actual - quoted
+  variancePercent: decimal("variancePercent", { precision: 5, scale: 2 }), // (actual-quoted)/quoted * 100
+  profitAmount: decimal("profitAmount", { precision: 12, scale: 2 }), // quoted - actual
+  profitPercent: decimal("profitPercent", { precision: 5, scale: 2 }),
+  // Context
+  completionDays: int("completionDays"),
+  clientSatisfaction: mysqlEnum("clientSatisfaction", ["excellent", "good", "fair", "poor"]),
+  lessonsLearned: text("lessonsLearned"),
+  itemVariances: json("itemVariances"), // array of { description, quoted, actual, variance }
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type JobOutcome = typeof jobOutcomes.$inferSelect;
+export type InsertJobOutcome = typeof jobOutcomes.$inferInsert;

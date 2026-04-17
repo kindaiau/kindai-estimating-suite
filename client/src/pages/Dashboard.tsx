@@ -4,8 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  ArrowRight, Camera, CheckCircle2, Clock, DollarSign,
-  FolderOpen, Plus, Send, Sparkles,
+  ArrowRight, Building2, Camera, CheckCircle2, Clock, DollarSign,
+  FolderOpen, Plus, Send, Sparkles, Target,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -185,6 +185,56 @@ export default function Dashboard() {
                 })}
               </div>
             )}
+          </CardContent>
+        </Card>
+        {/* ── Advanced Features ── */}
+        <Card className="border-0 shadow-sm overflow-hidden">
+          <CardHeader className="pb-2 pt-5 px-5 sm:px-6">
+            <CardTitle className="text-lg font-black flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-500" />
+              Advanced AI Features
+            </CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">Your AI gets smarter with every estimate</p>
+          </CardHeader>
+          <CardContent className="px-5 sm:px-6 pb-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button
+                onClick={() => navigate("/settings")}
+                className="group flex items-center gap-3 p-4 rounded-2xl border border-gray-100 bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-left"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-amber-600 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                  <Building2 className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-foreground">Company Memory</div>
+                  <div className="text-[11px] text-muted-foreground">Price book, AI instructions, Xero</div>
+                </div>
+              </button>
+              <button
+                onClick={() => navigate("/accuracy")}
+                className="group flex items-center gap-3 p-4 rounded-2xl border border-gray-100 bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-left"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                  <Target className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-foreground">Accuracy Dashboard</div>
+                  <div className="text-[11px] text-muted-foreground">Corrections, job outcomes, learning</div>
+                </div>
+              </button>
+              <button
+                onClick={() => navigate("/ai-takeoff")}
+                className="group flex items-center gap-3 p-4 rounded-2xl border border-gray-100 bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-left"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-400 to-rose-600 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                  <Camera className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-foreground">AI Takeoff</div>
+                  <div className="text-[11px] text-muted-foreground">Vision + text plan analysis</div>
+                </div>
+              </button>
+            </div>
           </CardContent>
         </Card>
       </div>

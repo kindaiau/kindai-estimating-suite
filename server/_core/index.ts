@@ -9,6 +9,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerStripeWebhook } from "../stripe/webhook";
 import { fbLeadWebhookRouter } from "../routes/fbLeadWebhook";
+import { xeroCallbackRouter } from "../routes/xeroCallback";
 import { seedMaterials } from "../seedMaterials";
 import { processDueNurtureEmails } from "../routers/betaNurture";
 import helmet from "helmet";
@@ -81,6 +82,9 @@ async function startServer() {
 
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+
+  // Xero OAuth callback
+  app.use(xeroCallbackRouter);
 
   // Apply stricter rate limiting to public LLM endpoints
   app.use("/api/trpc/demo.runDemo", publicLLMRateLimit);

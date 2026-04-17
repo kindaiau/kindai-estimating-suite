@@ -21,6 +21,9 @@ import { variationsRouter } from "./routers/variations";
 import { betaRouter } from "./routers/beta";
 import { betaNurtureRouter } from "./routers/betaNurture";
 import { fbLeadsRouter } from "./routers/fbLeads";
+import { companyMemoryRouter } from "./routers/companyMemory";
+import { correctionsRouter } from "./routers/corrections";
+import { xeroRouter } from "./routers/xero";
 
 export const appRouter = router({
   system: systemRouter,
@@ -51,6 +54,9 @@ export const appRouter = router({
   beta: betaRouter,
   betaNurture: betaNurtureRouter,
   fbLeads: fbLeadsRouter,
+  companyMemory: companyMemoryRouter,
+  corrections: correctionsRouter,
+  xero: xeroRouter,
 });
 
 export type AppRouter = typeof appRouter;

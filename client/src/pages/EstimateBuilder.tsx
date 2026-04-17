@@ -168,6 +168,10 @@ export default function EstimateBuilder() {
     quantity: "", unitRate: "", wasteFactor: "0", notes: "",
   });
 
+  // Inline editing state
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editValues, setEditValues] = useState<{ quantity: string; unitRate: string; description: string; unit: string; wasteFactor: string }>({ quantity: "", unitRate: "", description: "", unit: "", wasteFactor: "0" });
+
   const utils = trpc.useUtils();
   const { data: estimate, isLoading } = trpc.estimates.get.useQuery({ id: estimateId });
   const { data: lineItems, isLoading: itemsLoading } = trpc.estimates.getLineItems.useQuery({ estimateId });
@@ -193,6 +197,48 @@ export default function EstimateBuilder() {
       recalc.mutate({ id: estimateId });
     },
   });
+
+  const updateItem = trpc.estimates.updateLineItem.useMutation({
+    onSuccess: () => {
+      utils.estimates.getLineItems.invalidate();
+      recalc.mutate({ id: estimateId });
+      setEditingId(null);
+      toast.success("Item updated — correction recorded");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const pushToXero = trpc.xero.createInvoice.useMutation({
+    onSuccess: (data: any) => {
+      toast.success(`Invoice pushed to Xero! ID: ${data.invoiceNumber}`);
+      if (data.xeroUrl) window.open(data.xeroUrl, "_blank");
+    },
+    onError: (e: any) => toast.error("Xero push failed: " + e.message),
+  });
+
+  const startEditing = (item: any) => {
+    setEditingId(item.id);
+    setEditValues({
+      quantity: parseFloat(item.quantity as string).toString(),
+      unitRate: parseFloat(item.unitRate as string).toString(),
+      description: item.description,
+      unit: item.unit,
+      wasteFactor: parseFloat(item.wasteFactor as string).toString(),
+    });
+  };
+
+  const saveEditing = () => {
+    if (editingId == null) return;
+    updateItem.mutate({
+      id: editingId,
+      estimateId,
+      quantity: parseFloat(editValues.quantity) || undefined,
+      unitRate: parseFloat(editValues.unitRate) || undefined,
+      description: editValues.description || undefined,
+      unit: editValues.unit || undefined,
+      wasteFactor: parseFloat(editValues.wasteFactor) || undefined,
+    });
+  };
 
   const recalc = trpc.estimates.recalculate.useMutation({
     onSuccess: () => utils.estimates.get.invalidate(),
@@ -554,24 +600,51 @@ export default function EstimateBuilder() {
                         </thead>
                         <tbody>
                           {(items ?? []).map((item) => (
-                            <tr key={item.id} className="border-t border-gray-100 hover:bg-gray-50/50 transition-colors">
-                              <td className="p-3">
-                                <div className="flex items-center gap-1.5">
-                                  {item.isFromAi && <Sparkles className="w-3 h-3 text-pink-500 flex-shrink-0" />}
-                                  <span className="font-medium">{item.description}</span>
-                                </div>
-                                {item.notes && <div className="text-xs text-muted-foreground mt-0.5">{item.notes}</div>}
-                              </td>
-                              <td className="p-3 text-right text-xs">{parseFloat(item.quantity as string)}</td>
-                              <td className="p-3 text-right text-xs text-muted-foreground">{item.unit}</td>
-                              <td className="p-3 text-right text-xs">${parseFloat(item.unitRate as string).toFixed(2)}</td>
-                              <td className="p-3 text-right text-xs font-bold">${parseFloat(item.subtotal as string).toFixed(2)}</td>
-                              <td className="p-3">
-                                <button onClick={() => deleteItem.mutate({ id: item.id, estimateId })} className="text-muted-foreground hover:text-destructive transition-colors">
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </td>
-                            </tr>
+                            editingId === item.id ? (
+                              <tr key={item.id} className="border-t border-blue-200 bg-blue-50/50">
+                                <td className="p-2">
+                                  <Input value={editValues.description} onChange={e => setEditValues(v => ({ ...v, description: e.target.value }))} className="h-7 text-xs" />
+                                </td>
+                                <td className="p-2">
+                                  <Input type="number" value={editValues.quantity} onChange={e => setEditValues(v => ({ ...v, quantity: e.target.value }))} className="h-7 text-xs w-16 text-right" />
+                                </td>
+                                <td className="p-2">
+                                  <Input value={editValues.unit} onChange={e => setEditValues(v => ({ ...v, unit: e.target.value }))} className="h-7 text-xs w-12 text-right" />
+                                </td>
+                                <td className="p-2">
+                                  <Input type="number" step="0.01" value={editValues.unitRate} onChange={e => setEditValues(v => ({ ...v, unitRate: e.target.value }))} className="h-7 text-xs w-20 text-right" />
+                                </td>
+                                <td className="p-2 text-right">
+                                  <Button size="sm" className="h-6 text-[10px] px-2 mr-1" onClick={saveEditing} disabled={updateItem.isPending}>
+                                    {updateItem.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+                                  </Button>
+                                  <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2" onClick={() => setEditingId(null)}>Cancel</Button>
+                                </td>
+                                <td></td>
+                              </tr>
+                            ) : (
+                              <tr key={item.id} className="border-t border-gray-100 hover:bg-gray-50/50 transition-colors cursor-pointer" onDoubleClick={() => startEditing(item)}>
+                                <td className="p-3">
+                                  <div className="flex items-center gap-1.5">
+                                    {item.isFromAi && <Sparkles className="w-3 h-3 text-pink-500 flex-shrink-0" />}
+                                    <span className="font-medium">{item.description}</span>
+                                  </div>
+                                  {item.notes && <div className="text-xs text-muted-foreground mt-0.5">{item.notes}</div>}
+                                </td>
+                                <td className="p-3 text-right text-xs">{parseFloat(item.quantity as string)}</td>
+                                <td className="p-3 text-right text-xs text-muted-foreground">{item.unit}</td>
+                                <td className="p-3 text-right text-xs">${parseFloat(item.unitRate as string).toFixed(2)}</td>
+                                <td className="p-3 text-right text-xs font-bold">${parseFloat(item.subtotal as string).toFixed(2)}</td>
+                                <td className="p-3 flex gap-1">
+                                  <button onClick={() => startEditing(item)} className="text-muted-foreground hover:text-blue-500 transition-colors" title="Edit">
+                                    <FileText className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button onClick={() => deleteItem.mutate({ id: item.id, estimateId })} className="text-muted-foreground hover:text-destructive transition-colors" title="Delete">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </td>
+                              </tr>
+                            )
                           ))}
                         </tbody>
                       </table>
@@ -605,6 +678,16 @@ export default function EstimateBuilder() {
                   >
                     {recalc.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <DollarSign className="w-3.5 h-3.5 mr-1.5" />}
                     Recalculate
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full rounded-xl font-bold mt-1 text-[#13B5EA] border-[#13B5EA] hover:bg-[#13B5EA]/10"
+                    onClick={() => pushToXero.mutate({ estimateId })}
+                    disabled={pushToXero.isPending}
+                  >
+                    {pushToXero.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ExternalLink className="w-3.5 h-3.5 mr-1.5" />}
+                    Push to Xero
                   </Button>
                 </CardContent>
               </Card>

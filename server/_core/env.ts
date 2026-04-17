@@ -95,6 +95,10 @@ export const ENV = {
   frontendForgeApiKey: readEnv("VITE_FRONTEND_FORGE_API_KEY"),
   analyticsEndpoint: readEnv("VITE_ANALYTICS_ENDPOINT"),
   analyticsWebsiteId: readEnv("VITE_ANALYTICS_WEBSITE_ID"),
+  xeroClientId: readEnv("XERO_CLIENT_ID"),
+  xeroClientSecret: readEnv("XERO_CLIENT_SECRET"),
+  gmailUser: readEnv("GMAIL_USER"),
+  gmailAppPassword: readEnv("GMAIL_APP_PASSWORD"),
   isProduction: process.env.NODE_ENV === "production",
 };
 
