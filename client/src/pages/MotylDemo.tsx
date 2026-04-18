@@ -8,6 +8,7 @@ const MOTYL_YELLOW = "#F5C800";
 const MOTYL_BLACK = "#0A0A0A";
 const MOTYL_DARK = "#111111";
 const MOTYL_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/motyl-logo_0277f988.webp";
+const KINDAI_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
 const CNC_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/cnc-factory_eae967f3.jpg";
 
 // Pre-loaded Motyl plan CDN URLs (APT 314 Kitchen Type-F)
@@ -193,9 +194,9 @@ export default function MotylDemo() {
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3"
         style={{ background: "rgba(10,10,10,0.95)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(245,200,0,0.15)" }}>
         <div className="flex items-center gap-4">
-          <img src={MOTYL_LOGO} alt="Motyl Group" className="h-8 object-contain" />
+          <img src={MOTYL_LOGO} alt="Motyl Group" className="h-7 object-contain" />
           <span className="text-white/30 text-lg font-thin">×</span>
-          <span className="text-white font-bold text-lg tracking-tight">kindai</span>
+          <img src={KINDAI_LOGO} alt="Kindai" className="h-7 object-contain" />
         </div>
         <div className="hidden md:flex items-center gap-6 text-sm text-white/50">
           <span>08 8447 7877</span>
@@ -584,14 +585,14 @@ export default function MotylDemo() {
                     <div className="text-4xl font-black text-green-400">
                       <AnimatedNumber value={Math.round(kindaiCost + kindaiSubscription)} prefix="$" />
                     </div>
-                    <div className="text-white/40 text-sm mt-1">{roiProjects} projects × 0.5h with Kindai</div>
+                    <div className="text-white/40 text-sm mt-1">{roiProjects} projects × 0.5h — contact us for pricing</div>
                   </div>
                   <div className="rounded-2xl border p-6" style={{ background: "rgba(245,200,0,0.08)", borderColor: "rgba(245,200,0,0.3)" }}>
                     <div className="text-xs uppercase tracking-wider mb-2" style={{ color: MOTYL_YELLOW }}>Net saving after Kindai</div>
                     <div className="text-5xl font-black" style={{ color: MOTYL_YELLOW }}>
                       <AnimatedNumber value={Math.max(0, Math.round(netSaving))} prefix="$" />
                     </div>
-                    <div className="text-white/40 text-sm mt-1">per year · contact us for commercial pricing</div>
+                    <div className="text-white/40 text-sm mt-1">per year — contact us for commercial pricing</div>
                     <div className="flex gap-6 mt-4">
                       <div><div className="text-2xl font-black text-white"><AnimatedNumber value={Math.max(0, roiMultiple)} suffix="x" /></div><div className="text-xs text-white/40">ROI</div></div>
                       <div><div className="text-2xl font-black text-white"><AnimatedNumber value={hoursSaved > 0 ? Math.round(hoursSaved / 5) : 0} suffix="d" /></div><div className="text-xs text-white/40">Days saved</div></div>
