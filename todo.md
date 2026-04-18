@@ -787,3 +787,22 @@
 - [x] Remove all $149/mo pricing from Motyl page
 - [x] Fix ROI calculator TypeScript error (roi variable renamed to roiMultiple)
 - [x] Fix ROI calculator payback/ROI display with no subscription cost
+
+## GitHub Code Review Fixes — Critical (48h)
+- [ ] Fix rate limiter bypass — parse cookie properly instead of string-includes
+- [ ] Add DB indexes — userId on projects/estimates/lineItems, estimateId on lineItems, token on quoteTokens
+- [ ] Encrypt Xero OAuth tokens at rest (AES-256-GCM)
+- [ ] Enable CSP headers in production (branch Helmet config on NODE_ENV)
+- [ ] Remove hardcoded Grafana password from docker-compose.yaml
+- [ ] Add DB connection pooling (mysql2.createPool)
+- [ ] Add LLM call timeouts (AbortController, 60s per step)
+- [ ] Fix stats queries to use SQL COUNT/SUM instead of in-memory aggregation
+- [ ] Add LIMIT to all unbounded list queries
+
+## GitHub Code Review Fixes — High (2 weeks)
+- [ ] Implement team.acceptInvite endpoint + frontend invitation acceptance page
+- [ ] Implement route-based code splitting (React.lazy) to cut 1.2MB bundle
+- [ ] Pre-configure Stripe products/prices in dashboard, remove on-demand creation
+- [ ] Add CSRF nonce to Xero OAuth initiation and callback
+- [ ] Replace console.log with Pino structured logging
+- [ ] Add Sentry error tracking (free tier)

@@ -1,5 +1,6 @@
 import { eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import mysql from "mysql2";
 import { InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -9,7 +10,10 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && ENV.databaseUrl) {
     try {
-      _db = drizzle(ENV.databaseUrl);
+      // Use a connection pool instead of a single connection to handle concurrent requests
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pool = mysql.createPool(ENV.databaseUrl).promise() as any;
+      _db = drizzle(pool);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;

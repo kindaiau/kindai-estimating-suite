@@ -3,7 +3,7 @@ import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { estimates, lineItems, users, estimateCorrections, tradeProfiles } from "../../drizzle/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { GST_RATE } from "../../shared/trades";
 import { generateQuotePdf } from "../pdfGenerator";
@@ -15,7 +15,7 @@ export const estimatesRouter = router({
     const db = requireDatabase(await getDb());
     const conditions = [eq(estimates.userId, ctx.user.id)];
     if (input.projectId) conditions.push(eq(estimates.projectId, input.projectId));
-    return db.select().from(estimates).where(and(...conditions)).orderBy(desc(estimates.createdAt));
+    return db.select().from(estimates).where(and(...conditions)).orderBy(desc(estimates.createdAt)).limit(500);
   }),
 
   get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
@@ -270,14 +270,30 @@ export const estimatesRouter = router({
 
   stats: protectedProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
-    const all = await db.select().from(estimates).where(eq(estimates.userId, ctx.user.id));
-    const totalValue = all.filter(e => e.status === "accepted").reduce((sum, e) => sum + parseFloat(e.total as string), 0);
+    // Use SQL aggregation instead of fetching all rows into memory
+    const countRows = await db
+      .select({ status: estimates.status, count: sql<number>`COUNT(*)` })
+      .from(estimates)
+      .where(eq(estimates.userId, ctx.user.id))
+      .groupBy(estimates.status);
+    const counts: Record<string, number> = {};
+    let total = 0;
+    for (const row of countRows) {
+      const n = Number(row.count);
+      counts[row.status] = n;
+      total += n;
+    }
+    // Sum accepted estimate values in SQL
+    const [valueRow] = await db
+      .select({ totalValue: sql<string>`COALESCE(SUM(total), 0)` })
+      .from(estimates)
+      .where(and(eq(estimates.userId, ctx.user.id), eq(estimates.status, "accepted")));
     return {
-      total: all.length,
-      draft: all.filter(e => e.status === "draft").length,
-      sent: all.filter(e => e.status === "sent").length,
-      accepted: all.filter(e => e.status === "accepted").length,
-      totalValue,
+      total,
+      draft: counts["draft"] ?? 0,
+      sent: counts["sent"] ?? 0,
+      accepted: counts["accepted"] ?? 0,
+      totalValue: parseFloat(valueRow?.totalValue ?? "0"),
     };
   }),
 

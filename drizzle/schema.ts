@@ -2,6 +2,7 @@ import {
   bigint,
   boolean,
   decimal,
+  index,
   int,
   json,
   mysqlEnum,
@@ -60,6 +61,7 @@ export const projects = mysqlTable("projects", {
 
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = typeof projects.$inferInsert;
+// Index added via migration SQL — userId_status for list + stats queries
 
 // ─── Estimates ────────────────────────────────────────────────────────────────
 export const estimates = mysqlTable("estimates", {
@@ -101,6 +103,7 @@ export const estimates = mysqlTable("estimates", {
 
 export type Estimate = typeof estimates.$inferSelect;
 export type InsertEstimate = typeof estimates.$inferInsert;
+// Index added via migration SQL — userId_status, projectId for list + stats queries
 
 // ─── Line Items ───────────────────────────────────────────────────────────────
 export const lineItems = mysqlTable("line_items", {
@@ -122,6 +125,7 @@ export const lineItems = mysqlTable("line_items", {
 
 export type LineItem = typeof lineItems.$inferSelect;
 export type InsertLineItem = typeof lineItems.$inferInsert;
+// Index added via migration SQL — estimateId for join queries
 
 // ─── Materials Library ────────────────────────────────────────────────────────
 export const materials = mysqlTable("materials", {

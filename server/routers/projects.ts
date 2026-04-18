@@ -3,14 +3,15 @@ import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { projects } from "../../drizzle/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 export const projectsRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
     return db.select().from(projects)
       .where(eq(projects.userId, ctx.user.id))
-      .orderBy(desc(projects.createdAt));
+      .orderBy(desc(projects.createdAt))
+      .limit(500); // Prevent unbounded queries
   }),
 
   get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
@@ -69,13 +70,25 @@ export const projectsRouter = router({
 
   stats: protectedProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
-    const all = await db.select().from(projects).where(eq(projects.userId, ctx.user.id));
+    // Use SQL aggregation instead of fetching all rows into memory
+    const rows = await db
+      .select({ status: projects.status, count: sql<number>`COUNT(*)` })
+      .from(projects)
+      .where(eq(projects.userId, ctx.user.id))
+      .groupBy(projects.status);
+    const counts: Record<string, number> = {};
+    let total = 0;
+    for (const row of rows) {
+      const n = Number(row.count);
+      counts[row.status] = n;
+      total += n;
+    }
     return {
-      total: all.length,
-      draft: all.filter(p => p.status === "draft").length,
-      quoted: all.filter(p => p.status === "quoted").length,
-      accepted: all.filter(p => p.status === "accepted").length,
-      completed: all.filter(p => p.status === "completed").length,
+      total,
+      draft: counts["draft"] ?? 0,
+      quoted: counts["quoted"] ?? 0,
+      accepted: counts["accepted"] ?? 0,
+      completed: counts["completed"] ?? 0,
     };
   }),
 });

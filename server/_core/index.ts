@@ -24,8 +24,12 @@ const publicLLMRateLimit = rateLimit({
   legacyHeaders: false,
   message: { error: "Too many requests. Please wait 15 minutes before trying again." },
   skip: (req) => {
-    // Skip rate limiting for authenticated users (they have their own subscription limits)
-    return !!req.headers.cookie?.includes("session");
+    // Skip rate limiting for authenticated users — extract the actual session cookie value
+    // (not just checking if the word "session" appears anywhere in the cookie string)
+    const cookieHeader = req.headers.cookie || "";
+    const sessionMatch = cookieHeader.match(/(?:^|;\s*)session=([^;]+)/);
+    const sessionValue = sessionMatch ? decodeURIComponent(sessionMatch[1]).trim() : "";
+    return sessionValue.length > 20; // Valid signed session JWTs are always >20 chars
   },
 });
 
