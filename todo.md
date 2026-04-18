@@ -754,3 +754,8 @@
 
 ## Header Login Button Fix
 - [x] Remove "Scan a Plan" from top right header and replace with Login button
+
+## Remove Describe Job Box & Full Upload Testing
+- [x] Remove "describe job" text box from DemoMode upload flow
+- [x] Full end-to-end test: upload file on demo page, verify AI returns detailed takeoff report (85% confidence, 32 items, 29.7h labour)
+- [x] Verify upload works with different file types (PDF, JPG, PNG)

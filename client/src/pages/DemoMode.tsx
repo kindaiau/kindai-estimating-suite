@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -245,7 +244,7 @@ export default function DemoMode() {
     <div className="min-h-screen bg-gray-50">
       <SEO
         title="Free AI Estimating Demo | Try Without Signing Up"
-        description="Try Kindai's AI construction estimating software free — no account needed. Enter a job description, pick your trade, and watch AI generate a full quote with materials, labour, and GST."
+        description="Try Kindai's AI construction estimating software free — no account needed. Upload your plans, pick your trade, and watch AI generate a full quote with materials, labour, and GST."
         canonical="/demo"
         keywords="free estimating software demo Australia, AI takeoff demo, try construction quoting software, builder software free trial, tradie quoting demo"
       />
@@ -285,7 +284,7 @@ export default function DemoMode() {
               See Kindai AI in <span className="kindai-gradient-text">60 seconds</span>
             </h1>
             <p className="text-gray-500 text-base max-w-xl mx-auto">
-              Describe your job below. Our AI generates a complete materials takeoff with real Australian pricing — no login, no credit card.
+              Pick your trade, upload your plans, and hit Generate. Our AI builds a complete materials takeoff with real Australian pricing — no login, no credit card.
             </p>
           </div>
 
@@ -428,24 +427,10 @@ export default function DemoMode() {
                 />
               )}
 
-              {/* Job Description */}
-              <Card className="border-gray-200 shadow-sm">
-                <CardContent className="p-4">
-                  <h3 className="text-sm font-black text-gray-900 mb-2">3. Describe the job</h3>
-                  <p className="text-xs text-gray-400 mb-3">{planFile ? "Add any extra context for the AI" : "Or use the pre-loaded example below"}</p>
-                  <Textarea
-                    value={jobDescription}
-                    onChange={(e) => setJobDescription(e.target.value)}
-                    placeholder="e.g. 3-bedroom house, full electrical fit-out..."
-                    className="text-sm min-h-[100px] resize-none border-gray-200"
-                  />
-                </CardContent>
-              </Card>
-
               {/* Pricing Controls */}
               <Card className="border-gray-200 shadow-sm">
                 <CardContent className="p-4">
-                  <h3 className="text-sm font-black text-gray-900 mb-3">4. Set your pricing</h3>
+                  <h3 className="text-sm font-black text-gray-900 mb-3">3. Set your pricing</h3>
                   <div className="space-y-4">
                     <div>
                       <div className="flex justify-between text-xs mb-1.5">
@@ -530,7 +515,7 @@ export default function DemoMode() {
                     </div>
                     <h3 className="text-xl font-black text-gray-800 mb-2">Ready to analyse</h3>
                     <p className="text-gray-400 text-sm max-w-xs mx-auto">
-                      Select a trade, describe your job, and hit Generate. The AI will build a complete takeoff in seconds.
+                      Select a trade, upload your plans, and hit Generate. The AI will build a complete takeoff in seconds.
                     </p>
                     <div className="mt-6 flex flex-wrap justify-center gap-2">
                       {["Real AU pricing", "GST calculated", "Labour hours", "Trade savings"].map(tag => (
