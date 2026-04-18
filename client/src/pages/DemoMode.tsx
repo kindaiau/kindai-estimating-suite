@@ -18,6 +18,7 @@ import {
   Upload, FileImage, X, ScanLine
 } from "lucide-react";
 import ScopingQuestionsPanel from "@/components/ScopingQuestions";
+import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { formatScopingAnswers, getScopingQuestions } from "../../../shared/scopingQuestions";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
@@ -425,6 +426,17 @@ export default function DemoMode() {
                   tradeId={selectedTrade}
                   onChange={setScopingAnswers}
                 />
+              )}
+              {/* Voice-to-Estimate */}
+              {selectedTrade && (
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-xs text-gray-500 font-medium">Or speak the job description</span>
+                  <VoiceRecorder
+                    trade={selectedTrade}
+                    label="Speak Job"
+                    onTranscript={(text) => setJobDescription((prev: string) => prev ? `${prev} ${text}` : text)}
+                  />
+                </div>
               )}
 
               {/* Pricing Controls */}

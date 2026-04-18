@@ -21,6 +21,7 @@ interface OrchestrationProgressProps {
   planDescription?: string;
   additionalContext?: string;
   projectDetails?: string;
+  scopeDocUrl?: string;
   onComplete: (result: unknown) => void;
   onError: (message: string) => void;
 }
@@ -50,6 +51,7 @@ export function OrchestrationProgress({
   planDescription,
   additionalContext,
   projectDetails,
+  scopeDocUrl,
   onComplete,
   onError,
 }: OrchestrationProgressProps) {
@@ -69,6 +71,7 @@ export function OrchestrationProgress({
       ...(planDescription ? { planDescription } : {}),
       ...(additionalContext ? { additionalContext } : {}),
       ...(projectDetails ? { projectDetails } : {}),
+      ...(scopeDocUrl ? { scopeDocUrl } : {}),
     });
 
     const url = `/api/orchestrated-takeoff?${params.toString()}`;

@@ -17,11 +17,12 @@ import { toast } from "sonner";
 import { getLoginUrl } from "@/const";
 import { Camera, Upload, Zap, Loader2, FileImage, DollarSign,
   TrendingUp, Clock, Package, Users, ExternalLink, ChevronRight,
-  Sparkles, ShieldCheck, ArrowRight, BarChart3, Truck,
+  Sparkles, ShieldCheck, ArrowRight, BarChart3, Truck, FileText, X as XIcon,
 } from "lucide-react";
 import { OrchestrationProgress } from "@/components/OrchestrationProgress";
 import { TRADES } from "../../../shared/trades";
 import ScopingQuestionsPanel from "@/components/ScopingQuestions";
+import { VoiceRecorder } from "@/components/VoiceRecorder";
 import { formatScopingAnswers, getScopingQuestions } from "../../../shared/scopingQuestions";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
@@ -72,6 +73,11 @@ export default function AITakeoff() {
   const [scopingAnswers, setScopingAnswers] = useState<Record<string, string | string[] | number>>({});
   const [activeTab, setActiveTab] = useState<"materials" | "labour" | "suppliers" | "summary">("materials");
   const [showOrchestration, setShowOrchestration] = useState(false);
+  // Scope of Works document (optional second upload)
+  const [scopeDocUrl, setScopeDocUrl] = useState<string | null>(null);
+  const [scopeDocName, setScopeDocName] = useState<string | null>(null);
+  const [isUploadingScopeDoc, setIsUploadingScopeDoc] = useState(false);
+  const scopeDocInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch saved trade profile defaults when trade is selected
   const tradeProfileQuery = trpc.tradeProfiles.get.useQuery(
@@ -89,6 +95,7 @@ export default function AITakeoff() {
   }, [tradeProfileQuery.data]);
 
   const uploadPlan = trpc.ai.uploadPlan.useMutation();
+  const uploadScopeDoc = trpc.ai.uploadScopeDoc.useMutation();
   const visionTakeoff = trpc.ai.visionTakeoff.useMutation();
   const textTakeoff = trpc.ai.analyzePlan.useMutation();
   const calcPricing = trpc.ai.calculatePricing.useMutation();
@@ -482,12 +489,87 @@ export default function AITakeoff() {
                         onChange={setScopingAnswers}
                       />
                     )}
-                    <Textarea
-                      placeholder="Optional: Add extra context (e.g. '3-bed house, 180m², standard residential')"
-                      value={additionalContext}
-                      onChange={(e) => setAdditionalContext(e.target.value)}
-                      className="rounded-xl border-gray-200 text-sm min-h-[60px]"
-                    />
+                    <div className="relative">
+                      <Textarea
+                        placeholder="Optional: Add extra context (e.g. '3-bed house, 180m², standard residential')"
+                        value={additionalContext}
+                        onChange={(e) => setAdditionalContext(e.target.value)}
+                        className="rounded-xl border-gray-200 text-sm min-h-[60px] pr-12"
+                      />
+                      <div className="absolute bottom-2 right-2">
+                        <VoiceRecorder
+                          compact
+                          trade={selectedTrade}
+                          onTranscript={(text) => setAdditionalContext((prev) => prev ? `${prev} ${text}` : text)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Scope of Works / Spec Sheet upload */}
+                    <div className="border border-dashed border-gray-200 rounded-xl p-3 bg-gray-50">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                          <span className="text-xs font-medium text-gray-700">Scope of Works / Spec Sheet</span>
+                          <span className="text-[10px] text-gray-400">(optional)</span>
+                        </div>
+                        {scopeDocUrl && (
+                          <button
+                            onClick={() => { setScopeDocUrl(null); setScopeDocName(null); }}
+                            className="text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <XIcon className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      {scopeDocUrl ? (
+                        <div className="flex items-center gap-2 text-xs text-indigo-600 bg-indigo-50 rounded-lg px-3 py-2">
+                          <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="truncate">{scopeDocName}</span>
+                          <span className="text-green-500 ml-auto flex-shrink-0">✓ Ready</span>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => scopeDocInputRef.current?.click()}
+                          disabled={isUploadingScopeDoc}
+                          className="w-full flex items-center justify-center gap-2 text-xs text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg px-3 py-2 transition-colors border border-transparent hover:border-indigo-200"
+                        >
+                          {isUploadingScopeDoc ? (
+                            <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading...</>
+                          ) : (
+                            <><Upload className="w-3.5 h-3.5" /> Upload PDF or image spec sheet</>
+                          )}
+                        </button>
+                      )}
+                      <input
+                        ref={scopeDocInputRef}
+                        type="file"
+                        accept="image/*,.pdf,application/pdf"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setIsUploadingScopeDoc(true);
+                          try {
+                            const buffer = await file.arrayBuffer();
+                            const bytes = new Uint8Array(buffer);
+                            let binary = "";
+                            for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+                            const base64 = btoa(binary);
+                            const contentType = file.type.startsWith("image/") ? file.type as any : "application/pdf";
+                            const result = await uploadScopeDoc.mutateAsync({ fileName: file.name, fileBase64: base64, contentType });
+                            setScopeDocUrl(result.url);
+                            setScopeDocName(file.name);
+                            toast.success("Scope document uploaded — AI will cross-reference it with your plan");
+                          } catch (err: any) {
+                            toast.error(err.message ?? "Upload failed");
+                          } finally {
+                            setIsUploadingScopeDoc(false);
+                            e.target.value = "";
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -498,12 +580,22 @@ export default function AITakeoff() {
                         onChange={setScopingAnswers}
                       />
                     )}
-                    <Textarea
-                      placeholder="Describe the job in detail. E.g.: '3-bedroom house, 180m². Need 20 power points, 15 light points, 1 switchboard upgrade, smoke alarms to all bedrooms and hallway. Standard residential wiring.'"
-                      value={textDescription}
-                      onChange={(e) => setTextDescription(e.target.value)}
-                      className="rounded-xl border-gray-200 text-sm min-h-[140px]"
-                    />
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500 font-medium">Job Description</span>
+                        <VoiceRecorder
+                          trade={selectedTrade}
+                          label="Speak Description"
+                          onTranscript={(text) => setTextDescription((prev) => prev ? `${prev} ${text}` : text)}
+                        />
+                      </div>
+                      <Textarea
+                        placeholder="Describe the job in detail. E.g.: '3-bedroom house, 180m². Need 20 power points, 15 light points, 1 switchboard upgrade, smoke alarms to all bedrooms and hallway. Standard residential wiring.'"
+                        value={textDescription}
+                        onChange={(e) => setTextDescription(e.target.value)}
+                        className="rounded-xl border-gray-200 text-sm min-h-[140px]"
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -624,6 +716,7 @@ export default function AITakeoff() {
                     planDescription={mode === "text" ? textDescription : undefined}
                     additionalContext={additionalContext || undefined}
                     projectDetails={additionalContext || undefined}
+                    scopeDocUrl={scopeDocUrl ?? undefined}
                     onComplete={handleOrchestrationComplete}
                     onError={handleOrchestrationError}
                   />

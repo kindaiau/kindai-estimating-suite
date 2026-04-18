@@ -66,6 +66,8 @@ export type InvokeParams = {
   output_schema?: OutputSchema;
   responseFormat?: ResponseFormat;
   response_format?: ResponseFormat;
+  /** Override the thinking budget in tokens (default 128). Use 2048+ for complex multi-pass analysis. */
+  thinkingBudget?: number;
 };
 
 export type ToolCall = {
@@ -277,6 +279,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     output_schema,
     responseFormat,
     response_format,
+    thinkingBudget,
   } = params;
 
   const payload: Record<string, unknown> = {
@@ -298,7 +301,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
 
   payload.max_tokens = 32768
   payload.thinking = {
-    "budget_tokens": 128
+    "budget_tokens": thinkingBudget ?? 128
   }
 
   const normalizedResponseFormat = normalizeResponseFormat({

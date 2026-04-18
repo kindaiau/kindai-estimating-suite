@@ -806,3 +806,67 @@
 - [ ] Add CSRF nonce to Xero OAuth initiation and callback
 - [ ] Replace console.log with Pino structured logging
 - [ ] Add Sentry error tracking (free tier)
+
+## AI Capability Expansion Roadmap (Pasted_content_05.txt)
+
+### Feature 1: Voice-to-Estimate
+- [x] Add voice.transcribe tRPC route (wires existing voiceTranscription.ts infrastructure)
+- [x] Add microphone button to AI Takeoff page (speak job description → auto-transcribe → fill prompt)
+- [x] Add microphone button to Demo Mode page
+- [x] Handle browser mic permission request gracefully
+- [x] Show live recording indicator and transcription preview
+
+### Feature 2: Agentic Multi-Pass Document Analysis
+- [x] Upgrade AI takeoff to 3-pass sequential LLM loop (Pass 1: metadata, Pass 2: per-room itemisation, Pass 3: cross-check/anomaly detection)
+- [x] Increase LLM thinking budget_tokens from 128 to 2048+ for complex plan analysis
+- [x] Show pass-by-pass progress in the orchestration UI
+- [x] Surface anomaly flags (e.g. "room count doesn't match fixture schedule") as warnings
+
+### Feature 3: Scope-of-Works Document Ingestion
+- [x] Add second upload slot to AI Takeoff page labelled "Spec / Scope Document"
+- [x] Accept PDF and image spec sheets (Word doc support future)
+- [x] AI cross-references scope doc with plan across all 5 orchestration steps
+- [ ] Add second upload slot to Demo Mode page (future)
+
+### Feature 4: Predictive Win-Rate Intelligence
+- [ ] Build scoring model using estimateCorrections + quote status data
+- [ ] Add "Win Rate Prediction" badge to Quote Summary tab
+- [ ] Show "Based on your last 40 quotes, this margin wins X% of the time"
+- [ ] Build /insights page with win-rate trends by trade and postcode
+
+### Feature 5: Autonomous Variation Detection
+- [ ] Add nightly/on-demand plan comparison job (original estimate vs new uploaded plans)
+- [ ] LLM produces structured diff: new items, removed items, changed quantities
+- [ ] Auto-populate draft variation for PM to approve
+- [ ] Wire into existing variations table
+
+### Feature 6: Conversational Estimate Editing (Action-Capable Assistant)
+- [x] Upgrade Help Assistant from read-only to action-capable agent using LLM tool calling
+- [x] Define tools: add_line_item, update_line_item, delete_line_item, get_estimate_summary
+- [x] Map tools to existing tRPC mutations (add/update/delete lineItems)
+- [x] EstimateAgentChat floating panel on EstimateBuilder page (violet theme, quick actions)
+- [x] Tool-calling loop (max 3 iterations) with action badges on completed changes
+
+### Feature 7: Natural Language BI (/insights page)
+- [ ] Build /insights page with prompt box
+- [ ] AI answers: "What trade has my highest win rate?", "Which estimates did I underquote?"
+- [ ] Use LLM with structured JSON output to generate chart-ready data
+- [ ] Wire to existing Drizzle project/estimate/correction data
+
+### Feature 8: Supplier Price Intelligence
+- [ ] Monitor estimateCorrections where humanValue differs significantly from aiValue on material prices
+- [ ] Flag "potential price change" items in price book UI
+- [ ] Prompt user to update price book when AI is consistently wrong on a material
+- [ ] Add lastFetchedAt timestamp to priceBookItems
+
+### Feature 9: BIM/IFC 3D Model Support (frontier move)
+- [ ] Research ifcopenshell Python library for IFC geometry extraction
+- [ ] Design new /api/v1/upload-ifc endpoint
+- [ ] Extract walls, doors, MEP elements with dimensions from IFC files
+- [ ] Pass structured element data to LLM takeoff prompt (bypasses OCR uncertainty)
+
+### Feature 10: RLHF Feedback Loop (AI gets smarter with every correction)
+- [ ] After every 50 corrections for a trade, trigger fine-tune prompt generation
+- [ ] Generate trade-specific few-shot prompt addendum from correction patterns using LLM
+- [ ] Store generated prompt addendums in DB and inject into future AI prompts
+- [ ] Build "AI Learning Progress" indicator in Accuracy Dashboard

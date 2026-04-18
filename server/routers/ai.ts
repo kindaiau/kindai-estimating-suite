@@ -1088,6 +1088,23 @@ export const aiRouter = router({
     return { pages: results, count: results.length };
   }),
 
+  // Upload a Scope of Works / Specification document (PDF or image) to S3
+  uploadScopeDoc: protectedProcedure.input(z.object({
+    fileName: z.string().max(255),
+    fileBase64: z.string().max(44_000_000), // ~32MB base64 encoded
+    contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
+  })).mutation(async ({ ctx, input }) => {
+    const rawBuffer = Buffer.from(input.fileBase64, "base64");
+    const MAX_FILE_SIZE = 32 * 1024 * 1024;
+    if (rawBuffer.length > MAX_FILE_SIZE) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: `File too large. Maximum size is 32MB. Your file is ${(rawBuffer.length / 1024 / 1024).toFixed(1)}MB.` });
+    }
+    const ext = input.fileName.split(".").pop()?.toLowerCase() ?? "pdf";
+    const key = `scope-docs/${ctx.user.id}/${nanoid()}.${ext}`;
+    const { url } = await storagePut(key, rawBuffer, input.contentType);
+    return { url, key };
+  }),
+
   // AI Vision Takeoff — analyse a single uploaded plan image
   visionTakeoff: protectedProcedure.input(z.object({
     estimateId: z.number(),

@@ -15,6 +15,7 @@ import {
   FileText, Loader2, Plus, Shield, Sparkles, Trash2, Download, Send, Copy,
 } from "lucide-react";
 import { useState } from "react";
+import { EstimateAgentChat } from "@/components/EstimateAgentChat";
 import { pixelSendQuote } from "@/lib/metaPixel";
 import { useLocation, useParams } from "wouter";
 
@@ -962,6 +963,14 @@ export default function EstimateBuilder() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <EstimateAgentChat
+        estimateId={estimateId}
+        trade={estimate?.trade ?? undefined}
+        onEstimateChanged={() => {
+          utils.estimates.getLineItems.invalidate({ estimateId });
+          utils.estimates.get.invalidate({ id: estimateId });
+        }}
+      />
     </AppLayout>
   );
 }

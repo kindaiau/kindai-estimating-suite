@@ -24,6 +24,8 @@ import { fbLeadsRouter } from "./routers/fbLeads";
 import { companyMemoryRouter } from "./routers/companyMemory";
 import { correctionsRouter } from "./routers/corrections";
 import { xeroRouter } from "./routers/xero";
+import { voiceRouter } from "./routers/voice";
+import { estimateAgentRouter } from "./routers/estimateAgent";
 
 export const appRouter = router({
   system: systemRouter,
@@ -57,6 +59,8 @@ export const appRouter = router({
   companyMemory: companyMemoryRouter,
   corrections: correctionsRouter,
   xero: xeroRouter,
+  voice: voiceRouter,
+  estimateAgent: estimateAgentRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -120,7 +120,7 @@ orchestratedTakeoffRouter.get("/api/orchestrated-takeoff", async (req: Request, 
     return res.end();
   }
 
-  const { estimateId, trade, mode, imageUrl, planDescription, projectDetails, additionalContext } = req.query as Record<string, string>;
+  const { estimateId, trade, mode, imageUrl, planDescription, projectDetails, additionalContext, scopeDocUrl } = req.query as Record<string, string>;
 
   if (!estimateId || !trade || !mode) {
     sendEvent(res, "error", { message: "Missing required parameters" });
@@ -221,14 +221,29 @@ Quote Tone: ${companyProfile.quoteTone ?? "professional"}` : "";
   const productivityData = buildProductivityPromptSection(trade);
 
   // Build the user content for vision vs text mode
+  // scopeDocUrl: optional second document (spec sheet / scope of works)
   const buildUserContent = (step: number, stepContext: string): any => {
+    const scopeNote = scopeDocUrl
+      ? `\n\nA Scope of Works / Specification document has also been provided. Cross-reference it with the plan for inclusions, exclusions, and specified products.`
+      : "";
     if (mode === "vision" && imageUrl) {
-      return [
+      const content: any[] = [
         { type: "image_url", image_url: { url: imageUrl, detail: "high" } },
-        { type: "text", text: stepContext + (additionalContext ? `\n\nAdditional context: ${additionalContext}` : "") },
       ];
+      // Attach scope doc as a second image/PDF if provided
+      if (scopeDocUrl) {
+        const isImage = /\.(jpg|jpeg|png|webp)$/i.test(scopeDocUrl);
+        if (isImage) {
+          content.push({ type: "image_url", image_url: { url: scopeDocUrl, detail: "high" } });
+        } else {
+          // PDF — attach as file_url
+          content.push({ type: "file_url", file_url: { url: scopeDocUrl, mime_type: "application/pdf" } });
+        }
+      }
+      content.push({ type: "text", text: stepContext + (additionalContext ? `\n\nAdditional context: ${additionalContext}` : "") + scopeNote });
+      return content;
     }
-    return `${planDescription ?? ""}\n\nProject Details: ${projectDetails ?? "Standard residential project"}\n\n${stepContext}`;
+    return `${planDescription ?? ""}\n\nProject Details: ${projectDetails ?? "Standard residential project"}\n\n${stepContext}${scopeNote}`;
   };
 
   try {
@@ -256,6 +271,7 @@ ${companyContext}`,
         },
       ],
       response_format: STEP_1_SCHEMA,
+      thinkingBudget: 2048,
     });
 
     const step1Raw = step1Response.choices[0]?.message?.content;
@@ -294,6 +310,7 @@ Extract ALL quantities for this trade. Be precise. Flag low-confidence items (< 
         },
       ],
       response_format: STEP_2_SCHEMA,
+      thinkingBudget: 2048,
     });
 
     const step2Raw = step2Response.choices[0]?.message?.content;
@@ -457,6 +474,68 @@ Return JSON with:
       data: step4,
     });
 
+    // ─── CROSS-CHECK: Anomaly Detection ─────────────────────────────────────
+    // Run a lightweight cross-check pass to catch inconsistencies between passes
+    const anomalies: string[] = [];
+    try {
+      const crossCheckResponse = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: `You are a senior Australian QS performing a cross-check audit.
+You have the plan interpretation (Step 1) and the extracted quantities (Step 2).
+Your job is to flag anomalies — inconsistencies between what the plan shows and what was extracted.`,
+          },
+          {
+            role: "user",
+            content: `Cross-check these two outputs and identify anomalies:
+
+STEP 1 (Plan Interpretation):
+- Rooms detected: ${step1.rooms.join(", ")}
+- Project type: ${step1.projectType}
+- Complexity: ${step1.complexity}
+- Missing info: ${step1.missingInfo.join(", ") || "none"}
+
+STEP 2 (Quantities extracted): ${step2.totalItems} items across ${step2.sections.length} sections
+Sections: ${step2.sections.map((s: any) => s.section).join(", ")}
+
+Flag anomalies such as:
+- Room count mismatch (Step 1 says 4 bedrooms but Step 2 only has 2)
+- Missing fixture schedules referenced in plan
+- Unusually high or low quantities for the project type
+- Sections in Step 1 rooms not covered in Step 2
+
+Return JSON: { "anomalies": ["string"], "severity": "none" | "minor" | "major" }`,
+          },
+        ],
+        response_format: {
+          type: "json_schema" as const,
+          json_schema: {
+            name: "cross_check_result",
+            strict: true,
+            schema: {
+              type: "object",
+              properties: {
+                anomalies: { type: "array", items: { type: "string" } },
+                severity: { type: "string", enum: ["none", "minor", "major"] },
+              },
+              required: ["anomalies", "severity"],
+              additionalProperties: false,
+            },
+          },
+        },
+        thinkingBudget: 512,
+      });
+      const crossCheckRaw = crossCheckResponse.choices[0]?.message?.content;
+      const crossCheck = JSON.parse(typeof crossCheckRaw === "string" ? crossCheckRaw : JSON.stringify(crossCheckRaw));
+      anomalies.push(...(crossCheck.anomalies ?? []));
+      if (crossCheck.severity !== "none" && anomalies.length > 0) {
+        sendEvent(res, "anomaly", { anomalies, severity: crossCheck.severity });
+      }
+    } catch {
+      // Cross-check is non-blocking — if it fails, continue with assembly
+    }
+
     // ─── STEP 5: Draft Assembly ───────────────────────────────────────────────
     sendEvent(res, "step", {
       step: 5,
@@ -489,6 +568,7 @@ Return JSON with:
       assumptions: [
         ...step1.keyObservations,
         ...step1.missingInfo.map((m: string) => `MISSING: ${m}`),
+        ...anomalies.map((a: string) => `⚠️ ANOMALY: ${a}`),
       ],
       roomBreakdown: step1.rooms.map((room: string) => ({
         room,
@@ -497,12 +577,13 @@ Return JSON with:
           .map((i: any) => i.description)
           .slice(0, 5),
       })),
-      planNotes: `Project: ${step1.projectType} | Complexity: ${step1.complexity} | ${step2.totalItems} items | ${step4.complianceFlags.length} compliance flags`,
+      planNotes: `Project: ${step1.projectType} | Complexity: ${step1.complexity} | ${step2.totalItems} items | ${step4.complianceFlags.length} compliance flags${anomalies.length > 0 ? ` | ${anomalies.length} anomaly${anomalies.length > 1 ? "ies" : ""} detected` : ""}`,
       orchestrationMeta: {
         step1,
         step4,
         priceBookHits: step3.priceBookHits,
         totalTrade: Math.round(totalTrade),
+        anomalies,
       },
     };
 
