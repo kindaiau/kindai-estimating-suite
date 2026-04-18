@@ -198,10 +198,6 @@ export default function MotylDemo() {
           <span className="text-white/30 text-lg font-thin">×</span>
           <img src={KINDAI_LOGO} alt="Kindai" className="h-7 object-contain" />
         </div>
-        <div className="hidden md:flex items-center gap-6 text-sm text-white/50">
-          <span>08 8447 7877</span>
-          <span>info@motyl.com.au</span>
-        </div>
         <a
           href="mailto:matthew@kindai.com.au?subject=Kindai%20Pilot%20%E2%80%94%20Motyl%20Group&body=Hi%20Matthew%2C%0A%0AI%27d%20like%20to%20start%20the%20free%20pilot%20for%20Motyl%20Group."
           className="px-3 py-2 md:px-5 md:py-2.5 rounded-lg text-xs md:text-sm font-bold transition-all hover:scale-105 whitespace-nowrap"
