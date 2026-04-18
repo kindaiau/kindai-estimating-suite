@@ -780,3 +780,10 @@
 - [ ] Reframe ROI calculator around "time saved = machine time gained"
 - [ ] Single CTA: "Start a free pilot — 3 projects, no commitment"
 - [ ] Publish to kindaiestimator.com/motyl
+
+## Mobile & Motyl Fixes
+- [x] Fix main site hero mobile layout — buttons clipped on right edge
+- [x] Fix Motyl page mobile layout — full responsive pass
+- [x] Remove all $149/mo pricing from Motyl page
+- [x] Fix ROI calculator TypeScript error (roi variable renamed to roiMultiple)
+- [x] Fix ROI calculator payback/ROI display with no subscription cost

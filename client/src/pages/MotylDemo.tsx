@@ -143,9 +143,9 @@ export default function MotylDemo() {
   const hourlyRate = roiSalary / 1800; // ~1800 working hours/yr
   const manualCost = roiProjects * roiHours * hourlyRate;
   const kindaiCost = roiProjects * 0.5 * hourlyRate;
-  const kindaiSubscription = 1788; // $149/mo commercial
-  const netSaving = manualCost - kindaiCost - kindaiSubscription;
-  const roi = Math.round((netSaving / kindaiSubscription) * 10) / 10;
+  const kindaiSubscription = 0; // pricing discussed privately
+  const netSaving = manualCost - kindaiCost;
+  const roiMultiple = roiHours > 0.5 ? Math.round((manualCost / Math.max(kindaiCost, 1)) * 10) / 10 : 1;
   const hoursSaved = Math.round(roiProjects * (roiHours - 0.5));
   const staffCostSaving = Math.round(roiSalary * 0.8); // 80% of role replaced
   const staffNetSaving = staffCostSaving - kindaiSubscription;
@@ -190,7 +190,7 @@ export default function MotylDemo() {
     <div style={{ background: MOTYL_BLACK, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}>
 
       {/* ── NAV ─────────────────────────────────────────────────────────────── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4"
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3"
         style={{ background: "rgba(10,10,10,0.95)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(245,200,0,0.15)" }}>
         <div className="flex items-center gap-4">
           <img src={MOTYL_LOGO} alt="Motyl Group" className="h-8 object-contain" />
@@ -203,7 +203,7 @@ export default function MotylDemo() {
         </div>
         <a
           href="mailto:matthew@kindai.com.au?subject=Kindai%20Pilot%20%E2%80%94%20Motyl%20Group&body=Hi%20Matthew%2C%0A%0AI%27d%20like%20to%20start%20the%20free%20pilot%20for%20Motyl%20Group."
-          className="px-5 py-2.5 rounded-lg text-sm font-bold transition-all hover:scale-105"
+          className="px-3 py-2 md:px-5 md:py-2.5 rounded-lg text-xs md:text-sm font-bold transition-all hover:scale-105 whitespace-nowrap"
           style={{ background: MOTYL_YELLOW, color: MOTYL_BLACK }}
         >
           Start Free Pilot
@@ -231,27 +231,27 @@ export default function MotylDemo() {
             </div>
 
             {/* Headline */}
-            <h1 className="text-5xl md:text-7xl font-black leading-none mb-6 text-white">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-black leading-none mb-6 text-white">
               You automated<br />
               <span style={{ color: MOTYL_YELLOW }}>the factory.</span>
             </h1>
-            <h2 className="text-4xl md:text-6xl font-black leading-none mb-8 text-white/60">
+            <h2 className="text-3xl sm:text-4xl md:text-6xl font-black leading-none mb-8 text-white/60">
               Now automate<br />the quote.
             </h2>
 
-            <p className="text-xl text-white/60 max-w-2xl mb-10 leading-relaxed">
+            <p className="text-base md:text-xl text-white/60 max-w-2xl mb-10 leading-relaxed">
               Your CNC reads a DXF file and cuts perfectly every time.<br />
               <strong className="text-white">Kindai reads a PDF and quotes perfectly every time.</strong><br />
               Same concept. Different part of the business.
             </p>
 
             {/* Stats row */}
-            <div className="flex flex-wrap gap-8 mb-12">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-6 sm:gap-8 mb-12">
               {[
                 { label: "Time to takeoff", value: "< 60 sec", sub: "vs 4+ hours manual" },
                 { label: "Confidence score", value: "96–98%", sub: "with spec sheet" },
                 { label: "Replaces", value: "80%", sub: "of estimator role" },
-                { label: "Year 1 saving", value: "$60K+", sub: "net of subscription" },
+                { label: "Year 1 saving", value: "$60K+", sub: "net of Kindai" },
               ].map((s) => (
                 <div key={s.label}>
                   <div className="text-3xl font-black" style={{ color: MOTYL_YELLOW }}>{s.value}</div>
@@ -261,16 +261,16 @@ export default function MotylDemo() {
               ))}
             </div>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <button
                 onClick={handleRunDemo}
-                className="px-8 py-4 rounded-xl text-lg font-black transition-all hover:scale-105 hover:shadow-2xl"
+                className="w-full sm:w-auto px-6 sm:px-8 py-4 rounded-xl text-base sm:text-lg font-black transition-all hover:scale-105 hover:shadow-2xl"
                 style={{ background: MOTYL_YELLOW, color: MOTYL_BLACK, boxShadow: `0 0 40px rgba(245,200,0,0.3)` }}
               >
                 ⚡ Run AI on Motyl Plans
               </button>
               <a href="#roi"
-                className="px-8 py-4 rounded-xl text-lg font-bold border transition-all hover:scale-105"
+                className="w-full sm:w-auto text-center px-6 sm:px-8 py-4 rounded-xl text-base sm:text-lg font-bold border transition-all hover:scale-105"
                 style={{ borderColor: "rgba(255,255,255,0.2)", color: "white" }}>
                 See the numbers →
               </a>
@@ -584,17 +584,17 @@ export default function MotylDemo() {
                     <div className="text-4xl font-black text-green-400">
                       <AnimatedNumber value={Math.round(kindaiCost + kindaiSubscription)} prefix="$" />
                     </div>
-                    <div className="text-white/40 text-sm mt-1">{roiProjects} projects × 0.5h + $149/mo subscription</div>
+                    <div className="text-white/40 text-sm mt-1">{roiProjects} projects × 0.5h with Kindai</div>
                   </div>
                   <div className="rounded-2xl border p-6" style={{ background: "rgba(245,200,0,0.08)", borderColor: "rgba(245,200,0,0.3)" }}>
                     <div className="text-xs uppercase tracking-wider mb-2" style={{ color: MOTYL_YELLOW }}>Net saving after Kindai</div>
                     <div className="text-5xl font-black" style={{ color: MOTYL_YELLOW }}>
                       <AnimatedNumber value={Math.max(0, Math.round(netSaving))} prefix="$" />
                     </div>
-                    <div className="text-white/40 text-sm mt-1">per year · Kindai Commercial = $149/mo</div>
+                    <div className="text-white/40 text-sm mt-1">per year · contact us for commercial pricing</div>
                     <div className="flex gap-6 mt-4">
-                      <div><div className="text-2xl font-black text-white"><AnimatedNumber value={Math.max(0, roi)} suffix="x" /></div><div className="text-xs text-white/40">ROI</div></div>
-                      <div><div className="text-2xl font-black text-white"><AnimatedNumber value={Math.max(0, Math.round(kindaiSubscription / Math.max(netSaving / 365, 1)))} suffix="d" /></div><div className="text-xs text-white/40">Payback</div></div>
+                      <div><div className="text-2xl font-black text-white"><AnimatedNumber value={Math.max(0, roiMultiple)} suffix="x" /></div><div className="text-xs text-white/40">ROI</div></div>
+                      <div><div className="text-2xl font-black text-white"><AnimatedNumber value={hoursSaved > 0 ? Math.round(hoursSaved / 5) : 0} suffix="d" /></div><div className="text-xs text-white/40">Days saved</div></div>
                       <div><div className="text-2xl font-black text-white"><AnimatedNumber value={hoursSaved} suffix="h" /></div><div className="text-xs text-white/40">Hours saved</div></div>
                     </div>
                   </div>
@@ -611,9 +611,9 @@ export default function MotylDemo() {
                   <div className="rounded-2xl border p-6" style={{ background: "rgba(34,197,94,0.08)", borderColor: "rgba(34,197,94,0.2)" }}>
                     <div className="text-xs text-green-400 uppercase tracking-wider mb-2">Kindai replaces 80% of that role</div>
                     <div className="text-4xl font-black text-green-400">
-                      <AnimatedNumber value={kindaiSubscription} prefix="$" suffix="/yr" />
+                      <span className="text-2xl">Contact us for pricing</span>
                     </div>
-                    <div className="text-white/40 text-sm mt-1">$149/mo · No super · No leave · No office</div>
+                    <div className="text-white/40 text-sm mt-1">No super · No leave · No office · No sick days</div>
                   </div>
                   <div className="rounded-2xl border p-6" style={{ background: "rgba(245,200,0,0.08)", borderColor: "rgba(245,200,0,0.3)" }}>
                     <div className="text-xs uppercase tracking-wider mb-2" style={{ color: MOTYL_YELLOW }}>Net saving per year</div>

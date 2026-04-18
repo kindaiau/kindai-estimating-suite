@@ -255,11 +255,11 @@ export default function Home() {
                 Kindai reads your plans, applies your price book, and builds a GST-ready quote in 60 seconds. Built for Australian tradies.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 items-center lg:items-start justify-center lg:justify-start">
+              <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center lg:items-start justify-center lg:justify-start w-full sm:w-auto">
                 <Button
                   onClick={handleTryAI}
                   size="lg"
-                  className="kindai-btn-primary px-8 py-4 rounded-full text-base font-black h-auto shadow-2xl"
+                  className="kindai-btn-primary w-full sm:w-auto px-6 sm:px-8 py-4 rounded-full text-base font-black h-auto shadow-2xl"
                 >
                   <Camera className="w-5 h-5 mr-2" />
                   Claim Free Pilot Spot
@@ -269,7 +269,7 @@ export default function Home() {
                   onClick={() => navigate("/demo")}
                   size="lg"
                   variant="outline"
-                  className="px-8 py-4 rounded-full text-base font-black h-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
+                  className="w-full sm:w-auto px-6 sm:px-8 py-4 rounded-full text-base font-black h-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
                 >
                   <Play className="w-5 h-5 mr-2" />
                   Watch Demo
