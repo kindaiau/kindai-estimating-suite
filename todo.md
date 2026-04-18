@@ -770,3 +770,13 @@
 - [x] Add "Book a Call with Matthew" CTA
 - [x] Test full flow end-to-end
 - [ ] Publish to kindaiestimator.com/motyl
+
+## Motyl Page Rebuild — Tech-First Pitch (v2)
+- [ ] Find CNC/automation visual assets for Motyl page hero
+- [ ] Rebuild hero: "You automated the factory. Now automate the quote."
+- [ ] Remove generic sections (how it works, stats bar)
+- [ ] Replace with Motyl-specific framing (CNC parallel, time argument)
+- [ ] Keep live AI demo section (Tomasz loves tech)
+- [ ] Reframe ROI calculator around "time saved = machine time gained"
+- [ ] Single CTA: "Start a free pilot — 3 projects, no commitment"
+- [ ] Publish to kindaiestimator.com/motyl

@@ -1,25 +1,27 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "wouter";
 
-// Motyl brand colours
-const MOTYL_YELLOW = "#F5A800";
-const MOTYL_BLACK = "#1A1A1A";
+// ─── Motyl brand constants ────────────────────────────────────────────────────
+const MOTYL_YELLOW = "#F5C800";
+const MOTYL_BLACK = "#0A0A0A";
+const MOTYL_DARK = "#111111";
+const MOTYL_LOGO = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/motyl-logo_0277f988.webp";
+const CNC_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/cnc-factory_eae967f3.jpg";
 
-// Pre-uploaded Motyl plan CDN URLs
-const MOTYL_PLAN_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/motyl-apt314-kitchen-plan_5980945a.pdf";
-const MOTYL_SPEC_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/motyl-apt314-materials-schedule_a9bfd1f6.pdf";
+// Pre-loaded Motyl plan CDN URLs (APT 314 Kitchen Type-F)
+const MOTYL_PLAN_URLS = [
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/2026-04-1811.36.50_c9e2e4b8.pdf",
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/2026-04-1811.48.14_c44e7d5b.pdf",
+];
 
 type DemoItem = {
-  section: string;
   description: string;
   unit: string;
   quantity: number;
-  tradePrice: number;
   retailPrice: number;
+  tradePrice: number;
   labourMinutes: number;
   wasteFactor: number;
   category: string;
@@ -48,520 +50,670 @@ function formatCurrency(n: number) {
   return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD", maximumFractionDigits: 0 }).format(n);
 }
 
-// ─── ROI Calculator ──────────────────────────────────────────────────────────
-function ROICalculator() {
-  const [projectsPerYear, setProjectsPerYear] = useState(80);
-  const [hoursPerTakeoff, setHoursPerTakeoff] = useState(4);
-  const [estimatorRate, setEstimatorRate] = useState(95);
+// ─── Animated counter ─────────────────────────────────────────────────────────
+function AnimatedNumber({ value, prefix = "", suffix = "", duration = 1200 }: { value: number; prefix?: string; suffix?: string; duration?: number }) {
+  const [display, setDisplay] = useState(0);
+  const prevRef = useRef(0);
+  useEffect(() => {
+    const start = prevRef.current;
+    const end = value;
+    const startTime = performance.now();
+    const tick = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(start + (end - start) * eased));
+      if (progress < 1) requestAnimationFrame(tick);
+      else prevRef.current = end;
+    };
+    requestAnimationFrame(tick);
+  }, [value, duration]);
+  return <span>{prefix}{display.toLocaleString("en-AU")}{suffix}</span>;
+}
 
-  const currentCost = projectsPerYear * hoursPerTakeoff * estimatorRate;
-  const kindaiTime = 0.5; // 30 min per takeoff with Kindai
-  const kindaiCost = projectsPerYear * kindaiTime * estimatorRate;
-  const annualSaving = currentCost - kindaiCost;
-  const kindaiSubscription = 799 * 12; // Commercial tier
-  const netSaving = annualSaving - kindaiSubscription;
-  const roiMultiple = Math.round(annualSaving / kindaiSubscription);
-  const paybackDays = Math.round((kindaiSubscription / annualSaving) * 365);
+// ─── Typewriter text ──────────────────────────────────────────────────────────
+function TypewriterText({ text, delay = 0 }: { text: string; delay?: number }) {
+  const [displayed, setDisplayed] = useState("");
+  const [started, setStarted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setStarted(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+  useEffect(() => {
+    if (!started) return;
+    let i = 0;
+    setDisplayed("");
+    const interval = setInterval(() => {
+      setDisplayed(text.slice(0, i + 1));
+      i++;
+      if (i >= text.length) clearInterval(interval);
+    }, 28);
+    return () => clearInterval(interval);
+  }, [started, text]);
+  return <span>{displayed}<span className="animate-pulse">|</span></span>;
+}
 
+// ─── Result row reveal ────────────────────────────────────────────────────────
+function ResultRow({ item, index }: { item: DemoItem; index: number }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), index * 80);
+    return () => clearTimeout(t);
+  }, [index]);
+  const tradeCost = item.tradePrice * item.quantity * (1 + item.wasteFactor / 100);
   return (
-    <div className="rounded-2xl overflow-hidden border border-[#F5A800]/30 bg-[#111]">
-      {/* Header */}
-      <div className="px-8 py-6 border-b border-[#F5A800]/20" style={{ background: "linear-gradient(135deg, #1A1A1A 0%, #222 100%)" }}>
-        <div className="flex items-center gap-3 mb-1">
-          <span className="text-2xl">💰</span>
-          <h3 className="text-xl font-bold text-white">Motyl ROI Calculator</h3>
-        </div>
-        <p className="text-gray-400 text-sm">How much is manual estimating costing Motyl Group right now?</p>
-      </div>
-
-      <div className="p-8 grid md:grid-cols-2 gap-8">
-        {/* Sliders */}
-        <div className="space-y-8">
-          <div>
-            <div className="flex justify-between mb-3">
-              <label className="text-sm font-medium text-gray-300">Projects quoted per year</label>
-              <span className="text-[#F5A800] font-bold text-lg">{projectsPerYear}</span>
-            </div>
-            <Slider
-              min={10} max={300} step={5}
-              value={[projectsPerYear]}
-              onValueChange={([v]) => setProjectsPerYear(v)}
-              className="accent-yellow-400"
-            />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>10</span><span>300</span>
-            </div>
-          </div>
-
-          <div>
-            <div className="flex justify-between mb-3">
-              <label className="text-sm font-medium text-gray-300">Hours per manual takeoff</label>
-              <span className="text-[#F5A800] font-bold text-lg">{hoursPerTakeoff}h</span>
-            </div>
-            <Slider
-              min={1} max={12} step={0.5}
-              value={[hoursPerTakeoff]}
-              onValueChange={([v]) => setHoursPerTakeoff(v)}
-            />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>1h</span><span>12h</span>
-            </div>
-          </div>
-
-          <div>
-            <div className="flex justify-between mb-3">
-              <label className="text-sm font-medium text-gray-300">Estimator cost ($/hr loaded)</label>
-              <span className="text-[#F5A800] font-bold text-lg">${estimatorRate}/hr</span>
-            </div>
-            <Slider
-              min={60} max={180} step={5}
-              value={[estimatorRate]}
-              onValueChange={([v]) => setEstimatorRate(v)}
-            />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>$60</span><span>$180</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Results */}
-        <div className="space-y-4">
-          <div className="rounded-xl p-4 bg-red-950/40 border border-red-800/40">
-            <div className="text-xs text-red-400 uppercase tracking-wider mb-1">Current annual cost (manual)</div>
-            <div className="text-3xl font-black text-red-400">{formatCurrency(currentCost)}</div>
-            <div className="text-xs text-gray-500 mt-1">{projectsPerYear} projects × {hoursPerTakeoff}h × ${estimatorRate}/hr</div>
-          </div>
-
-          <div className="rounded-xl p-4 bg-green-950/40 border border-green-800/40">
-            <div className="text-xs text-green-400 uppercase tracking-wider mb-1">With Kindai (30 min/takeoff)</div>
-            <div className="text-3xl font-black text-green-400">{formatCurrency(kindaiCost)}</div>
-            <div className="text-xs text-gray-500 mt-1">{projectsPerYear} projects × 0.5h × ${estimatorRate}/hr</div>
-          </div>
-
-          <div className="rounded-xl p-5 border-2 border-[#F5A800]" style={{ background: "linear-gradient(135deg, #1A1A1A, #222)" }}>
-            <div className="text-xs text-[#F5A800] uppercase tracking-wider mb-1">Net saving after Kindai subscription</div>
-            <div className="text-4xl font-black" style={{ color: MOTYL_YELLOW }}>{formatCurrency(netSaving)}</div>
-            <div className="text-xs text-gray-400 mt-1">per year · Kindai Commercial = $799/mo</div>
-            <div className="flex gap-3 mt-3">
-              <div className="text-center">
-                <div className="text-xl font-black text-white">{roiMultiple}x</div>
-                <div className="text-xs text-gray-500">ROI</div>
-              </div>
-              <div className="w-px bg-gray-700" />
-              <div className="text-center">
-                <div className="text-xl font-black text-white">{paybackDays}d</div>
-                <div className="text-xs text-gray-500">Payback</div>
-              </div>
-              <div className="w-px bg-gray-700" />
-              <div className="text-center">
-                <div className="text-xl font-black text-white">{Math.round(projectsPerYear * (hoursPerTakeoff - kindaiTime)).toLocaleString()}h</div>
-                <div className="text-xs text-gray-500">Hours saved</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <tr
+      className="border-b border-white/5 transition-all duration-500"
+      style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(12px)" }}
+    >
+      <td className="py-2.5 pr-4 text-sm text-white/90">{item.description}</td>
+      <td className="py-2.5 pr-3 text-sm text-white/50 text-right">{item.quantity} {item.unit}</td>
+      <td className="py-2.5 pr-3 text-sm text-right" style={{ color: MOTYL_YELLOW }}>{formatCurrency(item.tradePrice)}</td>
+      <td className="py-2.5 text-sm font-semibold text-right text-white">{formatCurrency(tradeCost)}</td>
+    </tr>
   );
 }
 
-// ─── Live Demo Section ────────────────────────────────────────────────────────
-function LiveDemo() {
-  const [isRunning, setIsRunning] = useState(false);
+export default function MotylDemo() {
+  // ── Demo AI state ────────────────────────────────────────────────────────────
   const [result, setResult] = useState<DemoResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"materials" | "quote">("materials");
+  const [running, setRunning] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [activeTab, setActiveTab] = useState<"items" | "quote" | "assumptions">("items");
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  const runDemo = trpc.demo.runDemo.useMutation();
+  // ── ROI calculator state ─────────────────────────────────────────────────────
+  const [roiProjects, setRoiProjects] = useState(120);
+  const [roiHours, setRoiHours] = useState(4);
+  const [roiSalary, setRoiSalary] = useState(85000);
+  const [staffTab, setStaffTab] = useState<"time" | "staff">("time");
 
-  // Convert PDF URL to base64 pages via the upload endpoint
-  const uploadPages = trpc.demo.uploadDemoPlanPages.useMutation();
+  // ── Integration logos ────────────────────────────────────────────────────────
+  const integrations = [
+    { name: "Xero", color: "#13B5EA", desc: "Auto-invoice on quote approval" },
+    { name: "Polytec", color: "#E8E8E8", desc: "Live trade pricing" },
+    { name: "Laminex", color: "#D4A017", desc: "Live trade pricing" },
+    { name: "Blum", color: "#E63946", desc: "Hardware catalogue" },
+    { name: "Castella", color: "#888", desc: "Handle & hardware specs" },
+    { name: "CNC", color: "#4CAF50", desc: "Cut list export (DXF/CSV)" },
+  ];
 
-  async function handleRunDemo() {
-    setIsRunning(true);
-    setError(null);
-    setResult(null);
+  // ── ROI calculations ─────────────────────────────────────────────────────────
+  const hourlyRate = roiSalary / 1800; // ~1800 working hours/yr
+  const manualCost = roiProjects * roiHours * hourlyRate;
+  const kindaiCost = roiProjects * 0.5 * hourlyRate;
+  const kindaiSubscription = 1788; // $149/mo commercial
+  const netSaving = manualCost - kindaiCost - kindaiSubscription;
+  const roi = Math.round((netSaving / kindaiSubscription) * 10) / 10;
+  const hoursSaved = Math.round(roiProjects * (roiHours - 0.5));
+  const staffCostSaving = Math.round(roiSalary * 0.8); // 80% of role replaced
+  const staffNetSaving = staffCostSaving - kindaiSubscription;
 
-    try {
-      // Fetch both PDFs and convert to base64
-      const [planResp, specResp] = await Promise.all([
-        fetch(MOTYL_PLAN_URL),
-        fetch(MOTYL_SPEC_URL),
-      ]);
-      const [planBuf, specBuf] = await Promise.all([
-        planResp.arrayBuffer(),
-        specResp.arrayBuffer(),
-      ]);
-
-      const toBase64 = (buf: ArrayBuffer) => {
-        const bytes = new Uint8Array(buf);
-        let binary = "";
-        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-        return btoa(binary);
-      };
-
-      // Upload both PDFs as pages
-      const uploaded = await uploadPages.mutateAsync({
-        pages: [
-          { fileBase64: toBase64(planBuf), fileName: "motyl-apt314-kitchen-plan.pdf", contentType: "application/pdf" },
-          { fileBase64: toBase64(specBuf), fileName: "motyl-apt314-materials-schedule.pdf", contentType: "application/pdf" },
-        ],
-      });
-
-      const imageUrls = uploaded.pages.map((p) => p.url);
-
-      // Run the AI demo
-      const demoResult = await runDemo.mutateAsync({
-        trade: "cabinetry",
-        planImageUrls: imageUrls,
-        jobDescription: "Motyl Group APT 314 Kitchen Type-F (J01-F). Commercial apartment kitchen joinery. Carcass: Polytec White 18mm MDF. Doors/Drawers: Polytec Gossamer White Smooth. Benchtop: Stone Ambassador Zenith Vitrified Ceramic. Splashback: Vridan Toughened Glass Mirror Backed. End Panels: Polytec Maison Oak Matt. Hardware: Castella Ledge 100mm handles, Blum LEGRABOX drawer systems. Sink: Verve 399 undermount. Appliances: SMEG induction cooktop + rangehood. 6 base cabinets (JF-01 to JF-06), 2400mm wide kitchen run.",
-        markupPercent: 20,
-        labourRate: 95,
-        useTradePrice: true,
-      });
-
-      setResult(demoResult as DemoResult);
-
+  // ── Run demo ─────────────────────────────────────────────────────────────────
+  const runDemo = trpc.demo.runDemo.useMutation({
+    onSuccess: (data) => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setRunning(false);
+      setResult(data as unknown as DemoResult);
       setTimeout(() => {
         resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 300);
-    } catch (e: any) {
-      setError(e?.message ?? "Something went wrong. Please try again.");
-    } finally {
-      setIsRunning(false);
-    }
-  }
+    },
+    onError: (err) => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      setRunning(false);
+      toast.error("AI error: " + err.message);
+    },
+  });
+
+  const handleRunDemo = useCallback(() => {
+    if (running) return;
+    setRunning(true);
+    setResult(null);
+    setElapsed(0);
+    setActiveTab("items");
+    timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
+    runDemo.mutate({
+      trade: "cabinetry",
+      planImageUrls: MOTYL_PLAN_URLS,
+      jobDescription: "Commercial kitchen joinery for apartment complex. APT 314 Kitchen Type-F. Cabinet codes JF-01 to JF-06. Polytec Gossamer White Smooth doors, Blum LEGRABOX drawer systems, Castella Ledge 100mm handles, Zenith Vitrified Ceramic benchtop, Vridan toughened glass splashback. Full spec sheet provided. Use exact product codes from materials schedule.",
+      markupPercent: 20,
+      labourRate: 95,
+      useTradePrice: true,
+    });
+  }, [running, runDemo]);
+
+  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
 
   return (
-    <div className="space-y-6">
-      {/* Plans preview */}
-      <div className="rounded-2xl border border-[#F5A800]/30 bg-[#111] overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#F5A800]/20 flex items-center justify-between">
-          <div>
-            <h3 className="font-bold text-white text-lg">Motyl Group — APT 314 Kitchen Type-F</h3>
-            <p className="text-gray-400 text-sm mt-0.5">2 documents pre-loaded: Kitchen Plan (J01-F) + Materials Schedule</p>
-          </div>
-          <Badge className="bg-green-900/60 text-green-400 border-green-700">✓ Plans Ready</Badge>
-        </div>
+    <div style={{ background: MOTYL_BLACK, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}>
 
-        <div className="p-6 grid grid-cols-2 gap-4">
-          <div className="rounded-xl bg-[#1A1A1A] border border-gray-700 p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#F5A800]/10 flex items-center justify-center text-xl">📐</div>
-            <div>
-              <div className="text-sm font-medium text-white">Kitchen Plan (J01-F)</div>
-              <div className="text-xs text-gray-400">Plan + Elevation views · 2 pages · 1:20 scale</div>
-              <div className="text-xs text-[#F5A800] mt-0.5">JF-01 to JF-06 · 2400mm run</div>
-            </div>
-          </div>
-          <div className="rounded-xl bg-[#1A1A1A] border border-gray-700 p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#F5A800]/10 flex items-center justify-center text-xl">📋</div>
-            <div>
-              <div className="text-sm font-medium text-white">Materials Schedule</div>
-              <div className="text-xs text-gray-400">Full spec sheet · Polytec · Blum · Castella</div>
-              <div className="text-xs text-[#F5A800] mt-0.5">Products + codes + finishes</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="px-6 pb-6">
-          <button
-            onClick={handleRunDemo}
-            disabled={isRunning}
-            className="w-full py-4 rounded-xl font-black text-lg text-black transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.99]"
-            style={{ background: isRunning ? "#555" : `linear-gradient(135deg, ${MOTYL_YELLOW}, #FFD700)` }}
-          >
-            {isRunning ? (
-              <span className="flex items-center justify-center gap-3">
-                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                AI is reading your plans...
-              </span>
-            ) : result ? (
-              "✓ Takeoff Complete — Run Again"
-            ) : (
-              "⚡ Run AI Takeoff on Motyl Plans"
-            )}
-          </button>
-          {isRunning && (
-            <p className="text-center text-xs text-gray-500 mt-2">Reading cabinet codes, dimensions, and spec sheet... ~30 seconds</p>
-          )}
-        </div>
-      </div>
-
-      {/* Error */}
-      {error && (
-        <div className="rounded-xl border border-red-700 bg-red-950/40 p-4 text-red-400 text-sm">
-          {error}
-        </div>
-      )}
-
-      {/* Results */}
-      {result && (
-        <div ref={resultsRef} className="rounded-2xl border border-[#F5A800]/40 bg-[#111] overflow-hidden">
-          {/* Results header */}
-          <div className="px-6 py-5 border-b border-[#F5A800]/20" style={{ background: "linear-gradient(135deg, #1A1A1A, #222)" }}>
-            <div className="flex flex-wrap items-center gap-3 mb-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-900/50 border border-green-700">
-                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-green-400 font-bold text-sm">{result.confidence}% Confidence</span>
-              </div>
-              <Badge className="bg-[#F5A800]/10 text-[#F5A800] border-[#F5A800]/30">{result.items.length} line items</Badge>
-              <Badge className="bg-blue-900/40 text-blue-400 border-blue-700">
-                {result.pricing?.labourHours != null
-                  ? Math.round(result.pricing.labourHours * 10) / 10
-                  : Math.round(result.items.reduce((s, i) => s + (i.quantity * i.labourMinutes) / 60, 0) * 10) / 10
-                }h labour
-              </Badge>
-            </div>
-            {result.planNotes && (
-              <p className="text-gray-400 text-sm italic">"{result.planNotes}"</p>
-            )}
-          </div>
-
-          {/* Tabs */}
-          <div className="flex border-b border-gray-800">
-            {(["materials", "quote"] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-6 py-3 text-sm font-medium transition-colors ${
-                  activeTab === tab
-                    ? "text-[#F5A800] border-b-2 border-[#F5A800]"
-                    : "text-gray-500 hover:text-gray-300"
-                }`}
-              >
-                {tab === "materials" ? "📦 Materials Takeoff" : "💵 Quote Summary"}
-              </button>
-            ))}
-          </div>
-
-          {/* Materials table */}
-          {activeTab === "materials" && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-800 bg-[#1A1A1A]">
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Item</th>
-                    <th className="text-right px-4 py-3 text-gray-400 font-medium">Qty</th>
-                    <th className="text-right px-4 py-3 text-gray-400 font-medium">Unit</th>
-                    <th className="text-right px-4 py-3 text-gray-400 font-medium">Trade $</th>
-                    <th className="text-right px-4 py-3 text-gray-400 font-medium">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.items.map((item, i) => (
-                    <tr key={i} className="border-b border-gray-800/50 hover:bg-[#1A1A1A]/60 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="text-white font-medium text-sm">{item.description}</div>
-                        <div className="text-xs text-gray-500">{item.section} · {item.category}</div>
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-300">{item.quantity}</td>
-                      <td className="px-4 py-3 text-right text-gray-400 text-xs">{item.unit}</td>
-                      <td className="px-4 py-3 text-right text-gray-300">${item.tradePrice.toFixed(2)}</td>
-                      <td className="px-4 py-3 text-right font-medium text-white">
-                        {formatCurrency(item.quantity * item.tradePrice * (1 + item.wasteFactor / 100))}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* Quote summary */}
-          {activeTab === "quote" && result.pricing && (
-            <div className="p-6 max-w-md mx-auto space-y-3">
-              {[
-              { label: "Materials (trade price)", value: result.pricing.materialsCostTrade, color: "text-white" },
-              { label: `Labour (${Math.round(result.pricing.labourHours * 10) / 10}h @ $95/hr)`, value: result.pricing.labourCost, color: "text-white" },
-              { label: "Subtotal", value: result.pricing.subtotal, color: "text-white", border: true },
-              { label: "Markup (20%)", value: result.pricing.markupAmount, color: "text-[#F5A800]" },
-              { label: "GST (10%)", value: result.pricing.gst, color: "text-gray-400" },
-              ].map((row, i) => (
-                <div key={i} className={`flex justify-between py-2 ${row.border ? "border-t border-gray-700" : ""}`}>
-                  <span className="text-gray-400">{row.label}</span>
-                  <span className={`font-semibold ${row.color}`}>{formatCurrency(row.value)}</span>
-                </div>
-              ))}
-              <div className="flex justify-between py-3 border-t-2 border-[#F5A800]">
-                <span className="text-white font-bold text-lg">Total inc GST</span>
-                <span className="font-black text-2xl" style={{ color: MOTYL_YELLOW }}>{formatCurrency(result.pricing.total)}</span>
-              </div>
-              <div className="rounded-xl bg-green-950/40 border border-green-800/40 p-4 mt-4">
-                <div className="text-xs text-green-400 uppercase tracking-wider mb-1">Trade savings vs retail</div>
-                <div className="text-2xl font-black text-green-400">
-                  {formatCurrency(result.pricing.tradeSavings ?? 0)} saved
-                </div>
-                <div className="text-xs text-gray-500 mt-1">buying at trade vs retail pricing</div>
-              </div>
-            </div>
-          )}
-
-          {/* Assumptions */}
-          {result.assumptions && result.assumptions.length > 0 && (
-            <div className="px-6 pb-6">
-              <div className="rounded-xl bg-[#1A1A1A] border border-gray-700 p-4">
-                <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">AI Assumptions</div>
-                <ul className="space-y-1">
-                  {result.assumptions.slice(0, 5).map((a, i) => (
-                    <li key={i} className="text-xs text-gray-400 flex gap-2">
-                      <span className="text-[#F5A800] mt-0.5">→</span>
-                      <span>{a}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
-export default function MotylDemo() {
-  useEffect(() => {
-    document.title = "Kindai × Motyl Group — AI Estimating Demo";
-  }, []);
-
-  return (
-    <div className="min-h-screen" style={{ background: MOTYL_BLACK, color: "white" }}>
-      {/* Top bar */}
-      <div className="border-b border-gray-800 px-6 py-3 flex items-center justify-between">
+      {/* ── NAV ─────────────────────────────────────────────────────────────── */}
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4"
+        style={{ background: "rgba(10,10,10,0.95)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(245,200,0,0.15)" }}>
         <div className="flex items-center gap-4">
-          {/* Kindai logo */}
-          <Link href="/">
-            <span className="font-black text-lg tracking-tight" style={{ color: MOTYL_YELLOW }}>kindai</span>
-          </Link>
-          <span className="text-gray-600">×</span>
-          {/* Motyl logo text */}
-          <span className="font-bold text-white text-sm tracking-widest uppercase">MOTYL GROUP</span>
+          <img src={MOTYL_LOGO} alt="Motyl Group" className="h-8 object-contain" />
+          <span className="text-white/30 text-lg font-thin">×</span>
+          <span className="text-white font-bold text-lg tracking-tight">kindai</span>
+        </div>
+        <div className="hidden md:flex items-center gap-6 text-sm text-white/50">
+          <span>08 8447 7877</span>
+          <span>info@motyl.com.au</span>
         </div>
         <a
-          href="mailto:matthew@kindai.com.au?subject=Kindai%20Demo%20Follow-Up%20%E2%80%94%20Motyl%20Group"
-          className="text-xs px-4 py-2 rounded-full font-semibold text-black transition-all hover:brightness-110"
-          style={{ background: MOTYL_YELLOW }}
+          href="mailto:matthew@kindai.com.au?subject=Kindai%20Pilot%20%E2%80%94%20Motyl%20Group&body=Hi%20Matthew%2C%0A%0AI%27d%20like%20to%20start%20the%20free%20pilot%20for%20Motyl%20Group."
+          className="px-5 py-2.5 rounded-lg text-sm font-bold transition-all hover:scale-105"
+          style={{ background: MOTYL_YELLOW, color: MOTYL_BLACK }}
         >
-          Book a Call with Matthew →
+          Start Free Pilot
         </a>
-      </div>
+      </nav>
 
-      {/* Hero */}
-      <div className="max-w-5xl mx-auto px-6 pt-16 pb-12 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#F5A800]/30 bg-[#F5A800]/5 text-[#F5A800] text-sm font-medium mb-6">
-          <span className="w-2 h-2 rounded-full bg-[#F5A800] animate-pulse" />
-          Prepared exclusively for Motyl Group
+      {/* ── HERO ────────────────────────────────────────────────────────────── */}
+      <div className="relative min-h-screen flex items-center pt-20 overflow-hidden">
+        {/* CNC background */}
+        <div className="absolute inset-0">
+          <img src={CNC_BG} alt="" className="w-full h-full object-cover opacity-20" />
+          <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${MOTYL_BLACK} 40%, rgba(10,10,10,0.6) 100%)` }} />
+          {/* Animated grid */}
+          <div className="absolute inset-0 opacity-5"
+            style={{ backgroundImage: "linear-gradient(rgba(245,200,0,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(245,200,0,0.5) 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
         </div>
-        <h1 className="text-5xl md:text-6xl font-black leading-tight mb-4">
-          What if your plans<br />
-          <span style={{ color: MOTYL_YELLOW }}>quoted themselves?</span>
-        </h1>
-        <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-3">
-          We took your real APT 314 Kitchen Type-F plans and ran them through Kindai's AI.
-          Below is what it produced — in under 60 seconds.
-        </p>
-        <p className="text-sm text-gray-600">
-          Polytec Gossamer White Smooth · Blum LEGRABOX · Castella Ledge · Zenith Vitrified Ceramic — all read directly from your spec sheet.
-        </p>
-      </div>
 
-      {/* Stats bar */}
-      <div className="border-y border-gray-800 bg-[#111]">
-        <div className="max-w-5xl mx-auto px-6 py-5 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          {[
-            { label: "Time to takeoff", value: "< 60 sec", sub: "vs 4+ hours manual" },
-            { label: "Confidence score", value: "96–98%", sub: "with spec sheet" },
-            { label: "Motyl projects/yr", value: "365", sub: "completed projects" },
-            { label: "Potential saving", value: "$120K+", sub: "per year for Motyl" },
-          ].map((s) => (
-            <div key={s.label}>
-              <div className="text-2xl font-black" style={{ color: MOTYL_YELLOW }}>{s.value}</div>
-              <div className="text-sm text-white font-medium">{s.label}</div>
-              <div className="text-xs text-gray-500">{s.sub}</div>
+        <div className="relative container mx-auto px-6 py-20">
+          <div className="max-w-4xl">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold mb-8 border"
+              style={{ background: "rgba(245,200,0,0.1)", borderColor: "rgba(245,200,0,0.3)", color: MOTYL_YELLOW }}>
+              <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: MOTYL_YELLOW }} />
+              Prepared exclusively for Motyl Group · Adelaide, SA
             </div>
-          ))}
+
+            {/* Headline */}
+            <h1 className="text-5xl md:text-7xl font-black leading-none mb-6 text-white">
+              You automated<br />
+              <span style={{ color: MOTYL_YELLOW }}>the factory.</span>
+            </h1>
+            <h2 className="text-4xl md:text-6xl font-black leading-none mb-8 text-white/60">
+              Now automate<br />the quote.
+            </h2>
+
+            <p className="text-xl text-white/60 max-w-2xl mb-10 leading-relaxed">
+              Your CNC reads a DXF file and cuts perfectly every time.<br />
+              <strong className="text-white">Kindai reads a PDF and quotes perfectly every time.</strong><br />
+              Same concept. Different part of the business.
+            </p>
+
+            {/* Stats row */}
+            <div className="flex flex-wrap gap-8 mb-12">
+              {[
+                { label: "Time to takeoff", value: "< 60 sec", sub: "vs 4+ hours manual" },
+                { label: "Confidence score", value: "96–98%", sub: "with spec sheet" },
+                { label: "Replaces", value: "80%", sub: "of estimator role" },
+                { label: "Year 1 saving", value: "$60K+", sub: "net of subscription" },
+              ].map((s) => (
+                <div key={s.label}>
+                  <div className="text-3xl font-black" style={{ color: MOTYL_YELLOW }}>{s.value}</div>
+                  <div className="text-sm text-white font-semibold">{s.label}</div>
+                  <div className="text-xs text-white/40">{s.sub}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-4">
+              <button
+                onClick={handleRunDemo}
+                className="px-8 py-4 rounded-xl text-lg font-black transition-all hover:scale-105 hover:shadow-2xl"
+                style={{ background: MOTYL_YELLOW, color: MOTYL_BLACK, boxShadow: `0 0 40px rgba(245,200,0,0.3)` }}
+              >
+                ⚡ Run AI on Motyl Plans
+              </button>
+              <a href="#roi"
+                className="px-8 py-4 rounded-xl text-lg font-bold border transition-all hover:scale-105"
+                style={{ borderColor: "rgba(255,255,255,0.2)", color: "white" }}>
+                See the numbers →
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="max-w-5xl mx-auto px-6 py-12 space-y-12">
-
-        {/* Section 1: Live Demo */}
-        <section>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-black font-black text-sm" style={{ background: MOTYL_YELLOW }}>1</div>
-            <h2 className="text-2xl font-bold text-white">Live AI Takeoff — Your Real Plans</h2>
+      {/* ── AI DEMO SECTION ──────────────────────────────────────────────────── */}
+      <div className="py-24 px-6" style={{ background: MOTYL_DARK }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-4 border"
+              style={{ borderColor: "rgba(245,200,0,0.3)", color: MOTYL_YELLOW, background: "rgba(245,200,0,0.08)" }}>
+              LIVE DEMO — YOUR REAL PLANS
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
+              Watch it read<br /><span style={{ color: MOTYL_YELLOW }}>your APT 314 plans</span>
+            </h2>
+            <p className="text-white/50 text-lg max-w-xl mx-auto">
+              These are the actual Motyl plans from your last project. One click. No setup. No login.
+            </p>
           </div>
-          <LiveDemo />
-        </section>
 
-        {/* Section 2: ROI Calculator */}
-        <section>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-black font-black text-sm" style={{ background: MOTYL_YELLOW }}>2</div>
-            <h2 className="text-2xl font-bold text-white">What's Manual Estimating Costing Motyl?</h2>
+          {/* Plans loaded card */}
+          <div className="rounded-2xl border p-6 mb-6"
+            style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(245,200,0,0.2)" }}>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <div className="text-white font-bold text-lg">Motyl Group — APT 314 Kitchen Type-F</div>
+                <div className="text-white/40 text-sm">2 documents pre-loaded · Ready to analyse</div>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold"
+                style={{ background: "rgba(34,197,94,0.15)", color: "#22c55e", border: "1px solid rgba(34,197,94,0.3)" }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                Plans Ready
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { icon: "📐", title: "Kitchen Plan (J01-F)", sub: "Plan + Elevation · 2 pages · 1:20 scale", detail: "JF-01 to JF-06 · 2400mm run" },
+                { icon: "📋", title: "Materials Schedule", sub: "Full spec sheet · Polytec · Blum · Castella", detail: "Products + codes + finishes" },
+              ].map((doc) => (
+                <div key={doc.title} className="rounded-xl p-4 border" style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" }}>
+                  <div className="text-2xl mb-2">{doc.icon}</div>
+                  <div className="text-white font-semibold text-sm">{doc.title}</div>
+                  <div className="text-white/40 text-xs mt-1">{doc.sub}</div>
+                  <div className="text-xs mt-1 font-mono" style={{ color: MOTYL_YELLOW }}>{doc.detail}</div>
+                </div>
+              ))}
+            </div>
           </div>
-          <ROICalculator />
-        </section>
 
-        {/* Section 3: How it works */}
-        <section>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-black font-black text-sm" style={{ background: MOTYL_YELLOW }}>3</div>
-            <h2 className="text-2xl font-bold text-white">How Kindai Works for Motyl</h2>
+          {/* Run button */}
+          {!result && (
+            <button
+              onClick={handleRunDemo}
+              disabled={running}
+              className="w-full py-5 rounded-2xl text-xl font-black transition-all hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed relative overflow-hidden"
+              style={{ background: running ? "rgba(245,200,0,0.3)" : MOTYL_YELLOW, color: MOTYL_BLACK, boxShadow: running ? "none" : `0 0 60px rgba(245,200,0,0.4)` }}
+            >
+              {running ? (
+                <span className="flex items-center justify-center gap-3">
+                  <span className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                  AI is reading your plans... {elapsed}s
+                </span>
+              ) : "⚡ Run AI Takeoff on Motyl Plans"}
+              {/* Shimmer */}
+              {!running && (
+                <div className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity"
+                  style={{ background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%)", animation: "shimmer 2s infinite" }} />
+              )}
+            </button>
+          )}
+
+          {/* Progress bar while running */}
+          {running && (
+            <div className="mt-4 rounded-xl border p-6" style={{ background: "rgba(245,200,0,0.05)", borderColor: "rgba(245,200,0,0.2)" }}>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-white font-semibold">AI analysing plans...</span>
+                <span style={{ color: MOTYL_YELLOW }} className="font-mono text-sm">{elapsed}s elapsed</span>
+              </div>
+              <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                <div className="h-full rounded-full transition-all duration-1000"
+                  style={{ background: MOTYL_YELLOW, width: `${Math.min(elapsed * 3, 90)}%`, boxShadow: `0 0 12px rgba(245,200,0,0.6)` }} />
+              </div>
+              <div className="mt-3 space-y-1">
+                {[
+                  { t: 2, msg: "✓ Reading Kitchen Plan (J01-F) — Page 1 of 2" },
+                  { t: 5, msg: "✓ Reading Materials Schedule — Polytec, Blum, Castella detected" },
+                  { t: 9, msg: "✓ Extracting cabinet codes JF-01 to JF-06..." },
+                  { t: 14, msg: "✓ Applying 2024-25 Australian trade pricing..." },
+                  { t: 20, msg: "✓ Calculating labour hours and markup..." },
+                ].filter(s => elapsed >= s.t).map((s, i) => (
+                  <div key={i} className="text-xs font-mono" style={{ color: MOTYL_YELLOW }}>{s.msg}</div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Results */}
+          {result && (
+            <div ref={resultsRef} className="mt-6 rounded-2xl border overflow-hidden"
+              style={{ borderColor: "rgba(245,200,0,0.3)", background: "rgba(255,255,255,0.02)" }}>
+              {/* Results header */}
+              <div className="px-6 py-5 border-b flex flex-wrap items-center gap-4"
+                style={{ borderColor: "rgba(245,200,0,0.2)", background: "rgba(245,200,0,0.06)" }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse" />
+                  <span className="font-black text-lg" style={{ color: MOTYL_YELLOW }}>
+                    {result.confidence}% Confidence
+                  </span>
+                </div>
+                <Badge className="bg-white/10 text-white border-white/20 font-bold">
+                  {result.items.length} line items
+                </Badge>
+                <Badge className="bg-blue-900/30 text-blue-300 border-blue-700/50">
+                  {result.pricing?.labourHours != null
+                    ? Math.round(result.pricing.labourHours * 10) / 10
+                    : Math.round(result.items.reduce((s, i) => s + (i.quantity * i.labourMinutes) / 60, 0) * 10) / 10
+                  }h labour
+                </Badge>
+                <Badge className="font-bold" style={{ background: "rgba(245,200,0,0.15)", color: MOTYL_YELLOW, border: `1px solid rgba(245,200,0,0.3)` }}>
+                  Total: {formatCurrency(result.pricing?.total ?? 0)}
+                </Badge>
+                <span className="text-white/40 text-xs ml-auto">Completed in {elapsed}s</span>
+              </div>
+
+              {/* Tabs */}
+              <div className="flex border-b" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+                {(["items", "quote", "assumptions"] as const).map((tab) => (
+                  <button key={tab} onClick={() => setActiveTab(tab)}
+                    className="px-6 py-3 text-sm font-semibold capitalize transition-colors"
+                    style={{
+                      color: activeTab === tab ? MOTYL_YELLOW : "rgba(255,255,255,0.4)",
+                      borderBottom: activeTab === tab ? `2px solid ${MOTYL_YELLOW}` : "2px solid transparent",
+                      background: "transparent",
+                    }}>
+                    {tab === "items" ? "Materials Takeoff" : tab === "quote" ? "Quote Summary" : "AI Assumptions"}
+                  </button>
+                ))}
+              </div>
+
+              {/* Tab content */}
+              <div className="p-6 overflow-x-auto">
+                {activeTab === "items" && (
+                  <table className="w-full min-w-[500px]">
+                    <thead>
+                      <tr className="border-b border-white/10">
+                        <th className="text-left text-xs text-white/40 uppercase tracking-wider pb-3 pr-4">Description</th>
+                        <th className="text-right text-xs text-white/40 uppercase tracking-wider pb-3 pr-3">Qty</th>
+                        <th className="text-right text-xs text-white/40 uppercase tracking-wider pb-3 pr-3">Trade $/unit</th>
+                        <th className="text-right text-xs text-white/40 uppercase tracking-wider pb-3">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {result.items.map((item, i) => <ResultRow key={i} item={item} index={i} />)}
+                    </tbody>
+                  </table>
+                )}
+
+                {activeTab === "quote" && result.pricing && (
+                  <div className="max-w-md mx-auto space-y-3">
+                    {[
+                      { label: "Materials (trade price)", value: result.pricing.materialsCostTrade, color: "text-white" },
+                      { label: `Labour (${Math.round(result.pricing.labourHours * 10) / 10}h @ $95/hr)`, value: result.pricing.labourCost, color: "text-white" },
+                      { label: "Subtotal", value: result.pricing.subtotal, color: "text-white", border: true },
+                      { label: "Markup (20%)", value: result.pricing.markupAmount, color: "" },
+                      { label: "GST (10%)", value: result.pricing.gst, color: "text-white/50" },
+                    ].map((row, i) => (
+                      <div key={i} className={`flex justify-between py-2.5 ${row.border ? "border-t border-white/10 mt-2" : ""}`}>
+                        <span className="text-white/50">{row.label}</span>
+                        <span className={`font-semibold ${row.color}`} style={row.label.includes("Markup") ? { color: MOTYL_YELLOW } : {}}>
+                          {formatCurrency(row.value)}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between py-4 border-t-2 mt-2" style={{ borderColor: MOTYL_YELLOW }}>
+                      <span className="text-white font-black text-xl">Total inc GST</span>
+                      <span className="font-black text-2xl" style={{ color: MOTYL_YELLOW }}>{formatCurrency(result.pricing.total)}</span>
+                    </div>
+                    <div className="rounded-xl p-4 mt-2" style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}>
+                      <div className="text-xs text-green-400 uppercase tracking-wider mb-1">Trade savings vs retail</div>
+                      <div className="text-2xl font-black text-green-400">{formatCurrency(result.pricing.tradeSavings ?? 0)} saved</div>
+                      <div className="text-xs text-white/30 mt-1">buying at trade vs retail pricing</div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "assumptions" && (
+                  <div className="space-y-2">
+                    {result.planNotes && (
+                      <div className="rounded-xl p-4 mb-4 text-sm italic text-white/60 border border-white/10" style={{ background: "rgba(255,255,255,0.03)" }}>
+                        "{result.planNotes}"
+                      </div>
+                    )}
+                    {result.assumptions.map((a, i) => (
+                      <div key={i} className="flex items-start gap-3 text-sm text-white/70 py-1.5">
+                        <span style={{ color: MOTYL_YELLOW }} className="mt-0.5 flex-shrink-0">✓</span>
+                        {a}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── ROI CALCULATOR ───────────────────────────────────────────────────── */}
+      <div id="roi" className="py-24 px-6" style={{ background: "#0D0D0D" }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-4 border"
+              style={{ borderColor: "rgba(245,200,0,0.3)", color: MOTYL_YELLOW, background: "rgba(245,200,0,0.08)" }}>
+              MOTYL ROI CALCULATOR
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
+              What's manual estimating<br /><span style={{ color: MOTYL_YELLOW }}>actually costing Motyl?</span>
+            </h2>
+            <p className="text-white/50 text-lg">Move the sliders. Watch the number.</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-4">
-            {[
-              { icon: "📤", title: "Upload your plans", body: "Drag in any PDF — shop drawings, joinery elevations, materials schedules. Up to 50 pages per project." },
-              { icon: "🤖", title: "AI reads everything", body: "Kindai reads every cabinet code, dimension, material callout, and product spec. It uses your exact Polytec and Blum codes — not generic substitutes." },
-              { icon: "📄", title: "Quote in 60 seconds", body: "Full materials takeoff with trade pricing, labour hours, markup, and GST. One click to PDF. Ready to send." },
-            ].map((step) => (
-              <div key={step.title} className="rounded-xl bg-[#111] border border-gray-800 p-5">
-                <div className="text-3xl mb-3">{step.icon}</div>
-                <div className="font-bold text-white mb-2">{step.title}</div>
-                <div className="text-sm text-gray-400">{step.body}</div>
+
+          {/* Tab toggle */}
+          <div className="flex justify-center mb-8">
+            <div className="flex rounded-xl p-1 gap-1" style={{ background: "rgba(255,255,255,0.05)" }}>
+              {[{ key: "time", label: "Time Cost" }, { key: "staff", label: "Staff Cost" }].map((t) => (
+                <button key={t.key} onClick={() => setStaffTab(t.key as "time" | "staff")}
+                  className="px-6 py-2.5 rounded-lg text-sm font-bold transition-all"
+                  style={{
+                    background: staffTab === t.key ? MOTYL_YELLOW : "transparent",
+                    color: staffTab === t.key ? MOTYL_BLACK : "rgba(255,255,255,0.5)",
+                  }}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Sliders */}
+            <div className="rounded-2xl border p-8 space-y-8" style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" }}>
+              {staffTab === "time" ? (
+                <>
+                  <div>
+                    <div className="flex justify-between mb-3">
+                      <span className="text-white/70 text-sm font-semibold">Projects quoted per year</span>
+                      <span className="font-black text-xl" style={{ color: MOTYL_YELLOW }}>{roiProjects}</span>
+                    </div>
+                    <input type="range" min={10} max={300} value={roiProjects} onChange={e => setRoiProjects(+e.target.value)}
+                      className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                      style={{ accentColor: MOTYL_YELLOW }} />
+                    <div className="flex justify-between text-xs text-white/30 mt-1"><span>10</span><span>300</span></div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between mb-3">
+                      <span className="text-white/70 text-sm font-semibold">Hours per manual takeoff</span>
+                      <span className="font-black text-xl" style={{ color: MOTYL_YELLOW }}>{roiHours}h</span>
+                    </div>
+                    <input type="range" min={1} max={12} value={roiHours} onChange={e => setRoiHours(+e.target.value)}
+                      className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                      style={{ accentColor: MOTYL_YELLOW }} />
+                    <div className="flex justify-between text-xs text-white/30 mt-1"><span>1h</span><span>12h</span></div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between mb-3">
+                      <span className="text-white/70 text-sm font-semibold">Estimator cost ($/hr loaded)</span>
+                      <span className="font-black text-xl" style={{ color: MOTYL_YELLOW }}>${Math.round(hourlyRate)}/hr</span>
+                    </div>
+                    <input type="range" min={50000} max={120000} step={5000} value={roiSalary} onChange={e => setRoiSalary(+e.target.value)}
+                      className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                      style={{ accentColor: MOTYL_YELLOW }} />
+                    <div className="flex justify-between text-xs text-white/30 mt-1"><span>$50K/yr</span><span>$120K/yr</span></div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <div className="flex justify-between mb-3">
+                      <span className="text-white/70 text-sm font-semibold">Estimator / draughtsman salary</span>
+                      <span className="font-black text-xl" style={{ color: MOTYL_YELLOW }}>{formatCurrency(roiSalary)}/yr</span>
+                    </div>
+                    <input type="range" min={50000} max={120000} step={5000} value={roiSalary} onChange={e => setRoiSalary(+e.target.value)}
+                      className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                      style={{ accentColor: MOTYL_YELLOW }} />
+                    <div className="flex justify-between text-xs text-white/30 mt-1"><span>$50K</span><span>$120K</span></div>
+                  </div>
+                  <div className="rounded-xl p-4 border" style={{ background: "rgba(245,200,0,0.05)", borderColor: "rgba(245,200,0,0.2)" }}>
+                    <div className="text-white/60 text-sm mb-2">Kindai replaces ~80% of the estimating role</div>
+                    <div className="text-white/60 text-sm">One employee manages the tool, checks output, handles clients.</div>
+                    <div className="text-white/60 text-sm mt-2">The other role? Redeployed or removed.</div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Results */}
+            <div className="space-y-4">
+              {staffTab === "time" ? (
+                <>
+                  <div className="rounded-2xl border p-6" style={{ background: "rgba(239,68,68,0.08)", borderColor: "rgba(239,68,68,0.2)" }}>
+                    <div className="text-xs text-red-400 uppercase tracking-wider mb-2">Current annual cost (manual)</div>
+                    <div className="text-4xl font-black text-red-400">
+                      <AnimatedNumber value={Math.round(manualCost)} prefix="$" />
+                    </div>
+                    <div className="text-white/40 text-sm mt-1">{roiProjects} projects × {roiHours}h × ${Math.round(hourlyRate)}/hr</div>
+                  </div>
+                  <div className="rounded-2xl border p-6" style={{ background: "rgba(34,197,94,0.08)", borderColor: "rgba(34,197,94,0.2)" }}>
+                    <div className="text-xs text-green-400 uppercase tracking-wider mb-2">With Kindai (30 min/takeoff)</div>
+                    <div className="text-4xl font-black text-green-400">
+                      <AnimatedNumber value={Math.round(kindaiCost + kindaiSubscription)} prefix="$" />
+                    </div>
+                    <div className="text-white/40 text-sm mt-1">{roiProjects} projects × 0.5h + $149/mo subscription</div>
+                  </div>
+                  <div className="rounded-2xl border p-6" style={{ background: "rgba(245,200,0,0.08)", borderColor: "rgba(245,200,0,0.3)" }}>
+                    <div className="text-xs uppercase tracking-wider mb-2" style={{ color: MOTYL_YELLOW }}>Net saving after Kindai</div>
+                    <div className="text-5xl font-black" style={{ color: MOTYL_YELLOW }}>
+                      <AnimatedNumber value={Math.max(0, Math.round(netSaving))} prefix="$" />
+                    </div>
+                    <div className="text-white/40 text-sm mt-1">per year · Kindai Commercial = $149/mo</div>
+                    <div className="flex gap-6 mt-4">
+                      <div><div className="text-2xl font-black text-white"><AnimatedNumber value={Math.max(0, roi)} suffix="x" /></div><div className="text-xs text-white/40">ROI</div></div>
+                      <div><div className="text-2xl font-black text-white"><AnimatedNumber value={Math.max(0, Math.round(kindaiSubscription / Math.max(netSaving / 365, 1)))} suffix="d" /></div><div className="text-xs text-white/40">Payback</div></div>
+                      <div><div className="text-2xl font-black text-white"><AnimatedNumber value={hoursSaved} suffix="h" /></div><div className="text-xs text-white/40">Hours saved</div></div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="rounded-2xl border p-6" style={{ background: "rgba(239,68,68,0.08)", borderColor: "rgba(239,68,68,0.2)" }}>
+                    <div className="text-xs text-red-400 uppercase tracking-wider mb-2">Current staff cost (estimator role)</div>
+                    <div className="text-4xl font-black text-red-400">
+                      <AnimatedNumber value={roiSalary} prefix="$" suffix="/yr" />
+                    </div>
+                    <div className="text-white/40 text-sm mt-1">Salary + super + leave + tools + office</div>
+                  </div>
+                  <div className="rounded-2xl border p-6" style={{ background: "rgba(34,197,94,0.08)", borderColor: "rgba(34,197,94,0.2)" }}>
+                    <div className="text-xs text-green-400 uppercase tracking-wider mb-2">Kindai replaces 80% of that role</div>
+                    <div className="text-4xl font-black text-green-400">
+                      <AnimatedNumber value={kindaiSubscription} prefix="$" suffix="/yr" />
+                    </div>
+                    <div className="text-white/40 text-sm mt-1">$149/mo · No super · No leave · No office</div>
+                  </div>
+                  <div className="rounded-2xl border p-6" style={{ background: "rgba(245,200,0,0.08)", borderColor: "rgba(245,200,0,0.3)" }}>
+                    <div className="text-xs uppercase tracking-wider mb-2" style={{ color: MOTYL_YELLOW }}>Net saving per year</div>
+                    <div className="text-5xl font-black" style={{ color: MOTYL_YELLOW }}>
+                      <AnimatedNumber value={Math.max(0, staffNetSaving)} prefix="$" />
+                    </div>
+                    <div className="text-white/40 text-sm mt-1">That's {Math.round(staffNetSaving / roiSalary * 100)}% of the role cost saved</div>
+                    <div className="mt-4 text-sm text-white/60">
+                      One person still manages Kindai, checks outputs, and handles client relationships. The second seat is freed up.
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── INTEGRATIONS ─────────────────────────────────────────────────────── */}
+      <div className="py-24 px-6" style={{ background: MOTYL_DARK }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-4 border"
+              style={{ borderColor: "rgba(245,200,0,0.3)", color: MOTYL_YELLOW, background: "rgba(245,200,0,0.08)" }}>
+              BUILT TO CONNECT
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
+              Connects to everything<br /><span style={{ color: MOTYL_YELLOW }}>Motyl already uses</span>
+            </h2>
+            <p className="text-white/50 text-lg max-w-2xl mx-auto">
+              Plans → quote → invoice → cut list. One flow. No double entry. No delays.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-12">
+            {integrations.map((int) => (
+              <div key={int.name} className="rounded-2xl border p-6 flex flex-col gap-3 transition-all hover:scale-105 hover:border-opacity-60"
+                style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm"
+                  style={{ background: int.color + "22", color: int.color, border: `1px solid ${int.color}44` }}>
+                  {int.name.slice(0, 2)}
+                </div>
+                <div>
+                  <div className="text-white font-bold">{int.name}</div>
+                  <div className="text-white/40 text-sm mt-0.5">{int.desc}</div>
+                </div>
               </div>
             ))}
           </div>
-        </section>
 
-        {/* CTA */}
-        <section className="rounded-2xl border-2 border-[#F5A800] p-8 text-center" style={{ background: "linear-gradient(135deg, #1A1A1A, #222)" }}>
-          <h2 className="text-3xl font-black text-white mb-3">
-            Ready to see it on a full<br />
-            <span style={{ color: MOTYL_YELLOW }}>commercial shopfit project?</span>
+          {/* The vision */}
+          <div className="rounded-2xl border p-8 text-center" style={{ background: "rgba(245,200,0,0.05)", borderColor: "rgba(245,200,0,0.2)" }}>
+            <div className="text-white/60 text-lg mb-4 leading-relaxed max-w-3xl mx-auto">
+              "Your CNC machine doesn't ask for a salary. It doesn't take sick days. It doesn't underquote because it was rushing.
+              <strong className="text-white"> Kindai is the same thing — but for the front end of your business.</strong>"
+            </div>
+            <div className="text-white/30 text-sm">— Matthew Symons, Founder, Kindai</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── FINAL CTA ────────────────────────────────────────────────────────── */}
+      <div className="py-24 px-6 text-center relative overflow-hidden" style={{ background: MOTYL_BLACK }}>
+        <div className="absolute inset-0 opacity-10"
+          style={{ backgroundImage: "radial-gradient(circle at 50% 50%, rgba(245,200,0,0.4) 0%, transparent 70%)" }} />
+        <div className="relative max-w-3xl mx-auto">
+          <img src={MOTYL_LOGO} alt="Motyl Group" className="h-10 object-contain mx-auto mb-8 opacity-60" />
+          <h2 className="text-5xl md:text-6xl font-black text-white mb-6">
+            Ready to be the first<br />
+            <span style={{ color: MOTYL_YELLOW }}>commercial joiner in SA</span><br />
+            running AI estimating?
           </h2>
-          <p className="text-gray-400 mb-6 max-w-lg mx-auto">
-            We can set up a Motyl-specific account with your price book, supplier rates, and standard finishes pre-loaded. 30-minute setup. No IT required.
+          <p className="text-white/50 text-xl mb-10 max-w-xl mx-auto">
+            3 projects. No commitment. We set it up with your price book, your supplier rates, and your standard finishes. 30 minutes.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="mailto:matthew@kindai.com.au?subject=Kindai%20Demo%20Follow-Up%20%E2%80%94%20Motyl%20Group&body=Hi%20Matthew%2C%0A%0AI%27d%20like%20to%20discuss%20setting%20up%20Kindai%20for%20Motyl%20Group."
-              className="px-8 py-4 rounded-xl font-black text-black text-lg transition-all hover:brightness-110"
-              style={{ background: MOTYL_YELLOW }}
+              href="mailto:matthew@kindai.com.au?subject=Kindai%20Pilot%20%E2%80%94%20Motyl%20Group&body=Hi%20Matthew%2C%0A%0AWe%27d%20like%20to%20start%20the%20free%20pilot%20for%20Motyl%20Group.%0A%0AProjects%20per%20year%3A%20%0AMain%20trade%3A%20Commercial%20joinery%20%2F%20shopfitting%0A%0AThanks"
+              className="px-10 py-5 rounded-2xl text-xl font-black transition-all hover:scale-105"
+              style={{ background: MOTYL_YELLOW, color: MOTYL_BLACK, boxShadow: `0 0 60px rgba(245,200,0,0.3)` }}
             >
-              Book a Call with Matthew →
+              Start Free Pilot →
             </a>
-            <a
-              href="https://kindaiestimator.com/demo"
-              className="px-8 py-4 rounded-xl font-semibold text-white border border-gray-600 hover:border-gray-400 transition-colors"
-            >
-              Try the Full Demo
+            <a href="tel:+61884477877"
+              className="px-10 py-5 rounded-2xl text-xl font-bold border transition-all hover:scale-105"
+              style={{ borderColor: "rgba(255,255,255,0.2)", color: "white" }}>
+              Call Motyl: 08 8447 7877
             </a>
           </div>
-          <p className="text-xs text-gray-600 mt-4">matthew@kindai.com.au · kindaiestimator.com</p>
-        </section>
+          <div className="mt-8 text-white/30 text-sm">
+            matthew@kindai.com.au · kindaiestimator.com · Built by Kindai for Motyl Group
+          </div>
+        </div>
       </div>
 
-      {/* Footer */}
-      <div className="border-t border-gray-800 px-6 py-6 text-center text-xs text-gray-600">
-        <p>This page was prepared by Kindai specifically for Motyl Group. The AI takeoff above uses real Motyl plans.</p>
-        <p className="mt-1">© 2025 Kindai Estimating Suite · <a href="https://kindaiestimator.com" className="hover:text-gray-400">kindaiestimator.com</a></p>
-      </div>
+      <style>{`
+        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        input[type=range]::-webkit-slider-thumb { background: ${MOTYL_YELLOW}; }
+        input[type=range]::-moz-range-thumb { background: ${MOTYL_YELLOW}; border: none; }
+      `}</style>
     </div>
   );
 }
