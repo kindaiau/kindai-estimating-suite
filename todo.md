@@ -759,3 +759,14 @@
 - [x] Remove "describe job" text box from DemoMode upload flow
 - [x] Full end-to-end test: upload file on demo page, verify AI returns detailed takeoff report (85% confidence, 32 items, 29.7h labour)
 - [x] Verify upload works with different file types (PDF, JPG, PNG)
+
+## Motyl Custom Demo Page (Sales Tool)
+- [x] Upload Motyl APT 314 PDF plans to S3 and get CDN URLs
+- [x] Add /motyl route to App.tsx
+- [x] Build MotylDemo.tsx page with Motyl branding (black/yellow/white)
+- [x] Pre-load Motyl plans into demo with cabinetry trade pre-selected
+- [x] Build ROI calculator section (projects/year × hours/takeoff = $ saved)
+- [x] Wire demo to live AI takeoff
+- [x] Add "Book a Call with Matthew" CTA
+- [x] Test full flow end-to-end
+- [ ] Publish to kindaiestimator.com/motyl

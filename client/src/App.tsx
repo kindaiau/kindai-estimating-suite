@@ -33,6 +33,7 @@ import Help from "./pages/Help";
 import FbLeadsDashboard from "./pages/FbLeadsDashboard";
 import CompanySettings from "./pages/CompanySettings";
 import AccuracyDashboard from "./pages/AccuracyDashboard";
+import MotylDemo from "./pages/MotylDemo";
 import AIHelpAssistant from "./components/AIHelpAssistant";
 
 function Router() {
@@ -66,6 +67,7 @@ function Router() {
       <Route path="/admin/fb-leads" component={FbLeadsDashboard} />
       <Route path="/settings" component={CompanySettings} />
       <Route path="/accuracy" component={AccuracyDashboard} />
+      <Route path="/motyl" component={MotylDemo} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
