@@ -34,6 +34,7 @@ import FbLeadsDashboard from "./pages/FbLeadsDashboard";
 import CompanySettings from "./pages/CompanySettings";
 import AccuracyDashboard from "./pages/AccuracyDashboard";
 import MotylDemo from "./pages/MotylDemo";
+import GetGasDemo from "./pages/GetGasDemo";
 import AIHelpAssistant from "./components/AIHelpAssistant";
 
 function Router() {
@@ -68,6 +69,7 @@ function Router() {
       <Route path="/settings" component={CompanySettings} />
       <Route path="/accuracy" component={AccuracyDashboard} />
       <Route path="/motyl" component={MotylDemo} />
+      <Route path="/getgas" component={GetGasDemo} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

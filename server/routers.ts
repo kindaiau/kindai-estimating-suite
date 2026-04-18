@@ -26,6 +26,7 @@ import { correctionsRouter } from "./routers/corrections";
 import { xeroRouter } from "./routers/xero";
 import { voiceRouter } from "./routers/voice";
 import { estimateAgentRouter } from "./routers/estimateAgent";
+import { getgasSeedRouter } from "./routers/getgasSeed";
 
 export const appRouter = router({
   system: systemRouter,
@@ -61,6 +62,7 @@ export const appRouter = router({
   xero: xeroRouter,
   voice: voiceRouter,
   estimateAgent: estimateAgentRouter,
+  getgasSeed: getgasSeedRouter,
 });
 
 export type AppRouter = typeof appRouter;

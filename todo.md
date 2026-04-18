@@ -870,3 +870,13 @@
 - [ ] Generate trade-specific few-shot prompt addendum from correction patterns using LLM
 - [ ] Store generated prompt addendums in DB and inject into future AI prompts
 - [ ] Build "AI Learning Progress" indicator in Accuracy Dashboard
+
+## GetGas Enterprise Demo Page
+
+- [x] Create /demo/getgas route and GetGasDemo page component
+- [x] Build GetGas package pricing workbench with real ServiceM8 data (9,042 jobs analysed)
+- [x] Seed GetGas price book (319 gas materials from Reece/ServiceM8) into the platform database
+- [x] Seed GetGas job templates (1st fix, 2nd fix, appliance packages, BBQ, inground) into DB
+- [x] Wire ServiceM8 API helper into server with correct X-API-Key auth header
+- [x] Update vitest for ServiceM8 auth validation
+- [x] Add GetGas to the enterprise demo navigation
