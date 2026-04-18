@@ -52,8 +52,13 @@ export default function AITakeoff() {
 
   const [selectedTrade, setSelectedTrade] = useState("");
   const [selectedState, setSelectedState] = useState("");
-  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
-  const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
+  const [previewDataUrls, setPreviewDataUrls] = useState<string[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploadingCount, setUploadingCount] = useState(0);
+  // Legacy single-file aliases
+  const uploadedImageUrl = uploadedImageUrls[0] ?? null;
+  const previewDataUrl = previewDataUrls[0] ?? null;
   const [additionalContext, setAdditionalContext] = useState("");
   const [textDescription, setTextDescription] = useState("");
   const [mode, setMode] = useState<"vision" | "text">("vision");
@@ -159,38 +164,64 @@ export default function AITakeoff() {
     return estId;
   }
 
-  async function handleFileSelect(file: File) {
-    if (!isAuthenticated) {
-      window.location.href = getLoginUrl();
+  async function addFiles(files: File[]) {
+    if (!isAuthenticated) { window.location.href = getLoginUrl(); return; }
+    const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    const MAX_SIZE = 32 * 1024 * 1024;
+    const MAX_PAGES = 50;
+    const valid = files.filter(f => {
+      if (!allowed.includes(f.type)) { toast.error(`${f.name}: unsupported format.`); return false; }
+      if (f.size > MAX_SIZE) { toast.error(`${f.name}: too large (max 32MB).`); return false; }
+      return true;
+    });
+    if (uploadedFiles.length + valid.length > MAX_PAGES) {
+      toast.error(`Max ${MAX_PAGES} pages per job.`);
       return;
     }
+    if (valid.length === 0) return;
+    setUploadedFiles(prev => [...prev, ...valid]);
+    setUploadingCount(prev => prev + valid.length);
     setIsUploading(true);
-    try {
-      // Show preview
-      const reader = new FileReader();
-      reader.onload = (e) => setPreviewDataUrl(e.target?.result as string);
-      reader.readAsDataURL(file);
-
-      // Upload to S3
-      const base64 = await fileToBase64(file);
-      const uploaded = await uploadPlan.mutateAsync({
-        fileName: file.name,
-        fileBase64: base64,
-        contentType: file.type as "image/jpeg" | "image/png" | "image/webp" | "application/pdf",
-      });
-      setUploadedImageUrl(uploaded.url);
-      toast.success("Plan uploaded! Ready to analyse.");
-      pixelUploadPlan({ trade: selectedTrade });
-    } catch (err) {
-      toast.error("Upload failed. Please try again.");
-    } finally {
-      setIsUploading(false);
+    for (const file of valid) {
+      try {
+        const base64 = await fileToBase64(file);
+        const reader = new FileReader();
+        reader.onload = (e) => setPreviewDataUrls(prev => [...prev, e.target?.result as string]);
+        reader.readAsDataURL(file);
+        const uploaded = await uploadPlan.mutateAsync({
+          fileName: file.name, fileBase64: base64,
+          contentType: file.type as "image/jpeg" | "image/png" | "image/webp" | "application/pdf",
+        });
+        setUploadedImageUrls(prev => [...prev, uploaded.url]);
+        setUploadingCount(prev => Math.max(0, prev - 1));
+        pixelUploadPlan({ trade: selectedTrade });
+      } catch {
+        toast.error(`Upload failed for ${file.name}.`);
+        setUploadingCount(prev => Math.max(0, prev - 1));
+      }
     }
+    setIsUploading(false);
+    if (valid.length > 0) toast.success(`${valid.length} page${valid.length > 1 ? 's' : ''} uploaded.`);
+  }
+
+  async function handleFileSelect(file: File) { await addFiles([file]); }
+
+  function removePage(index: number) {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+    setPreviewDataUrls(prev => prev.filter((_, i) => i !== index));
+    setUploadedImageUrls(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function clearAllPages() {
+    setUploadedFiles([]); setPreviewDataUrls([]); setUploadedImageUrls([]);
+    setUploadingCount(0);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
   }
 
   async function handleAnalyse() {
     if (!selectedTrade) { toast.error("Select your trade first"); return; }
-    if (mode === "vision" && !uploadedImageUrl) { toast.error("Upload a plan first"); return; }
+    if (mode === "vision" && uploadedImageUrls.length === 0) { toast.error("Upload at least one plan page first"); return; }
     if (mode === "text" && textDescription.length < 10) { toast.error("Describe the job (at least 10 characters)"); return; }
 
     setIsAnalysing(true);
@@ -348,54 +379,86 @@ export default function AITakeoff() {
 
                 {mode === "vision" ? (
                   <div className="space-y-3">
-                    {previewDataUrl ? (
-                      <div className="relative rounded-xl overflow-hidden border border-gray-200">
-                        <img src={previewDataUrl} alt="Plan preview" className="w-full h-48 object-cover" />
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="absolute top-2 right-2 rounded-lg text-xs bg-white/90"
-                          onClick={() => { setPreviewDataUrl(null); setUploadedImageUrl(null); }}
-                        >
-                          Change
-                        </Button>
-                        {uploadedImageUrl && (
-                          <Badge className="absolute bottom-2 left-2 bg-green-500 text-white border-0 text-xs">
-                            Uploaded
-                          </Badge>
+                    {/* Drop zone — always visible so more pages can be added */}
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full border-2 border-dashed border-gray-300 rounded-xl p-5 text-center hover:border-pink-400 hover:bg-pink-50/50 transition-all cursor-pointer"
+                      >
+                        {isUploading ? (
+                          <Loader2 className="w-7 h-7 mx-auto text-pink-500 animate-spin mb-1.5" />
+                        ) : (
+                          <Upload className="w-7 h-7 mx-auto text-gray-400 mb-1.5" />
                         )}
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          className="w-full border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-pink-400 hover:bg-pink-50/50 transition-all cursor-pointer"
-                        >
-                          {isUploading ? (
-                            <Loader2 className="w-8 h-8 mx-auto text-pink-500 animate-spin mb-2" />
-                          ) : (
-                            <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                          )}
-                          <p className="text-sm font-bold text-gray-600">
-                            {isUploading ? "Uploading..." : "Upload plan photo or PDF"}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">JPG, PNG, PDF up to 16MB</p>
-                        </button>
-                        <Button
-                          variant="outline"
-                          className="w-full rounded-xl text-xs font-bold border-gray-200"
-                          onClick={() => cameraInputRef.current?.click()}
-                        >
-                          <Camera className="w-3.5 h-3.5 mr-1" /> Take Photo with Camera
-                        </Button>
+                        <p className="text-sm font-bold text-gray-600">
+                          {uploadedFiles.length === 0 ? "Upload plans (up to 50 pages)" : `Add more pages (${uploadedFiles.length}/50)`}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">JPG, PNG, WebP, PDF — 32MB each</p>
+                      </button>
+                      <Button
+                        variant="outline"
+                        className="w-full rounded-xl text-xs font-bold border-gray-200"
+                        onClick={() => cameraInputRef.current?.click()}
+                      >
+                        <Camera className="w-3.5 h-3.5 mr-1" /> Take Photo with Camera
+                      </Button>
+                    </div>
+
+                    {/* Upload status */}
+                    {uploadingCount > 0 && (
+                      <div className="flex items-center gap-1.5 px-1">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-pink-500" />
+                        <span className="text-xs text-gray-500">Uploading {uploadingCount} file{uploadingCount > 1 ? 's' : ''}...</span>
                       </div>
                     )}
+                    {uploadingCount === 0 && uploadedImageUrls.length > 0 && (
+                      <div className="flex items-center gap-1.5 px-1">
+                        <span className="text-green-500">✓</span>
+                        <span className="text-xs text-green-600 font-semibold">{uploadedImageUrls.length} page{uploadedImageUrls.length > 1 ? 's' : ''} ready to analyse</span>
+                      </div>
+                    )}
+
+                    {/* Page list */}
+                    {uploadedFiles.length > 0 && (
+                      <div className="space-y-1.5 max-h-52 overflow-y-auto">
+                        {uploadedFiles.map((file, idx) => (
+                          <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
+                            {previewDataUrls[idx] ? (
+                              <img src={previewDataUrls[idx]} alt={`Page ${idx + 1}`} className="w-8 h-8 object-cover rounded flex-shrink-0" />
+                            ) : (
+                              <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+                                <FileImage className="w-4 h-4 text-gray-400" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-gray-700 truncate">Page {idx + 1}: {file.name}</p>
+                              <p className="text-[10px] text-gray-400">{(file.size / 1024 / 1024).toFixed(1)}MB</p>
+                            </div>
+                            {uploadedImageUrls[idx] ? (
+                              <span className="text-green-500 text-xs flex-shrink-0">✓</span>
+                            ) : (
+                              <Loader2 className="w-3 h-3 animate-spin text-pink-400 flex-shrink-0" />
+                            )}
+                            <button onClick={() => removePage(idx)} className="p-0.5 hover:bg-gray-200 rounded flex-shrink-0">
+                              <span className="text-gray-400 text-xs">✕</span>
+                            </button>
+                          </div>
+                        ))}
+                        {uploadedFiles.length > 1 && (
+                          <button onClick={clearAllPages} className="text-[10px] text-gray-400 hover:text-red-500 w-full text-center py-1">
+                            Clear all pages
+                          </button>
+                        )}
+                      </div>
+                    )}
+
                     <input
                       ref={fileInputRef}
                       type="file"
                       accept="image/*,.pdf"
                       className="hidden"
-                      onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
+                      multiple
+                      onChange={(e) => { const files = Array.from(e.target.files ?? []); if (files.length) addFiles(files); }}
                     />
                     <input
                       ref={cameraInputRef}

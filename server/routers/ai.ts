@@ -976,19 +976,63 @@ type TakeoffResult = {
   planNotes: string;
 };
 
+// ─── Merge multiple batch takeoff results into one combined result ───────────
+function mergeTakeoffResults(results: TakeoffResult[], totalPages: number): TakeoffResult {
+  // Combine all items — use description+unit as dedup key, sum quantities
+  const itemMap = new Map<string, TakeoffItem>();
+  for (const result of results) {
+    for (const item of result.items) {
+      const key = `${item.description.toLowerCase().trim()}|${item.unit.toLowerCase().trim()}|${item.category.toLowerCase().trim()}`;
+      const existing = itemMap.get(key);
+      if (existing) {
+        // Sum quantities for duplicate items across pages
+        existing.quantity += item.quantity;
+      } else {
+        itemMap.set(key, { ...item });
+      }
+    }
+  }
+
+  // Average confidence across batches, weighted by item count
+  const totalItems = results.reduce((sum, r) => sum + r.items.length, 0);
+  const weightedConfidence = totalItems > 0
+    ? results.reduce((sum, r) => sum + r.confidence * r.items.length, 0) / totalItems
+    : results.reduce((sum, r) => sum + r.confidence, 0) / results.length;
+
+  // Merge assumptions and room breakdowns, deduplicate
+  const allAssumptions = Array.from(new Set(results.flatMap(r => r.assumptions)));
+  const roomMap = new Map<string, string[]>();
+  for (const result of results) {
+    for (const rb of result.roomBreakdown) {
+      const existing = roomMap.get(rb.room) ?? [];
+      roomMap.set(rb.room, Array.from(new Set(existing.concat(rb.items))));
+    }
+  }
+
+  const planNotesParts = results.map((r, i) => r.planNotes ? `Pages ${i * 5 + 1}–${Math.min((i + 1) * 5, totalPages)}: ${r.planNotes}` : null).filter(Boolean);
+
+  return {
+    items: Array.from(itemMap.values()),
+    confidence: Math.round(weightedConfidence * 10) / 10,
+    assumptions: allAssumptions,
+    roomBreakdown: Array.from(roomMap.entries()).map(([room, items]) => ({ room, items })),
+    planNotes: planNotesParts.join(" | ") || `Combined takeoff from ${totalPages} plan pages.`,
+  };
+}
+
 // ─── Router ──────────────────────────────────────────────────────────────────
 export const aiRouter = router({
-  // Upload plan image/PDF to S3
+  // Upload plan image/PDF to S3 (single file, up to 32MB)
   uploadPlan: protectedProcedure.input(z.object({
     fileName: z.string().max(255),
-    fileBase64: z.string().max(22_000_000), // ~16MB base64 encoded
+    fileBase64: z.string().max(44_000_000), // ~32MB base64 encoded
     contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
   })).mutation(async ({ ctx, input }) => {
-    // Validate file size (max 16MB decoded)
+    // Validate file size (max 32MB decoded)
     const buffer = Buffer.from(input.fileBase64, "base64");
-    const MAX_FILE_SIZE = 16 * 1024 * 1024; // 16MB
+    const MAX_FILE_SIZE = 32 * 1024 * 1024; // 32MB
     if (buffer.length > MAX_FILE_SIZE) {
-      throw new TRPCError({ code: "BAD_REQUEST", message: `File too large. Maximum size is 16MB. Your file is ${(buffer.length / 1024 / 1024).toFixed(1)}MB.` });
+      throw new TRPCError({ code: "BAD_REQUEST", message: `File too large. Maximum size is 32MB. Your file is ${(buffer.length / 1024 / 1024).toFixed(1)}MB.` });
     }
     const ext = input.fileName.split(".").pop() ?? "png";
     const key = `plans/${ctx.user.id}/${nanoid()}.${ext}`;
@@ -996,7 +1040,30 @@ export const aiRouter = router({
     return { url, key };
   }),
 
-  // AI Vision Takeoff — analyse an uploaded plan image
+  // Upload multiple plan pages to S3 (up to 50 pages, 32MB each)
+  uploadPlanPages: protectedProcedure.input(z.object({
+    pages: z.array(z.object({
+      fileName: z.string().max(255),
+      fileBase64: z.string().max(44_000_000),
+      contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
+    })).min(1).max(50),
+  })).mutation(async ({ ctx, input }) => {
+    const MAX_FILE_SIZE = 32 * 1024 * 1024;
+    const results: { url: string; key: string; fileName: string }[] = [];
+    for (const page of input.pages) {
+      const buffer = Buffer.from(page.fileBase64, "base64");
+      if (buffer.length > MAX_FILE_SIZE) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `File "${page.fileName}" is too large (${(buffer.length / 1024 / 1024).toFixed(1)}MB). Maximum is 32MB per file.` });
+      }
+      const ext = page.fileName.split(".").pop() ?? "png";
+      const key = `plans/${ctx.user.id}/${nanoid()}.${ext}`;
+      const { url } = await storagePut(key, buffer, page.contentType);
+      results.push({ url, key, fileName: page.fileName });
+    }
+    return { pages: results, count: results.length };
+  }),
+
+  // AI Vision Takeoff — analyse a single uploaded plan image
   visionTakeoff: protectedProcedure.input(z.object({
     estimateId: z.number(),
     trade: z.string(),
@@ -1048,6 +1115,83 @@ export const aiRouter = router({
     }).where(eq(estimates.id, input.estimateId));
 
     return result;
+  }),
+
+  // Multi-page Vision Takeoff — analyse up to 50 plan pages in batches of 5, merge results
+  visionTakeoffMultiPage: protectedProcedure.input(z.object({
+    estimateId: z.number(),
+    trade: z.string(),
+    imageUrls: z.array(z.string().url()).min(1).max(50),
+    additionalContext: z.string().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+
+    // Verify ownership
+    const [est] = await db.select().from(estimates)
+      .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
+      .limit(1);
+    if (!est) throw new Error("Estimate not found");
+
+    const customRates = await fetchCustomRates(db, ctx.user.id, input.trade);
+    const memory = await fetchCompanyMemory(db, ctx.user.id, input.trade);
+    const systemPrompt = buildVisionPrompt(input.trade, customRates, memory);
+
+    // Process in batches of 5 pages to stay within LLM context limits
+    const BATCH_SIZE = 5;
+    const batches: string[][] = [];
+    for (let i = 0; i < input.imageUrls.length; i += BATCH_SIZE) {
+      batches.push(input.imageUrls.slice(i, i + BATCH_SIZE));
+    }
+
+    const batchResults: TakeoffResult[] = [];
+    for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
+      const batch = batches[batchIdx];
+      const userContent: Array<{ type: string; text?: string; image_url?: { url: string; detail?: string } }> = [];
+
+      // Add all images in this batch
+      for (const url of batch) {
+        userContent.push({ type: "image_url", image_url: { url, detail: "high" } });
+      }
+
+      const batchLabel = `Pages ${batchIdx * BATCH_SIZE + 1}–${Math.min((batchIdx + 1) * BATCH_SIZE, input.imageUrls.length)} of ${input.imageUrls.length}`;
+      userContent.push({
+        type: "text",
+        text: `You are analysing ${batchLabel} of a ${input.imageUrls.length}-page construction document set for trade: ${input.trade}. Extract ALL materials, quantities, and items visible in these pages. Do not duplicate items already found in earlier pages — focus on what is unique to these pages.${input.additionalContext ? `\nEstimator notes: ${input.additionalContext}` : ""}`,
+      });
+
+      const response = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent as any },
+        ],
+        response_format: takeoffResponseSchema,
+      });
+
+      const rawContent = response.choices[0]?.message?.content;
+      const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
+      if (content) {
+        try {
+          batchResults.push(JSON.parse(content) as TakeoffResult);
+        } catch {
+          console.warn(`[MultiPageTakeoff] Failed to parse batch ${batchIdx + 1}`);
+        }
+      }
+    }
+
+    if (batchResults.length === 0) throw new Error("AI analysis returned no results");
+
+    // Merge all batch results into a single combined takeoff
+    const merged = mergeTakeoffResults(batchResults, input.imageUrls.length);
+
+    // Save merged AI data to estimate
+    await db.update(estimates).set({
+      aiConfidenceScore: merged.confidence,
+      aiAssumptions: merged.assumptions as any,
+      aiTakeoffData: merged.items as any,
+    }).where(eq(estimates.id, input.estimateId));
+
+    return { ...merged, pageCount: input.imageUrls.length, batchCount: batches.length };
   }),
 
   // Text-based takeoff (enhanced with section-by-section output)

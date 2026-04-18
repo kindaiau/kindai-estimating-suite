@@ -806,6 +806,7 @@ export default function Home() {
                 {[
                   { label: "Privacy Policy", href: "/privacy-policy" },
                   { label: "Terms of Service", href: "/terms" },
+                  { label: "Help & Best Practices", href: "/help" },
                   { label: "Support", href: "/support" },
                   { label: "About", href: "/about" },
                 ].map(link => (

@@ -212,21 +212,44 @@ const demoSchema = {
 };
 
 export const demoRouter = router({
-  // Public plan upload for demo — no login required, 16MB limit
+  // Public plan upload for demo — no login required, 32MB limit
   uploadDemoPlan: publicProcedure.input(z.object({
     fileBase64: z.string(),
     fileName: z.string(),
     contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
   })).mutation(async ({ input }) => {
     const buffer = Buffer.from(input.fileBase64, "base64");
-    const MAX_SIZE = 16 * 1024 * 1024;
+    const MAX_SIZE = 32 * 1024 * 1024;
     if (buffer.length > MAX_SIZE) {
-      throw new Error(`File too large. Max 16MB. Your file is ${(buffer.length / 1024 / 1024).toFixed(1)}MB.`);
+      throw new Error(`File too large. Max 32MB. Your file is ${(buffer.length / 1024 / 1024).toFixed(1)}MB.`);
     }
     const ext = input.fileName.split(".").pop() ?? "png";
     const key = `demo-plans/${nanoid()}.${ext}`;
     const { url } = await storagePut(key, buffer, input.contentType);
     return { url, key };
+  }),
+
+  // Public multi-page plan upload for demo — up to 50 pages, 32MB each
+  uploadDemoPlanPages: publicProcedure.input(z.object({
+    pages: z.array(z.object({
+      fileBase64: z.string(),
+      fileName: z.string(),
+      contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
+    })).min(1).max(50),
+  })).mutation(async ({ input }) => {
+    const MAX_SIZE = 32 * 1024 * 1024;
+    const results: { url: string; key: string; fileName: string }[] = [];
+    for (const page of input.pages) {
+      const buffer = Buffer.from(page.fileBase64, "base64");
+      if (buffer.length > MAX_SIZE) {
+        throw new Error(`File "${page.fileName}" is too large (${(buffer.length / 1024 / 1024).toFixed(1)}MB). Max 32MB per file.`);
+      }
+      const ext = page.fileName.split(".").pop() ?? "png";
+      const key = `demo-plans/${nanoid()}.${ext}`;
+      const { url } = await storagePut(key, buffer, page.contentType);
+      results.push({ url, key, fileName: page.fileName });
+    }
+    return { pages: results, count: results.length };
   }),
 
   // Public demo — no login required, rate-limited by IP via trade selection
@@ -236,41 +259,86 @@ export const demoRouter = router({
     markupPercent: z.number().min(0).max(100).default(20),
     labourRate: z.number().min(30).max(250).default(95),
     useTradePrice: z.boolean().default(true),
-    planImageUrl: z.string().url().optional(), // CDN URL of uploaded plan image
+    planImageUrl: z.string().url().optional(), // CDN URL of single uploaded plan image (legacy)
+    planImageUrls: z.array(z.string().url()).max(50).optional(), // CDN URLs for multi-page upload
   })).mutation(async ({ input }) => {
-    // Use real AI if job description provided, else use pre-built scenario
+    // Normalise: prefer planImageUrls array, fall back to single planImageUrl
+    const imageUrls = input.planImageUrls && input.planImageUrls.length > 0
+      ? input.planImageUrls
+      : input.planImageUrl ? [input.planImageUrl] : [];
+
+    // Use real AI if images or job description provided, else use pre-built scenario
     let result;
 
-    if (input.planImageUrl || (input.jobDescription && input.jobDescription.length > 10)) {
+    if (imageUrls.length > 0 || (input.jobDescription && input.jobDescription.length > 10)) {
       try {
-        // Build user message — include plan image if uploaded
-        const userContent: Array<{ type: string; text?: string; image_url?: { url: string; detail: string } }> = [];
-        if (input.planImageUrl) {
-          userContent.push({
-            type: "image_url",
-            image_url: { url: input.planImageUrl, detail: "high" },
-          });
-          userContent.push({
-            type: "text",
-            text: `Trade: ${input.trade}\nAnalyse this construction plan image and generate a complete materials takeoff with 2024-25 Australian pricing.${input.jobDescription ? `\nAdditional context: ${input.jobDescription}` : ""}`,
-          });
+        // For multi-page: process in batches of 5, merge results
+        if (imageUrls.length > 1) {
+          const BATCH_SIZE = 5;
+          const batchResults: any[] = [];
+          for (let i = 0; i < imageUrls.length; i += BATCH_SIZE) {
+            const batch = imageUrls.slice(i, i + BATCH_SIZE);
+            const batchContent: Array<{ type: string; text?: string; image_url?: { url: string; detail: string } }> = [];
+            for (const url of batch) {
+              batchContent.push({ type: "image_url", image_url: { url, detail: "high" } });
+            }
+            batchContent.push({
+              type: "text",
+              text: `Trade: ${input.trade}. Pages ${i + 1}–${Math.min(i + BATCH_SIZE, imageUrls.length)} of ${imageUrls.length}. Generate complete materials takeoff with 2024-25 Australian pricing.${input.jobDescription ? ` Context: ${input.jobDescription}` : ""}`,
+            });
+            const batchResp = await invokeLLM({
+              messages: [
+                { role: "system", content: buildDemoPrompt(input.trade) },
+                { role: "user", content: batchContent as any },
+              ],
+              response_format: demoSchema,
+            });
+            const raw = batchResp.choices[0]?.message?.content;
+            const c = typeof raw === "string" ? raw : JSON.stringify(raw);
+            if (c) batchResults.push(JSON.parse(c));
+          }
+          // Merge batch results
+          if (batchResults.length > 0) {
+            const itemMap = new Map<string, any>();
+            for (const br of batchResults) {
+              for (const item of ((br?.items ?? []) as any[])) {
+                const key = `${String(item.description ?? "").toLowerCase().trim()}|${String(item.unit ?? "").toLowerCase().trim()}`;
+                const ex = itemMap.get(key);
+                if (ex) { ex.quantity = (ex.quantity ?? 0) + (item.quantity ?? 0); }
+                else { itemMap.set(key, { ...item }); }
+              }
+            }
+            result = { ...(batchResults[0] as any), items: Array.from(itemMap.values()) };
+          } else {
+            result = DEMO_SCENARIOS[input.trade] ?? DEMO_SCENARIOS.electrical;
+          }
         } else {
-          userContent.push({
-            type: "text",
-            text: `Trade: ${input.trade}\nJob: ${input.jobDescription}\n\nGenerate complete takeoff with 2024-25 Australian pricing.`,
-          });
-        }
+          // Single image or text-only path
+          const userContent: Array<{ type: string; text?: string; image_url?: { url: string; detail: string } }> = [];
+          if (imageUrls.length === 1) {
+            userContent.push({ type: "image_url", image_url: { url: imageUrls[0], detail: "high" } });
+            userContent.push({
+              type: "text",
+              text: `Trade: ${input.trade}\nAnalyse this construction plan image and generate a complete materials takeoff with 2024-25 Australian pricing.${input.jobDescription ? `\nAdditional context: ${input.jobDescription}` : ""}`,
+            });
+          } else {
+            userContent.push({
+              type: "text",
+              text: `Trade: ${input.trade}\nJob: ${input.jobDescription}\n\nGenerate complete takeoff with 2024-25 Australian pricing.`,
+            });
+          }
 
-        const response = await invokeLLM({
-          messages: [
-            { role: "system", content: buildDemoPrompt(input.trade) },
-            { role: "user", content: userContent as any },
-          ],
-          response_format: demoSchema,
-        });
-        const rawContent = response.choices[0]?.message?.content;
-        const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
-        result = JSON.parse(content);
+          const response = await invokeLLM({
+            messages: [
+              { role: "system", content: buildDemoPrompt(input.trade) },
+              { role: "user", content: userContent as any },
+            ],
+            response_format: demoSchema,
+          });
+          const rawContent = response.choices[0]?.message?.content;
+          const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
+          result = JSON.parse(content);
+        }
       } catch {
         // Fallback to pre-built if AI fails
         result = DEMO_SCENARIOS[input.trade] ?? DEMO_SCENARIOS.electrical;

@@ -702,3 +702,22 @@
 - [x] Verify all text is readable on mobile (no truncation, no overflow)
 - [x] Check all inner pages on mobile (dashboard, AI takeoff, pricing, demo, about, beta)
 - [x] Confirm site functions end-to-end for demo readiness
+
+## Help & Documentation Page
+- [x] Build /help page with tabbed sections: Getting Started, Scanning Best Practices, Plan Upload Guide, Supported Trades, FAQs
+- [x] Scanning best practices: printer types, resolution tips, PDF vs image, phone photo guidance
+- [x] Getting started guide: step-by-step for new users and enterprise teams
+- [x] Plan upload guide: file types, size limits, quality tips
+- [x] FAQ section: common questions answered concisely
+- [x] Add Help link to site footer and nav
+- [x] Make page enterprise-appropriate (clean, professional, no fluff)
+
+## Multi-File Plan Upload Upgrade
+- [x] Increase per-file size limit from 16MB to 32MB (server + frontend validation)
+- [x] Support uploading up to 50 plan pages per job (AITakeoff + DemoMode) — enterprise requirement
+- [x] Smart AI batching: process pages in groups of 5, merge results into single combined takeoff
+- [x] Multi-file drag-and-drop UI with file list, thumbnails, and remove buttons
+- [x] Progress indicator showing batch processing status (e.g. "Analysing pages 1-5 of 50...")
+- [x] Show page count badge on upload zone (e.g. "12 pages uploaded")
+- [x] Combined takeoff result merges all page analyses, deduplicates items, sums quantities
+- [x] Update Help/Docs page with multi-page scanning guidance and enterprise workflow

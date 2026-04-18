@@ -101,10 +101,15 @@ export default function DemoMode() {
   const [useTradePrice, setUseTradePrice] = useState(true);
   const [result, setResult] = useState<DemoResult | null>(null);
   const [activeTab, setActiveTab] = useState<"materials" | "summary">("materials");
-  const [planFile, setPlanFile] = useState<File | null>(null);
-  const [planPreviewUrl, setPlanPreviewUrl] = useState<string | null>(null);
-  const [uploadedPlanUrl, setUploadedPlanUrl] = useState<string | null>(null);
+  const [planFiles, setPlanFiles] = useState<File[]>([]);
+  const [planPreviewUrls, setPlanPreviewUrls] = useState<string[]>([]);
+  const [uploadedPlanUrls, setUploadedPlanUrls] = useState<string[]>([]);
+  const [uploadingCount, setUploadingCount] = useState(0);
   const [isDragOver, setIsDragOver] = useState(false);
+  // Legacy single-file aliases for backward compat
+  const planFile = planFiles[0] ?? null;
+  const planPreviewUrl = planPreviewUrls[0] ?? null;
+  const uploadedPlanUrl = uploadedPlanUrls[0] ?? null;
   const [scopingAnswers, setScopingAnswers] = useState<Record<string, string | string[] | number>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -114,57 +119,72 @@ export default function DemoMode() {
     pixelStartTrial();
   }, []);
 
-  const uploadPlan = trpc.demo.uploadDemoPlan.useMutation({
-    onSuccess: (data) => {
-      setUploadedPlanUrl(data.url);
-      toast.success("Plan uploaded! Hit Generate to analyse it.");
-    },
-    onError: (err) => {
-      toast.error("Upload failed: " + err.message);
-    },
-  });
+  const uploadPlan = trpc.demo.uploadDemoPlan.useMutation();
 
-  const handleFileSelect = (file: File) => {
+  const addFiles = (newFiles: File[]) => {
     const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
-    if (!allowed.includes(file.type)) {
-      toast.error("Please upload a JPG, PNG, WebP, or PDF file.");
+    const MAX_SIZE = 32 * 1024 * 1024;
+    const MAX_PAGES = 50;
+    const valid = newFiles.filter(f => {
+      if (!allowed.includes(f.type)) { toast.error(`${f.name}: unsupported format. Use JPG, PNG, WebP, or PDF.`); return false; }
+      if (f.size > MAX_SIZE) { toast.error(`${f.name}: too large. Max 32MB per file.`); return false; }
+      return true;
+    });
+    if (planFiles.length + valid.length > MAX_PAGES) {
+      toast.error(`Maximum ${MAX_PAGES} pages per job. You already have ${planFiles.length} pages.`);
       return;
     }
-    if (file.size > 16 * 1024 * 1024) {
-      toast.error("File too large. Max 16MB.");
-      return;
-    }
-    setPlanFile(file);
-    setUploadedPlanUrl(null);
-    if (file.type !== "application/pdf") {
-      setPlanPreviewUrl(URL.createObjectURL(file));
-    } else {
-      setPlanPreviewUrl(null);
-    }
-    // Upload immediately
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const base64 = (e.target?.result as string).split(",")[1];
-      uploadPlan.mutate({
-        fileBase64: base64,
-        fileName: file.name,
-        contentType: file.type as "image/jpeg" | "image/png" | "image/webp" | "application/pdf",
-      });
-    };
-    reader.readAsDataURL(file);
+    if (valid.length === 0) return;
+
+    // Add previews
+    const newPreviews = valid.map(f => f.type !== "application/pdf" ? URL.createObjectURL(f) : "");
+    setPlanFiles(prev => [...prev, ...valid]);
+    setPlanPreviewUrls(prev => [...prev, ...newPreviews]);
+    setUploadingCount(prev => prev + valid.length);
+
+    // Upload each file
+    valid.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = (e.target?.result as string).split(",")[1];
+        uploadPlan.mutateAsync({
+          fileBase64: base64,
+          fileName: file.name,
+          contentType: file.type as "image/jpeg" | "image/png" | "image/webp" | "application/pdf",
+        }).then((data) => {
+          setUploadedPlanUrls(prev => [...prev, data.url]);
+          setUploadingCount(prev => Math.max(0, prev - 1));
+        }).catch((err) => {
+          toast.error(`Upload failed for ${file.name}: ${err.message}`);
+          setUploadingCount(prev => Math.max(0, prev - 1));
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+
+    if (valid.length > 0) toast.success(`${valid.length} page${valid.length > 1 ? 's' : ''} added. Uploading...`);
   };
+
+  const handleFileSelect = (file: File) => addFiles([file]);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFileSelect(file);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) addFiles(files);
+  };
+
+  const removePage = (index: number) => {
+    setPlanFiles(prev => prev.filter((_, i) => i !== index));
+    setPlanPreviewUrls(prev => prev.filter((_, i) => i !== index));
+    setUploadedPlanUrls(prev => prev.filter((_, i) => i !== index));
   };
 
   const clearPlan = () => {
-    setPlanFile(null);
-    setPlanPreviewUrl(null);
-    setUploadedPlanUrl(null);
+    setPlanFiles([]);
+    setPlanPreviewUrls([]);
+    setUploadedPlanUrls([]);
+    setUploadingCount(0);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -206,7 +226,8 @@ export default function DemoMode() {
       markupPercent,
       labourRate,
       useTradePrice,
-      planImageUrl: uploadedPlanUrl || undefined,
+      planImageUrl: uploadedPlanUrls[0] || undefined,
+      planImageUrls: uploadedPlanUrls.length > 0 ? uploadedPlanUrls : undefined,
     });
   };
 
@@ -294,52 +315,79 @@ export default function DemoMode() {
                     <ScanLine className="w-4 h-4 text-pink-500" />
                     2. Upload your plans <span className="text-xs font-normal text-gray-400">(optional)</span>
                   </h3>
-                  <p className="text-xs text-gray-400 mb-3">JPG, PNG, WebP or PDF — max 16MB. AI will read the actual plan.</p>
+                  <p className="text-xs text-gray-400 mb-3">JPG, PNG, WebP or PDF — up to 50 pages, 32MB each. AI reads all pages together.</p>
 
-                  {!planFile ? (
-                    <div
-                      className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
-                        isDragOver ? "border-pink-400 bg-pink-50" : "border-gray-200 hover:border-pink-300 hover:bg-pink-50/30"
-                      }`}
-                      onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-                      onDragLeave={() => setIsDragOver(false)}
-                      onDrop={handleDrop}
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Upload className="w-7 h-7 text-gray-300 mx-auto mb-2" />
-                      <p className="text-xs font-semibold text-gray-500">Drop your plan here or <span className="text-pink-500">browse</span></p>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp,application/pdf"
-                        className="hidden"
-                        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }}
-                      />
+                  {/* Drop zone — always visible so more pages can be added */}
+                  <div
+                    className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all mb-3 ${
+                      isDragOver ? "border-pink-400 bg-pink-50" : "border-gray-200 hover:border-pink-300 hover:bg-pink-50/30"
+                    }`}
+                    onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                    onDragLeave={() => setIsDragOver(false)}
+                    onDrop={handleDrop}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="w-7 h-7 text-gray-300 mx-auto mb-1.5" />
+                    {planFiles.length === 0 ? (
+                      <p className="text-xs font-semibold text-gray-500">Drop plans here or <span className="text-pink-500">browse</span></p>
+                    ) : (
+                      <p className="text-xs font-semibold text-gray-500"><span className="text-pink-500">Add more pages</span> ({planFiles.length}/50)</p>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,application/pdf"
+                      className="hidden"
+                      multiple
+                      onChange={(e) => { const files = Array.from(e.target.files ?? []); if (files.length) addFiles(files); }}
+                    />
+                  </div>
+
+                  {/* Upload status */}
+                  {uploadingCount > 0 && (
+                    <div className="flex items-center gap-1.5 mb-2 px-1">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-pink-500" />
+                      <span className="text-xs text-gray-500">Uploading {uploadingCount} file{uploadingCount > 1 ? 's' : ''}...</span>
                     </div>
-                  ) : (
-                    <div className="relative border border-gray-200 rounded-xl overflow-hidden">
-                      {planPreviewUrl ? (
-                        <img src={planPreviewUrl} alt="Plan preview" className="w-full h-32 object-cover" />
-                      ) : (
-                        <div className="h-16 bg-gray-50 flex items-center justify-center gap-2">
-                          <FileImage className="w-5 h-5 text-gray-400" />
-                          <span className="text-xs text-gray-500 font-semibold">{planFile.name}</span>
-                        </div>
-                      )}
-                      <div className="p-2 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          {uploadPlan.isPending ? (
-                            <><Loader2 className="w-3.5 h-3.5 animate-spin text-pink-500" /><span className="text-xs text-gray-500">Uploading...</span></>
-                          ) : uploadedPlanUrl ? (
-                            <><CheckCircle2 className="w-3.5 h-3.5 text-green-500" /><span className="text-xs text-green-600 font-semibold">Ready to analyse</span></>
+                  )}
+                  {uploadingCount === 0 && uploadedPlanUrls.length > 0 && (
+                    <div className="flex items-center gap-1.5 mb-2 px-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                      <span className="text-xs text-green-600 font-semibold">{uploadedPlanUrls.length} page{uploadedPlanUrls.length > 1 ? 's' : ''} ready to analyse</span>
+                    </div>
+                  )}
+
+                  {/* Page list */}
+                  {planFiles.length > 0 && (
+                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                      {planFiles.map((file, idx) => (
+                        <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
+                          {planPreviewUrls[idx] ? (
+                            <img src={planPreviewUrls[idx]} alt={`Page ${idx + 1}`} className="w-8 h-8 object-cover rounded flex-shrink-0" />
                           ) : (
-                            <span className="text-xs text-gray-400">Processing...</span>
+                            <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+                              <FileImage className="w-4 h-4 text-gray-400" />
+                            </div>
                           )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-gray-700 truncate">Page {idx + 1}: {file.name}</p>
+                            <p className="text-[10px] text-gray-400">{(file.size / 1024 / 1024).toFixed(1)}MB</p>
+                          </div>
+                          {uploadedPlanUrls[idx] ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+                          ) : (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-pink-400 flex-shrink-0" />
+                          )}
+                          <button onClick={() => removePage(idx)} className="p-0.5 hover:bg-gray-200 rounded transition-colors flex-shrink-0">
+                            <X className="w-3 h-3 text-gray-400" />
+                          </button>
                         </div>
-                        <button onClick={clearPlan} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
-                          <X className="w-3.5 h-3.5 text-gray-400" />
+                      ))}
+                      {planFiles.length > 1 && (
+                        <button onClick={clearPlan} className="text-[10px] text-gray-400 hover:text-red-500 transition-colors w-full text-center py-1">
+                          Clear all pages
                         </button>
-                      </div>
+                      )}
                     </div>
                   )}
                 </CardContent>

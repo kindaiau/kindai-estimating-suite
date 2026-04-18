@@ -29,6 +29,7 @@ import TermsOfService from "./pages/TermsOfService";
 import Support from "./pages/Support";
 import CabinetJoinery from "./pages/CabinetJoinery";
 import About from "./pages/About";
+import Help from "./pages/Help";
 import FbLeadsDashboard from "./pages/FbLeadsDashboard";
 import CompanySettings from "./pages/CompanySettings";
 import AccuracyDashboard from "./pages/AccuracyDashboard";
@@ -61,6 +62,7 @@ function Router() {
       <Route path="/support" component={Support} />
       <Route path="/cabinet-joinery" component={CabinetJoinery} />
       <Route path="/about" component={About} />
+      <Route path="/help" component={Help} />
       <Route path="/admin/fb-leads" component={FbLeadsDashboard} />
       <Route path="/settings" component={CompanySettings} />
       <Route path="/accuracy" component={AccuracyDashboard} />

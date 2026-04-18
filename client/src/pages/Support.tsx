@@ -20,7 +20,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "What plan and drawing formats does Kindai accept?",
-    a: "Kindai accepts PDF (recommended), JPG, PNG, and HEIC formats up to 16MB per file. For best results, use clear architectural or shop drawings at A3 or A1 scale. The AI Vision Takeoff works with both scanned physical drawings and digital PDF exports from CAD software (AutoCAD, Revit, ArchiCAD). For complex commercial projects, you can also describe the scope in text and Kindai will generate a takeoff from the description."
+    a: "Kindai accepts PDF (recommended), JPG, PNG, and HEIC formats up to 32MB per file. For best results, use clear architectural or shop drawings at A3 or A1 scale. The AI Vision Takeoff works with both scanned physical drawings and digital PDF exports from CAD software (AutoCAD, Revit, ArchiCAD). For complex commercial projects, you can also describe the scope in text and Kindai will generate a takeoff from the description."
   }
 ];
 
