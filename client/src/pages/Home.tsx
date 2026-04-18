@@ -93,7 +93,15 @@ function ScrollNav({ isAuthenticated, navigate, handleGetStarted }: {
               <button onClick={() => window.location.href = getLoginUrl()} className={`text-sm font-semibold transition-colors hidden sm:block ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-white/80 hover:text-white'}`}>
                 Sign In
               </button>
-              <Button onClick={handleGetStarted} className="kindai-btn-primary px-5 rounded-full text-sm font-bold">
+              {/* Mobile: show Login button instead of Get Started */}
+              <Button
+                onClick={() => window.location.href = getLoginUrl()}
+                variant="outline"
+                className={`sm:hidden px-4 rounded-full text-sm font-bold ${scrolled ? 'border-gray-300 text-gray-800 hover:bg-gray-50' : 'border-white/40 text-white hover:bg-white/10'}`}
+              >
+                Log In
+              </Button>
+              <Button onClick={handleGetStarted} className="kindai-btn-primary px-5 rounded-full text-sm font-bold hidden sm:flex">
                 Get Started Free
               </Button>
             </>

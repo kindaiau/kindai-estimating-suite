@@ -729,3 +729,6 @@
 - [x] Wire logoUrl into PDF quote generator (replace Kindai logo with company logo)
 - [x] Wire logoUrl into email templates (show company logo in email header)
 - [x] Show fallback to Kindai logo if no company logo uploaded
+
+## Mobile Login Fix
+- [x] Add Login button to mobile header so existing users can sign in on mobile
