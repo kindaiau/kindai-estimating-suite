@@ -22,6 +22,7 @@ export type PdfQuoteData = {
   state?: string;
   trade: string;
   brandColor?: string;
+  companyLogoUrl?: string; // Company's own logo — overrides Kindai logo
   // Quote info
   quoteNumber: string;
   quoteDate: string;
@@ -334,7 +335,7 @@ function buildHtml(data: PdfQuoteData): string {
   <!-- Header -->
   <div class="header">
     <div class="logo-section">
-      <img src="${LOGO_URL}" alt="Kindai" class="logo-img" />
+      <img src="${data.companyLogoUrl || LOGO_URL}" alt="${data.businessName || 'Kindai'}" class="logo-img" />
       <div>
         <div class="business-name">${data.businessName || "Kindai Estimating"}</div>
         <div class="business-sub">Estimating Suite · ${data.trade.charAt(0).toUpperCase() + data.trade.slice(1)}</div>

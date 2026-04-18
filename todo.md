@@ -721,3 +721,11 @@
 - [x] Show page count badge on upload zone (e.g. "12 pages uploaded")
 - [x] Combined takeoff result merges all page analyses, deduplicates items, sums quantities
 - [x] Update Help/Docs page with multi-page scanning guidance and enterprise workflow
+
+## Company Logo Upload (Branded Quotes)
+- [x] Add logoUrl field to company_profiles table in drizzle schema
+- [x] Add uploadLogo tRPC procedure (S3 upload, returns URL)
+- [x] Build logo upload UI in Trade Profile branding tab (upload + preview + remove)
+- [x] Wire logoUrl into PDF quote generator (replace Kindai logo with company logo)
+- [x] Wire logoUrl into email templates (show company logo in email header)
+- [x] Show fallback to Kindai logo if no company logo uploaded

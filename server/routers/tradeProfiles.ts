@@ -5,6 +5,8 @@ import { getDb } from "../db";
 import { tradeProfiles, emailTemplates } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { invokeLLM } from "../_core/llm";
+import { storagePut } from "../storage";
+import { nanoid } from "nanoid";
 
 // ─── Default email templates per type ────────────────────────────────────────
 function getDefaultTemplate(type: string, tradeName: string): { subject: string; bodyHtml: string } {
@@ -369,5 +371,43 @@ Return JSON: { "subject": "...", "bodyHtml": "..." }`,
     }
 
     return { renderedHtml: rendered, renderedSubject };
+  }),
+
+  // Upload company logo to S3 and save URL to trade profile
+  uploadLogo: protectedProcedure.input(z.object({
+    trade: z.string(),
+    fileName: z.string().max(255),
+    fileBase64: z.string().max(5_500_000), // ~4MB base64 encoded
+    contentType: z.enum(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]),
+  })).mutation(async ({ ctx, input }) => {
+    const MAX_SIZE = 4 * 1024 * 1024; // 4MB
+    const buffer = Buffer.from(input.fileBase64, "base64");
+    if (buffer.length > MAX_SIZE) {
+      throw new Error(`Logo too large. Maximum is 4MB. Your file is ${(buffer.length / 1024 / 1024).toFixed(1)}MB.`);
+    }
+    const ext = input.fileName.split(".").pop()?.toLowerCase() ?? "png";
+    const key = `logos/${ctx.user.id}/${nanoid()}.${ext}`;
+    const { url } = await storagePut(key, buffer, input.contentType);
+    const db = requireDatabase(await getDb());
+    const existing = await db.select().from(tradeProfiles)
+      .where(and(eq(tradeProfiles.userId, ctx.user.id), eq(tradeProfiles.trade, input.trade)))
+      .limit(1);
+    if (existing.length > 0) {
+      await db.update(tradeProfiles).set({ logoUrl: url })
+        .where(and(eq(tradeProfiles.userId, ctx.user.id), eq(tradeProfiles.trade, input.trade)));
+    } else {
+      await db.insert(tradeProfiles).values({ userId: ctx.user.id, trade: input.trade, logoUrl: url });
+    }
+    return { url, key };
+  }),
+
+  // Remove company logo from trade profile
+  removeLogo: protectedProcedure.input(z.object({
+    trade: z.string(),
+  })).mutation(async ({ ctx, input }) => {
+    const db = requireDatabase(await getDb());
+    await db.update(tradeProfiles).set({ logoUrl: null })
+      .where(and(eq(tradeProfiles.userId, ctx.user.id), eq(tradeProfiles.trade, input.trade)));
+    return { success: true };
   }),
 });

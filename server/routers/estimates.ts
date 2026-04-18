@@ -2,7 +2,7 @@ import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { estimates, lineItems, users, estimateCorrections } from "../../drizzle/schema";
+import { estimates, lineItems, users, estimateCorrections, tradeProfiles } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { GST_RATE } from "../../shared/trades";
@@ -369,6 +369,11 @@ export const estimatesRouter = router({
     // Load user profile
     const [user] = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
 
+    // Load trade profile for company logo and brand colour
+    const [tradeProfile] = await db.select().from(tradeProfiles)
+      .where(and(eq(tradeProfiles.userId, ctx.user.id), eq(tradeProfiles.trade, estimate.trade)))
+      .limit(1);
+
     // Load project for client info
     const { projects } = await import("../../drizzle/schema");
     const [project] = await db.select().from(projects).where(eq(projects.id, estimate.projectId)).limit(1);
@@ -417,6 +422,8 @@ export const estimatesRouter = router({
       notes: estimate.notes || undefined,
       aiConfidenceScore: estimate.aiConfidenceScore || undefined,
       aiAssumptions: (estimate.aiAssumptions as string[]) || undefined,
+      companyLogoUrl: tradeProfile?.logoUrl || undefined,
+      brandColor: tradeProfile?.brandColour || undefined,
     };
 
     // Generate PDF

@@ -15,7 +15,8 @@ import { toast } from "sonner";
 import {
   Building2, Mail, Truck, Settings, Plus, Trash2, Eye, Wand2,
   Save, ChevronLeft, Palette, Phone, Globe, MapPin, Hash, Zap,
-  DollarSign, TrendingUp, Percent, AlertTriangle, BarChart3, Wrench
+  DollarSign, TrendingUp, Percent, AlertTriangle, BarChart3, Wrench,
+  Upload, X, ImageIcon
 } from "lucide-react";
 
 // ─── Canonical trade list (matches shared/trades.ts) ─────────────────────────
@@ -148,6 +149,8 @@ export default function TradeProfile() {
     reminderEnabled: true, reminderDays: 7,
   });
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
 
   const trade = TRADES.find(t => t.id === selectedTrade)!;
   const benchmark = AU_BENCHMARKS[selectedTrade] ?? AU_BENCHMARKS.electrical;
@@ -201,6 +204,7 @@ export default function TradeProfile() {
         reminderDays: profile.reminderDays ?? 7,
       });
       setSuppliers((profile.suppliers as Supplier[]) ?? []);
+      setLogoUrl(profile.logoUrl ?? null);
     }
   }, [profile]);
 
@@ -237,6 +241,43 @@ export default function TradeProfile() {
     },
     onError: (e) => toast.error(e.message),
   });
+
+  const uploadLogoMutation = trpc.tradeProfiles.uploadLogo.useMutation({
+    onSuccess: (data) => {
+      setLogoUrl(data.url);
+      toast.success("Logo uploaded! It will appear on all your quotes and emails.");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const removeLogoMutation = trpc.tradeProfiles.removeLogo.useMutation({
+    onSuccess: () => {
+      setLogoUrl(null);
+      toast.success("Logo removed.");
+    },
+  });
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error("Logo must be under 4MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = (reader.result as string).split(",")[1];
+      setLogoUploading(true);
+      uploadLogoMutation.mutate({
+        trade: selectedTrade,
+        fileName: file.name,
+        fileBase64: base64,
+        contentType: file.type as any,
+      }, { onSettled: () => setLogoUploading(false) });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
 
   const generateTemplate = trpc.tradeProfiles.generateEmailTemplate.useMutation({
     onSuccess: (data) => {
@@ -401,6 +442,50 @@ export default function TradeProfile() {
                       onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
                   </div>
                 </div>
+                {/* Company Logo Upload */}
+                <div className="col-span-1 sm:col-span-2">
+                  <Label>Company Logo</Label>
+                  <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>Appears on all PDF quotes and emails instead of the Kindai logo. PNG, JPG, or SVG, max 4MB.</p>
+                  {logoUrl ? (
+                    <div className="flex items-center gap-4 p-4 rounded-xl border" style={{ borderColor: "var(--border-color)", background: "var(--surface-2)" }}>
+                      <img src={logoUrl} alt="Company logo" className="h-16 w-auto max-w-[200px] object-contain rounded" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Logo uploaded</p>
+                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>This logo will appear on your quotes and emails</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <label className="cursor-pointer">
+                          <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={handleLogoUpload} />
+                          <Button variant="outline" size="sm" asChild><span><Upload className="w-4 h-4 mr-1" />Replace</span></Button>
+                        </label>
+                        <Button variant="outline" size="sm" onClick={() => removeLogoMutation.mutate({ trade: selectedTrade })}>
+                          <X className="w-4 h-4 mr-1" />Remove
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer block">
+                      <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={handleLogoUpload} />
+                      <div className="border-2 border-dashed rounded-xl p-8 text-center transition-colors hover:border-pink-400" style={{ borderColor: "var(--border-color)" }}>
+                        {logoUploading ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="w-8 h-8 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
+                            <p className="text-sm" style={{ color: "var(--text-muted)" }}>Uploading logo...</p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "var(--surface-3)" }}>
+                              <ImageIcon className="w-6 h-6" style={{ color: "var(--text-muted)" }} />
+                            </div>
+                            <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Upload your company logo</p>
+                            <p className="text-xs" style={{ color: "var(--text-muted)" }}>PNG, JPG, SVG · Max 4MB · Click to browse</p>
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  )}
+                </div>
+
                 <div>
                   <Label>Brand Colour</Label>
                   <div className="flex items-center gap-3 mt-1">
