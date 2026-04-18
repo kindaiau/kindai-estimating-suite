@@ -751,3 +751,6 @@
 - [x] Added mobile camera button (Take Photo of Plans) for direct camera capture
 - [x] Changed file input accept to image/*,.pdf for maximum mobile compatibility
 - [x] Added e.target.value reset after file selection to allow re-uploading same file
+
+## Header Login Button Fix
+- [x] Remove "Scan a Plan" from top right header and replace with Login button

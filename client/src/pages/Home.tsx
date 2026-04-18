@@ -78,10 +78,7 @@ function ScrollNav({ isAuthenticated, navigate, handleGetStarted }: {
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
             <>
-              <Button onClick={() => navigate("/ai-takeoff")} className="kindai-btn-primary px-5 rounded-full text-sm font-bold">
-                <Camera className="w-4 h-4 mr-1.5" /> Scan a Plan
-              </Button>
-              <Button onClick={() => navigate("/dashboard")} variant="outline" className={`px-4 rounded-full text-sm font-bold hidden sm:flex ${scrolled ? '' : 'border-white/30 text-white hover:bg-white/10'}`}>
+              <Button onClick={() => navigate("/dashboard")} variant="outline" className={`px-4 rounded-full text-sm font-bold ${scrolled ? '' : 'border-white/30 text-white hover:bg-white/10'}`}>
                 Dashboard
               </Button>
             </>
@@ -90,14 +87,10 @@ function ScrollNav({ isAuthenticated, navigate, handleGetStarted }: {
               <a href="/about" className={`text-sm font-semibold transition-colors hidden sm:block ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-white/80 hover:text-white'}`}>
                 About
               </a>
-              <button onClick={() => window.location.href = getLoginUrl()} className={`text-sm font-semibold transition-colors hidden sm:block ${scrolled ? 'text-gray-600 hover:text-gray-900' : 'text-white/80 hover:text-white'}`}>
-                Sign In
-              </button>
-              {/* Mobile: show Login button instead of Get Started */}
               <Button
                 onClick={() => window.location.href = getLoginUrl()}
                 variant="outline"
-                className={`sm:hidden px-4 rounded-full text-sm font-bold ${scrolled ? 'border-gray-300 text-gray-800 hover:bg-gray-50' : 'border-white/40 text-white hover:bg-white/10'}`}
+                className={`px-4 rounded-full text-sm font-bold ${scrolled ? 'border-gray-300 text-gray-800 hover:bg-gray-50' : 'border-white/40 text-white hover:bg-white/10'}`}
               >
                 Log In
               </Button>
