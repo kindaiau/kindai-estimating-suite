@@ -743,3 +743,11 @@
 - [x] Convert HEIC/HEIF to JPEG on server before storing to S3 (browsers can't read HEIC natively)
 - [x] Update server content type validation to accept image/heic and image/heif
 - [x] Fix Express body limit: 10MB → 50MB (base64 overhead for 32MB files)
+
+## Bug Fix: Mobile Upload Still Failing
+- [x] Diagnose and fix why mobile file upload still fails on demo page after body limit increase
+- [x] Root cause: createRequire(import.meta.url) crashes in ESM deployed env, breaking entire demo router
+- [x] Fix: switched to lazy dynamic import() for heic-convert in both demo.ts and ai.ts
+- [x] Added mobile camera button (Take Photo of Plans) for direct camera capture
+- [x] Changed file input accept to image/*,.pdf for maximum mobile compatibility
+- [x] Added e.target.value reset after file selection to allow re-uploading same file

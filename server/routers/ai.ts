@@ -7,13 +7,21 @@ import { estimates, tradeProfiles, companyProfiles, priceBookItems, estimateCorr
 import { eq, and, desc } from "drizzle-orm";
 import { storagePut } from "../storage";
 import { nanoid } from "nanoid";
-import { createRequire } from "module";
 import { buildProductivityPromptSection } from "../labourProductivity";
-const _requireAi = createRequire(import.meta.url);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const heicConvertAi = _requireAi("heic-convert") as (opts: { buffer: Buffer; format: string; quality: number }) => Promise<Uint8Array>;
+
+// Convert HEIC/HEIF buffer to JPEG — lazy dynamic import to avoid ESM crash
+let _heicConvertAi: ((opts: { buffer: Buffer; format: string; quality: number }) => Promise<Uint8Array>) | null = null;
+async function getHeicConvertAi() {
+  if (!_heicConvertAi) {
+    // @ts-ignore — heic-convert has no type declarations
+    const mod = await import("heic-convert");
+    _heicConvertAi = (mod.default || mod) as typeof _heicConvertAi;
+  }
+  return _heicConvertAi!;
+}
 async function convertHeicToJpegAi(buffer: Buffer): Promise<Buffer> {
-  const out = await heicConvertAi({ buffer, format: "JPEG", quality: 0.92 });
+  const heicConvert = await getHeicConvertAi();
+  const out = await heicConvert({ buffer, format: "JPEG", quality: 0.92 });
   return Buffer.from(out);
 }
 

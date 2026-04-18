@@ -3,13 +3,19 @@ import { publicProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { storagePut } from "../storage";
 import { nanoid } from "nanoid";
-import { createRequire } from "module";
-const _require = createRequire(import.meta.url);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const heicConvert = _require("heic-convert") as (opts: { buffer: Buffer; format: string; quality: number }) => Promise<Uint8Array>;
-
 // Convert HEIC/HEIF buffer to JPEG for browser/AI compatibility
+// Use lazy dynamic import to avoid createRequire crash in ESM deployed environments
+let _heicConvert: ((opts: { buffer: Buffer; format: string; quality: number }) => Promise<Uint8Array>) | null = null;
+async function getHeicConvert() {
+  if (!_heicConvert) {
+    // @ts-ignore — heic-convert has no type declarations
+    const mod = await import("heic-convert");
+    _heicConvert = (mod.default || mod) as typeof _heicConvert;
+  }
+  return _heicConvert!;
+}
 async function convertHeicToJpeg(buffer: Buffer): Promise<Buffer> {
+  const heicConvert = await getHeicConvert();
   const outputBuffer = await heicConvert({ buffer, format: "JPEG", quality: 0.92 });
   return Buffer.from(outputBuffer);
 }

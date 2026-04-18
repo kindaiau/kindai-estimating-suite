@@ -340,15 +340,35 @@ export default function DemoMode() {
                     ) : (
                       <p className="text-xs font-semibold text-gray-500"><span className="text-pink-500">Add more pages</span> ({planFiles.length}/50)</p>
                     )}
+                    <p className="text-[10px] text-gray-400 mt-1">JPG, PNG, PDF, HEIC — up to 32MB each</p>
+                    {/* Main file input — use wildcard accept for maximum mobile compatibility */}
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept="image/jpeg,image/png,image/webp,application/pdf,image/heic,image/heif,.heic,.heif"
+                      accept="image/*,.pdf,.heic,.heif,application/pdf"
                       className="hidden"
                       multiple
-                      onChange={(e) => { const files = Array.from(e.target.files ?? []); if (files.length) addFiles(files); }}
+                      onChange={(e) => { const files = Array.from(e.target.files ?? []); if (files.length) addFiles(files); e.target.value = ""; }}
                     />
                   </div>
+                  {/* Mobile camera button — separate input with capture for direct photo */}
+                  <button
+                    type="button"
+                    className="w-full border border-gray-200 rounded-lg py-2.5 px-3 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-all mb-3 flex items-center justify-center gap-2 md:hidden"
+                    onClick={() => {
+                      const cameraInput = document.createElement('input');
+                      cameraInput.type = 'file';
+                      cameraInput.accept = 'image/*';
+                      cameraInput.capture = 'environment';
+                      cameraInput.onchange = (ev) => {
+                        const files = Array.from((ev.target as HTMLInputElement).files ?? []);
+                        if (files.length) addFiles(files);
+                      };
+                      cameraInput.click();
+                    }}
+                  >
+                    📷 Take Photo of Plans
+                  </button>
 
                   {/* Upload status */}
                   {uploadingCount > 0 && (

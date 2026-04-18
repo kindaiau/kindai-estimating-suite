@@ -462,10 +462,10 @@ export default function AITakeoff() {
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept="image/*,.pdf"
+                      accept="image/*,.pdf,.heic,.heif,application/pdf"
                       className="hidden"
                       multiple
-                      onChange={(e) => { const files = Array.from(e.target.files ?? []); if (files.length) addFiles(files); }}
+                      onChange={(e) => { const files = Array.from(e.target.files ?? []); if (files.length) addFiles(files); e.target.value = ""; }}
                     />
                     <input
                       ref={cameraInputRef}
