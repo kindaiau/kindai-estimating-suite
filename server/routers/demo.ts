@@ -160,23 +160,64 @@ function buildDemoPrompt(trade: string): string {
   };
   const tradeName = tradeNames[trade] ?? trade;
 
-  return `You are an expert Australian ${tradeName} estimator with 20+ years of experience.
+  const tradeSpecific: Record<string, string> = {
+    cabinetry: `
+CABINETRY-SPECIFIC RULES (CRITICAL — follow exactly):
+- Read EVERY cabinet code on the plan (e.g. JF-01, JF-02) and list each one individually with W×H×D dimensions
+- Sheet materials: calculate total sheets from cabinet dimensions + 15% machining waste
+- Benchtops: measure TOTAL linear metres including all returns, corners, waterfall ends, and islands
+- Hardware: count EVERY hinge (min 2 per door), EVERY drawer runner pair, EVERY handle
+- Appliance cutouts (oven, cooktop, dishwasher, rangehood, sink): include labour for each
+- Include ALL scribing strips, filler panels, end panels, plinths, and shadow line profiles
+- Edging: calculate total linear metres of ALL exposed edges (front, sides, shelves)
+- ALWAYS include: site measure, shop drawings, delivery, and installation
+- Specify EXACT product codes from the spec sheet if provided (e.g. Polytec Gossamer White Smooth, Blum LEGRABOX)
+- Separate workshop manufacture labour from site installation labour
+- If a materials schedule/spec sheet is provided, use THOSE exact products and finishes — do not substitute
+- Confidence should be 96-99 when a spec sheet AND plan drawings are both provided`,
+    electrical: `
+ELECTRICAL-SPECIFIC RULES:
+- Count every GPO, light point, switch, and circuit — do not estimate
+- Measure cable runs from plan dimensions
+- Every circuit needs a breaker in the switchboard
+- Include conduit for wet areas, external, and underground runs
+- Smoke alarms: required in every bedroom, hallway, and living area per AS3786`,
+    plumbing: `
+PLUMBING-SPECIFIC RULES:
+- Water and drainage ONLY — no gas items
+- Multi-dwelling: detect number of units and multiply accordingly
+- Include ALL consumables: solvent cement, flux, thread tape, pipe clips, penetration seals`,
+  };
+  const tradeHint = tradeSpecific[trade] ?? "";
 
-Generate a COMPLETE materials takeoff for the described job. Use 2024-25 Australian market pricing.
+  return `You are a senior Australian ${tradeName} estimator and quantity surveyor with 25+ years of experience on residential, commercial, and large-scale projects. You produce highly accurate, audit-ready takeoffs.
 
-For EVERY item provide:
-- description: specific Australian product name
+YOUR TASK: Generate a COMPLETE, ITEMISED materials takeoff. Read every visible element in the plans and spec sheets. Do not skip items. Do not round up vaguely.
+
+CONFIDENCE SCORING RULES (be accurate, not conservative):
+- 96-99: Full plan set + spec sheet/schedule provided — you can read exact products, dimensions, and quantities
+- 90-95: Plan drawings only, no spec sheet — products inferred from context
+- 80-89: Partial plans or low-resolution images
+- 70-79: Text description only, no plans
+- <70: Insufficient information
+
+For EVERY line item provide:
+- description: exact Australian product name, brand, code, and finish (e.g. "Polytec Gossamer White Smooth 18mm MDF Door Panel")
 - unit: ea/m/m²/m³/lm/kg/roll/sheet/bag/pack
-- quantity: accurate quantity
-- retailPrice: Australian RETAIL price per unit AUD (Bunnings-level)
+- quantity: precise quantity calculated from plan dimensions (show your working in assumptions)
+- retailPrice: Australian RETAIL price per unit AUD (Bunnings/Beaumont-level)
 - tradePrice: Australian TRADE/WHOLESALE price per unit AUD (20-40% below retail)
 - category: Materials/Labour/Plant/Consumables
 - labourMinutes: minutes per unit for qualified tradesperson
-- wasteFactor: percentage waste (e.g. 10)
+- wasteFactor: percentage waste appropriate to the item (e.g. 10 for sheet goods, 5 for hardware, 0 for labour)
 
-Also: confidence (0-100), assumptions (array), planNotes (string), roomBreakdown (array of {room, items}).
-
-Return ONLY valid JSON. No markdown.`;
+Also provide:
+- confidence: your confidence score 0-100 (use the scoring rules above — be accurate)
+- assumptions: array of specific assumptions made (e.g. "Cabinet JF-01 assumed 600mm deep standard base unit")
+- planNotes: what you observed in the plans (dimensions, cabinet codes, materials called out, spec sheet items)
+- roomBreakdown: array of {room, items} grouping line items by area/section
+${tradeHint}
+Return ONLY valid JSON. No markdown. No explanation outside the JSON.`;
 }
 
 const demoSchema = {
@@ -320,7 +361,15 @@ export const demoRouter = router({
             }
             batchContent.push({
               type: "text",
-              text: `Trade: ${input.trade}. Pages ${i + 1}–${Math.min(i + BATCH_SIZE, imageUrls.length)} of ${imageUrls.length}. Generate complete materials takeoff with 2024-25 Australian pricing.${input.jobDescription ? ` Context: ${input.jobDescription}` : ""}`,
+              text: `TRADE: ${input.trade.toUpperCase()}
+PAGES: ${i + 1}–${Math.min(i + BATCH_SIZE, imageUrls.length)} of ${imageUrls.length} total pages in this document set.
+
+INSTRUCTIONS: Read ALL pages carefully. Extract every cabinet code, dimension, material callout, and specification visible. If this page is a materials schedule or spec sheet, extract ALL product names, codes, and finishes — these override any generic assumptions.
+
+Generate a complete, itemised materials takeoff with 2024-25 Australian trade pricing.${input.jobDescription ? `
+
+ESTIMATOR CONTEXT (use this to improve accuracy):
+${input.jobDescription}` : ""}`,
             });
             const batchResp = await invokeLLM({
               messages: [
@@ -355,7 +404,14 @@ export const demoRouter = router({
             userContent.push({ type: "image_url", image_url: { url: imageUrls[0], detail: "high" } });
             userContent.push({
               type: "text",
-              text: `Trade: ${input.trade}\nAnalyse this construction plan image and generate a complete materials takeoff with 2024-25 Australian pricing.${input.jobDescription ? `\nAdditional context: ${input.jobDescription}` : ""}`,
+              text: `TRADE: ${input.trade.toUpperCase()}
+
+INSTRUCTIONS: Read this plan carefully. Extract every dimension, cabinet code, material callout, product specification, and finish visible. If this is a materials schedule or spec sheet, extract ALL product names, codes, and finishes — use them exactly in your takeoff.
+
+Generate a complete, itemised materials takeoff with 2024-25 Australian trade pricing.${input.jobDescription ? `
+
+ESTIMATOR CONTEXT (use this to improve accuracy):
+${input.jobDescription}` : ""}`,
             });
           } else {
             userContent.push({
