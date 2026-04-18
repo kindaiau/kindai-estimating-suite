@@ -732,3 +732,14 @@
 
 ## Mobile Login Fix
 - [x] Add Login button to mobile header so existing users can sign in on mobile
+
+## Bug Fix: Mobile Demo Upload Error
+- [x] Fix red warning error when uploading files on mobile in DemoMode
+- [x] Ensure mobile camera/photo library uploads work (HEIC, HEIF, large JPEGs from phone)
+- [x] Test full mobile demo flow: upload → analyse → results
+
+## HEIC/HEIF Mobile Upload Support
+- [x] Add HEIC/HEIF to allowed file types in DemoMode and AITakeoff frontend
+- [x] Convert HEIC/HEIF to JPEG on server before storing to S3 (browsers can't read HEIC natively)
+- [x] Update server content type validation to accept image/heic and image/heif
+- [x] Fix Express body limit: 10MB → 50MB (base64 overhead for 32MB files)

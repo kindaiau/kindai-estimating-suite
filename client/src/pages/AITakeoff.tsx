@@ -166,11 +166,15 @@ export default function AITakeoff() {
 
   async function addFiles(files: File[]) {
     if (!isAuthenticated) { window.location.href = getLoginUrl(); return; }
-    const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf", "image/heic", "image/heif"];
     const MAX_SIZE = 32 * 1024 * 1024;
     const MAX_PAGES = 50;
     const valid = files.filter(f => {
-      if (!allowed.includes(f.type)) { toast.error(`${f.name}: unsupported format.`); return false; }
+      // iOS sometimes reports HEIC with empty type — check extension as fallback
+      const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
+      const isHeic = f.type === "image/heic" || f.type === "image/heif" || ext === "heic" || ext === "heif";
+      const effectiveType = isHeic ? "image/heic" : f.type;
+      if (!allowed.includes(effectiveType)) { toast.error(`${f.name}: unsupported format. Use JPG, PNG, WebP, PDF, or HEIC.`); return false; }
       if (f.size > MAX_SIZE) { toast.error(`${f.name}: too large (max 32MB).`); return false; }
       return true;
     });
@@ -188,9 +192,12 @@ export default function AITakeoff() {
         const reader = new FileReader();
         reader.onload = (e) => setPreviewDataUrls(prev => [...prev, e.target?.result as string]);
         reader.readAsDataURL(file);
+        const extUp = file.name.split(".").pop()?.toLowerCase() ?? "";
+        const isHeicUp = file.type === "image/heic" || file.type === "image/heif" || extUp === "heic" || extUp === "heif";
+        const ctUp = (isHeicUp ? "image/heic" : file.type) as "image/jpeg" | "image/png" | "image/webp" | "application/pdf" | "image/heic" | "image/heif";
         const uploaded = await uploadPlan.mutateAsync({
           fileName: file.name, fileBase64: base64,
-          contentType: file.type as "image/jpeg" | "image/png" | "image/webp" | "application/pdf",
+          contentType: ctUp,
         });
         setUploadedImageUrls(prev => [...prev, uploaded.url]);
         setUploadingCount(prev => Math.max(0, prev - 1));

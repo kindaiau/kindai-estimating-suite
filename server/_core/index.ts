@@ -74,9 +74,10 @@ async function startServer() {
   // Stripe webhook MUST be registered BEFORE json body parser
   registerStripeWebhook(app);
 
-  // Configure body parser — 10MB is sufficient for plan images (base64 encoded)
-  app.use(express.json({ limit: "10mb" }));
-  app.use(express.urlencoded({ limit: "10mb", extended: true }));
+  // Configure body parser — 50MB supports 32MB files (base64 encoding adds ~33% overhead)
+  // Mobile phone photos (iPhone 15 Pro: 15-25MB HEIC/JPEG) and multi-page PDFs need this headroom
+  app.use(express.json({ limit: "50mb" }));
+  app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
   // Facebook Lead Ads webhook (from Zapier) — registered after body parser
   app.use("/api/webhooks", fbLeadWebhookRouter);

@@ -7,7 +7,15 @@ import { estimates, tradeProfiles, companyProfiles, priceBookItems, estimateCorr
 import { eq, and, desc } from "drizzle-orm";
 import { storagePut } from "../storage";
 import { nanoid } from "nanoid";
+import { createRequire } from "module";
 import { buildProductivityPromptSection } from "../labourProductivity";
+const _requireAi = createRequire(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const heicConvertAi = _requireAi("heic-convert") as (opts: { buffer: Buffer; format: string; quality: number }) => Promise<Uint8Array>;
+async function convertHeicToJpegAi(buffer: Buffer): Promise<Buffer> {
+  const out = await heicConvertAi({ buffer, format: "JPEG", quality: 0.92 });
+  return Buffer.from(out);
+}
 
 // ─── Australian Supplier Database ────────────────────────────────────────────
 export const AUSTRALIAN_SUPPLIERS: Record<string, Array<{
@@ -1022,21 +1030,30 @@ function mergeTakeoffResults(results: TakeoffResult[], totalPages: number): Take
 
 // ─── Router ──────────────────────────────────────────────────────────────────
 export const aiRouter = router({
-  // Upload plan image/PDF to S3 (single file, up to 32MB)
+  // Upload plan image/PDF to S3 (single file, up to 32MB, HEIC auto-converted)
   uploadPlan: protectedProcedure.input(z.object({
     fileName: z.string().max(255),
     fileBase64: z.string().max(44_000_000), // ~32MB base64 encoded
-    contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
+    contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf", "image/heic", "image/heif"]),
   })).mutation(async ({ ctx, input }) => {
     // Validate file size (max 32MB decoded)
-    const buffer = Buffer.from(input.fileBase64, "base64");
+    const rawBuffer = Buffer.from(input.fileBase64, "base64");
     const MAX_FILE_SIZE = 32 * 1024 * 1024; // 32MB
-    if (buffer.length > MAX_FILE_SIZE) {
-      throw new TRPCError({ code: "BAD_REQUEST", message: `File too large. Maximum size is 32MB. Your file is ${(buffer.length / 1024 / 1024).toFixed(1)}MB.` });
+    if (rawBuffer.length > MAX_FILE_SIZE) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: `File too large. Maximum size is 32MB. Your file is ${(rawBuffer.length / 1024 / 1024).toFixed(1)}MB.` });
     }
-    const ext = input.fileName.split(".").pop() ?? "png";
+    let finalBuffer: Buffer;
+    let contentType = input.contentType;
+    let ext = input.fileName.split(".").pop()?.toLowerCase() ?? "jpg";
+    if (contentType === "image/heic" || contentType === "image/heif") {
+      finalBuffer = await convertHeicToJpegAi(rawBuffer);
+      contentType = "image/jpeg";
+      ext = "jpg";
+    } else {
+      finalBuffer = rawBuffer;
+    }
     const key = `plans/${ctx.user.id}/${nanoid()}.${ext}`;
-    const { url } = await storagePut(key, buffer, input.contentType);
+    const { url } = await storagePut(key, finalBuffer, contentType);
     return { url, key };
   }),
 

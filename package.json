@@ -60,6 +60,7 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.3.2",
     "framer-motion": "^12.23.22",
+    "heic-convert": "^2.1.0",
     "helmet": "^8.1.0",
     "input-otp": "^1.4.2",
     "jose": "6.1.0",

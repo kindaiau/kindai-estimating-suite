@@ -3,6 +3,16 @@ import { publicProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { storagePut } from "../storage";
 import { nanoid } from "nanoid";
+import { createRequire } from "module";
+const _require = createRequire(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const heicConvert = _require("heic-convert") as (opts: { buffer: Buffer; format: string; quality: number }) => Promise<Uint8Array>;
+
+// Convert HEIC/HEIF buffer to JPEG for browser/AI compatibility
+async function convertHeicToJpeg(buffer: Buffer): Promise<Buffer> {
+  const outputBuffer = await heicConvert({ buffer, format: "JPEG", quality: 0.92 });
+  return Buffer.from(outputBuffer);
+}
 
 // ─── Pre-built demo results for instant display ───────────────────────────────
 // These are shown while the real AI runs, or as fallback if AI is slow
@@ -216,16 +226,26 @@ export const demoRouter = router({
   uploadDemoPlan: publicProcedure.input(z.object({
     fileBase64: z.string(),
     fileName: z.string(),
-    contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
+    contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf", "image/heic", "image/heif"]),
   })).mutation(async ({ input }) => {
-    const buffer = Buffer.from(input.fileBase64, "base64");
+    const rawBuffer = Buffer.from(input.fileBase64, "base64");
     const MAX_SIZE = 32 * 1024 * 1024;
-    if (buffer.length > MAX_SIZE) {
-      throw new Error(`File too large. Max 32MB. Your file is ${(buffer.length / 1024 / 1024).toFixed(1)}MB.`);
+    if (rawBuffer.length > MAX_SIZE) {
+      throw new Error(`File too large. Max 32MB. Your file is ${(rawBuffer.length / 1024 / 1024).toFixed(1)}MB.`);
     }
-    const ext = input.fileName.split(".").pop() ?? "png";
+    // Convert HEIC/HEIF to JPEG (iPhone default format)
+    let contentType = input.contentType;
+    let ext = input.fileName.split(".").pop()?.toLowerCase() ?? "jpg";
+    let finalBuffer: Buffer;
+    if (contentType === "image/heic" || contentType === "image/heif") {
+      finalBuffer = await convertHeicToJpeg(rawBuffer);
+      contentType = "image/jpeg";
+      ext = "jpg";
+    } else {
+      finalBuffer = rawBuffer;
+    }
     const key = `demo-plans/${nanoid()}.${ext}`;
-    const { url } = await storagePut(key, buffer, input.contentType);
+    const { url } = await storagePut(key, finalBuffer, contentType);
     return { url, key };
   }),
 
@@ -234,19 +254,29 @@ export const demoRouter = router({
     pages: z.array(z.object({
       fileBase64: z.string(),
       fileName: z.string(),
-      contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
+      contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf", "image/heic", "image/heif"]),
     })).min(1).max(50),
   })).mutation(async ({ input }) => {
     const MAX_SIZE = 32 * 1024 * 1024;
     const results: { url: string; key: string; fileName: string }[] = [];
     for (const page of input.pages) {
-      const buffer = Buffer.from(page.fileBase64, "base64");
-      if (buffer.length > MAX_SIZE) {
-        throw new Error(`File "${page.fileName}" is too large (${(buffer.length / 1024 / 1024).toFixed(1)}MB). Max 32MB per file.`);
+      const rawBuffer = Buffer.from(page.fileBase64, "base64");
+      if (rawBuffer.length > MAX_SIZE) {
+        throw new Error(`File "${page.fileName}" is too large (${(rawBuffer.length / 1024 / 1024).toFixed(1)}MB). Max 32MB per file.`);
       }
-      const ext = page.fileName.split(".").pop() ?? "png";
+      // Convert HEIC/HEIF to JPEG
+      let contentType = page.contentType;
+      let ext = page.fileName.split(".").pop()?.toLowerCase() ?? "jpg";
+      let finalBuffer: Buffer;
+      if (contentType === "image/heic" || contentType === "image/heif") {
+        finalBuffer = await convertHeicToJpeg(rawBuffer);
+        contentType = "image/jpeg";
+        ext = "jpg";
+      } else {
+        finalBuffer = rawBuffer;
+      }
       const key = `demo-plans/${nanoid()}.${ext}`;
-      const { url } = await storagePut(key, buffer, page.contentType);
+      const { url } = await storagePut(key, finalBuffer, contentType);
       results.push({ url, key, fileName: page.fileName });
     }
     return { pages: results, count: results.length };

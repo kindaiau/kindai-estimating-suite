@@ -122,11 +122,15 @@ export default function DemoMode() {
   const uploadPlan = trpc.demo.uploadDemoPlan.useMutation();
 
   const addFiles = (newFiles: File[]) => {
-    const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf", "image/heic", "image/heif"];
     const MAX_SIZE = 32 * 1024 * 1024;
     const MAX_PAGES = 50;
     const valid = newFiles.filter(f => {
-      if (!allowed.includes(f.type)) { toast.error(`${f.name}: unsupported format. Use JPG, PNG, WebP, or PDF.`); return false; }
+      // iOS sometimes reports HEIC files with empty type — check extension as fallback
+      const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
+      const isHeic = f.type === "image/heic" || f.type === "image/heif" || ext === "heic" || ext === "heif";
+      const effectiveType = isHeic ? "image/heic" : f.type;
+      if (!allowed.includes(effectiveType)) { toast.error(`${f.name}: unsupported format. Use JPG, PNG, WebP, PDF, or HEIC.`); return false; }
       if (f.size > MAX_SIZE) { toast.error(`${f.name}: too large. Max 32MB per file.`); return false; }
       return true;
     });
@@ -147,10 +151,13 @@ export default function DemoMode() {
       const reader = new FileReader();
       reader.onload = (e) => {
         const base64 = (e.target?.result as string).split(",")[1];
+        const ext2 = file.name.split(".").pop()?.toLowerCase() ?? "";
+        const isHeic2 = file.type === "image/heic" || file.type === "image/heif" || ext2 === "heic" || ext2 === "heif";
+        const ct = isHeic2 ? "image/heic" : (file.type as "image/jpeg" | "image/png" | "image/webp" | "application/pdf");
         uploadPlan.mutateAsync({
           fileBase64: base64,
           fileName: file.name,
-          contentType: file.type as "image/jpeg" | "image/png" | "image/webp" | "application/pdf",
+          contentType: ct as "image/jpeg" | "image/png" | "image/webp" | "application/pdf" | "image/heic" | "image/heif",
         }).then((data) => {
           setUploadedPlanUrls(prev => [...prev, data.url]);
           setUploadingCount(prev => Math.max(0, prev - 1));
@@ -336,7 +343,7 @@ export default function DemoMode() {
                     <input
                       ref={fileInputRef}
                       type="file"
-                      accept="image/jpeg,image/png,image/webp,application/pdf"
+                      accept="image/jpeg,image/png,image/webp,application/pdf,image/heic,image/heif,.heic,.heif"
                       className="hidden"
                       multiple
                       onChange={(e) => { const files = Array.from(e.target.files ?? []); if (files.length) addFiles(files); }}
