@@ -661,10 +661,10 @@ export default function EstimateBuilder() {
                                 <td className="p-3 text-right text-xs">${parseFloat(item.unitRate as string).toFixed(2)}</td>
                                 <td className="p-3 text-right text-xs font-bold">${parseFloat(item.subtotal as string).toFixed(2)}</td>
                                 <td className="p-3 flex gap-1">
-                                  <button onClick={() => startEditing(item)} aria-label={`Edit ${item.description}`} className="text-muted-foreground hover:text-blue-500 transition-colors" title="Edit">
+                                  <button onClick={() => startEditing(item)} aria-label={`Edit ${item.description || "item"}`} className="text-muted-foreground hover:text-blue-500 transition-colors" title="Edit">
                                     <FileText className="w-3.5 h-3.5" />
                                   </button>
-                                  <button onClick={() => deleteItem.mutate({ id: item.id, estimateId })} aria-label={`Delete ${item.description}`} className="text-muted-foreground hover:text-destructive transition-colors" title="Delete">
+                                  <button onClick={() => deleteItem.mutate({ id: item.id, estimateId })} aria-label={`Delete ${item.description || "item"}`} className="text-muted-foreground hover:text-destructive transition-colors" title="Delete">
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 </td>
