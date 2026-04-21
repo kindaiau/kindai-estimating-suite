@@ -786,23 +786,22 @@ export default function AITakeoff() {
 
                 {/* Materials Tab */}
                 {activeTab === "materials" && (
-                  <Card className="border-0 shadow-md rounded-2xl overflow-hidden">
+                  <Card className="border-0 shadow-md rounded-2xl">
                     <CardHeader className="pb-2 pt-4 px-4">
                       <CardTitle className="text-sm font-black">{result.items.length} Items Found</CardTitle>
                     </CardHeader>
                     <CardContent className="px-0 pb-0">
-                      <div className="overflow-x-auto -mx-0">
-                        <ScrollArea className="max-h-[500px]">
+                      <div className="overflow-auto max-h-[500px]">
                           <table className="w-full text-xs min-w-[640px]">
-                            <thead>
-                              <tr className="border-b border-gray-100 bg-gray-50/50">
-                                <th className="text-left py-2.5 px-4 font-bold text-gray-500">Item</th>
-                                <th className="text-center py-2.5 px-2 font-bold text-gray-500">Qty</th>
-                                <th className="text-center py-2.5 px-2 font-bold text-gray-500">Unit</th>
-                                <th className="text-right py-2.5 px-2 font-bold text-green-600">Trade $</th>
-                                <th className="text-right py-2.5 px-2 font-bold text-gray-400">Retail $</th>
-                                <th className="text-right py-2.5 px-2 font-bold text-gray-500">Waste</th>
-                                <th className="text-right py-2.5 px-4 font-bold text-gray-500">Total</th>
+                            <thead className="sticky top-0 z-10">
+                              <tr className="border-b border-gray-100 bg-gray-50">
+                                <th className="text-left py-2.5 px-4 font-bold text-gray-500 bg-gray-50">Item</th>
+                                <th className="text-center py-2.5 px-2 font-bold text-gray-500 bg-gray-50">Qty</th>
+                                <th className="text-center py-2.5 px-2 font-bold text-gray-500 bg-gray-50">Unit</th>
+                                <th className="text-right py-2.5 px-2 font-bold text-green-600 bg-gray-50">Trade $</th>
+                                <th className="text-right py-2.5 px-2 font-bold text-gray-400 bg-gray-50">Retail $</th>
+                                <th className="text-right py-2.5 px-2 font-bold text-gray-500 bg-gray-50">Waste</th>
+                                <th className="text-right py-2.5 px-4 font-bold text-gray-500 bg-gray-50">Total</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -827,7 +826,6 @@ export default function AITakeoff() {
                               })}
                             </tbody>
                           </table>
-                        </ScrollArea>
                       </div>
                     </CardContent>
                   </Card>
@@ -835,21 +833,20 @@ export default function AITakeoff() {
 
                 {/* Labour Tab */}
                 {activeTab === "labour" && (
-                  <Card className="border-0 shadow-md rounded-2xl overflow-hidden">
+                  <Card className="border-0 shadow-md rounded-2xl">
                     <CardHeader className="pb-2 pt-4 px-4">
                       <CardTitle className="text-sm font-black">Labour Breakdown</CardTitle>
                     </CardHeader>
                     <CardContent className="px-0 pb-0">
-                      <div className="overflow-x-auto">
-                        <ScrollArea className="max-h-[500px]">
+                      <div className="overflow-auto max-h-[500px]">
                           <table className="w-full text-xs min-w-[500px]">
-                            <thead>
-                              <tr className="border-b border-gray-100 bg-gray-50/50">
-                                <th className="text-left py-2.5 px-4 font-bold text-gray-500">Task</th>
-                              <th className="text-center py-2.5 px-2 font-bold text-gray-500">Qty</th>
-                              <th className="text-center py-2.5 px-2 font-bold text-gray-500">Min/unit</th>
-                              <th className="text-right py-2.5 px-2 font-bold text-gray-500">Total Hours</th>
-                              <th className="text-right py-2.5 px-4 font-bold text-gray-500">Cost</th>
+                            <thead className="sticky top-0 z-10">
+                              <tr className="border-b border-gray-100 bg-gray-50">
+                                <th className="text-left py-2.5 px-4 font-bold text-gray-500 bg-gray-50">Task</th>
+                              <th className="text-center py-2.5 px-2 font-bold text-gray-500 bg-gray-50">Qty</th>
+                              <th className="text-center py-2.5 px-2 font-bold text-gray-500 bg-gray-50">Min/unit</th>
+                              <th className="text-right py-2.5 px-2 font-bold text-gray-500 bg-gray-50">Total Hours</th>
+                              <th className="text-right py-2.5 px-4 font-bold text-gray-500 bg-gray-50">Cost</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -867,7 +864,6 @@ export default function AITakeoff() {
                             })}
                           </tbody>
                           </table>
-                        </ScrollArea>
                       </div>
                       <div className="p-4 bg-blue-50 border-t border-blue-100">
                         <div className="flex justify-between items-center">
