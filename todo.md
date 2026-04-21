@@ -925,3 +925,14 @@
 ## Mobile UI Fix — Materials Table Scroll (21 Apr 2026)
 - [x] Fix materials table horizontal scroll on mobile (table too wide, gets cut off)
 - [x] Fix labour table horizontal scroll on mobile too
+
+## Motyl Presentation & Demo Page — 22 Apr 2026
+- [x] Research Motyl Group (cabinet makers, not gasfitters) — 30+ years, 30+ employees, commercial fitouts
+- [x] Research presentation tactics for tough/dominant trade business owners
+- [x] Research cabinet making / joinery estimating pain points
+- [x] Audit current Motyl demo page on kindaiestimator.com
+- [x] Build 10-slide presentation deck (industrial precision style, Motyl yellow + black)
+- [x] Upgrade Motyl demo page: added How It Works section, competitive comparison table, Microvellum integration, upgraded CTA
+- [x] Added /moytle route alias (both /motyl and /moytle now work)
+- [x] Updated hero stat from $60K+ to $100K+ saving (matches Motyl's volume)
+- [ ] Save checkpoint and publish

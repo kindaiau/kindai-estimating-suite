@@ -69,6 +69,7 @@ function Router() {
       <Route path="/settings" component={CompanySettings} />
       <Route path="/accuracy" component={AccuracyDashboard} />
       <Route path="/motyl" component={MotylDemo} />
+      <Route path="/moytle" component={MotylDemo} />
       <Route path="/getgas" component={GetGasDemo} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

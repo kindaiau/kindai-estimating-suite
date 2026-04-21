@@ -132,12 +132,12 @@ export default function MotylDemo() {
 
   // ── Integration logos ────────────────────────────────────────────────────────
   const integrations = [
+    { name: "Microvellum", color: "#4CAF50", desc: "Cut lists direct from takeoff" },
     { name: "Xero", color: "#13B5EA", desc: "Auto-invoice on quote approval" },
-    { name: "Polytec", color: "#E8E8E8", desc: "Live trade pricing" },
-    { name: "Laminex", color: "#D4A017", desc: "Live trade pricing" },
-    { name: "Blum", color: "#E63946", desc: "Hardware catalogue" },
+    { name: "Polytec", color: "#E8E8E8", desc: "Live trade pricing for board & surfaces" },
+    { name: "Laminex", color: "#D4A017", desc: "Live laminate pricing" },
+    { name: "Blum", color: "#E63946", desc: "Hardware catalogue + current pricing" },
     { name: "Castella", color: "#888", desc: "Handle & hardware specs" },
-    { name: "CNC", color: "#4CAF50", desc: "Cut list export (DXF/CSV)" },
   ];
 
   // ── ROI calculations ─────────────────────────────────────────────────────────
@@ -248,7 +248,7 @@ export default function MotylDemo() {
                 { label: "Time to takeoff", value: "< 60 sec", sub: "vs 4+ hours manual" },
                 { label: "Confidence score", value: "96–98%", sub: "with spec sheet" },
                 { label: "Replaces", value: "80%", sub: "of estimator role" },
-                { label: "Year 1 saving", value: "$60K+", sub: "net of Kindai" },
+                { label: "Year 1 saving", value: "$100K+", sub: "at Motyl's volume" },
               ].map((s) => (
                 <div key={s.label}>
                   <div className="text-3xl font-black" style={{ color: MOTYL_YELLOW }}>{s.value}</div>
@@ -524,6 +524,60 @@ export default function MotylDemo() {
         </div>
       </div>
 
+      {/* ── HOW IT WORKS ─────────────────────────────────────────────────── */}
+      <div className="py-24 px-6" style={{ background: MOTYL_BLACK }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-4 border"
+              style={{ borderColor: "rgba(245,200,0,0.3)", color: MOTYL_YELLOW, background: "rgba(245,200,0,0.08)" }}>
+              HOW IT WORKS
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
+              Three steps.<br /><span style={{ color: MOTYL_YELLOW }}>Under 60 seconds.</span>
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                step: "01",
+                title: "Upload Plans",
+                desc: "Drop your PDF plans — kitchen drawings, elevations, spec sheets. Any format, any size.",
+                icon: "📐",
+              },
+              {
+                step: "02",
+                title: "AI Reads Everything",
+                desc: "Kindai extracts every cabinet code, hardware item, board type, benchtop, handle — with exact quantities.",
+                icon: "🧠",
+              },
+              {
+                step: "03",
+                title: "Quote Ready",
+                desc: "Full priced takeoff with trade pricing, labour hours, markup, and GST. Ready to send or export.",
+                icon: "✅",
+              },
+            ].map((s) => (
+              <div key={s.step} className="relative rounded-2xl border p-8 text-center group transition-all hover:scale-105"
+                style={{ background: "rgba(255,255,255,0.02)", borderColor: "rgba(245,200,0,0.15)" }}>
+                <div className="text-5xl mb-4">{s.icon}</div>
+                <div className="text-xs font-black tracking-widest mb-3" style={{ color: MOTYL_YELLOW }}>STEP {s.step}</div>
+                <div className="text-xl font-black text-white mb-3">{s.title}</div>
+                <div className="text-white/50 text-sm leading-relaxed">{s.desc}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-12 text-center">
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full border"
+              style={{ borderColor: "rgba(245,200,0,0.3)", background: "rgba(245,200,0,0.06)" }}>
+              <span className="text-2xl font-black" style={{ color: MOTYL_YELLOW }}>96–98%</span>
+              <span className="text-white/60 text-sm">accuracy with spec sheets provided</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ── ROI CALCULATOR ───────────────────────────────────────────────────── */}
       <div id="roi" className="py-24 px-6" style={{ background: "#0D0D0D" }}>
         <div className="max-w-5xl mx-auto">
@@ -718,6 +772,56 @@ export default function MotylDemo() {
         </div>
       </div>
 
+      {/* ── WHY MOTYL + KINDAI ────────────────────────────────────────────── */}
+      <div className="py-24 px-6" style={{ background: MOTYL_BLACK }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-4 border"
+              style={{ borderColor: "rgba(245,200,0,0.3)", color: MOTYL_YELLOW, background: "rgba(245,200,0,0.08)" }}>
+              WHY KINDAI FOR MOTYL
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
+              Not another software tool.<br /><span style={{ color: MOTYL_YELLOW }}>An AI estimator that reads plans.</span>
+            </h2>
+          </div>
+
+          {/* Comparison table */}
+          <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: "rgba(245,200,0,0.2)" }}>
+            <table className="w-full min-w-[600px]">
+              <thead>
+                <tr style={{ background: "rgba(245,200,0,0.08)" }}>
+                  <th className="text-left text-sm font-bold text-white/60 py-4 px-6">Feature</th>
+                  <th className="text-center text-sm font-bold text-white/40 py-4 px-4">Spreadsheets</th>
+                  <th className="text-center text-sm font-bold text-white/40 py-4 px-4">CabinetVision</th>
+                  <th className="text-center text-sm font-bold py-4 px-4" style={{ color: MOTYL_YELLOW }}>Kindai</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { feature: "Reads PDF plans automatically", ss: false, cv: false, k: true },
+                  { feature: "Extracts product codes from specs", ss: false, cv: false, k: true },
+                  { feature: "Full takeoff in under 60 seconds", ss: false, cv: false, k: true },
+                  { feature: "Australian trade pricing built-in", ss: false, cv: false, k: true },
+                  { feature: "Learns your price book", ss: false, cv: false, k: true },
+                  { feature: "Works on 10+ trades", ss: false, cv: false, k: true },
+                ].map((row, i) => (
+                  <tr key={i} className="border-t" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
+                    <td className="py-3.5 px-6 text-sm text-white/80">{row.feature}</td>
+                    <td className="py-3.5 px-4 text-center text-lg">{row.ss ? <span className="text-green-400">✓</span> : <span className="text-red-400/60">✗</span>}</td>
+                    <td className="py-3.5 px-4 text-center text-lg">{row.cv ? <span className="text-green-400">✓</span> : <span className="text-red-400/60">✗</span>}</td>
+                    <td className="py-3.5 px-4 text-center text-lg"><span className="text-green-400 font-bold">✓</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-8 text-center text-white/50 text-sm">
+            CabinetVision is for drafting and manufacturing. Kindai is for estimating and quoting. They work <span style={{ color: MOTYL_YELLOW }}>together</span>, not against each other.
+          </div>
+        </div>
+      </div>
+
       {/* ── FINAL CTA ────────────────────────────────────────────────────────── */}
       <div className="py-24 px-6 text-center relative overflow-hidden" style={{ background: MOTYL_BLACK }}>
         <div className="absolute inset-0 opacity-10"
@@ -726,12 +830,25 @@ export default function MotylDemo() {
           <img src={MOTYL_LOGO} alt="Motyl Group" className="h-10 object-contain mx-auto mb-8 opacity-60" />
           <h2 className="text-5xl md:text-6xl font-black text-white mb-6">
             Ready to be the first<br />
-            <span style={{ color: MOTYL_YELLOW }}>commercial joiner in SA</span><br />
+            <span style={{ color: MOTYL_YELLOW }}>commercial fitout company in SA</span><br />
             running AI estimating?
           </h2>
           <p className="text-white/50 text-xl mb-10 max-w-xl mx-auto">
-            3 projects. No commitment. We set it up with your price book, your supplier rates, and your standard finishes. 30 minutes.
+            3 real projects. No commitment. No strings. We set it up with your price book, your supplier rates, and your standard finishes.
           </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 max-w-2xl mx-auto">
+            {[
+              { icon: "📋", text: "Your price book loaded" },
+              { icon: "🏗️", text: "3 real projects quoted" },
+              { icon: "📊", text: "Side-by-side comparison" },
+              { icon: "📞", text: "Direct line to our team" },
+            ].map((item) => (
+              <div key={item.text} className="text-center p-3 rounded-xl" style={{ background: "rgba(245,200,0,0.06)" }}>
+                <div className="text-2xl mb-1">{item.icon}</div>
+                <div className="text-xs text-white/60">{item.text}</div>
+              </div>
+            ))}
+          </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="mailto:matthew@kindai.com.au?subject=Kindai%20Pilot%20%E2%80%94%20Motyl%20Group&body=Hi%20Matthew%2C%0A%0AWe%27d%20like%20to%20start%20the%20free%20pilot%20for%20Motyl%20Group.%0A%0AProjects%20per%20year%3A%20%0AMain%20trade%3A%20Commercial%20joinery%20%2F%20shopfitting%0A%0AThanks"
