@@ -916,3 +916,12 @@
 - [x] Verify the estimate ID linkage between AI takeoff and line items
 - [x] Confirmed: pricing model (materials + labour hours × rate + markup + GST) is correct as-is
 - [ ] Publish fix to production
+
+## Gasfitting AI Exclusion — Street Connection (21 Apr 2026)
+- [x] Exclude "gas service connection from street to meter" from gasfitting AI estimates (done by gas department, not gas fitter)
+- [x] Add exclusion rule to orchestrated takeoff system prompt for gasfitting trade
+- [x] Add exclusion rule to ai.ts gas-install trade prompt (criticalRules + pricingBenchmarks)
+
+## Mobile UI Fix — Materials Table Scroll (21 Apr 2026)
+- [x] Fix materials table horizontal scroll on mobile (table too wide, gets cut off)
+- [x] Fix labour table horizontal scroll on mobile too

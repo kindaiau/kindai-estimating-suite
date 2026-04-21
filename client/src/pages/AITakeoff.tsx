@@ -791,9 +791,9 @@ export default function AITakeoff() {
                       <CardTitle className="text-sm font-black">{result.items.length} Items Found</CardTitle>
                     </CardHeader>
                     <CardContent className="px-0 pb-0">
-                      <ScrollArea className="max-h-[500px]">
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-xs">
+                      <div className="overflow-x-auto -mx-0">
+                        <ScrollArea className="max-h-[500px]">
+                          <table className="w-full text-xs min-w-[640px]">
                             <thead>
                               <tr className="border-b border-gray-100 bg-gray-50/50">
                                 <th className="text-left py-2.5 px-4 font-bold text-gray-500">Item</th>
@@ -827,8 +827,8 @@ export default function AITakeoff() {
                               })}
                             </tbody>
                           </table>
-                        </div>
-                      </ScrollArea>
+                        </ScrollArea>
+                      </div>
                     </CardContent>
                   </Card>
                 )}
@@ -840,11 +840,12 @@ export default function AITakeoff() {
                       <CardTitle className="text-sm font-black">Labour Breakdown</CardTitle>
                     </CardHeader>
                     <CardContent className="px-0 pb-0">
-                      <ScrollArea className="max-h-[500px]">
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="border-b border-gray-100 bg-gray-50/50">
-                              <th className="text-left py-2.5 px-4 font-bold text-gray-500">Task</th>
+                      <div className="overflow-x-auto">
+                        <ScrollArea className="max-h-[500px]">
+                          <table className="w-full text-xs min-w-[500px]">
+                            <thead>
+                              <tr className="border-b border-gray-100 bg-gray-50/50">
+                                <th className="text-left py-2.5 px-4 font-bold text-gray-500">Task</th>
                               <th className="text-center py-2.5 px-2 font-bold text-gray-500">Qty</th>
                               <th className="text-center py-2.5 px-2 font-bold text-gray-500">Min/unit</th>
                               <th className="text-right py-2.5 px-2 font-bold text-gray-500">Total Hours</th>
@@ -865,8 +866,9 @@ export default function AITakeoff() {
                               );
                             })}
                           </tbody>
-                        </table>
-                      </ScrollArea>
+                          </table>
+                        </ScrollArea>
+                      </div>
                       <div className="p-4 bg-blue-50 border-t border-blue-100">
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-bold text-blue-800">Total Labour</span>

@@ -764,7 +764,7 @@ PROJECT BENCHMARKS:
 - Gas bayonet fitting (indoor): $28-45 trade, $48-68 retail
 - Gas bayonet fitting (outdoor/BBQ): $35-55 trade, $55-82 retail
 - Gas isolation valve (ball valve): $18-32 trade, $32-48 retail
-- Gas meter connection/upgrade: $350-850 (utility fee varies by state)
+- Gas meter connection/upgrade: $350-850 (utility fee varies by state) — NOTE: meter is supplied/installed by gas distributor, NOT the gas fitter
 - Cooktop gas connection (standard): $180-350 labour + materials
 - Gas oven connection: $180-320 labour + materials
 - Gas hot water unit connection (instantaneous): $280-550 labour + materials
@@ -781,12 +781,15 @@ PROJECT BENCHMARKS:
       criticalRules: `- ONLY price GAS work — do NOT include any water, drainage, or sewer items
 - If the user mentions water pipes, hot water PLUMBING, or drainage, flag these as EXCLUSIONS requiring a separate Plumbing estimate
 - Gas pipe sizing: calculate based on MJ/hr demand of ALL connected appliances using AS/NZS 5601.1 Table 5.1
-- ALWAYS include: gas meter assessment, pipe run measurements, number of appliance connections, regulator sizing
+- ALWAYS include: pipe run measurements, number of appliance connections, regulator sizing
+- NEVER include: gas service connection from street to meter (done by gas distribution company), gas meter supply/installation (done by gas distributor)
 - Underground PE pipe: include trenching, sand bedding, tracer wire, and backfill
 - Internal copper pipe: include clips every 1.2m, fire-rated penetrations through walls/floors
 - EVERY appliance connection needs: isolation valve, flex connector (if applicable), and test point
 - Compliance: ALWAYS include gas leak testing (standing pressure test) and Gas Compliance Certificate as separate line items
-- For new builds: include gas meter box, regulator, and main run from meter to first appliance
+- For new builds: include regulator and main run from meter to first appliance
+- EXCLUSION: Gas service connection from street to meter is ALWAYS done by the gas distribution company (e.g. AGN, Jemena, AusNet) — NEVER include this in a gasfitting estimate
+- EXCLUSION: Gas meter supply and installation is done by the gas distributor — do NOT include meter cost
 - For renovations: assess existing pipe capacity — flag if main needs upgrading
 - Include Provisional Sum for any builder's work (chasing, patching, making good)
 - State-specific: check if LP Gas or Natural Gas — pricing differs significantly`,

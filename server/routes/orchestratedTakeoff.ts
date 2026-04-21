@@ -312,7 +312,14 @@ STEP 2: QUANTITY EXTRACTION for ${trade} trade.
 Project context from Step 1: ${JSON.stringify(step1)}
 ${companyContext}
 ${productivityData}
-Extract ALL quantities for this trade. Be precise. Flag low-confidence items (< 70%).`,
+Extract ALL quantities for this trade. Be precise. Flag low-confidence items (< 70%).
+${trade.toLowerCase().includes('gas') ? `
+CRITICAL GASFITTING EXCLUSIONS — DO NOT include these items (they are done by the gas distribution network/utility company, NOT the gas fitter):
+- Gas service connection from street to meter
+- Gas main tapping / street connection
+- Gas meter installation (meter is supplied by the gas distributor)
+- Any work on the gas distribution network side of the meter
+Only include work from the meter/regulator onwards (internal pipework, appliance connections, compliance testing, etc.).` : ''}`,
         },
         {
           role: "user",
@@ -433,7 +440,12 @@ ${JSON.stringify(step2.sections, null, 2)}`,
 STEP 4: BUSINESS RULES for ${trade} trade.
 ${companyContext}
 Custom rates: ${customRates ? `Labour $${customRates.defaultLabourRate}/hr, Markup ${customRates.defaultMarkup}%, Overhead ${customRates.overheadPercent}%, Profit ${customRates.profitMargin}%` : "Using defaults"}
-Check: missing items, compliance requirements (AS standards, BCA), provisional sums needed, items that should be excluded per company rules.`,
+Check: missing items, compliance requirements (AS standards, BCA), provisional sums needed, items that should be excluded per company rules.
+${trade.toLowerCase().includes('gas') ? `
+GASFITTING MANDATORY EXCLUSIONS — These must ALWAYS be in the exclusions list:
+- Gas service connection from street to meter (done by gas distribution company)
+- Gas meter supply/installation (supplied by gas distributor)
+- Any work on the network side of the meter` : ''}`,
         },
         {
           role: "user",
