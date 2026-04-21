@@ -155,6 +155,12 @@ export default function EstimateBuilder() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const estimateId = parseInt(params.id ?? "0");
+
+  // Guard against invalid route params — redirect rather than silently fire broken queries
+  if (isNaN(estimateId) || estimateId <= 0) {
+    navigate("/projects");
+    return null;
+  }
   const [addOpen, setAddOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [aiDescription, setAiDescription] = useState("");
@@ -197,6 +203,7 @@ export default function EstimateBuilder() {
       utils.estimates.getLineItems.invalidate();
       recalc.mutate({ id: estimateId });
     },
+    onError: (e) => toast.error("Failed to delete item: " + e.message),
   });
 
   const updateItem = trpc.estimates.updateLineItem.useMutation({
@@ -230,19 +237,23 @@ export default function EstimateBuilder() {
 
   const saveEditing = () => {
     if (editingId == null) return;
+    const qty = parseFloat(editValues.quantity);
+    const rate = parseFloat(editValues.unitRate);
+    const waste = parseFloat(editValues.wasteFactor);
     updateItem.mutate({
       id: editingId,
       estimateId,
-      quantity: parseFloat(editValues.quantity) || undefined,
-      unitRate: parseFloat(editValues.unitRate) || undefined,
+      quantity: !isNaN(qty) ? qty : undefined,
+      unitRate: !isNaN(rate) ? rate : undefined,
       description: editValues.description || undefined,
       unit: editValues.unit || undefined,
-      wasteFactor: parseFloat(editValues.wasteFactor) || undefined,
+      wasteFactor: !isNaN(waste) ? waste : undefined,
     });
   };
 
   const recalc = trpc.estimates.recalculate.useMutation({
     onSuccess: () => utils.estimates.get.invalidate(),
+    onError: (e) => toast.error("Recalculate failed: " + e.message),
   });
 
   const updateStatus = trpc.estimates.update.useMutation({
@@ -283,14 +294,27 @@ export default function EstimateBuilder() {
 
   const handleAddAiItems = async () => {
     if (!aiResult?.items) return;
+    let addedCount = 0;
+    const errors: string[] = [];
     for (const item of aiResult.items) {
-      await addItem.mutateAsync({
-        estimateId, category: item.category, description: item.description,
-        unit: item.unit, quantity: item.quantity, unitRate: item.unitRate,
-        wasteFactor: 5, isFromAi: true,
-      });
+      try {
+        await addItem.mutateAsync({
+          estimateId, category: item.category, description: item.description,
+          unit: item.unit, quantity: item.quantity, unitRate: item.unitRate,
+          wasteFactor: 5, isFromAi: true,
+        });
+        addedCount++;
+      } catch (err: any) {
+        errors.push(item.description);
+      }
     }
-    toast.success(`${aiResult.items.length} items added from AI takeoff`);
+    if (errors.length === 0) {
+      toast.success(`${addedCount} items added from AI takeoff`);
+    } else if (addedCount > 0) {
+      toast.warning(`${addedCount} items added, ${errors.length} failed: ${errors.slice(0, 2).join(", ")}${errors.length > 2 ? "…" : ""}`);
+    } else {
+      toast.error("Failed to add AI items. Please try again.");
+    }
     setAiOpen(false); setAiResult(null); setAiDescription("");
   };
 
@@ -395,7 +419,7 @@ export default function EstimateBuilder() {
         </div>
 
         <Tabs defaultValue="items">
-          <TabsList className="bg-gray-100 rounded-full p-1">
+          <TabsList aria-label="Estimate sections" className="bg-gray-100 rounded-full p-1">
             <TabsTrigger value="items" className="text-xs rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm">Line Items</TabsTrigger>
             <TabsTrigger value="compliance" className="text-xs rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm">Compliance</TabsTrigger>
             <TabsTrigger value="summary" className="text-xs rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm">Quote Summary</TabsTrigger>
@@ -637,10 +661,10 @@ export default function EstimateBuilder() {
                                 <td className="p-3 text-right text-xs">${parseFloat(item.unitRate as string).toFixed(2)}</td>
                                 <td className="p-3 text-right text-xs font-bold">${parseFloat(item.subtotal as string).toFixed(2)}</td>
                                 <td className="p-3 flex gap-1">
-                                  <button onClick={() => startEditing(item)} className="text-muted-foreground hover:text-blue-500 transition-colors" title="Edit">
+                                  <button onClick={() => startEditing(item)} aria-label={`Edit ${item.description}`} className="text-muted-foreground hover:text-blue-500 transition-colors" title="Edit">
                                     <FileText className="w-3.5 h-3.5" />
                                   </button>
-                                  <button onClick={() => deleteItem.mutate({ id: item.id, estimateId })} className="text-muted-foreground hover:text-destructive transition-colors" title="Delete">
+                                  <button onClick={() => deleteItem.mutate({ id: item.id, estimateId })} aria-label={`Delete ${item.description}`} className="text-muted-foreground hover:text-destructive transition-colors" title="Delete">
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 </td>
@@ -828,7 +852,14 @@ export default function EstimateBuilder() {
                   >
                     Mark as Sent
                   </Button>
-                  <Button size="sm" variant="outline" className="rounded-full font-bold text-xs" onClick={() => toast.info("PDF generation coming soon — export to Xero/MYOB available")}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-full font-bold text-xs"
+                    onClick={() => generatePdf.mutate({ id: estimateId })}
+                    disabled={generatePdf.isPending}
+                  >
+                    {generatePdf.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Download className="w-3.5 h-3.5 mr-1.5" />}
                     Export PDF
                   </Button>
                 </div>

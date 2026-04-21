@@ -48,7 +48,7 @@ export const projectsRouter = router({
     id: z.number(),
     name: z.string().min(1).optional(),
     clientName: z.string().optional(),
-    clientEmail: z.string().optional(),
+    clientEmail: z.string().email().optional().or(z.literal("")),
     clientPhone: z.string().optional(),
     address: z.string().optional(),
     suburb: z.string().optional(),
