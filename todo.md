@@ -898,3 +898,9 @@
 - [x] Reduce keywords from 13 to 5 focused keywords
 - [x] Shorten title from 79 chars to 44 chars
 - [x] Shorten description from 161 chars to 114 chars
+
+## CRITICAL BUG — AI Takeoff Returns $0.00 / 0 Items
+- [ ] Diagnose why AI pipeline results show $0.00, 0h labour, 10% confidence on production
+- [ ] Fix line item save flow from orchestrated takeoff to estimate
+- [ ] Verify end-to-end on dev server
+- [ ] Publish fix before Motyl meeting
