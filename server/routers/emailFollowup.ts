@@ -164,7 +164,7 @@ export const emailFollowupRouter = router({
         scheduledAt,
         status: "scheduled",
       } as any);
-      inserted.push({ id: Number((result as any).insertId), dayOffset: step.dayOffset, label: step.label });
+      inserted.push({ id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0), dayOffset: step.dayOffset, label: step.label });
     }
 
     return { scheduled: inserted.length, followups: inserted };

@@ -54,7 +54,7 @@ export const companyMemoryRouter = router({
       return { id: existing.id };
     } else {
       const result = await db.insert(companyProfiles).values({ userId: ctx.user.id, ...data });
-      return { id: Number((result as any).insertId) };
+      return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
     }
   }),
 
@@ -91,7 +91,7 @@ export const companyMemoryRouter = router({
       ...input,
       unitPrice: input.unitPrice.toString() as any,
     });
-    return { id: Number((result as any).insertId) };
+    return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
   }),
 
   updatePriceBookItem: protectedProcedure.input(z.object({
@@ -184,7 +184,7 @@ export const companyMemoryRouter = router({
       lineItems: input.lineItems as any,
       estimatedTotal: input.estimatedTotal?.toString() as any,
     });
-    return { id: Number((result as any).insertId) };
+    return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
   }),
 
   saveEstimateAsTemplate: protectedProcedure.input(z.object({
@@ -219,7 +219,7 @@ export const companyMemoryRouter = router({
       lineItems: templateItems as any,
       estimatedTotal: estimate.total?.toString() as any,
     });
-    return { id: Number((result as any).insertId) };
+    return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
   }),
 
   useTemplate: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {

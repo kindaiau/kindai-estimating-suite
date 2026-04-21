@@ -880,3 +880,9 @@
 - [x] Wire ServiceM8 API helper into server with correct X-API-Key auth header
 - [x] Update vitest for ServiceM8 auth validation
 - [x] Add GetGas to the enterprise demo navigation
+
+## Critical Bug Fix — Motyl Meeting Prep (21 Apr 2026)
+- [x] Fix "Failed to create project" error (insertId returns NaN on MySQL) — affects ALL insert operations
+- [x] Fix applied to 15 routers (projects, estimates, materials, labour, suppliers, corrections, etc.)
+- [x] Verify fix on dev server end-to-end
+- [ ] Save checkpoint so Matthew can publish before Motyl meeting (next step)

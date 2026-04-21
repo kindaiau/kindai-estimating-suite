@@ -219,7 +219,7 @@ export const tradeProfilesRouter = router({
       return { success: true, id: existing[0].id };
     } else {
       const result = await db.insert(tradeProfiles).values(values);
-      return { success: true, id: Number((result as any).insertId) };
+      return { success: true, id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
     }
   }),
 
@@ -260,7 +260,7 @@ export const tradeProfilesRouter = router({
         bodyHtml: input.bodyHtml,
         isActive: input.isActive ?? true,
       });
-      return { success: true, id: Number((result as any).insertId) };
+      return { success: true, id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
     }
   }),
 

@@ -67,7 +67,7 @@ export const labourRouter = router({
       travelAllowance: (input.travelAllowance ?? 0).toString() as any,
       toolAllowance: (input.toolAllowance ?? 0).toString() as any,
     } as any);
-    return { id: Number((result as any).insertId) };
+    return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
   }),
 
   update: protectedProcedure.input(z.object({

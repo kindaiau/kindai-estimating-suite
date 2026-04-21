@@ -31,7 +31,7 @@ export const correctionsRouter = router({
       ...input,
       userId: ctx.user.id,
     });
-    return { id: Number((result as any).insertId) };
+    return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
   }),
 
   // ── Batch record corrections (for when user saves multiple edits at once) ──
@@ -205,7 +205,7 @@ export const correctionsRouter = router({
       itemVariances: input.itemVariances as any,
     });
 
-    return { id: Number((result as any).insertId), variancePercent, profitPercent };
+    return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0), variancePercent, profitPercent };
   }),
 
   listOutcomes: protectedProcedure.input(z.object({

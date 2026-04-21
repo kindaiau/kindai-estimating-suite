@@ -34,7 +34,7 @@ export const suppliersRouter = router({
       trades: input.trades as any,
       discountPercent: input.discountPercent.toString() as any,
     });
-    return { id: Number((result as any).insertId) };
+    return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
   }),
 
   // Update a supplier connection

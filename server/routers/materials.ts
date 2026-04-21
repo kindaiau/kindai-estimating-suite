@@ -33,7 +33,7 @@ export const materialsRouter = router({
       unitPrice: input.unitPrice.toString() as any,
       wasteFactor: (input.wasteFactor ?? 5).toString() as any,
     } as any);
-    return { id: Number((result as any).insertId) };
+    return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
   }),
 
   update: protectedProcedure.input(z.object({

@@ -59,7 +59,7 @@ export const estimatesRouter = router({
       complianceState: input.complianceState,
       notes: input.notes,
     } as any);
-    return { id: Number((result as any).insertId), quoteNumber };
+    return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0), quoteNumber };
   }),
 
   update: protectedProcedure.input(z.object({
@@ -142,7 +142,7 @@ export const estimatesRouter = router({
       unitRate: rate.toString() as any,
       subtotal: subtotal.toFixed(2) as any,
     });
-    return { id: Number((result as any).insertId) };
+    return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
   }),
 
   updateLineItem: protectedProcedure.input(z.object({

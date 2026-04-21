@@ -40,7 +40,8 @@ export const projectsRouter = router({
       userId: ctx.user.id,
       clientEmail: input.clientEmail || undefined,
     });
-    return { id: Number((result as any).insertId) };
+    const id = Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0);
+    return { id };
   }),
 
   update: protectedProcedure.input(z.object({
