@@ -121,7 +121,13 @@ orchestratedTakeoffRouter.get("/api/orchestrated-takeoff", async (req: Request, 
     return res.end();
   }
 
-  const { estimateId, trade, mode, imageUrl, planDescription, projectDetails, additionalContext, scopeDocUrl } = req.query as Record<string, string>;
+  const { estimateId, trade, mode, planDescription, projectDetails, additionalContext, scopeDocUrl } = req.query as Record<string, string>;
+  // imageUrl can be a single string or an array of strings (multi-page PDF)
+  const rawImageUrl = req.query.imageUrl;
+  const imageUrls: string[] = Array.isArray(rawImageUrl)
+    ? (rawImageUrl as string[]).filter(Boolean)
+    : rawImageUrl ? [rawImageUrl as string] : [];
+  const imageUrl = imageUrls[0] ?? null; // backward compat for logging
 
   if (!estimateId || !trade || !mode) {
     sendEvent(res, "error", { message: "Missing required parameters" });
@@ -227,10 +233,12 @@ Quote Tone: ${companyProfile.quoteTone ?? "professional"}` : "";
     const scopeNote = scopeDocUrl
       ? `\n\nA Scope of Works / Specification document has also been provided. Cross-reference it with the plan for inclusions, exclusions, and specified products.`
       : "";
-    if (mode === "vision" && imageUrl) {
-      const content: any[] = [
-        { type: "image_url", image_url: { url: imageUrl, detail: "high" } },
-      ];
+    if (mode === "vision" && imageUrls.length > 0) {
+      // Send ALL plan pages as separate image_url items so the LLM sees every page
+      const content: any[] = imageUrls.map(url => ({
+        type: "image_url",
+        image_url: { url, detail: "high" as const },
+      }));
       // Attach scope doc as a second image/PDF if provided
       if (scopeDocUrl) {
         const isImage = /\.(jpg|jpeg|png|webp)$/i.test(scopeDocUrl);
@@ -248,6 +256,7 @@ Quote Tone: ${companyProfile.quoteTone ?? "professional"}` : "";
   };
 
   try {
+    console.log(`[Orchestrated] Starting takeoff: trade=${trade}, mode=${mode}, imageUrls=${imageUrls.length} pages, estimateId=${estimateId}`);
     // ─── STEP 1: Plan Interpretation ─────────────────────────────────────────
     sendEvent(res, "step", {
       step: 1,

@@ -712,7 +712,7 @@ export default function AITakeoff() {
                     estimateId={tempEstimateId}
                     trade={selectedTrade}
                     mode={mode}
-                    imageUrl={mode === "vision" ? uploadedImageUrl ?? undefined : undefined}
+                    imageUrls={mode === "vision" ? uploadedImageUrls : []}
                     planDescription={mode === "text" ? textDescription : undefined}
                     additionalContext={additionalContext || undefined}
                     projectDetails={additionalContext || undefined}

@@ -17,7 +17,7 @@ interface OrchestrationProgressProps {
   estimateId: number;
   trade: string;
   mode: "vision" | "text";
-  imageUrl?: string;
+  imageUrls?: string[];
   planDescription?: string;
   additionalContext?: string;
   projectDetails?: string;
@@ -47,7 +47,7 @@ export function OrchestrationProgress({
   estimateId,
   trade,
   mode,
-  imageUrl,
+  imageUrls,
   planDescription,
   additionalContext,
   projectDetails,
@@ -67,12 +67,15 @@ export function OrchestrationProgress({
       estimateId: String(estimateId),
       trade,
       mode,
-      ...(imageUrl ? { imageUrl } : {}),
       ...(planDescription ? { planDescription } : {}),
       ...(additionalContext ? { additionalContext } : {}),
       ...(projectDetails ? { projectDetails } : {}),
       ...(scopeDocUrl ? { scopeDocUrl } : {}),
     });
+    // Append each image URL as a separate param so multi-page PDFs send ALL pages
+    if (imageUrls && imageUrls.length > 0) {
+      imageUrls.forEach(url => params.append("imageUrl", url));
+    }
 
     const url = `/api/orchestrated-takeoff?${params.toString()}`;
 
@@ -110,7 +113,7 @@ export function OrchestrationProgress({
       es.close();
       controller.abort();
     };
-  }, [estimateId, trade, mode, imageUrl, planDescription, additionalContext, projectDetails]);
+  }, [estimateId, trade, mode, JSON.stringify(imageUrls), planDescription, additionalContext, projectDetails]);
 
   const completedCount = steps.filter(s => s.status === "done").length;
   const progress = (completedCount / 5) * 100;

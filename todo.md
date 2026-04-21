@@ -904,3 +904,15 @@
 - [x] Created insertAiLineItems helper, wired into all 4 takeoff paths (orchestrated, single, multi, text)
 - [x] Verified: 22 items (11 materials + 11 labour), $21,109.70 total, 75% confidence
 - [ ] Publish fix before Motyl meeting
+
+## PRODUCTION BUG — $0.00 on Real PDF Plans (21 Apr 2026)
+- [x] Trace full pipeline: PDF upload -> S3 -> orchestrated takeoff -> line item insertion -> frontend display
+- [ ] Check if insertAiLineItems fix was published to production
+- [x] Check if multi-page PDF takeoff correctly passes all page URLs to the AI
+- [x] Fix: AITakeoff.tsx now passes all uploadedImageUrls (was only [0])
+- [x] Fix: OrchestrationProgress.tsx now accepts imageUrls[] array and appends each as separate param
+- [x] Fix: orchestratedTakeoff.ts now reads imageUrl as array and sends ALL pages to LLM
+- [x] Check if the EstimateBuilder frontend reads from lineItems table correctly
+- [x] Verify the estimate ID linkage between AI takeoff and line items
+- [x] Confirmed: pricing model (materials + labour hours × rate + markup + GST) is correct as-is
+- [ ] Publish fix to production
