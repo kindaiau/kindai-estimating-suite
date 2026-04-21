@@ -3,11 +3,12 @@ import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 import { getDb } from "../db";
-import { estimates, tradeProfiles, companyProfiles, priceBookItems, estimateCorrections } from "../../drizzle/schema";
+import { estimates, lineItems, tradeProfiles, companyProfiles, priceBookItems, estimateCorrections } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { storagePut } from "../storage";
 import { nanoid } from "nanoid";
 import { buildProductivityPromptSection } from "../labourProductivity";
+import { insertAiLineItems } from "../routes/insertAiLineItems";
 
 // Convert HEIC/HEIF buffer to JPEG — lazy dynamic import to avoid ESM crash
 let _heicConvertAi: ((opts: { buffer: Buffer; format: string; quality: number }) => Promise<Uint8Array>) | null = null;
@@ -1156,6 +1157,9 @@ export const aiRouter = router({
       aiTakeoffData: result.items as any,
     }).where(eq(estimates.id, input.estimateId));
 
+    // Insert line items into the lineItems table so EstimateBuilder can display them
+    await insertAiLineItems(input.estimateId, result.items);
+
     return result;
   }),
 
@@ -1225,13 +1229,15 @@ export const aiRouter = router({
 
     // Merge all batch results into a single combined takeoff
     const merged = mergeTakeoffResults(batchResults, input.imageUrls.length);
-
     // Save merged AI data to estimate
     await db.update(estimates).set({
       aiConfidenceScore: merged.confidence,
       aiAssumptions: merged.assumptions as any,
       aiTakeoffData: merged.items as any,
     }).where(eq(estimates.id, input.estimateId));
+
+    // Insert line items into the lineItems table so EstimateBuilder can display them
+    await insertAiLineItems(input.estimateId, merged.items);
 
     return { ...merged, pageCount: input.imageUrls.length, batchCount: batches.length };
   }),
@@ -1281,6 +1287,9 @@ Generate a complete, section-by-section takeoff with accurate 2024-25 Australian
       aiAssumptions: result.assumptions as any,
       aiTakeoffData: result.items as any,
     }).where(eq(estimates.id, input.estimateId));
+
+    // Insert line items into the lineItems table so EstimateBuilder can display them
+    await insertAiLineItems(input.estimateId, result.items);
 
     return result;
   }),

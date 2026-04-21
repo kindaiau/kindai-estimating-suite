@@ -14,10 +14,11 @@
 import { Router, Request, Response } from "express";
 import { invokeLLM } from "../_core/llm";
 import { getDb } from "../db";
-import { estimates, tradeProfiles, companyProfiles, priceBookItems, estimateCorrections } from "../../drizzle/schema";
+import { estimates, lineItems, tradeProfiles, companyProfiles, priceBookItems, estimateCorrections } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { buildProductivityPromptSection } from "../labourProductivity";
 import { sdk } from "../_core/sdk";
+import { insertAiLineItems } from "./insertAiLineItems";
 
 export const orchestratedTakeoffRouter = Router();
 
@@ -593,6 +594,10 @@ Return JSON: { "anomalies": ["string"], "severity": "none" | "minor" | "major" }
       aiAssumptions: result.assumptions as any,
       aiTakeoffData: result.items as any,
     }).where(eq(estimates.id, parseInt(estimateId)));
+
+    // ─── INSERT LINE ITEMS INTO lineItems TABLE ──────────────────────────────
+    // Critical: EstimateBuilder reads from lineItems table, not aiTakeoffData JSON
+    await insertAiLineItems(parseInt(estimateId), finalItems);
 
     sendEvent(res, "step", {
       step: 5,

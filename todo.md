@@ -900,7 +900,7 @@
 - [x] Shorten description from 161 chars to 114 chars
 
 ## CRITICAL BUG — AI Takeoff Returns $0.00 / 0 Items
-- [ ] Diagnose why AI pipeline results show $0.00, 0h labour, 10% confidence on production
-- [ ] Fix line item save flow from orchestrated takeoff to estimate
-- [ ] Verify end-to-end on dev server
+- [x] Diagnosed: line items saved to JSON blob (aiTakeoffData) but never inserted into lineItems table
+- [x] Created insertAiLineItems helper, wired into all 4 takeoff paths (orchestrated, single, multi, text)
+- [x] Verified: 22 items (11 materials + 11 labour), $21,109.70 total, 75% confidence
 - [ ] Publish fix before Motyl meeting
