@@ -206,8 +206,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       <SEO
-        title="Kindai | AI Estimating Software for Australian Trades"
-        description="AI estimating software for Australian tradies and builders. Scan plans, get instant takeoffs, send GST-compliant quotes in 60 seconds."
+        title="Kindai | AI Estimating for Australian Trades"
+        description="Scan plans, get instant AI takeoffs and GST-ready quotes in 60 seconds. Built for Australian tradies and builders."
         canonical="/"
         keywords="AI estimating software Australia, construction quoting software, trade takeoff software, builder quoting app, AI construction estimating"
       />

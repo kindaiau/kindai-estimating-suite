@@ -885,4 +885,16 @@
 - [x] Fix "Failed to create project" error (insertId returns NaN on MySQL) — affects ALL insert operations
 - [x] Fix applied to 15 routers (projects, estimates, materials, labour, suppliers, corrections, etc.)
 - [x] Verify fix on dev server end-to-end
-- [ ] Save checkpoint so Matthew can publish before Motyl meeting (next step)
+- [x] Save checkpoint so Matthew can publish before Motyl meeting
+
+## Auto-Extract Client Name & Address from Plans
+- [ ] Add client name/address extraction to Step 1 of orchestrated AI pipeline (title block reading)
+- [ ] Store extracted clientName and siteAddress in the project/estimate record
+- [ ] Display extracted details in the results panel with editable fields
+- [ ] Auto-populate project name with client name when available
+- [ ] Handle cases where no title block is found (graceful fallback)
+
+## SEO Fixes — Homepage (/)
+- [x] Reduce keywords from 13 to 5 focused keywords
+- [x] Shorten title from 79 chars to 44 chars
+- [x] Shorten description from 161 chars to 114 chars
