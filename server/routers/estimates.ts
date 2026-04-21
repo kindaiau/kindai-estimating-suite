@@ -91,9 +91,9 @@ export const estimatesRouter = router({
 
     const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, input.id));
     const subtotal = items.reduce((sum, item) => {
-      const qty = parseFloat(item.quantity as string);
-      const rate = parseFloat(item.unitRate as string);
-      const waste = parseFloat(item.wasteFactor as string) / 100;
+      const qty = parseFloat(item.quantity as string) || 0;
+      const rate = parseFloat(item.unitRate as string) || 0;
+      const waste = parseFloat((item.wasteFactor as string) || "0") / 100;
       return sum + qty * rate * (1 + waste);
     }, 0);
 
@@ -165,16 +165,16 @@ export const estimatesRouter = router({
     const [existing] = await db.select().from(lineItems).where(eq(lineItems.id, input.id)).limit(1);
     if (!existing) throw new Error("Line item not found");
 
-    const qty = input.quantity ?? parseFloat(existing.quantity as string);
-    const rate = input.unitRate ?? parseFloat(existing.unitRate as string);
-    const waste = (input.wasteFactor ?? parseFloat(existing.wasteFactor as string)) / 100;
+    const qty = input.quantity ?? (parseFloat(existing.quantity as string) || 0);
+    const rate = input.unitRate ?? (parseFloat(existing.unitRate as string) || 0);
+    const waste = (input.wasteFactor ?? parseFloat((existing.wasteFactor as string) || "0")) / 100;
     const subtotal = qty * rate * (1 + waste);
 
     await db.update(lineItems).set({
       ...input,
       quantity: qty.toString() as any,
       unitRate: rate.toString() as any,
-      wasteFactor: ((input.wasteFactor ?? parseFloat(existing.wasteFactor as string))).toString() as any,
+      wasteFactor: ((input.wasteFactor ?? parseFloat((existing.wasteFactor as string) || "0"))).toString() as any,
       subtotal: subtotal.toFixed(2) as any,
     }).where(eq(lineItems.id, input.id));
 
@@ -226,9 +226,9 @@ export const estimatesRouter = router({
         });
       }
 
-      // Batch insert all corrections
-      for (const c of corrections) {
-        await db.insert(estimateCorrections).values(c).catch(err =>
+      // Batch insert all corrections in a single query
+      if (corrections.length > 0) {
+        await db.insert(estimateCorrections).values(corrections).catch(err =>
           console.warn("[Correction] Failed to record:", err.message)
         );
       }
@@ -243,7 +243,7 @@ export const estimatesRouter = router({
       .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
       .limit(1);
     if (!est) throw new Error("Estimate not found");
-    await db.delete(lineItems).where(eq(lineItems.id, input.id));
+    await db.delete(lineItems).where(and(eq(lineItems.id, input.id), eq(lineItems.estimateId, input.estimateId)));
     return { success: true };
   }),
 

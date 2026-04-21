@@ -7,6 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   CheckCircle2, XCircle, Clock, FileText, Building2,
   Phone, Mail, AlertCircle, Loader2, Shield,
   User, Wrench
@@ -27,6 +32,7 @@ export default function QuoteAcceptance() {
   const [signature, setSignature] = useState("");
   const [notes, setNotes] = useState("");
   const [responded, setResponded] = useState<"accepted" | "declined" | null>(null);
+  const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
 
   const { data, isLoading, error } = trpc.quoteTokens.getByToken.useQuery(
     { token: token ?? "" },
@@ -129,6 +135,9 @@ export default function QuoteAcceptance() {
   const subtotal = parseFloat(estimate.subtotal || "0");
   const gst = parseFloat(estimate.gstAmount || "0");
   const total = parseFloat(estimate.total || "0");
+  const safeSubtotal = isNaN(subtotal) ? 0 : subtotal;
+  const safeGst = isNaN(gst) ? 0 : gst;
+  const safeTotal = isNaN(total) ? 0 : total;
   const tradeEmoji = TRADE_EMOJI[estimate.trade] || "🔧";
 
   // Group line items by section
@@ -297,17 +306,17 @@ export default function QuoteAcceptance() {
           <div className="p-6 bg-zinc-50 space-y-2">
             <div className="flex justify-between text-sm text-zinc-600">
               <span>Subtotal (excl. GST)</span>
-              <span>${subtotal.toLocaleString("en-AU", { minimumFractionDigits: 2 })}</span>
+              <span>${safeSubtotal.toLocaleString("en-AU", { minimumFractionDigits: 2 })}</span>
             </div>
             <div className="flex justify-between text-sm text-zinc-600">
               <span>GST (10%)</span>
-              <span>${gst.toLocaleString("en-AU", { minimumFractionDigits: 2 })}</span>
+              <span>${safeGst.toLocaleString("en-AU", { minimumFractionDigits: 2 })}</span>
             </div>
             <Separator />
             <div className="flex justify-between font-bold text-zinc-900">
               <span>Total (inc. GST)</span>
               <span className="text-orange-600 text-lg">
-                ${total.toLocaleString("en-AU", { minimumFractionDigits: 2 })}
+                ${safeTotal.toLocaleString("en-AU", { minimumFractionDigits: 2 })}
               </span>
             </div>
           </div>
@@ -363,7 +372,7 @@ export default function QuoteAcceptance() {
                 Accept Quote
               </Button>
               <Button
-                onClick={() => handleRespond("declined")}
+                onClick={() => setDeclineDialogOpen(true)}
                 disabled={respondMutation.isPending}
                 variant="outline"
                 className="flex-1 border-zinc-300 text-zinc-600 hover:bg-zinc-50 py-3"
@@ -372,6 +381,26 @@ export default function QuoteAcceptance() {
                 Decline
               </Button>
             </div>
+
+            <AlertDialog open={declineDialogOpen} onOpenChange={setDeclineDialogOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Decline this quote?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will notify the contractor that you've declined. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                    onClick={() => { setDeclineDialogOpen(false); handleRespond("declined"); }}
+                  >
+                    Yes, Decline
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
 
