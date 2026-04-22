@@ -106,6 +106,25 @@ const STEP_2_SCHEMA = {
   },
 };
 
+// ─── Helper: extract text content from LLM responses ─────────────────────────
+// When thinking mode is active the model may return content as an array of parts
+// (e.g. [{type:"thinking",text:"..."},{type:"text",text:"{...json...}"}]).
+// This helper always returns the plain-text / JSON portion as a string.
+function extractLLMContent(content: string | Array<{ type: string; text?: string }> | undefined): string {
+  if (!content) return "{}";
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    // Prefer the explicit "text" typed part (the actual JSON output)
+    const textPart = content.find(p => p.type === "text");
+    if (textPart?.text) return textPart.text;
+    // Fallback: last element that has a text property
+    for (let i = content.length - 1; i >= 0; i--) {
+      if (content[i]?.text) return content[i].text!;
+    }
+  }
+  return JSON.stringify(content);
+}
+
 // ─── Main SSE endpoint ────────────────────────────────────────────────────────
 orchestratedTakeoffRouter.get("/api/orchestrated-takeoff", async (req: Request, res: Response) => {
   // Set SSE headers
@@ -234,11 +253,17 @@ Quote Tone: ${companyProfile.quoteTone ?? "professional"}` : "";
       ? `\n\nA Scope of Works / Specification document has also been provided. Cross-reference it with the plan for inclusions, exclusions, and specified products.`
       : "";
     if (mode === "vision" && imageUrls.length > 0) {
-      // Send ALL plan pages as separate image_url items so the LLM sees every page
-      const content: any[] = imageUrls.map(url => ({
-        type: "image_url",
-        image_url: { url, detail: "high" as const },
-      }));
+      // Send ALL plan pages so the LLM sees every page.
+      // PDFs MUST be sent as file_url (not image_url) — the LLM cannot parse a
+      // PDF when it's addressed as an image, which causes it to see a blank input
+      // and return 0 quantities / 0% confidence (the "$0.00" bug).
+      const content: any[] = imageUrls.map(url => {
+        const isPdf = /\.pdf$/i.test(url.split("?")[0]);
+        if (isPdf) {
+          return { type: "file_url", file_url: { url, mime_type: "application/pdf" as const } };
+        }
+        return { type: "image_url", image_url: { url, detail: "high" as const } };
+      });
       // Attach scope doc as a second image/PDF if provided
       if (scopeDocUrl) {
         const isImage = /\.(jpg|jpeg|png|webp)$/i.test(scopeDocUrl);
@@ -285,7 +310,8 @@ ${companyContext}`,
     });
 
     const step1Raw = step1Response.choices[0]?.message?.content;
-    const step1 = JSON.parse(typeof step1Raw === "string" ? step1Raw : JSON.stringify(step1Raw));
+    const step1 = JSON.parse(extractLLMContent(step1Raw as any));
+    console.log(`[Orchestrated] Step 1 done: projectType=${step1.projectType}, rooms=${step1.rooms?.length ?? 0}, complexity=${step1.complexity}`);
 
     sendEvent(res, "step", {
       step: 1,
@@ -331,7 +357,8 @@ Only include work from the meter/regulator onwards (internal pipework, appliance
     });
 
     const step2Raw = step2Response.choices[0]?.message?.content;
-    const step2 = JSON.parse(typeof step2Raw === "string" ? step2Raw : JSON.stringify(step2Raw));
+    const step2 = JSON.parse(extractLLMContent(step2Raw as any));
+    console.log(`[Orchestrated] Step 2 done: totalItems=${step2.totalItems}, sections=${step2.sections?.length ?? 0}, lowConf=${step2.lowConfidenceCount}`);
 
     sendEvent(res, "step", {
       step: 2,
@@ -407,7 +434,8 @@ ${JSON.stringify(step2.sections, null, 2)}`,
     });
 
     const step3Raw = step3Response.choices[0]?.message?.content;
-    const step3 = JSON.parse(typeof step3Raw === "string" ? step3Raw : JSON.stringify(step3Raw));
+    const step3 = JSON.parse(extractLLMContent(step3Raw as any));
+    console.log(`[Orchestrated] Step 3 done: pricedItems=${step3.pricedItems?.length ?? 0}, priceBookHits=${step3.priceBookHits}`);
 
     const totalMaterials = step3.pricedItems
       .filter((i: any) => i.category === "Materials")
@@ -485,7 +513,8 @@ Return JSON with:
     });
 
     const step4Raw = step4Response.choices[0]?.message?.content;
-    const step4 = JSON.parse(typeof step4Raw === "string" ? step4Raw : JSON.stringify(step4Raw));
+    const step4 = JSON.parse(extractLLMContent(step4Raw as any));
+    console.log(`[Orchestrated] Step 4 done: confidence=${step4.overallConfidence}%, flags=${step4.missingItems?.length ?? 0} missing, ${step4.complianceFlags?.length ?? 0} compliance`);
 
     const flagCount = step4.missingItems.length + step4.complianceFlags.length + step4.provisionalSums.length;
     sendEvent(res, "step", {

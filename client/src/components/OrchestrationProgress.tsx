@@ -81,6 +81,10 @@ export function OrchestrationProgress({
 
     const es = new EventSource(url);
 
+    // Guard against double-firing: onerror can fire after `complete` when the server
+    // closes the SSE connection immediately after sending the final event.
+    let completed = false;
+
     es.addEventListener("step", (e) => {
       const data = JSON.parse(e.data) as OrchestrationStep;
       setSteps(prev => prev.map(s => s.step === data.step ? { ...s, ...data } : s));
@@ -88,12 +92,16 @@ export function OrchestrationProgress({
     });
 
     es.addEventListener("complete", (e) => {
+      if (completed) return;
+      completed = true;
       es.close();
       const result = JSON.parse(e.data);
       onComplete(result);
     });
 
     es.addEventListener("error", (e) => {
+      if (completed) return;
+      completed = true;
       es.close();
       try {
         const data = JSON.parse((e as MessageEvent).data ?? "{}");
@@ -105,6 +113,8 @@ export function OrchestrationProgress({
 
     // Fallback: if SSE native error fires (connection drop)
     es.onerror = () => {
+      if (completed) return;
+      completed = true;
       es.close();
       onError("Connection to AI server lost. Please try again.");
     };
