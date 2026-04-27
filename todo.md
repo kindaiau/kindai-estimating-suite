@@ -936,3 +936,20 @@
 - [x] Added /moytle route alias (both /motyl and /moytle now work)
 - [x] Updated hero stat from $60K+ to $100K+ saving (matches Motyl's volume)
 - [ ] Save checkpoint and publish
+
+## URGENT: Switch Email System from Gmail SMTP to Resend API (28 Apr 2026)
+- [x] Created resendSender.ts — Resend API email sender (replaces gmailSender.ts)
+- [x] Updated welcomeEmail.ts to use Resend instead of Gmail
+- [x] Updated betaNurture.ts to use Resend instead of Gmail
+- [x] Updated env.ts to require RESEND_API_KEY (not BREVO_API_KEY)
+- [x] Updated server cron log messages from Gmail to Resend
+- [x] Wrote 21 vitest tests for Resend email integration (all passing)
+- [x] Approved all 10 beta signups
+- [x] Built apology/welcome-back email (Matt's voice, honest, with ebook gift)
+- [x] Added admin endpoints: beta.sendApology + beta.sendApologyBulk
+- [x] Sent apology emails to all 10 beta users (10/10 delivered via Resend)
+- [x] Included ebook gift: "From Plans to Quote in Minutes"
+- [x] All email links point to kindaiestimator.com (dashboard, AI takeoff, beta)
+- [x] Full campaign flow working: signup → welcome → nurture day1/3/7/14 via Resend
+- [x] Re-queued 23 failed nurture emails + 40 total now scheduled via Resend
+- [ ] Save checkpoint and publish fix to production

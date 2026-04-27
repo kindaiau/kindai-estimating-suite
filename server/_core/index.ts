@@ -127,7 +127,7 @@ async function startServer() {
     // Seed default materials library on startup (idempotent)
     seedMaterials().catch(err => console.warn("[Seed] Materials seed failed:", err.message));
 
-    // ── Nurture email cron — runs every 15 minutes via Gmail SMTP ──
+    // ── Nurture email cron — runs every 15 minutes via Resend API ──
     setInterval(() => {
       processDueNurtureEmails().catch(err =>
         console.warn("[Nurture] Cron processing failed:", err.message)
@@ -139,7 +139,7 @@ async function startServer() {
         console.warn("[Nurture] Initial processing failed:", err.message)
       );
     }, 30_000);
-    console.log("[Nurture] Cron started — processing due emails every 15 minutes via Gmail SMTP");
+    console.log("[Nurture] Cron started — processing due emails every 15 minutes via Resend API");
   });
 }
 

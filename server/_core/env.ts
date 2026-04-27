@@ -38,7 +38,7 @@ const FEATURE_REQUIREMENTS: Record<FeatureKey, FeatureRequirement> = {
   },
   email: {
     label: "Email & CRM",
-    required: ["BREVO_API_KEY"],
+    required: ["RESEND_API_KEY"],
     optional: ["HUBSPOT_API_KEY"],
   },
   ai: {
@@ -86,7 +86,7 @@ export const ENV = {
   stripeWebhookSecret: readEnv("STRIPE_WEBHOOK_SECRET"),
   forgeApiUrl: readEnv("BUILT_IN_FORGE_API_URL"),
   forgeApiKey: readEnv("BUILT_IN_FORGE_API_KEY"),
-  brevoApiKey: readEnv("BREVO_API_KEY"),
+  resendApiKey: readEnv("RESEND_API_KEY"),
   hubspotApiKey: readEnv("HUBSPOT_API_KEY"),
   openAiApiKey: readEnv("OPENAI_API_KEY"),
   oauthPortalUrl: readEnv("VITE_OAUTH_PORTAL_URL"),
@@ -97,8 +97,7 @@ export const ENV = {
   analyticsWebsiteId: readEnv("VITE_ANALYTICS_WEBSITE_ID"),
   xeroClientId: readEnv("XERO_CLIENT_ID"),
   xeroClientSecret: readEnv("XERO_CLIENT_SECRET"),
-  gmailUser: readEnv("GMAIL_USER"),
-  gmailAppPassword: readEnv("GMAIL_APP_PASSWORD"),
+  // Gmail SMTP removed — using Resend API for email delivery
   isProduction: process.env.NODE_ENV === "production",
 };
 

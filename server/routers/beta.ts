@@ -6,6 +6,7 @@ import { betaSignups } from "../../drizzle/schema";
 import { notifyOwner } from "../_core/notification";
 import { createBetaSignupInHubSpot } from "../hubspot";
 import { sendBetaWelcomeEmail } from "../welcomeEmail";
+import { sendApologyEmail } from "../apologyEmail";
 import { scheduleNurtureForSignup } from "./betaNurture";
 import {
   buildMetaUserData,
@@ -128,7 +129,7 @@ export const betaRouter = router({
 
       const spotNumber = claimed + 1;
 
-      // Send welcome email via Gmail (fire-and-forget)
+      // Send welcome email via Resend (fire-and-forget)
       sendBetaWelcomeEmail({
         name: input.name,
         email: input.email,
@@ -232,5 +233,63 @@ export const betaRouter = router({
       }
 
       return { success: true };
+    }),
+
+  // Admin: send apology/welcome-back email to a specific signup
+  sendApology: protectedProcedure
+    .input(z.object({ id: z.number(), ebookUrl: z.string().url().optional(), ebookTitle: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new Error("Forbidden");
+      const db = (await getDb())!;
+
+      const [signup] = await db
+        .select()
+        .from(betaSignups)
+        .where(eq(betaSignups.id, input.id))
+        .limit(1);
+
+      if (!signup) throw new Error("Signup not found");
+
+      const messageId = await sendApologyEmail({
+        name: signup.name,
+        email: signup.email,
+        spotNumber: signup.id,
+        trade: signup.trade ?? undefined,
+        ebookUrl: input.ebookUrl,
+        ebookTitle: input.ebookTitle,
+      });
+
+      return { success: !!messageId, messageId };
+    }),
+
+  // Admin: send apology email to ALL approved signups (bulk)
+  sendApologyBulk: protectedProcedure
+    .input(z.object({ ebookUrl: z.string().url().optional(), ebookTitle: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") throw new Error("Forbidden");
+      const db = (await getDb())!;
+
+      const signups = await db
+        .select()
+        .from(betaSignups)
+        .where(eq(betaSignups.status, "approved"));
+
+      const results: Array<{ email: string; success: boolean; messageId?: string | null }> = [];
+
+      for (const signup of signups) {
+        // Small delay between sends to avoid rate limiting
+        await new Promise((r) => setTimeout(r, 1000));
+        const messageId = await sendApologyEmail({
+          name: signup.name,
+          email: signup.email,
+          spotNumber: signup.id,
+          trade: signup.trade ?? undefined,
+          ebookUrl: input.ebookUrl,
+          ebookTitle: input.ebookTitle,
+        });
+        results.push({ email: signup.email, success: !!messageId, messageId });
+      }
+
+      return { sent: results.filter((r) => r.success).length, failed: results.filter((r) => !r.success).length, results };
     }),
 });
