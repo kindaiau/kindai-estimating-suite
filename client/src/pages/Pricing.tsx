@@ -13,6 +13,13 @@ import { motion, useInView, useMotionValue, useSpring, AnimatePresence } from "f
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
 
 // ─── Tier definitions ─────────────────────────────────────────────────────────
+// Takeoff level labels shown on cards
+const TAKEOFF_LEVELS = {
+  quickQuote: { label: "Quick Quote", desc: "Text-based — describe the job, AI applies your price book", color: "bg-gray-100 text-gray-600" },
+  planReading: { label: "Plan Reading", desc: "Upload PDF plans — GPT-4o Vision reads dimensions & counts items", color: "bg-violet-100 text-violet-700", badge: "Vision AI" },
+  fullTakeoff: { label: "Full AI Takeoff", desc: "Plan Reading + orchestrated 5-step pipeline + correction history", color: "bg-orange-100 text-orange-700", badge: "Multimodal" },
+};
+
 const TIERS = [
   {
     id: "free",
@@ -25,13 +32,14 @@ const TIERS = [
     cta: "Get Started Free",
     ctaVariant: "outline" as const,
     description: "Get a feel for the AI before you commit.",
+    takeoffs: { quickQuote: "3 / month", planReading: null, fullTakeoff: null },
     features: [
-      { label: "3 AI Takeoffs / month", included: true },
-      { label: "1 Vision Takeoff / month", included: true },
+      { label: "Quick Quote — 3 / month", included: true },
+      { label: "Plan Reading (Vision AI)", included: false },
+      { label: "Full AI Takeoff", included: false },
       { label: "5 Projects", included: true },
       { label: "Company Memory", included: false },
       { label: "Correction Learning", included: false },
-      { label: "Orchestrated AI Workflow", included: false },
       { label: "Accuracy Dashboard", included: false },
       { label: "Xero Integration", included: false },
       { label: "PDF Export", included: false },
@@ -49,13 +57,14 @@ const TIERS = [
     cta: "Start Pro",
     ctaVariant: "default" as const,
     description: "Your prices, your rules. The AI learns your business from day one.",
+    takeoffs: { quickQuote: "Unlimited", planReading: "10 / month", fullTakeoff: null },
     features: [
-      { label: "20 AI Takeoffs / month", included: true },
-      { label: "10 Vision Takeoffs / month", included: true },
+      { label: "Quick Quote — Unlimited", included: true },
+      { label: "Plan Reading (Vision AI) — 10 / mo", included: true, highlight: true },
+      { label: "Full AI Takeoff", included: false },
       { label: "50 Projects", included: true },
       { label: "Company Memory (price book)", included: true },
       { label: "Correction Learning Loop", included: true },
-      { label: "Orchestrated AI Workflow", included: false },
       { label: "Accuracy Dashboard", included: false },
       { label: "Xero Integration", included: false },
       { label: "PDF Export", included: true },
@@ -73,13 +82,14 @@ const TIERS = [
     cta: "Start Business",
     ctaVariant: "default" as const,
     description: "Full AI orchestration, Xero sync, and accuracy tracking for serious businesses.",
+    takeoffs: { quickQuote: "Unlimited", planReading: "Unlimited", fullTakeoff: "20 / month" },
     features: [
-      { label: "Unlimited AI Takeoffs", included: true },
-      { label: "Unlimited Vision Takeoffs", included: true },
+      { label: "Quick Quote — Unlimited", included: true },
+      { label: "Plan Reading (Vision AI) — Unlimited", included: true, highlight: true },
+      { label: "Full AI Takeoff — 20 / mo", included: true, highlight: true },
       { label: "Unlimited Projects", included: true },
       { label: "Company Memory (price book)", included: true },
       { label: "Correction Learning Loop", included: true },
-      { label: "Orchestrated AI Workflow", included: true },
       { label: "Accuracy Dashboard", included: true },
       { label: "Xero Integration", included: true },
       { label: "PDF Export", included: true },
@@ -97,13 +107,14 @@ const TIERS = [
     cta: "Start Enterprise",
     ctaVariant: "default" as const,
     description: "White-label, team management, priority support, and custom integrations.",
+    takeoffs: { quickQuote: "Unlimited", planReading: "Unlimited", fullTakeoff: "Unlimited" },
     features: [
-      { label: "Unlimited AI Takeoffs", included: true },
-      { label: "Unlimited Vision Takeoffs", included: true },
+      { label: "Quick Quote — Unlimited", included: true },
+      { label: "Plan Reading (Vision AI) — Unlimited", included: true, highlight: true },
+      { label: "Full AI Takeoff — Unlimited", included: true, highlight: true },
       { label: "Unlimited Projects", included: true },
       { label: "Company Memory (price book)", included: true },
       { label: "Correction Learning Loop", included: true },
-      { label: "Orchestrated AI Workflow", included: true },
       { label: "Accuracy Dashboard", included: true },
       { label: "Xero Integration", included: true },
       { label: "White-label Branding", included: true },
@@ -122,11 +133,12 @@ const TIERS = [
     cta: "Talk to Us",
     ctaVariant: "outline" as const,
     description: "Custom pricing built around your team size, usage volume, and integration needs.",
+    takeoffs: { quickQuote: "Unlimited", planReading: "Unlimited", fullTakeoff: "Unlimited" },
     features: [
       { label: "Everything in Enterprise", included: true },
+      { label: "Custom AI Training Data", included: true },
       { label: "Unlimited Team Members", included: true },
       { label: "Dedicated Account Manager", included: true },
-      { label: "Custom AI Training Data", included: true },
       { label: "SLA + DPA Agreement", included: true },
       { label: "Custom Integrations", included: true },
       { label: "On-site Onboarding", included: true },
@@ -136,12 +148,26 @@ const TIERS = [
 ];
 
 const FEATURE_HIGHLIGHTS = [
-  { icon: Brain, title: "Orchestrated AI", desc: "5-step pipeline — Plan Interpretation → Quantity Extraction → Pricing → Business Rules → Draft Assembly", tier: "Business+" },
-  { icon: Database, title: "Company Memory", desc: "Your price book, AI instructions, and job templates — the AI learns your business and applies your rates automatically", tier: "Pro+" },
-  { icon: GitBranch, title: "Correction Learning", desc: "Every edit you make trains the AI. After 10 jobs it starts pre-adjusting based on your patterns", tier: "Pro+" },
-  { icon: BarChart3, title: "Accuracy Dashboard", desc: "Track estimated vs actual, see where the AI is over/under, and measure improvement over time", tier: "Business+" },
-  { icon: FileText, title: "Xero Integration", desc: "Push any quote directly to Xero as a draft invoice. One click from estimate to invoice.", tier: "Business+" },
-  { icon: Shield, title: "Approval Workflow", desc: "Draft → Under Review → Approved → Sent. Full audit log for every estimate state change.", tier: "Enterprise+" },
+  {
+    icon: Sparkles,
+    title: "Plan Reading — Vision AI",
+    desc: "Powered by GPT-4o multimodal. Upload any PDF plan and the AI visually reads dimensions, counts fixtures, identifies components, and builds a first-pass takeoff — just like a trained estimator would.",
+    tier: "Pro+",
+    aiLabel: "GPT-4o Vision",
+    aiColor: "bg-violet-100 text-violet-700",
+  },
+  {
+    icon: Brain,
+    title: "Full AI Takeoff — Multimodal",
+    desc: "The most advanced takeoff on the market. GPT-4o reads your plans, cross-references your price book, applies your correction history, and runs a 5-step orchestrated pipeline: Plan Interpretation → Quantity Extraction → Pricing → Business Rules → Draft Assembly.",
+    tier: "Business+",
+    aiLabel: "Multimodal AI",
+    aiColor: "bg-orange-100 text-orange-700",
+  },
+  { icon: Database, title: "Company Memory", desc: "Your price book, AI instructions, and job templates — the AI learns your business and applies your rates automatically", tier: "Pro+", aiLabel: null, aiColor: null },
+  { icon: GitBranch, title: "Correction Learning", desc: "Every edit you make trains the AI. After 10 jobs it starts pre-adjusting based on your patterns", tier: "Pro+", aiLabel: null, aiColor: null },
+  { icon: BarChart3, title: "Accuracy Dashboard", desc: "Track estimated vs actual, see where the AI is over/under, and measure improvement over time", tier: "Business+", aiLabel: null, aiColor: null },
+  { icon: FileText, title: "Xero Integration", desc: "Push any quote directly to Xero as a draft invoice. One click from estimate to invoice.", tier: "Business+", aiLabel: null, aiColor: null },
 ];
 
 const COMPETITOR_BENCHMARKS = [
@@ -520,6 +546,87 @@ export default function Pricing() {
         </div>
       </section>
 
+      {/* Vision AI callout */}
+      <section className="py-14 px-4 bg-gray-950 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/3 w-96 h-96 rounded-full bg-violet-600/10 blur-3xl" />
+          <div className="absolute bottom-0 right-1/3 w-96 h-96 rounded-full bg-orange-600/10 blur-3xl" />
+        </div>
+        <div className="max-w-5xl mx-auto relative">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/30 rounded-full px-4 py-1.5 text-sm font-bold text-violet-400 mb-4">
+              <Sparkles className="w-3.5 h-3.5" /> Powered by GPT-4o Multimodal AI
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white mb-3">
+              Three levels of AI intelligence
+            </h2>
+            <p className="text-gray-400 text-sm max-w-xl mx-auto">
+              Each tier unlocks a more powerful AI engine. Start with Quick Quote, graduate to Vision AI plan reading, then run the full multimodal pipeline.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-5">
+            {[
+              {
+                level: "01",
+                name: "Quick Quote",
+                badge: "Free + Pro",
+                badgeColor: "bg-gray-700 text-gray-300",
+                desc: "Describe the job in plain English. The AI applies your price book, labour rates, and margin rules to build a GST-ready quote in seconds.",
+                model: "GPT-4o Text",
+                modelColor: "text-gray-400",
+                icon: "💬",
+              },
+              {
+                level: "02",
+                name: "Plan Reading",
+                badge: "Pro+",
+                badgeColor: "bg-violet-900/60 text-violet-300 border border-violet-700",
+                desc: "Upload any PDF plan. GPT-4o Vision reads the drawing like a trained estimator — counting fixtures, reading dimensions, identifying components — and builds the first-pass takeoff automatically.",
+                model: "GPT-4o Vision AI",
+                modelColor: "text-violet-400",
+                icon: "👁️",
+                highlight: true,
+              },
+              {
+                level: "03",
+                name: "Full AI Takeoff",
+                badge: "Business+",
+                badgeColor: "bg-orange-900/60 text-orange-300 border border-orange-700",
+                desc: "The complete pipeline. Plan Reading + your price book + correction history + 5-step orchestrated workflow: Plan Interpretation → Quantity Extraction → Pricing → Business Rules → Draft Assembly.",
+                model: "GPT-4o Multimodal",
+                modelColor: "text-orange-400",
+                icon: "🧠",
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={item.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className={`rounded-2xl p-6 border ${
+                  item.highlight
+                    ? "bg-violet-950/60 border-violet-700/50 shadow-lg shadow-violet-900/20"
+                    : "bg-gray-900 border-gray-800"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-3xl">{item.icon}</span>
+                  <span className={`text-[10px] font-black px-2.5 py-1 rounded-full ${item.badgeColor}`}>{item.badge}</span>
+                </div>
+                <div className="text-gray-600 text-xs font-bold mb-1">LEVEL {item.level}</div>
+                <h3 className="text-white font-black text-lg mb-3">{item.name}</h3>
+                <p className="text-gray-400 text-xs leading-relaxed mb-4">{item.desc}</p>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                  <span className={`text-xs font-bold ${item.modelColor}`}>{item.model}</span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Feature highlights */}
       <section className="py-16 px-4 bg-white">
         <div className="max-w-5xl mx-auto">
@@ -547,6 +654,9 @@ export default function Pricing() {
                 <div className="flex items-center gap-2 mb-2">
                   <h3 className="font-black text-gray-900 text-sm">{feat.title}</h3>
                   <span className="text-[10px] bg-orange-100 text-orange-600 font-bold px-2 py-0.5 rounded-full">{feat.tier}</span>
+                  {feat.aiLabel && (
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${feat.aiColor}`}>{feat.aiLabel}</span>
+                  )}
                 </div>
                 <p className="text-xs text-gray-500 leading-relaxed">{feat.desc}</p>
               </motion.div>

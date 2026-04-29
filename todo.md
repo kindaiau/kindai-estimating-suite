@@ -935,7 +935,7 @@
 - [x] Upgrade Motyl demo page: added How It Works section, competitive comparison table, Microvellum integration, upgraded CTA
 - [x] Added /moytle route alias (both /motyl and /moytle now work)
 - [x] Updated hero stat from $60K+ to $100K+ saving (matches Motyl's volume)
-- [ ] Save checkpoint and publish
+- [x] Save checkpoint and publish
 
 ## URGENT: Switch Email System from Gmail SMTP to Resend API (28 Apr 2026)
 - [x] Created resendSender.ts — Resend API email sender (replaces gmailSender.ts)
@@ -962,4 +962,11 @@
 - [x] Write 21 vitest tests for ebook email sequence (all passing)
 - [x] Write Facebook/Instagram ad copy + creative brief (Pain angle + Curiosity angle)
 - [x] Organic post copy for Facebook groups + LinkedIn
+- [x] Save checkpoint and publish
+
+## Pricing Page — Takeoff Tier Restructure (29 Apr 2026)
+- [ ] Rename takeoff types: Quick Quote / Plan Reading (Vision AI) / Full AI Takeoff
+- [ ] Add AI model labels (GPT-4o multimodal, Vision AI badge on Plan Reading)
+- [ ] Add multimodal credibility quotes/callouts to pricing page
+- [ ] Update tier feature lists with new takeoff structure
 - [ ] Save checkpoint and publish
