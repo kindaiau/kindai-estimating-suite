@@ -952,4 +952,14 @@
 - [x] All email links point to kindaiestimator.com (dashboard, AI takeoff, beta)
 - [x] Full campaign flow working: signup → welcome → nurture day1/3/7/14 via Resend
 - [x] Re-queued 23 failed nurture emails + 40 total now scheduled via Resend
-- [ ] Save checkpoint and publish fix to production
+- [x] Save checkpoint and publish fix to production
+
+## Lead Gen Machine — Ebook Funnel (29 Apr 2026)
+- [x] Build /guide landing page — email capture + instant ebook delivery via Resend
+- [x] Add ebook_leads table to database schema (migration 0015 applied)
+- [x] Add ebook.capture tRPC procedure (public) + ebook.list + ebook.stats admin procedures
+- [x] Wire 5-email ebook nurture sequence (Day 0, 2, 4, 7, 10) via Resend
+- [x] Write 21 vitest tests for ebook email sequence (all passing)
+- [x] Write Facebook/Instagram ad copy + creative brief (Pain angle + Curiosity angle)
+- [x] Organic post copy for Facebook groups + LinkedIn
+- [ ] Save checkpoint and publish

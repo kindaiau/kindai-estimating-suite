@@ -493,6 +493,31 @@ export const betaNurtureEmails = mysqlTable("beta_nurture_emails", {
 export type BetaNurtureEmail = typeof betaNurtureEmails.$inferSelect;
 export type InsertBetaNurtureEmail = typeof betaNurtureEmails.$inferInsert;
 
+// ─── Ebook Leads (Free Guide Lead Magnet) ────────────────────────────────────
+export const ebookLeads = mysqlTable("ebook_leads", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  trade: varchar("trade", { length: 64 }),
+  source: varchar("source", { length: 128 }).default("guide_page"), // guide_page, fb_ad, organic, etc.
+  utmSource: varchar("utmSource", { length: 128 }),
+  utmCampaign: varchar("utmCampaign", { length: 128 }),
+  utmMedium: varchar("utmMedium", { length: 128 }),
+  ebookSentAt: bigint("ebookSentAt", { mode: "number" }), // UTC ms
+  // Nurture sequence tracking
+  nurtureDay2SentAt: bigint("nurtureDay2SentAt", { mode: "number" }),
+  nurtureDay4SentAt: bigint("nurtureDay4SentAt", { mode: "number" }),
+  nurtureDay7SentAt: bigint("nurtureDay7SentAt", { mode: "number" }),
+  nurtureDay10SentAt: bigint("nurtureDay10SentAt", { mode: "number" }),
+  // Conversion tracking
+  convertedToBeta: boolean("convertedToBeta").default(false),
+  convertedAt: bigint("convertedAt", { mode: "number" }),
+  hubspotContactId: varchar("hubspotContactId", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type EbookLead = typeof ebookLeads.$inferSelect;
+export type InsertEbookLead = typeof ebookLeads.$inferInsert;
+
 // ─── Company Profiles (Company-Wide Memory & Defaults) ──────────────────────
 export const companyProfiles = mysqlTable("company_profiles", {
   id: int("id").autoincrement().primaryKey(),

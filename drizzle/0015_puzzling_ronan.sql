@@ -1,0 +1,21 @@
+CREATE TABLE `ebook_leads` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`name` varchar(255) NOT NULL,
+	`email` varchar(320) NOT NULL,
+	`trade` varchar(64),
+	`source` varchar(128) DEFAULT 'guide_page',
+	`utmSource` varchar(128),
+	`utmCampaign` varchar(128),
+	`utmMedium` varchar(128),
+	`ebookSentAt` bigint,
+	`nurtureDay2SentAt` bigint,
+	`nurtureDay4SentAt` bigint,
+	`nurtureDay7SentAt` bigint,
+	`nurtureDay10SentAt` bigint,
+	`convertedToBeta` boolean DEFAULT false,
+	`convertedAt` bigint,
+	`hubspotContactId` varchar(64),
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `ebook_leads_id` PRIMARY KEY(`id`),
+	CONSTRAINT `ebook_leads_email_unique` UNIQUE(`email`)
+);
