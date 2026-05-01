@@ -255,23 +255,23 @@ export default function Home() {
                 Kindai reads your plans, applies your price book, and builds a GST-ready quote in 60 seconds. Built for Australian tradies.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center lg:items-start justify-center lg:justify-start w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center lg:items-start justify-center lg:justify-start w-full sm:w-auto">
                 <Button
                   onClick={handleTryAI}
                   size="lg"
-                  className="kindai-btn-primary w-full sm:w-auto px-6 sm:px-8 py-4 rounded-full text-base font-black h-auto shadow-2xl"
+                  className="kindai-btn-primary w-full sm:w-auto px-4 sm:px-8 py-3 sm:py-4 rounded-full text-sm sm:text-base font-black h-auto shadow-2xl"
                 >
-                  <Camera className="w-5 h-5 mr-2" />
+                  <Camera className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                   Claim Free Pilot Spot
-                  <ChevronRight className="w-5 h-5 ml-2" />
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
                 </Button>
                 <Button
                   onClick={() => navigate("/demo")}
                   size="lg"
                   variant="outline"
-                  className="w-full sm:w-auto px-6 sm:px-8 py-4 rounded-full text-base font-black h-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
+                  className="w-full sm:w-auto px-4 sm:px-8 py-3 sm:py-4 rounded-full text-sm sm:text-base font-black h-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
                 >
-                  <Play className="w-5 h-5 mr-2" />
+                  <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                   Watch Demo
                 </Button>
               </div>
@@ -415,21 +415,21 @@ export default function Home() {
               Your browser does not support the video tag.
             </video>
           </div>
-          <div className="flex justify-center gap-6 mt-6">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-6 mt-6 px-4 sm:px-0">
             <Button
               onClick={handleTryAI}
               size="lg"
-              className="kindai-btn-primary px-8 py-4 rounded-full text-base font-black h-auto shadow-xl"
+              className="kindai-btn-primary w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-full text-sm sm:text-base font-black h-auto shadow-xl"
             >
-              <Camera className="w-5 h-5 mr-2" /> Claim Free Pilot Spot
+              <Camera className="w-4 h-4 sm:w-5 sm:h-5 mr-2" /> Claim Free Pilot Spot
             </Button>
             <Button
               onClick={() => navigate("/demo")}
               size="lg"
               variant="outline"
-              className="px-8 py-4 rounded-full text-base font-black h-auto border-white/30 text-white hover:bg-white/10"
+              className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-full text-sm sm:text-base font-black h-auto border-white/30 text-white hover:bg-white/10"
             >
-              <Play className="w-5 h-5 mr-2" /> Watch Demo
+              <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" /> Watch Demo
             </Button>
           </div>
         </div>
