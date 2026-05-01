@@ -780,9 +780,15 @@ export default function Home() {
             <FadeUp delay={0.1}>
               <h4 className="text-white font-black text-sm mb-4 tracking-wide uppercase">Product</h4>
               <ul className="space-y-2.5">
-                {["AI Takeoff", "Company Memory", "Xero Integration", "Accuracy Dashboard", "Pricing"].map(link => (
-                  <li key={link}>
-                    <a href="#" className="text-gray-400 text-sm hover:text-white transition-colors duration-200 inline-block">{link}</a>
+                {[
+                  { label: "AI Takeoff", href: "/ai-takeoff" },
+                  { label: "Company Memory", href: "/dashboard" },
+                  { label: "Xero Integration", href: "/dashboard" },
+                  { label: "Accuracy Dashboard", href: "/dashboard" },
+                  { label: "Pricing", href: "/pricing" },
+                ].map(link => (
+                  <li key={link.label}>
+                    <a href={link.href} className="text-gray-400 text-sm hover:text-white transition-colors duration-200 inline-block">{link.label}</a>
                   </li>
                 ))}
               </ul>
@@ -792,9 +798,16 @@ export default function Home() {
             <FadeUp delay={0.2}>
               <h4 className="text-white font-black text-sm mb-4 tracking-wide uppercase">Trades</h4>
               <ul className="space-y-2.5">
-                {["Electrical", "Plumbing", "Concrete", "Painting", "Carpentry", "All Trades"].map(link => (
-                  <li key={link}>
-                    <a href="#" className="text-gray-400 text-sm hover:text-white transition-colors duration-200 inline-block">{link}</a>
+                {[
+                  { label: "Electrical", href: "/ai-takeoff" },
+                  { label: "Plumbing", href: "/ai-takeoff" },
+                  { label: "Concrete", href: "/ai-takeoff" },
+                  { label: "Painting", href: "/ai-takeoff" },
+                  { label: "Carpentry", href: "/ai-takeoff" },
+                  { label: "All Trades", href: "/ai-takeoff" },
+                ].map(link => (
+                  <li key={link.label}>
+                    <a href={link.href} className="text-gray-400 text-sm hover:text-white transition-colors duration-200 inline-block">{link.label}</a>
                   </li>
                 ))}
               </ul>
