@@ -13,6 +13,11 @@ import { getDb } from "../db";
 import { ebookLeads } from "../../drizzle/schema";
 import { eq, desc, count } from "drizzle-orm";
 import { sendEbookDelivery } from "../ebookEmail";
+import {
+  buildMetaUserData,
+  extractMetaClickIdentifiers,
+  sendMetaConversionEvent,
+} from "../metaCapi";
 
 // ─── Public: Capture lead + send ebook ──────────────────────────────────────
 
@@ -29,7 +34,7 @@ export const ebookRouter = router({
         utmMedium: z.string().max(128).optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       // Check for duplicate
       const db = (await getDb())!;
 
@@ -80,6 +85,43 @@ export const ebookRouter = router({
       }
 
       console.log(`[Ebook] New lead captured: ${input.email} (${input.name})`);
+
+      // ─── Meta CAPI: Lead (ebook download = lead capture) ──
+      const ebookFbIds = extractMetaClickIdentifiers(ctx.req.headers.cookie);
+      const ebookClientIp =
+        (ctx.req.headers["x-forwarded-for"] as string | undefined)
+          ?.split(",")
+          .map((v) => v.trim())
+          .find(Boolean) ?? ctx.req.socket.remoteAddress ?? undefined;
+
+      sendMetaConversionEvent({
+        eventName: "Lead",
+        eventId: `ebook_lead_${inserted.id}_${Date.now()}`,
+        actionSource: "website",
+        eventSourceUrl: ctx.req.headers.referer ?? "https://kindaiestimator.com/guide",
+        customData: {
+          currency: "AUD",
+          value: 0,
+          content_name: "Ebook Lead Magnet",
+          content_category: "Lead Generation",
+          source: input.source ?? "guide_page",
+          trade: input.trade,
+        },
+        userData: buildMetaUserData({
+          email: input.email,
+          name: input.name,
+          clientIpAddress: ebookClientIp,
+          clientUserAgent: ctx.req.headers["user-agent"] ?? undefined,
+          fbp: ebookFbIds.fbp,
+          fbc: ebookFbIds.fbc,
+        }),
+      }).catch((err: unknown) => {
+        console.error(
+          "[Meta CAPI] Failed to send ebook Lead event:",
+          err instanceof Error ? err.message : String(err)
+        );
+      });
+
       return { success: true, alreadyRegistered: false };
     }),
 

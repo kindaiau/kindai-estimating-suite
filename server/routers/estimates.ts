@@ -9,6 +9,11 @@ import { GST_RATE } from "../../shared/trades";
 import { generateQuotePdf } from "../pdfGenerator";
 import { storagePut } from "../storage";
 import { INDUSTRY_BENCHMARKS } from "./ai";
+import {
+  buildMetaUserData,
+  extractMetaClickIdentifiers,
+  sendMetaConversionEvent,
+} from "../metaCapi";
 
 export const estimatesRouter = router({
   list: protectedProcedure.input(z.object({ projectId: z.number().optional() })).query(async ({ ctx, input }) => {
@@ -59,7 +64,44 @@ export const estimatesRouter = router({
       complianceState: input.complianceState,
       notes: input.notes,
     } as any);
-    return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0), quoteNumber };
+    const newEstimateId = Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0);
+
+    // ─── Meta CAPI: ViewContent (new estimate created = viewing estimator) ──
+    const { fbp, fbc } = extractMetaClickIdentifiers(ctx.req.headers.cookie);
+    const clientIpAddress =
+      (ctx.req.headers["x-forwarded-for"] as string | undefined)
+        ?.split(",")
+        .map((v) => v.trim())
+        .find(Boolean) ?? ctx.req.socket.remoteAddress ?? undefined;
+    const clientUserAgent = ctx.req.headers["user-agent"] ?? undefined;
+
+    sendMetaConversionEvent({
+      eventName: "ViewContent",
+      eventId: `estimate_create_${newEstimateId}_${Date.now()}`,
+      actionSource: "website",
+      eventSourceUrl: "https://kindaiestimator.com/ai-takeoff",
+      customData: {
+        currency: "AUD",
+        value: 0,
+        content_name: `New Estimate: ${input.title}`,
+        content_category: input.trade,
+        content_ids: [String(newEstimateId)],
+      },
+      userData: buildMetaUserData({
+        email: ctx.user.email ?? undefined,
+        clientIpAddress,
+        clientUserAgent,
+        fbp,
+        fbc,
+      }),
+    }).catch((err: unknown) => {
+      console.error(
+        "[Meta CAPI] Failed to send ViewContent event:",
+        err instanceof Error ? err.message : String(err)
+      );
+    });
+
+    return { id: newEstimateId, quoteNumber };
   }),
 
   update: protectedProcedure.input(z.object({
@@ -454,6 +496,41 @@ export const estimatesRouter = router({
       quotePdfUrl: url,
       quotePdfKey: fileKey,
     } as any).where(eq(estimates.id, input.id));
+
+    // ─── Meta CAPI: Purchase (quote PDF generated = quote sent to client) ──
+    const pdfFbIds = extractMetaClickIdentifiers(ctx.req.headers.cookie);
+    const pdfClientIp =
+      (ctx.req.headers["x-forwarded-for"] as string | undefined)
+        ?.split(",")
+        .map((v) => v.trim())
+        .find(Boolean) ?? ctx.req.socket.remoteAddress ?? undefined;
+
+    sendMetaConversionEvent({
+      eventName: "Purchase",
+      eventId: `quote_pdf_${input.id}_${Date.now()}`,
+      actionSource: "website",
+      eventSourceUrl: "https://kindaiestimator.com/dashboard",
+      customData: {
+        currency: "AUD",
+        value: totalNum,
+        content_name: `Quote: ${estimate.quoteNumber}`,
+        content_category: estimate.trade,
+        content_ids: [String(input.id)],
+        num_items: items.length,
+      },
+      userData: buildMetaUserData({
+        email: ctx.user.email ?? undefined,
+        clientIpAddress: pdfClientIp,
+        clientUserAgent: ctx.req.headers["user-agent"] ?? undefined,
+        fbp: pdfFbIds.fbp,
+        fbc: pdfFbIds.fbc,
+      }),
+    }).catch((err: unknown) => {
+      console.error(
+        "[Meta CAPI] Failed to send Purchase event:",
+        err instanceof Error ? err.message : String(err)
+      );
+    });
 
     return { url, fileKey };
   }),

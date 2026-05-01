@@ -21,6 +21,7 @@ import { eq, count } from "drizzle-orm";
 import { createBetaSignupInHubSpot } from "../hubspot.js";
 import { sendBetaWelcomeEmail } from "../welcomeEmail.js";
 import { scheduleNurtureForSignup } from "../routers/betaNurture.js";
+import { buildMetaUserData, sendMetaConversionEvent } from "../metaCapi.js";
 
 export const fbLeadWebhookRouter = Router();
 
@@ -153,7 +154,35 @@ fbLeadWebhookRouter.post("/fb-lead", async (req: Request, res: Response) => {
 
     // MySQL insertId is on the result object directly
     const signupId = (insertResult as unknown as { insertId: number }).insertId ?? 0;
-    console.log(`[FB Lead Webhook] Beta signup created: id=${signupId}, email=${email}, spot=#${spotNumber}`);
+     console.log(`[FB Lead Webhook] Beta signup created: id=${signupId}, email=${email}, spot=#${spotNumber}`);
+
+    // ── 3b. Meta CAPI: Lead (Facebook Ad lead) ──
+    sendMetaConversionEvent({
+      eventName: "Lead",
+      eventId: `fb_lead_${signupId}_${Date.now()}`,
+      actionSource: "website",
+      eventSourceUrl: "https://kindaiestimator.com/beta",
+      customData: {
+        currency: "AUD",
+        value: 0,
+        content_name: "Facebook Lead Ad",
+        content_category: "Kindai Beta Signup",
+        source: "fb_ad",
+        trade: trade,
+        state: state,
+        spot_number: spotNumber,
+        lead_id: payload.lead_id,
+      },
+      userData: buildMetaUserData({
+        email,
+        name,
+      }),
+    }).catch((err: unknown) => {
+      console.error(
+        "[Meta CAPI] Failed to send FB lead event:",
+        err instanceof Error ? err.message : String(err)
+      );
+    });
 
     // ── 4. HubSpot CRM ──────────────────────────────────────────────────────
     let hubspotResult: { contactId: string; dealId: string } | null = null;

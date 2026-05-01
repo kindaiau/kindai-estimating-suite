@@ -3,6 +3,11 @@ import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
+import {
+  buildMetaUserData,
+  extractMetaClickIdentifiers,
+  sendMetaConversionEvent,
+} from "../metaCapi";
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
@@ -43,6 +48,42 @@ export function registerOAuthRoutes(app: Express) {
 
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
+      // ─── Meta CAPI: CompleteRegistration ──────────────────────────────────
+      const { fbp, fbc } = extractMetaClickIdentifiers(req.headers.cookie);
+      const clientIpAddress =
+        (req.headers["x-forwarded-for"] as string | undefined)
+          ?.split(",")
+          .map((v) => v.trim())
+          .find(Boolean) ?? req.socket.remoteAddress ?? undefined;
+      const clientUserAgent = req.headers["user-agent"] ?? undefined;
+
+      sendMetaConversionEvent({
+        eventName: "CompleteRegistration",
+        eventId: `oauth_reg_${userInfo.openId}_${Date.now()}`,
+        actionSource: "website",
+        eventSourceUrl: "https://kindaiestimator.com/",
+        customData: {
+          content_name: "OAuth Login/Registration",
+          status: "complete",
+          currency: "AUD",
+          value: 0,
+          login_method: userInfo.loginMethod ?? userInfo.platform ?? "unknown",
+        },
+        userData: buildMetaUserData({
+          email: userInfo.email ?? undefined,
+          name: userInfo.name ?? undefined,
+          clientIpAddress,
+          clientUserAgent,
+          fbp,
+          fbc,
+        }),
+      }).catch((err: unknown) => {
+        console.error(
+          "[Meta CAPI] Failed to send CompleteRegistration event:",
+          err instanceof Error ? err.message : String(err)
+        );
+      });
 
       res.redirect(302, "/");
     } catch (error) {
