@@ -970,3 +970,9 @@
 - [ ] Add multimodal credibility quotes/callouts to pricing page
 - [ ] Update tier feature lists with new takeoff structure
 - [ ] Save checkpoint and publish
+
+## Three Follow-Up Tasks (30 Apr 2026)
+- [ ] Add Plan Reading FAQ entries to pricing page (file types, accuracy, commercial jobs)
+- [ ] Wire ebook nurture cron job (Day 2/4/7/10 emails via Resend)
+- [ ] Record Motyl AI Takeoff demo screen recording
+- [ ] Save checkpoint and publish

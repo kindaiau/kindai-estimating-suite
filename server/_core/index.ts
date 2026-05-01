@@ -13,6 +13,7 @@ import { xeroCallbackRouter } from "../routes/xeroCallback";
 import { orchestratedTakeoffRouter } from "../routes/orchestratedTakeoff";
 import { seedMaterials } from "../seedMaterials";
 import { processDueNurtureEmails } from "../routers/betaNurture";
+import { processEbookNurtureEmails } from "../ebookNurtureCron";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 
@@ -140,6 +141,20 @@ async function startServer() {
       );
     }, 30_000);
     console.log("[Nurture] Cron started — processing due emails every 15 minutes via Resend API");
+
+    // ── Ebook nurture cron — runs every 15 minutes via Resend API ──
+    setInterval(() => {
+      processEbookNurtureEmails().catch(err =>
+        console.warn("[EbookNurture] Cron processing failed:", err.message)
+      );
+    }, 15 * 60 * 1000);
+    // Also run once 60 seconds after startup
+    setTimeout(() => {
+      processEbookNurtureEmails().catch(err =>
+        console.warn("[EbookNurture] Initial processing failed:", err.message)
+      );
+    }, 60_000);
+    console.log("[EbookNurture] Cron started — processing Day 2/4/7/10 ebook nurture emails every 15 minutes");
   });
 }
 

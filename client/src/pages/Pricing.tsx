@@ -730,6 +730,18 @@ export default function Pricing() {
                 q: "Is my data used to train AI models?",
                 a: "No. Your uploaded plans, pricing, and job data are never used to train AI models. Your business data is not shared with any third party. Enterprise accounts can request a Data Processing Agreement.",
               },
+              {
+                q: "What file types does Plan Reading (Vision AI) support?",
+                a: "Plan Reading accepts PDF plans, architectural drawings, and engineering documents. It works best with standard A1/A3 construction plans, joinery elevations, electrical schematics, and plumbing layouts. JPG and PNG images of hand-drawn or scanned plans also work. Maximum file size is 50MB per upload.",
+              },
+              {
+                q: "How accurate is the AI plan reading? Can I trust the numbers?",
+                a: "The AI returns a confidence score with every takeoff (typically 75–92% for clear plans). It flags assumptions it made — e.g. 'assumed 2-pac finish based on elevation style'. You always review and adjust before the quote goes out. Think of it as a trained estimator doing the first pass in 60 seconds — you do the final check. Most users find it gets 85–90% of items right on the first read.",
+              },
+              {
+                q: "Can it handle commercial jobs — large builders, joinery contractors, fitouts?",
+                a: "Yes — this is where Plan Reading shines. Commercial joinery packages, multi-apartment fitouts, and large builder projects are exactly what the Full AI Takeoff tier is built for. The AI reads multi-page plan sets, identifies component schedules, and applies your commercial pricing. Enterprise and Enterprise+ plans include custom AI training on your specific job types and materials.",
+              },
             ].map((faq, i) => (
               <div key={i} className="bg-gray-50 rounded-xl p-5 border border-gray-100">
                 <h3 className="font-black text-gray-900 text-sm mb-2">{faq.q}</h3>

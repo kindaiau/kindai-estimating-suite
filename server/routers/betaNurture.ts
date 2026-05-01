@@ -62,7 +62,9 @@ export async function processDueNurtureEmails(): Promise<{
   const now = Date.now();
 
   // Find all scheduled emails that are due
-  const dueEmails = await db
+  // Note: MySQL2 driver rejects parameterised LIMIT values in some configurations.
+  // Workaround: fetch without limit then slice in JS.
+  const allDueEmails = await db
     .select()
     .from(betaNurtureEmails)
     .where(
@@ -70,8 +72,8 @@ export async function processDueNurtureEmails(): Promise<{
         eq(betaNurtureEmails.status, "scheduled"),
         lte(betaNurtureEmails.scheduledAt, now)
       )
-    )
-    .limit(50); // Process in batches
+    );
+  const dueEmails = allDueEmails.slice(0, 50); // Process in batches of 50
 
   let sent = 0;
   let failed = 0;
