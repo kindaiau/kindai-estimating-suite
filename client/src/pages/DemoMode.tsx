@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { pixelViewDemoPage, pixelStartTrial, pixelRunTakeoff } from "@/lib/metaPixel";
+import { getAnalyticsContext, trackEvent } from "@/lib/analytics";
 import { useAuth } from "@/_core/hooks/useAuth";
 import SEO from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
@@ -15,7 +16,7 @@ import {
   Camera, Sparkles, Loader2, CheckCircle2, DollarSign,
   Clock, Shield, ChevronRight, ArrowRight, Package,
   Users, TrendingUp, Zap, Star, Lock, BarChart3,
-  Upload, FileImage, X, ScanLine
+  Upload, FileImage, X, ScanLine, AlertTriangle
 } from "lucide-react";
 import ScopingQuestionsPanel from "@/components/ScopingQuestions";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
@@ -90,6 +91,7 @@ type DemoResult = {
     total: number;
   };
   demoMode: boolean;
+  aiFallback?: boolean;
 };
 
 export default function DemoMode() {
@@ -117,6 +119,10 @@ export default function DemoMode() {
   useEffect(() => {
     pixelViewDemoPage();
     pixelStartTrial();
+    trackEvent("demo_viewed", {
+      ...getAnalyticsContext(),
+      defaultTrade: selectedTrade,
+    });
   }, []);
 
   const uploadPlan = trpc.demo.uploadDemoPlan.useMutation();
@@ -161,9 +167,18 @@ export default function DemoMode() {
         }).then((data) => {
           setUploadedPlanUrls(prev => [...prev, data.url]);
           setUploadingCount(prev => Math.max(0, prev - 1));
+          trackEvent("demo_plan_uploaded", {
+            trade: selectedTrade,
+            fileType: ct,
+            pageCount: planFiles.length + valid.length,
+          });
         }).catch((err) => {
           toast.error(`Upload failed for ${file.name}: ${err.message}`);
           setUploadingCount(prev => Math.max(0, prev - 1));
+          trackEvent("demo_takeoff_failed", {
+            trade: selectedTrade,
+            reason: "plan_upload_failed",
+          });
         });
       };
       reader.readAsDataURL(file);
@@ -202,9 +217,21 @@ export default function DemoMode() {
       toast.success("AI takeoff complete! Scroll down to see your quote.");
       // Fire RunTakeoff custom event
       pixelRunTakeoff({ trade: selectedTrade, job_type: "demo" });
+      trackEvent("demo_takeoff_succeeded", {
+        trade: selectedTrade,
+        itemCount: data.items?.length ?? 0,
+        confidence: data.confidence ?? 0,
+        total: data.pricing?.total ?? 0,
+        aiFallback: Boolean(data.aiFallback),
+        pageCount: uploadedPlanUrls.length,
+      });
     },
     onError: (err) => {
       toast.error("Demo failed: " + err.message);
+      trackEvent("demo_takeoff_failed", {
+        trade: selectedTrade,
+        reason: "server_error",
+      });
     },
   });
 
@@ -213,20 +240,51 @@ export default function DemoMode() {
     setJobDescription(DEMO_PROMPTS[tradeId] ?? "");
     setScopingAnswers({});
     setResult(null);
+    trackEvent("demo_trade_selected", {
+      trade: tradeId,
+    });
   };
 
   const handleRun = () => {
     if (!selectedTrade) {
       toast.error("Please select a trade first.");
+      trackEvent("demo_takeoff_failed", { reason: "validation_missing_trade" });
+      return;
+    }
+    const missingRequired = getScopingQuestions(selectedTrade).filter((q) => {
+      if (!q.required) return false;
+      const value = scopingAnswers[q.id];
+      return value === undefined || value === "" || (Array.isArray(value) && value.length === 0);
+    });
+    if (missingRequired.length > 0) {
+      toast.error(`Please answer ${missingRequired.length} required scope question${missingRequired.length > 1 ? "s" : ""} before generating.`);
+      trackEvent("demo_takeoff_failed", {
+        trade: selectedTrade,
+        reason: "validation_missing_scope",
+        missingRequiredCount: missingRequired.length,
+      });
       return;
     }
     if (planFile && !uploadedPlanUrl) {
       toast.error("Plan is still uploading, please wait a moment.");
+      trackEvent("demo_takeoff_failed", {
+        trade: selectedTrade,
+        reason: "validation_plan_uploading",
+      });
       return;
     }
     // Inject scoping answers into the job description for the AI
     const scopingContext = formatScopingAnswers(getScopingQuestions(selectedTrade), scopingAnswers);
     const enrichedDescription = (jobDescription || "") + scopingContext;
+    trackEvent("demo_takeoff_started", {
+      trade: selectedTrade,
+      hasPlan: uploadedPlanUrls.length > 0,
+      pageCount: uploadedPlanUrls.length,
+      scopingAnswerCount: Object.keys(scopingAnswers).length,
+      markupPercent,
+      labourRate,
+      useTradePrice,
+    });
     runDemo.mutate({
       trade: selectedTrade,
       jobDescription: enrichedDescription || undefined,
@@ -450,6 +508,7 @@ export default function DemoMode() {
                         <span className="font-black text-pink-600">{markupPercent}%</span>
                       </div>
                       <Slider
+                        aria-label="Markup percentage"
                         value={[markupPercent]}
                         onValueChange={([v]) => setMarkupPercent(v)}
                         min={0} max={50} step={5}
@@ -462,6 +521,7 @@ export default function DemoMode() {
                         <span className="font-black text-blue-600">${labourRate}/hr</span>
                       </div>
                       <Slider
+                        aria-label="Labour hourly rate"
                         value={[labourRate]}
                         onValueChange={([v]) => setLabourRate(v)}
                         min={50} max={180} step={5}
@@ -471,6 +531,9 @@ export default function DemoMode() {
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-gray-600 font-semibold">Use trade pricing</span>
                       <button
+                        type="button"
+                        aria-label={useTradePrice ? "Disable trade pricing" : "Enable trade pricing"}
+                        aria-pressed={useTradePrice}
                         onClick={() => setUseTradePrice(!useTradePrice)}
                         className={`relative w-10 h-5 rounded-full transition-colors ${useTradePrice ? "bg-green-500" : "bg-gray-300"}`}
                       >
@@ -582,6 +645,18 @@ export default function DemoMode() {
                       </div>
                     )}
                   </div>
+
+                  {result.aiFallback && (
+                    <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                      <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-black text-amber-900">Uploaded plan was not analysed</p>
+                        <p className="text-xs text-amber-800">
+                          This is a sample estimate because AI analysis failed. Try again, or contact support if it repeats.
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Tabs */}
                   <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
@@ -730,7 +805,7 @@ export default function DemoMode() {
                               View Pricing
                             </Button>
                           </div>
-                          <p className="text-xs text-gray-400 mt-2">Solo Tradie plan from $49/mo. Free tier available.</p>
+                          <p className="text-xs text-gray-600 mt-2">Sole Tradie plan from $149/mo. Free demo available.</p>
                         </div>
                       </div>
                     </CardContent>

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -9,6 +10,7 @@ import { GST_RATE } from "../../shared/trades";
 import { generateQuotePdf } from "../pdfGenerator";
 import { storagePut } from "../storage";
 import { INDUSTRY_BENCHMARKS } from "./ai";
+import { buildQuoteAssuranceReport } from "../assurance";
 
 export const estimatesRouter = router({
   list: protectedProcedure.input(z.object({ projectId: z.number().optional() })).query(async ({ ctx, input }) => {
@@ -34,6 +36,16 @@ export const estimatesRouter = router({
     if (!estimate) return null;
     const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, input.id));
     return { ...estimate, lineItems: items };
+  }),
+
+  getAssurance: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+    const db = requireDatabase(await getDb());
+    const [estimate] = await db.select().from(estimates)
+      .where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)))
+      .limit(1);
+    if (!estimate) return null;
+    const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, input.id));
+    return buildQuoteAssuranceReport(estimate, items);
   }),
 
   create: protectedProcedure.input(z.object({
@@ -76,6 +88,22 @@ export const estimatesRouter = router({
   })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     const { id, margin, ...rest } = input;
+
+    if (rest.status === "sent") {
+      const [estimate] = await db.select().from(estimates)
+        .where(and(eq(estimates.id, id), eq(estimates.userId, ctx.user.id)))
+        .limit(1);
+      if (!estimate) throw new TRPCError({ code: "NOT_FOUND", message: "Estimate not found" });
+      const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, id));
+      const assurance = buildQuoteAssuranceReport(estimate, items);
+      if (!assurance.canIssue) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: `Quote assurance blocked sending: ${assurance.issueBlocks[0]}`,
+        });
+      }
+    }
+
     const data: Record<string, unknown> = { ...rest };
     if (margin !== undefined) data.margin = margin.toString();
     await db.update(estimates).set(data as any).where(and(eq(estimates.id, id), eq(estimates.userId, ctx.user.id)));
@@ -382,6 +410,14 @@ export const estimatesRouter = router({
     // Load line items
     const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, input.id));
 
+    const assurance = buildQuoteAssuranceReport(estimate, items);
+    if (!assurance.canIssue) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: `Quote assurance blocked PDF export: ${assurance.issueBlocks[0]}`,
+      });
+    }
+
     // Load user profile
     const [user] = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
 
@@ -438,6 +474,7 @@ export const estimatesRouter = router({
       notes: estimate.notes || undefined,
       aiConfidenceScore: estimate.aiConfidenceScore || undefined,
       aiAssumptions: (estimate.aiAssumptions as string[]) || undefined,
+      assurance,
       companyLogoUrl: tradeProfile?.logoUrl || undefined,
       brandColor: tradeProfile?.brandColour || undefined,
     };

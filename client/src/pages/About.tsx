@@ -135,7 +135,7 @@ export default function About() {
           </p>
           <div className="flex gap-6 text-sm text-white/40">
             <Link href="/privacy-policy" className="hover:text-white/70 transition-colors">Privacy</Link>
-            <Link href="/terms-of-service" className="hover:text-white/70 transition-colors">Terms</Link>
+            <Link href="/terms" className="hover:text-white/70 transition-colors">Terms</Link>
             <a href="mailto:hello@kindaiestimator.com" className="hover:text-white/70 transition-colors">Contact</a>
           </div>
         </div>

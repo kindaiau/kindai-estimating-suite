@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo, useEffect } from "react";
 import { pixelUploadPlan, pixelRunTakeoff } from "@/lib/metaPixel";
+import { getAnalyticsContext, trackEvent } from "@/lib/analytics";
 import { useAuth } from "@/_core/hooks/useAuth";
 import SEO from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
@@ -78,6 +79,10 @@ export default function AITakeoff() {
   const [scopeDocName, setScopeDocName] = useState<string | null>(null);
   const [isUploadingScopeDoc, setIsUploadingScopeDoc] = useState(false);
   const scopeDocInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    trackEvent("ai_takeoff_viewed", getAnalyticsContext());
+  }, []);
 
   // Fetch saved trade profile defaults when trade is selected
   const tradeProfileQuery = trpc.tradeProfiles.get.useQuery(
@@ -209,9 +214,22 @@ export default function AITakeoff() {
         setUploadedImageUrls(prev => [...prev, uploaded.url]);
         setUploadingCount(prev => Math.max(0, prev - 1));
         pixelUploadPlan({ trade: selectedTrade });
+        trackEvent("ai_takeoff_file_uploaded", {
+          trade: selectedTrade,
+          state: selectedState,
+          mode,
+          fileType: ctUp,
+          pageCount: uploadedFiles.length + valid.length,
+        });
       } catch {
         toast.error(`Upload failed for ${file.name}.`);
         setUploadingCount(prev => Math.max(0, prev - 1));
+        trackEvent("ai_takeoff_failed", {
+          trade: selectedTrade,
+          state: selectedState,
+          mode,
+          reason: "plan_upload_failed",
+        });
       }
     }
     setIsUploading(false);
@@ -234,12 +252,58 @@ export default function AITakeoff() {
   }
 
   async function handleAnalyse() {
-    if (!selectedTrade) { toast.error("Select your trade first"); return; }
-    if (mode === "vision" && uploadedImageUrls.length === 0) { toast.error("Upload at least one plan page first"); return; }
-    if (mode === "text" && textDescription.length < 10) { toast.error("Describe the job (at least 10 characters)"); return; }
+    if (!selectedTrade) {
+      toast.error("Select your trade first");
+      trackEvent("ai_takeoff_failed", { mode, reason: "validation_missing_trade" });
+      return;
+    }
+    const missingRequired = getScopingQuestions(selectedTrade).filter((q) => {
+      if (!q.required) return false;
+      const value = scopingAnswers[q.id];
+      return value === undefined || value === "" || (Array.isArray(value) && value.length === 0);
+    });
+    if (missingRequired.length > 0) {
+      toast.error(`Answer ${missingRequired.length} required scope question${missingRequired.length > 1 ? "s" : ""} before analysing.`);
+      trackEvent("ai_takeoff_failed", {
+        trade: selectedTrade,
+        state: selectedState,
+        mode,
+        reason: "validation_missing_scope",
+        missingRequiredCount: missingRequired.length,
+      });
+      return;
+    }
+    if (mode === "vision" && uploadedImageUrls.length === 0) {
+      toast.error("Upload at least one plan page first");
+      trackEvent("ai_takeoff_failed", {
+        trade: selectedTrade,
+        state: selectedState,
+        mode,
+        reason: "validation_missing_plan",
+      });
+      return;
+    }
+    if (mode === "text" && textDescription.length < 10) {
+      toast.error("Describe the job (at least 10 characters)");
+      trackEvent("ai_takeoff_failed", {
+        trade: selectedTrade,
+        state: selectedState,
+        mode,
+        reason: "validation_description_too_short",
+      });
+      return;
+    }
 
     setIsAnalysing(true);
     setResult(null);
+    trackEvent("ai_takeoff_started", {
+      trade: selectedTrade,
+      state: selectedState,
+      mode,
+      pageCount: uploadedImageUrls.length,
+      hasScopeDoc: Boolean(scopeDocUrl),
+      scopingAnswerCount: Object.keys(scopingAnswers).length,
+    });
     try {
       const estimateId = await ensureEstimate();
       // Show the orchestration progress UI
@@ -249,6 +313,12 @@ export default function AITakeoff() {
     } catch (err: any) {
       toast.error(err.message || "Failed to start analysis. Please try again.");
       setIsAnalysing(false);
+      trackEvent("ai_takeoff_failed", {
+        trade: selectedTrade,
+        state: selectedState,
+        mode,
+        reason: "start_failed",
+      });
     }
   }
 
@@ -259,12 +329,27 @@ export default function AITakeoff() {
     setIsAnalysing(false);
     toast.success(`Takeoff complete! ${takeoffResult.items.length} items found. Confidence: ${takeoffResult.confidence}%`);
     pixelRunTakeoff({ trade: selectedTrade, job_type: mode });
+    trackEvent("ai_takeoff_succeeded", {
+      trade: selectedTrade,
+      state: selectedState,
+      mode,
+      itemCount: takeoffResult.items.length,
+      confidence: takeoffResult.confidence,
+      pageCount: uploadedImageUrls.length,
+      hasScopeDoc: Boolean(scopeDocUrl),
+    });
   }
 
   function handleOrchestrationError(message: string) {
     setShowOrchestration(false);
     setIsAnalysing(false);
     toast.error(message || "Analysis failed. Please try again.");
+    trackEvent("ai_takeoff_failed", {
+      trade: selectedTrade,
+      state: selectedState,
+      mode,
+      reason: "orchestration_error",
+    });
   }
 
   function fileToBase64(file: File): Promise<string> {
@@ -338,7 +423,17 @@ export default function AITakeoff() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-4 pb-4">
-                <Select value={selectedTrade} onValueChange={setSelectedTrade}>
+                <Select
+                  value={selectedTrade}
+                  onValueChange={(value) => {
+                    setSelectedTrade(value);
+                    trackEvent("ai_takeoff_trade_selected", {
+                      trade: value,
+                      state: selectedState,
+                      mode,
+                    });
+                  }}
+                >
                   <SelectTrigger className={`rounded-xl ${!selectedTrade ? 'border-orange-400 ring-2 ring-orange-200' : 'border-gray-200'}`}>
                     <SelectValue placeholder="👇 Choose your trade first..." />
                   </SelectTrigger>
@@ -544,7 +639,7 @@ export default function AITakeoff() {
                       <input
                         ref={scopeDocInputRef}
                         type="file"
-                        accept="image/*,.pdf,application/pdf"
+                        accept="image/*,.pdf,.heic,.heif,application/pdf"
                         className="hidden"
                         onChange={async (e) => {
                           const file = e.target.files?.[0];
@@ -556,7 +651,9 @@ export default function AITakeoff() {
                             let binary = "";
                             for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
                             const base64 = btoa(binary);
-                            const contentType = file.type.startsWith("image/") ? file.type as any : "application/pdf";
+                            const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+                            const isHeic = file.type === "image/heic" || file.type === "image/heif" || ext === "heic" || ext === "heif";
+                            const contentType = isHeic ? "image/heic" : file.type.startsWith("image/") ? file.type as any : "application/pdf";
                             const result = await uploadScopeDoc.mutateAsync({ fileName: file.name, fileBase64: base64, contentType });
                             setScopeDocUrl(result.url);
                             setScopeDocName(file.name);
@@ -637,7 +734,11 @@ export default function AITakeoff() {
                 <CardContent className="px-4 pb-4 space-y-4">
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-bold">Use Trade Pricing</Label>
-                    <Switch checked={useTradePrice} onCheckedChange={setUseTradePrice} />
+                    <Switch
+                      aria-label={useTradePrice ? "Disable trade pricing" : "Enable trade pricing"}
+                      checked={useTradePrice}
+                      onCheckedChange={setUseTradePrice}
+                    />
                   </div>
                   {useTradePrice && pricing && (
                     <div className="bg-green-50 rounded-xl p-3 text-center">
@@ -650,6 +751,7 @@ export default function AITakeoff() {
                       <span className="text-sm font-black text-pink-600">{markupPercent}%</span>
                     </div>
                     <Slider
+                      aria-label="Markup percentage"
                       value={[markupPercent]}
                       onValueChange={([v]) => setMarkupPercent(v)}
                       min={0} max={100} step={5}
@@ -665,6 +767,7 @@ export default function AITakeoff() {
                       <span className="text-sm font-black text-blue-600">${labourRate}</span>
                     </div>
                     <Slider
+                      aria-label="Labour hourly rate"
                       value={[labourRate]}
                       onValueChange={([v]) => setLabourRate(v)}
                       min={40} max={200} step={5}

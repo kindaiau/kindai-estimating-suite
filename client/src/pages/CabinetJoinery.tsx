@@ -404,7 +404,7 @@ onClick={() => window.location.href = 'mailto:matt@kindaiestimator.com?subject=3
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400">
           <span>© 2026 Kindai. Built for Australian construction businesses.</span>
           <div className="flex gap-4">
-            <a href="/privacy" className="hover:text-gray-600 transition-colors">Privacy Policy</a>
+            <a href="/privacy-policy" className="hover:text-gray-600 transition-colors">Privacy Policy</a>
             <a href="/terms" className="hover:text-gray-600 transition-colors">Terms of Service</a>
             <a href="/support" className="hover:text-gray-600 transition-colors">Support</a>
           </div>

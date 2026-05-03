@@ -94,7 +94,7 @@ export const PLANS: SubscriptionPlan[] = [
   // ─── TIER 2: SOLE TRADER ─────────────────────────────────────────────────────
   {
     id: "sole_trader",
-    name: "Sole Trader",
+    name: "Sole Tradie",
     tagline: "Quote faster. Win more jobs.",
     description: "For the one-person operation. Replaces hours of manual quoting with 60-second AI takeoffs. Pays for itself on the first job.",
     targetAudience: "Sole traders and owner-operators (1–2 people)",
@@ -125,17 +125,17 @@ export const PLANS: SubscriptionPlan[] = [
     },
   },
 
-  // ─── TIER 3: SMALL BUILDER ───────────────────────────────────────────────────
+  // ─── TIER 3: PRO ─────────────────────────────────────────────────────────────
   {
     id: "small_builder",
-    name: "Small Builder",
-    tagline: "Ditch the part-time estimator.",
-    description: "For trade businesses with a small team. Replaces the cost of a part-time estimator ($55K–$75K/yr) for a fraction of the price.",
+    name: "Pro",
+    tagline: "For growing trade teams.",
+    description: "For trade businesses with a small team. Adds unlimited AI volume, Xero, accuracy reporting, and team workflows.",
     targetAudience: "Trade businesses with 3–15 staff",
     annualSavings: "Replaces a $55,000–$75,000/yr part-time estimator",
-    roiStatement: "You pay $5,988/yr. You save $55,000+. That's a 9x return.",
-    priceMonthly: 49900, // $499/mo
-    priceYearly: 478800, // $399/mo billed annually ($4,788/yr — saves $1,200)
+    roiStatement: "You pay $5,400/yr. You save $55,000+. That's a 10x return.",
+    priceMonthly: 45000, // $450/mo
+    priceYearly: 432000, // $360/mo billed annually ($4,320/yr — saves $1,080)
     popular: true,
     features: [
       { text: "Unlimited estimates", included: true },
@@ -173,7 +173,7 @@ export const PLANS: SubscriptionPlan[] = [
     priceMonthly: 149900, // $1,499/mo
     priceYearly: 1438800, // $1,199/mo billed annually ($14,388/yr — saves $3,600)
     features: [
-      { text: "Everything in Small Builder, plus:", included: true },
+      { text: "Everything in Pro, plus:", included: true },
       { text: "Unlimited AI Vision Takeoffs", included: true },
       { text: "Up to 20 team members", included: true },
       { text: "Multi-trade estimating (all 10 trades)", included: true },
@@ -197,17 +197,17 @@ export const PLANS: SubscriptionPlan[] = [
   // ─── TIER 5: ENTERPRISE ──────────────────────────────────────────────────────
   {
     id: "enterprise",
-    name: "Enterprise",
-    tagline: "Replace your estimating department.",
-    description: "For tier 1–3 builders and major construction firms. Replaces 2–3 full-time estimators, integrates with Procore/Aconex, and gives you a competitive edge on every tender.",
+    name: "Enterprise & Custom Solutions",
+    tagline: "Built around your workflow.",
+    description: "For builders and major trade teams that need custom onboarding, integrations, supplier price books, and commercial support.",
     targetAudience: "Tier 1–3 builders, $20M+ turnover, multi-state operations",
     annualSavings: "Replaces $250,000–$450,000/yr estimating team",
     roiStatement: "Custom pricing. Typically 8–15x ROI in year one.",
-    priceMonthly: 399900, // $3,999/mo
-    priceYearly: 3839040, // $3,199/mo billed annually ($38,388/yr)
+    priceMonthly: 0, // Custom pricing by contact
+    priceYearly: 0, // Custom pricing by contact
     contactSales: true,
     features: [
-      { text: "Everything in Mid-Tier Builder, plus:", included: true },
+      { text: "Everything in Pro, plus:", included: true },
       { text: "Unlimited team members", included: true },
       { text: "Dedicated account manager", included: true },
       { text: "Custom onboarding + staff training", included: true },

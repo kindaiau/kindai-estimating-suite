@@ -1,0 +1,28 @@
+{
+  "caseId": "template-commercial-1m-plus",
+  "title": "Large Commercial Electrical Package",
+  "trade": "electrical",
+  "projectValueBand": "enterprise",
+  "market": {
+    "country": "Australia",
+    "stateOrTerritory": "Australia-wide template; replace with the project state or territory before live investor runs",
+    "currency": "AUD",
+    "gstTreatment": "ex GST benchmark values unless stated otherwise",
+    "pricingBasis": "Australian commercial electrical supplier pricing, subcontractor pricing, preliminaries, margin, and estimator-reviewed high-value project allowances",
+    "labourBasis": "Licensed Australian electrical labour with productivity, supervision, shift work, shutdown windows, access constraints, and award/EBA allowances reviewed by a senior estimator",
+    "standardsContext": [
+      "NCC/BCA obligations where relevant to building services, egress, fire, and certification.",
+      "AS/NZS electrical compliance requirements where visible in the documents.",
+      "State or territory WHS, licensing, shutdown, access, fire penetration sealing, commissioning, and certification requirements."
+    ]
+  },
+  "description": "A high-value commercial electrical package with distribution, cable tray, lighting, power, communications, labour, commissioning, preliminaries, and compliance-sensitive scope.",
+  "context": [
+    "Use this template for investor demonstrations of million-dollar quote assurance.",
+    "The point of this case is not just extraction accuracy; it should also prove that Kindai blocks high-risk issue/export actions until senior review and compliance sign-off are complete.",
+    "Replace the document URL with public or signed plan URLs before live benchmark runs."
+  ],
+  "documentUrls": [
+    "REPLACE_WITH_PUBLIC_OR_SIGNED_PLAN_URL"
+  ]
+}

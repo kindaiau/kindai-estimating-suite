@@ -1,0 +1,140 @@
+{
+  "marketBasis": "Australia",
+  "currency": "AUD",
+  "gstTreatment": "ex GST unless stated otherwise",
+  "items": [
+    {
+      "description": "Main switchboard upgrade",
+      "category": "materials",
+      "unit": "ea",
+      "quantity": 1,
+      "unitRate": 110000,
+      "subtotal": 110000,
+      "confidence": 88,
+      "evidence": "Single line diagram references MSB upgrade."
+    },
+    {
+      "description": "Electrical distribution boards",
+      "category": "materials",
+      "unit": "each",
+      "quantity": 7,
+      "unitRate": 12000,
+      "subtotal": 84000,
+      "confidence": 78,
+      "evidence": "Distribution board schedule was partially legible."
+    },
+    {
+      "description": "Main cable tray route",
+      "category": "materials",
+      "unit": "lm",
+      "quantity": 650,
+      "unitRate": 75,
+      "subtotal": 48750,
+      "confidence": 84,
+      "evidence": "Measured from services reticulation routes."
+    },
+    {
+      "description": "Submain cabling",
+      "category": "materials",
+      "unit": "m",
+      "quantity": 3020,
+      "unitRate": 35,
+      "subtotal": 105700,
+      "confidence": 81,
+      "evidence": "Estimated from riser and distribution board schedule."
+    },
+    {
+      "description": "Lighting points",
+      "category": "materials",
+      "unit": "ea",
+      "quantity": 1415,
+      "unitRate": 95,
+      "subtotal": 134425,
+      "confidence": 86,
+      "evidence": "Lighting layout count by floor."
+    },
+    {
+      "description": "Emergency and exit lighting",
+      "category": "materials",
+      "unit": "ea",
+      "quantity": 176,
+      "unitRate": 180,
+      "subtotal": 31680,
+      "confidence": 83,
+      "evidence": "Emergency lighting symbols counted by floor."
+    },
+    {
+      "description": "General power outlets",
+      "category": "materials",
+      "unit": "ea",
+      "quantity": 940,
+      "unitRate": 95,
+      "subtotal": 89300,
+      "confidence": 82,
+      "evidence": "Power layout symbols counted."
+    },
+    {
+      "description": "Communications data outlets",
+      "category": "materials",
+      "unit": "ea",
+      "quantity": 492,
+      "unitRate": 110,
+      "subtotal": 54120,
+      "confidence": 73,
+      "evidence": "Data outlet symbols visible, rack schedule missing."
+    },
+    {
+      "description": "Electrical installation labour",
+      "category": "labour",
+      "unit": "hours",
+      "quantity": 9900,
+      "unitRate": 48,
+      "subtotal": 475200,
+      "confidence": 79,
+      "evidence": "Labour build-up from detected scope and productivity assumptions."
+    },
+    {
+      "description": "Testing commissioning and certification",
+      "category": "labour",
+      "unit": "lot",
+      "quantity": 1,
+      "unitRate": 36000,
+      "subtotal": 36000,
+      "confidence": 82,
+      "evidence": "Completion and certification scope note."
+    },
+    {
+      "description": "Fire penetration sealing allowance",
+      "category": "materials",
+      "unit": "lot",
+      "quantity": 1,
+      "unitRate": 28000,
+      "subtotal": 28000,
+      "confidence": 62,
+      "evidence": "Fire sealing detail incomplete; allowance added."
+    },
+    {
+      "description": "Site preliminaries supervision and access",
+      "category": "labour",
+      "unit": "lot",
+      "quantity": 1,
+      "unitRate": 52000,
+      "subtotal": 52000,
+      "confidence": 74,
+      "evidence": "Project duration and access assumptions."
+    }
+  ],
+  "warnings": [
+    "Fire penetration sealing requirements are not fully specified and should be reviewed before issue.",
+    "Main switchboard shutdown window requires confirmation with the client and building operator.",
+    "Communications rack schedule is missing, so data scope may be incomplete.",
+    "Builder preliminaries and access constraints require review by a senior estimator."
+  ],
+  "assumptions": [
+    "Distribution board count was partially legible and should be confirmed against the latest schedule.",
+    "Labour productivity assumes standard access and normal working hours.",
+    "This quote should not be issued until compliance sign-off and senior estimator review are complete."
+  ],
+  "confidence": 80,
+  "total": 1249800
+}

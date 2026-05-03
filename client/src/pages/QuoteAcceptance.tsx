@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
   User, Wrench
 } from "lucide-react";
 import { toast } from "sonner";
+import { trackEvent } from "@/lib/analytics";
 
 const TRADE_EMOJI: Record<string, string> = {
   electrical: "⚡", plumbing: "🔧", carpentry: "🪚", concreting: "🏗️",
@@ -33,15 +34,47 @@ export default function QuoteAcceptance() {
   const [notes, setNotes] = useState("");
   const [responded, setResponded] = useState<"accepted" | "declined" | null>(null);
   const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
+  const viewTrackedRef = useRef(false);
 
   const { data, isLoading, error } = trpc.quoteTokens.getByToken.useQuery(
     { token: token ?? "" },
     { enabled: !!token, retry: false }
   );
 
+  const quoteAnalyticsProps = () => ({
+    trade: data?.estimate?.trade ?? "",
+    status: data?.token?.status ?? "",
+    total: parseFloat(String(data?.estimate?.total ?? "0")) || 0,
+    lineItemCount: data?.items?.length ?? 0,
+    hasMessage: Boolean(data?.token?.message),
+  });
+
+  useEffect(() => {
+    if (viewTrackedRef.current) return;
+    if (data) {
+      viewTrackedRef.current = true;
+      trackEvent("quote_link_viewed", {
+        ...quoteAnalyticsProps(),
+        valid: true,
+      });
+    } else if (error) {
+      viewTrackedRef.current = true;
+      trackEvent("quote_link_viewed", {
+        valid: false,
+        reason: "not_found_or_expired",
+      });
+    }
+  }, [data, error]);
+
   const respondMutation = trpc.quoteTokens.respond.useMutation({
     onSuccess: (result) => {
       setResponded(result.status);
+      trackEvent("quote_response_submitted", {
+        ...quoteAnalyticsProps(),
+        action: result.status,
+        success: true,
+        hasNotes: Boolean(notes.trim()),
+      });
       if (result.status === "accepted") {
         toast.success("Quote accepted! The contractor will be in touch shortly.");
       } else {
@@ -50,12 +83,23 @@ export default function QuoteAcceptance() {
     },
     onError: (err) => {
       toast.error(err.message || "Something went wrong. Please try again.");
+      trackEvent("quote_response_submitted", {
+        ...quoteAnalyticsProps(),
+        success: false,
+        reason: "server_error",
+      });
     },
   });
 
   const handleRespond = (action: "accepted" | "declined") => {
     if (action === "accepted" && !signature.trim()) {
       toast.error("Please type your name to confirm acceptance.");
+      trackEvent("quote_response_submitted", {
+        ...quoteAnalyticsProps(),
+        action,
+        success: false,
+        reason: "validation_missing_signature",
+      });
       return;
     }
     respondMutation.mutate({

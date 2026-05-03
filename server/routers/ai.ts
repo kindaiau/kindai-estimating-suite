@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, type MessageContent } from "../_core/llm";
+import { mediaContentFromUrl } from "../_core/mediaInputs";
 import { getDb } from "../db";
 import { estimates, lineItems, tradeProfiles, companyProfiles, priceBookItems, estimateCorrections } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
@@ -1074,19 +1075,28 @@ export const aiRouter = router({
     pages: z.array(z.object({
       fileName: z.string().max(255),
       fileBase64: z.string().max(44_000_000),
-      contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
+      contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf", "image/heic", "image/heif"]),
     })).min(1).max(50),
   })).mutation(async ({ ctx, input }) => {
     const MAX_FILE_SIZE = 32 * 1024 * 1024;
     const results: { url: string; key: string; fileName: string }[] = [];
     for (const page of input.pages) {
-      const buffer = Buffer.from(page.fileBase64, "base64");
-      if (buffer.length > MAX_FILE_SIZE) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: `File "${page.fileName}" is too large (${(buffer.length / 1024 / 1024).toFixed(1)}MB). Maximum is 32MB per file.` });
+      const rawBuffer = Buffer.from(page.fileBase64, "base64");
+      if (rawBuffer.length > MAX_FILE_SIZE) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `File "${page.fileName}" is too large (${(rawBuffer.length / 1024 / 1024).toFixed(1)}MB). Maximum is 32MB per file.` });
       }
-      const ext = page.fileName.split(".").pop() ?? "png";
+      let buffer: Buffer;
+      let contentType = page.contentType;
+      let ext = page.fileName.split(".").pop()?.toLowerCase() ?? "png";
+      if (contentType === "image/heic" || contentType === "image/heif") {
+        buffer = await convertHeicToJpegAi(rawBuffer);
+        contentType = "image/jpeg";
+        ext = "jpg";
+      } else {
+        buffer = rawBuffer;
+      }
       const key = `plans/${ctx.user.id}/${nanoid()}.${ext}`;
-      const { url } = await storagePut(key, buffer, page.contentType);
+      const { url } = await storagePut(key, buffer, contentType);
       results.push({ url, key, fileName: page.fileName });
     }
     return { pages: results, count: results.length };
@@ -1096,16 +1106,25 @@ export const aiRouter = router({
   uploadScopeDoc: protectedProcedure.input(z.object({
     fileName: z.string().max(255),
     fileBase64: z.string().max(44_000_000), // ~32MB base64 encoded
-    contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
+    contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf", "image/heic", "image/heif"]),
   })).mutation(async ({ ctx, input }) => {
     const rawBuffer = Buffer.from(input.fileBase64, "base64");
     const MAX_FILE_SIZE = 32 * 1024 * 1024;
     if (rawBuffer.length > MAX_FILE_SIZE) {
       throw new TRPCError({ code: "BAD_REQUEST", message: `File too large. Maximum size is 32MB. Your file is ${(rawBuffer.length / 1024 / 1024).toFixed(1)}MB.` });
     }
-    const ext = input.fileName.split(".").pop()?.toLowerCase() ?? "pdf";
+    let finalBuffer: Buffer;
+    let contentType = input.contentType;
+    let ext = input.fileName.split(".").pop()?.toLowerCase() ?? "pdf";
+    if (contentType === "image/heic" || contentType === "image/heif") {
+      finalBuffer = await convertHeicToJpegAi(rawBuffer);
+      contentType = "image/jpeg";
+      ext = "jpg";
+    } else {
+      finalBuffer = rawBuffer;
+    }
     const key = `scope-docs/${ctx.user.id}/${nanoid()}.${ext}`;
-    const { url } = await storagePut(key, rawBuffer, input.contentType);
+    const { url } = await storagePut(key, finalBuffer, contentType);
     return { url, key };
   }),
 
@@ -1129,12 +1148,7 @@ export const aiRouter = router({
     const customRates = await fetchCustomRates(db, ctx.user.id, input.trade);
     const memory = await fetchCompanyMemory(db, ctx.user.id, input.trade);
     const systemPrompt = buildVisionPrompt(input.trade, customRates, memory);
-    const userContent: Array<{ type: string; text?: string; image_url?: { url: string; detail?: string } }> = [
-      {
-        type: "image_url",
-        image_url: { url: input.imageUrl, detail: "high" },
-      },
-    ];
+    const userContent: MessageContent[] = [mediaContentFromUrl(input.imageUrl)];
     if (input.additionalContext) {
       userContent.push({ type: "text", text: `Additional context from the estimator: ${input.additionalContext}` });
     }
@@ -1196,11 +1210,11 @@ export const aiRouter = router({
     const batchResults: TakeoffResult[] = [];
     for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
       const batch = batches[batchIdx];
-      const userContent: Array<{ type: string; text?: string; image_url?: { url: string; detail?: string } }> = [];
+      const userContent: MessageContent[] = [];
 
-      // Add all images in this batch
+      // Add all uploaded plan pages in this batch, preserving PDFs as file input.
       for (const url of batch) {
-        userContent.push({ type: "image_url", image_url: { url, detail: "high" } });
+        userContent.push(mediaContentFromUrl(url));
       }
 
       const batchLabel = `Pages ${batchIdx * BATCH_SIZE + 1}–${Math.min((batchIdx + 1) * BATCH_SIZE, input.imageUrls.length)} of ${input.imageUrls.length}`;

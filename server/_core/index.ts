@@ -89,6 +89,18 @@ async function startServer() {
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
 
+  app.get("/.well-known/security.txt", (_req, res) => {
+    res
+      .type("text/plain")
+      .send([
+        "Contact: mailto:hello@kindaiestimator.com",
+        "Preferred-Languages: en",
+        "Canonical: https://kindaiestimator.com/.well-known/security.txt",
+        "Policy: https://kindaiestimator.com/privacy-policy",
+        "",
+      ].join("\n"));
+  });
+
   // Xero OAuth callback
   app.use(xeroCallbackRouter);
 

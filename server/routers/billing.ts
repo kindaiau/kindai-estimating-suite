@@ -127,6 +127,12 @@ export const billingRouter = router({
       const stripe = getStripe();
       const plan = getPlanById(input.planId);
       if (!plan) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid plan" });
+      if (plan.contactSales || plan.priceMonthly <= 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This plan is handled by the Kindai team. Please contact us to scope the right solution.",
+        });
+      }
 
       const priceAmount =
         input.interval === "yearly"

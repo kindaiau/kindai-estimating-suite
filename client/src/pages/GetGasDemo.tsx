@@ -555,6 +555,7 @@ export default function GetGasDemo() {
                   <label className="text-xs text-white/50 mb-1 block">Markup %</label>
                   <input
                     type="range" min={0} max={50} value={markupPercent}
+                    aria-label="Markup percentage"
                     onChange={e => setMarkupPercent(Number(e.target.value))}
                     className="w-full accent-red-500"
                   />
@@ -695,6 +696,7 @@ export default function GetGasDemo() {
                   <span className="text-xs text-white/70 font-semibold">{roiJobs}</span>
                 </div>
                 <input type="range" min={20} max={500} value={roiJobs}
+                  aria-label="Jobs per year"
                   onChange={e => setRoiJobs(Number(e.target.value))}
                   className="w-full accent-red-500" />
               </div>
@@ -704,6 +706,7 @@ export default function GetGasDemo() {
                   <span className="text-xs text-white/70 font-semibold">{roiHours}h</span>
                 </div>
                 <input type="range" min={0.5} max={8} step={0.5} value={roiHours}
+                  aria-label="Hours to quote manually"
                   onChange={e => setRoiHours(Number(e.target.value))}
                   className="w-full accent-red-500" />
               </div>

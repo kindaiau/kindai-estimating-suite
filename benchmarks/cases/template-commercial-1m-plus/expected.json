@@ -1,0 +1,138 @@
+{
+  "caseId": "template-commercial-1m-plus",
+  "title": "Large Commercial Electrical Package",
+  "marketBasis": "Australia",
+  "currency": "AUD",
+  "gstTreatment": "ex GST unless stated otherwise",
+  "minimumAcceptableScore": 88,
+  "expectedTotal": 1250000,
+  "totalTolerancePercent": 8,
+  "requiredWarnings": [
+    "fire penetration sealing requirements are not fully specified",
+    "main switchboard shutdown window requires confirmation",
+    "communications rack schedule is missing",
+    "builder preliminaries and access constraints require review"
+  ],
+  "expectedItems": [
+    {
+      "id": "main-switchboard",
+      "description": "main switchboard upgrade",
+      "aliases": ["MSB upgrade", "main switch board works"],
+      "category": "materials",
+      "unit": "ea",
+      "quantity": 1,
+      "tolerancePercent": 0,
+      "evidence": "Single main switchboard shown on electrical single line diagram."
+    },
+    {
+      "id": "distribution-boards",
+      "description": "distribution boards",
+      "aliases": ["DB boards", "electrical distribution boards"],
+      "category": "materials",
+      "unit": "ea",
+      "quantity": 8,
+      "tolerancePercent": 5,
+      "evidence": "Distribution board schedule."
+    },
+    {
+      "id": "cable-tray",
+      "description": "main cable tray",
+      "aliases": ["cable tray route", "electrical cable tray"],
+      "category": "materials",
+      "unit": "m",
+      "quantity": 620,
+      "tolerancePercent": 10,
+      "evidence": "Measured from services reticulation drawings."
+    },
+    {
+      "id": "submain-cabling",
+      "description": "submain cabling",
+      "aliases": ["sub main cable", "submains"],
+      "category": "materials",
+      "unit": "m",
+      "quantity": 3100,
+      "tolerancePercent": 10,
+      "evidence": "Estimator measured from DB schedule and riser routes."
+    },
+    {
+      "id": "lighting-points",
+      "description": "lighting points",
+      "aliases": ["light points", "general lighting outlets"],
+      "category": "materials",
+      "unit": "ea",
+      "quantity": 1450,
+      "tolerancePercent": 7,
+      "evidence": "Lighting layouts and schedule."
+    },
+    {
+      "id": "emergency-lighting",
+      "description": "emergency and exit lighting",
+      "aliases": ["emergency lighting", "exit lights"],
+      "category": "materials",
+      "unit": "ea",
+      "quantity": 180,
+      "tolerancePercent": 5,
+      "evidence": "Emergency lighting layouts."
+    },
+    {
+      "id": "power-outlets",
+      "description": "general power outlets",
+      "aliases": ["GPO outlets", "socket outlets"],
+      "category": "materials",
+      "unit": "ea",
+      "quantity": 980,
+      "tolerancePercent": 7,
+      "evidence": "Power layouts."
+    },
+    {
+      "id": "communications-outlets",
+      "description": "communications data outlets",
+      "aliases": ["data outlets", "communications points"],
+      "category": "materials",
+      "unit": "ea",
+      "quantity": 520,
+      "tolerancePercent": 7,
+      "evidence": "Communications layouts."
+    },
+    {
+      "id": "labour",
+      "description": "electrical installation labour",
+      "aliases": ["electrician labour", "installation labour hours"],
+      "category": "labour",
+      "unit": "hr",
+      "quantity": 10500,
+      "tolerancePercent": 10,
+      "evidence": "Senior estimator labour build-up."
+    },
+    {
+      "id": "testing",
+      "description": "testing commissioning and certification",
+      "aliases": ["commissioning", "testing and certification"],
+      "category": "labour",
+      "unit": "lot",
+      "quantity": 1,
+      "tolerancePercent": 0,
+      "evidence": "Project completion scope."
+    },
+    {
+      "id": "fire-sealing",
+      "description": "fire penetration sealing allowance",
+      "aliases": ["fire sealing", "penetration sealing"],
+      "category": "materials",
+      "unit": "lot",
+      "quantity": 1,
+      "tolerancePercent": 0,
+      "evidence": "Compliance allowance required because fire detail is incomplete."
+    },
+    {
+      "id": "preliminaries",
+      "description": "site preliminaries supervision and access",
+      "aliases": ["site preliminaries", "supervision and access"],
+      "category": "labour",
+      "unit": "lot",
+      "quantity": 1,
+      "tolerancePercent": 0,
+      "evidence": "Senior estimator preliminaries allowance."
+    }
+  ]
+}

@@ -53,7 +53,14 @@ const FEATURE_REQUIREMENTS: Record<FeatureKey, FeatureRequirement> = {
   analytics: {
     label: "Analytics",
     required: [],
-    optional: ["VITE_ANALYTICS_ENDPOINT", "VITE_ANALYTICS_WEBSITE_ID"],
+    optional: [
+      "VITE_ANALYTICS_ENDPOINT",
+      "VITE_ANALYTICS_WEBSITE_ID",
+      "VITE_ANALYTICS_SCRIPT_URL",
+      "VITE_PLAUSIBLE_DOMAIN",
+      "VITE_PLAUSIBLE_SCRIPT_URL",
+      "VITE_ANALYTICS_ALLOW_EXISTING_TRACKERS",
+    ],
   },
 };
 
@@ -89,12 +96,16 @@ export const ENV = {
   brevoApiKey: readEnv("BREVO_API_KEY"),
   hubspotApiKey: readEnv("HUBSPOT_API_KEY"),
   openAiApiKey: readEnv("OPENAI_API_KEY"),
+  openAiModel: readEnv("OPENAI_MODEL"),
   oauthPortalUrl: readEnv("VITE_OAUTH_PORTAL_URL"),
   appLogo: readEnv("VITE_APP_LOGO"),
   frontendForgeApiUrl: readEnv("VITE_FRONTEND_FORGE_API_URL"),
   frontendForgeApiKey: readEnv("VITE_FRONTEND_FORGE_API_KEY"),
   analyticsEndpoint: readEnv("VITE_ANALYTICS_ENDPOINT"),
   analyticsWebsiteId: readEnv("VITE_ANALYTICS_WEBSITE_ID"),
+  analyticsScriptUrl: readEnv("VITE_ANALYTICS_SCRIPT_URL"),
+  plausibleDomain: readEnv("VITE_PLAUSIBLE_DOMAIN"),
+  plausibleScriptUrl: readEnv("VITE_PLAUSIBLE_SCRIPT_URL"),
   xeroClientId: readEnv("XERO_CLIENT_ID"),
   xeroClientSecret: readEnv("XERO_CLIENT_SECRET"),
   gmailUser: readEnv("GMAIL_USER"),

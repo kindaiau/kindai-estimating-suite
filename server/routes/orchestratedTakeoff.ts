@@ -13,6 +13,7 @@
 
 import { Router, Request, Response } from "express";
 import { invokeLLM } from "../_core/llm";
+import { mediaContentFromUrl } from "../_core/mediaInputs";
 import { getDb } from "../db";
 import { estimates, lineItems, tradeProfiles, companyProfiles, priceBookItems, estimateCorrections } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
@@ -254,25 +255,10 @@ Quote Tone: ${companyProfile.quoteTone ?? "professional"}` : "";
       : "";
     if (mode === "vision" && imageUrls.length > 0) {
       // Send ALL plan pages so the LLM sees every page.
-      // PDFs MUST be sent as file_url (not image_url) — the LLM cannot parse a
-      // PDF when it's addressed as an image, which causes it to see a blank input
-      // and return 0 quantities / 0% confidence (the "$0.00" bug).
-      const content: any[] = imageUrls.map(url => {
-        const isPdf = /\.pdf$/i.test(url.split("?")[0]);
-        if (isPdf) {
-          return { type: "file_url", file_url: { url, mime_type: "application/pdf" as const } };
-        }
-        return { type: "image_url", image_url: { url, detail: "high" as const } };
-      });
-      // Attach scope doc as a second image/PDF if provided
+      const content: any[] = imageUrls.map(url => mediaContentFromUrl(url));
+      // Attach scope doc as a second image/PDF if provided.
       if (scopeDocUrl) {
-        const isImage = /\.(jpg|jpeg|png|webp)$/i.test(scopeDocUrl);
-        if (isImage) {
-          content.push({ type: "image_url", image_url: { url: scopeDocUrl, detail: "high" } });
-        } else {
-          // PDF — attach as file_url
-          content.push({ type: "file_url", file_url: { url: scopeDocUrl, mime_type: "application/pdf" } });
-        }
+        content.push(mediaContentFromUrl(scopeDocUrl));
       }
       content.push({ type: "text", text: stepContext + (additionalContext ? `\n\nAdditional context: ${additionalContext}` : "") + scopeNote });
       return content;

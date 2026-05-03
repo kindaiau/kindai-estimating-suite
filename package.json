@@ -8,6 +8,10 @@
     "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
+    "smoke:openai-media": "tsx scripts/smoke-openai-media.ts",
+    "benchmark:run": "tsx scripts/benchmark/run-benchmark.ts",
+    "benchmark:score": "tsx scripts/benchmark/run-benchmark.ts --score-only",
+    "benchmark:report": "tsx scripts/benchmark/generate-report.ts",
     "format": "prettier --write .",
     "test": "vitest run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate"

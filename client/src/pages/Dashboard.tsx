@@ -26,11 +26,12 @@ const TRADES = [
 ];
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
-  const { data: projectStats } = trpc.projects.stats.useQuery();
-  const { data: estimateStats } = trpc.estimates.stats.useQuery();
-  const { data: recentProjects } = trpc.projects.list.useQuery();
+  const queryOptions = { enabled: isAuthenticated };
+  const { data: projectStats } = trpc.projects.stats.useQuery(undefined, queryOptions);
+  const { data: estimateStats } = trpc.estimates.stats.useQuery(undefined, queryOptions);
+  const { data: recentProjects } = trpc.projects.list.useQuery(undefined, queryOptions);
 
   const firstName = user?.name?.split(" ")[0] ?? "Tradie";
 

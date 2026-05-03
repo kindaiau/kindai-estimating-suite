@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, type MessageContent } from "../_core/llm";
+import { mediaContentFromUrl } from "../_core/mediaInputs";
 import { storagePut } from "../storage";
 import { nanoid } from "nanoid";
 // Convert HEIC/HEIF buffer to JPEG for browser/AI compatibility
@@ -355,9 +356,9 @@ export const demoRouter = router({
           const batchResults: any[] = [];
           for (let i = 0; i < imageUrls.length; i += BATCH_SIZE) {
             const batch = imageUrls.slice(i, i + BATCH_SIZE);
-            const batchContent: Array<{ type: string; text?: string; image_url?: { url: string; detail: string } }> = [];
+            const batchContent: MessageContent[] = [];
             for (const url of batch) {
-              batchContent.push({ type: "image_url", image_url: { url, detail: "high" } });
+              batchContent.push(mediaContentFromUrl(url));
             }
             batchContent.push({
               type: "text",
@@ -399,9 +400,9 @@ ${input.jobDescription}` : ""}`,
           }
         } else {
           // Single image or text-only path
-          const userContent: Array<{ type: string; text?: string; image_url?: { url: string; detail: string } }> = [];
+          const userContent: MessageContent[] = [];
           if (imageUrls.length === 1) {
-            userContent.push({ type: "image_url", image_url: { url: imageUrls[0], detail: "high" } });
+            userContent.push(mediaContentFromUrl(imageUrls[0]));
             userContent.push({
               type: "text",
               text: `TRADE: ${input.trade.toUpperCase()}
@@ -431,9 +432,24 @@ ${input.jobDescription}` : ""}`,
           const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
           result = JSON.parse(content);
         }
-      } catch {
-        // Fallback to pre-built if AI fails
-        result = DEMO_SCENARIOS[input.trade] ?? DEMO_SCENARIOS.electrical;
+      } catch (error) {
+        console.error("[Demo] AI analysis failed:", error);
+        // Fallback is only acceptable if the UI makes it clear the uploaded plan
+        // was not analysed. Silent sample estimates destroy user trust.
+        const fallback = DEMO_SCENARIOS[input.trade] ?? DEMO_SCENARIOS.electrical;
+        result = imageUrls.length > 0
+          ? {
+              ...fallback,
+              confidence: Math.min(fallback.confidence, 60),
+              assumptions: [
+                "AI analysis could not complete for the uploaded plan; this is a sample estimate, not a takeoff from the uploaded document.",
+                ...fallback.assumptions,
+              ],
+              planNotes:
+                "Uploaded-plan analysis failed, so this sample result is not based on the uploaded plan. Please try again or contact support if this repeats.",
+              aiFallback: true,
+            }
+          : fallback;
       }
     } else {
       result = DEMO_SCENARIOS[input.trade] ?? DEMO_SCENARIOS.electrical;
@@ -475,6 +491,7 @@ ${input.jobDescription}` : ""}`,
         total: Math.round(total * 100) / 100,
       },
       demoMode: true,
+      aiFallback: Boolean(result.aiFallback),
     };
   }),
 });

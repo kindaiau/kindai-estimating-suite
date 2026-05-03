@@ -5,6 +5,7 @@ import {
   pixelLead,
   pixelViewBetaPage,
 } from "@/lib/metaPixel";
+import { getAnalyticsContext, trackEvent } from "@/lib/analytics";
 import SEO from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,7 @@ function useCountdown(target: Date) {
 }
 
 const BETA_PERKS = [
-  { icon: Zap, text: "Full platform access — free during beta (normally $149–$499/mo)" },
+  { icon: Zap, text: "Full platform access — free during beta (normally $149–$450/mo)" },
   { icon: Shield, text: "Founding member pricing locked in when we go paid" },
   { icon: Users, text: "Your feedback directly shapes the product" },
   { icon: Star, text: "Your business listed as a Kindai Founding Partner" },
@@ -65,10 +66,14 @@ export default function BetaLanding() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [spotNumber, setSpotNumber] = useState<number | null>(null);
+  const [formStarted, setFormStarted] = useState(false);
   const leadEventIdRef = useRef<string | null>(null);
 
   // Fire ViewBetaPage pixel event on mount
-  useEffect(() => { pixelViewBetaPage(); }, []);
+  useEffect(() => {
+    pixelViewBetaPage();
+    trackEvent("beta_viewed", getAnalyticsContext());
+  }, []);
 
   const { data: stats } = trpc.beta.getStats.useQuery(undefined, {
     staleTime: 60_000, // cache for 60s to prevent excessive polling
@@ -80,11 +85,23 @@ export default function BetaLanding() {
       if (data.alreadyRegistered) {
         toast.info("You're already on the beta list! We'll be in touch.");
         setSubmitted(true);
+        trackEvent("beta_signup_succeeded", {
+          trade: form.trade,
+          state: form.state,
+          projectSize: form.projectSize,
+          alreadyRegistered: true,
+        });
         leadEventIdRef.current = null;
         return;
       }
       if (data.isFull) {
         toast.error("Sorry — all 25 beta spots have been claimed. Join the waitlist and we'll notify you when spots open.");
+        trackEvent("beta_signup_failed", {
+          trade: form.trade,
+          state: form.state,
+          projectSize: form.projectSize,
+          reason: "beta_full",
+        });
         leadEventIdRef.current = null;
         return;
       }
@@ -97,24 +114,61 @@ export default function BetaLanding() {
         { content_name: "Beta Sign-up", content_category: "Kindai Estimating Suite", value: 0 },
         { eventId: leadEventId }
       );
+      trackEvent("beta_signup_succeeded", {
+        trade: form.trade,
+        state: form.state,
+        projectSize: form.projectSize,
+        hasCompany: Boolean(form.company),
+        hasFeedback: Boolean(form.feedback),
+        spotNumber: data.spotNumber ?? 0,
+      });
       leadEventIdRef.current = null;
     },
     onError: (err) => {
       toast.error(err.message || "Something went wrong. Please try again.");
+      trackEvent("beta_signup_failed", {
+        trade: form.trade,
+        state: form.state,
+        projectSize: form.projectSize,
+        reason: err.message ? "server_error" : "unknown",
+      });
       leadEventIdRef.current = null;
     },
   });
+
+  const updateForm = (patch: Partial<typeof form>) => {
+    if (!formStarted) {
+      setFormStarted(true);
+      trackEvent("beta_form_started", {
+        ...getAnalyticsContext(),
+      });
+    }
+    setForm((current) => ({ ...current, ...patch }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.email) {
       toast.error("Please enter your name and email.");
+      trackEvent("beta_signup_failed", {
+        trade: form.trade,
+        state: form.state,
+        projectSize: form.projectSize,
+        reason: "validation_missing_name_or_email",
+      });
       return;
     }
 
     const leadEventId = generateMetaEventId("beta_lead");
     const metaContext = getMetaBrowserContext();
     leadEventIdRef.current = leadEventId;
+    trackEvent("beta_signup_submitted", {
+      trade: form.trade,
+      state: form.state,
+      projectSize: form.projectSize,
+      hasCompany: Boolean(form.company),
+      hasFeedback: Boolean(form.feedback),
+    });
 
     signupMutation.mutate({
       name: form.name,
@@ -285,7 +339,7 @@ export default function BetaLanding() {
                     <label className="mb-2 block text-sm font-medium text-gray-200">Full name *</label>
                     <Input
                       value={form.name}
-                      onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) => updateForm({ name: e.target.value })}
                       placeholder="Matthew Symons"
                       className="h-12 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-gray-500"
                     />
@@ -296,7 +350,7 @@ export default function BetaLanding() {
                     <Input
                       type="email"
                       value={form.email}
-                      onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                      onChange={(e) => updateForm({ email: e.target.value })}
                       placeholder="you@company.com"
                       className="h-12 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-gray-500"
                     />
@@ -306,7 +360,7 @@ export default function BetaLanding() {
                     <label className="mb-2 block text-sm font-medium text-gray-200">Company</label>
                     <Input
                       value={form.company}
-                      onChange={(e) => setForm((prev) => ({ ...prev, company: e.target.value }))}
+                      onChange={(e) => updateForm({ company: e.target.value })}
                       placeholder="Kindai"
                       className="h-12 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-gray-500"
                     />
@@ -314,7 +368,7 @@ export default function BetaLanding() {
 
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-200">Trade</label>
-                    <Select value={form.trade} onValueChange={(value) => setForm((prev) => ({ ...prev, trade: value }))}>
+                    <Select value={form.trade} onValueChange={(value) => updateForm({ trade: value })}>
                       <SelectTrigger className="h-12 rounded-2xl border-white/10 bg-white/5 text-white">
                         <SelectValue placeholder="Select your trade" />
                       </SelectTrigger>
@@ -329,7 +383,7 @@ export default function BetaLanding() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-200">State</label>
-                      <Select value={form.state} onValueChange={(value: typeof form.state) => setForm((prev) => ({ ...prev, state: value }))}>
+                      <Select value={form.state} onValueChange={(value: typeof form.state) => updateForm({ state: value })}>
                         <SelectTrigger className="h-12 rounded-2xl border-white/10 bg-white/5 text-white">
                           <SelectValue placeholder="Select state" />
                         </SelectTrigger>
@@ -343,7 +397,7 @@ export default function BetaLanding() {
 
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-200">Business size</label>
-                      <Select value={form.projectSize} onValueChange={(value: typeof form.projectSize) => setForm((prev) => ({ ...prev, projectSize: value }))}>
+                      <Select value={form.projectSize} onValueChange={(value: typeof form.projectSize) => updateForm({ projectSize: value })}>
                         <SelectTrigger className="h-12 rounded-2xl border-white/10 bg-white/5 text-white">
                           <SelectValue placeholder="Select size" />
                         </SelectTrigger>
@@ -361,7 +415,7 @@ export default function BetaLanding() {
                     <label className="mb-2 block text-sm font-medium text-gray-200">Biggest quoting pain right now?</label>
                     <Textarea
                       value={form.feedback}
-                      onChange={(e) => setForm((prev) => ({ ...prev, feedback: e.target.value }))}
+                      onChange={(e) => updateForm({ feedback: e.target.value })}
                       placeholder="Slow takeoffs, missed items, pricing inconsistency, tender pressure…"
                       className="min-h-[120px] rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-gray-500"
                     />

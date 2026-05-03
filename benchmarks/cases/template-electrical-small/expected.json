@@ -1,0 +1,76 @@
+{
+  "caseId": "template-electrical-small",
+  "title": "Small Retail Electrical Fitout",
+  "marketBasis": "Australia",
+  "currency": "AUD",
+  "gstTreatment": "ex GST unless stated otherwise",
+  "minimumAcceptableScore": 85,
+  "expectedTotal": 48200,
+  "totalTolerancePercent": 12,
+  "requiredWarnings": [
+    "switchboard capacity is not visible",
+    "final fixture selections are not specified"
+  ],
+  "expectedItems": [
+    {
+      "id": "double-gpo",
+      "description": "double general power outlets",
+      "aliases": ["double GPO", "twin socket outlets", "double power points"],
+      "category": "materials",
+      "unit": "ea",
+      "quantity": 28,
+      "tolerancePercent": 5,
+      "evidence": "Power layout drawing, outlet symbols."
+    },
+    {
+      "id": "led-panels",
+      "description": "LED panel light fittings",
+      "aliases": ["LED panels", "600x600 panel lights"],
+      "category": "materials",
+      "unit": "ea",
+      "quantity": 42,
+      "tolerancePercent": 5,
+      "evidence": "Lighting layout drawing."
+    },
+    {
+      "id": "emergency-lights",
+      "description": "emergency and exit light fittings",
+      "aliases": ["emergency lights", "exit lights"],
+      "category": "materials",
+      "unit": "ea",
+      "quantity": 7,
+      "tolerancePercent": 0,
+      "evidence": "Emergency lighting symbols."
+    },
+    {
+      "id": "cable-run",
+      "description": "2.5mm TPS cable run",
+      "aliases": ["2.5 mm TPS cable", "power circuit cable"],
+      "category": "materials",
+      "unit": "m",
+      "quantity": 180,
+      "tolerancePercent": 10,
+      "evidence": "Measured circuit route with estimator allowance."
+    },
+    {
+      "id": "switchboard-modification",
+      "description": "switchboard modification allowance",
+      "aliases": ["distribution board modification", "switchboard works"],
+      "category": "materials",
+      "unit": "lot",
+      "quantity": 1,
+      "tolerancePercent": 0,
+      "evidence": "Scope note references existing board alteration."
+    },
+    {
+      "id": "labour",
+      "description": "electrical installation labour",
+      "aliases": ["electrician labour", "installation labour hours"],
+      "category": "labour",
+      "unit": "hr",
+      "quantity": 220,
+      "tolerancePercent": 12,
+      "evidence": "Estimator labour build-up from item quantities."
+    }
+  ]
+}

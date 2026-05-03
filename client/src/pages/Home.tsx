@@ -780,9 +780,15 @@ export default function Home() {
             <FadeUp delay={0.1}>
               <h4 className="text-white font-black text-sm mb-4 tracking-wide uppercase">Product</h4>
               <ul className="space-y-2.5">
-                {["AI Takeoff", "Company Memory", "Xero Integration", "Accuracy Dashboard", "Pricing"].map(link => (
-                  <li key={link}>
-                    <a href="#" className="text-gray-400 text-sm hover:text-white transition-colors duration-200 inline-block">{link}</a>
+                {[
+                  { label: "AI Takeoff", href: "/ai-takeoff" },
+                  { label: "Free Demo", href: "/demo" },
+                  { label: "Pricing", href: "/pricing" },
+                  { label: "Help & Best Practices", href: "/help" },
+                  { label: "Cabinet Joinery", href: "/cabinet-joinery" },
+                ].map(link => (
+                  <li key={link.href}>
+                    <a href={link.href} className="text-gray-300 text-sm hover:text-white transition-colors duration-200 inline-block">{link.label}</a>
                   </li>
                 ))}
               </ul>
@@ -792,9 +798,16 @@ export default function Home() {
             <FadeUp delay={0.2}>
               <h4 className="text-white font-black text-sm mb-4 tracking-wide uppercase">Trades</h4>
               <ul className="space-y-2.5">
-                {["Electrical", "Plumbing", "Concrete", "Painting", "Carpentry", "All Trades"].map(link => (
-                  <li key={link}>
-                    <a href="#" className="text-gray-400 text-sm hover:text-white transition-colors duration-200 inline-block">{link}</a>
+                {[
+                  { label: "Electrical", href: "/demo" },
+                  { label: "Plumbing", href: "/demo" },
+                  { label: "Concrete", href: "/demo" },
+                  { label: "Painting", href: "/demo" },
+                  { label: "Carpentry", href: "/demo" },
+                  { label: "All Trades", href: "/help" },
+                ].map(link => (
+                  <li key={link.label}>
+                    <a href={link.href} className="text-gray-300 text-sm hover:text-white transition-colors duration-200 inline-block">{link.label}</a>
                   </li>
                 ))}
               </ul>
@@ -812,7 +825,7 @@ export default function Home() {
                   { label: "About", href: "/about" },
                 ].map(link => (
                   <li key={link.label}>
-                    <a href={link.href} className="text-gray-400 text-sm hover:text-white transition-colors duration-200 inline-block">{link.label}</a>
+                    <a href={link.href} className="text-gray-300 text-sm hover:text-white transition-colors duration-200 inline-block">{link.label}</a>
                   </li>
                 ))}
               </ul>

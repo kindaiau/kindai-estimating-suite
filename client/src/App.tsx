@@ -35,7 +35,24 @@ import CompanySettings from "./pages/CompanySettings";
 import AccuracyDashboard from "./pages/AccuracyDashboard";
 import MotylDemo from "./pages/MotylDemo";
 import GetGasDemo from "./pages/GetGasDemo";
+import LaunchEngineLandingPage from "./launch-engine/LandingPage";
+import LaunchEngineBrandScanPage from "./launch-engine/BrandScanPage";
+import LaunchEngineDashboardPage from "./launch-engine/DashboardPage";
 import AIHelpAssistant from "./components/AIHelpAssistant";
+import { getLoginUrl } from "./const";
+import { useEffect } from "react";
+
+function LoginRedirect() {
+  useEffect(() => {
+    window.location.href = getLoginUrl();
+  }, []);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-sm text-muted-foreground font-medium">Redirecting to sign in...</div>
+    </div>
+  );
+}
 
 function Router() {
   return (
@@ -53,14 +70,17 @@ function Router() {
       <Route path="/billing" component={Billing} />
       <Route path="/trade-profiles" component={TradeProfile} />
       <Route path="/demo" component={DemoMode} />
+      <Route path="/login" component={LoginRedirect} />
       <Route path="/suppliers" component={SupplierManager} />
       <Route path="/followups" component={QuoteFollowups} />
       <Route path="/projects/:projectId/variations" component={VariationsRegister} />
       <Route path="/quote/accept/:token" component={QuoteAcceptance} />
       <Route path="/beta" component={BetaLanding} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
+      <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/data-deletion" component={DataDeletion} />
       <Route path="/terms" component={TermsOfService} />
+      <Route path="/terms-of-service" component={TermsOfService} />
       <Route path="/support" component={Support} />
       <Route path="/cabinet-joinery" component={CabinetJoinery} />
       <Route path="/about" component={About} />
@@ -71,6 +91,9 @@ function Router() {
       <Route path="/motyl" component={MotylDemo} />
       <Route path="/moytle" component={MotylDemo} />
       <Route path="/getgas" component={GetGasDemo} />
+      <Route path="/launch-engine/brand-scan" component={LaunchEngineBrandScanPage} />
+      <Route path="/launch-engine/dashboard" component={LaunchEngineDashboardPage} />
+      <Route path="/launch-engine" component={LaunchEngineLandingPage} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

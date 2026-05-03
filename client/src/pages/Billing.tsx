@@ -14,14 +14,18 @@ import { pixelPurchase } from "@/lib/metaPixel";
 
 const TIER_COLOURS: Record<string, string> = {
   free: "bg-slate-100 text-slate-700 border-slate-200",
-  pro: "bg-gradient-to-r from-pink-500 to-orange-500 text-white border-transparent",
-  business: "bg-gradient-to-r from-blue-500 to-purple-500 text-white border-transparent",
+  sole_trader: "bg-gradient-to-r from-pink-500 to-orange-500 text-white border-transparent",
+  small_builder: "bg-gradient-to-r from-blue-500 to-purple-500 text-white border-transparent",
+  mid_builder: "bg-gradient-to-r from-purple-500 to-pink-600 text-white border-transparent",
+  enterprise: "bg-gradient-to-r from-amber-500 to-orange-600 text-white border-transparent",
 };
 
 const TIER_NAMES: Record<string, string> = {
   free: "Starter (Free)",
-  pro: "Pro Tradie",
-  business: "Business",
+  sole_trader: "Sole Tradie",
+  small_builder: "Pro",
+  mid_builder: "Commercial",
+  enterprise: "Enterprise & Custom",
 };
 
 const STATUS_BADGES: Record<string, { label: string; icon: typeof CheckCircle2; colour: string }> = {
@@ -163,7 +167,7 @@ export default function Billing() {
                   <Sparkles className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-black text-foreground">Upgrade to Pro Tradie</h3>
+                  <h3 className="text-lg font-black text-foreground">Upgrade to Sole Tradie</h3>
                   <p className="text-sm text-muted-foreground mt-0.5">
                     Unlimited estimates, 20 AI Vision Takeoffs/mo, trade pricing, supplier recommendations, and PDF export.
                   </p>
