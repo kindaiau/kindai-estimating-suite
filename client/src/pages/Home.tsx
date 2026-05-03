@@ -11,6 +11,7 @@ import { Zap, Shield, Brain, FileText, Users, BarChart3,
 import { motion, useInView, AnimatePresence, useMotionValueEvent, useScroll } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import { pixelViewContent } from "@/lib/metaPixel";
+import PilotSpotCounter from "@/components/PilotSpotCounter";
 
 // Design note: Australian workshop brutalism — blunt pain-first messaging, tradie-friendly proof, and a clear path from ad click to pilot sign-up.
 
@@ -255,7 +256,9 @@ export default function Home() {
                 Kindai reads your plans, applies your price book, and builds a GST-ready quote in 60 seconds. Built for Australian tradies.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center lg:items-start justify-center lg:justify-start w-full sm:w-auto">
+              <PilotSpotCounter variant="hero" fallbackClaimed={12} fallbackTotal={25} />
+
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center lg:items-start justify-center lg:justify-start w-full sm:w-auto mt-4">
                 <Button
                   onClick={handleTryAI}
                   size="lg"
