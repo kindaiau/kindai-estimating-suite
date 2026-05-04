@@ -164,6 +164,14 @@ export const TRADES = [
     unit: "tonne",
   },
   {
+    id: "ev-charging",
+    name: "EV Charging Installation & Service",
+    icon: "Zap",
+    color: "#22C55E",
+    description: "EV charger installation, maintenance, fault diagnosis & repair — residential & commercial",
+    unit: "ea",
+  },
+  {
     id: "gasfitting",
     name: "Gasfitting",
     icon: "Flame",
@@ -221,6 +229,29 @@ export const COMPLIANCE_DATA: Record<
     ],
     whsNotice: "All electrical work must be performed by a licensed electrician. A Certificate of Compliance for Electrical Work (CCEW) must be issued upon completion. Ensure all WHS obligations under the Work Health and Safety Act 2011 are met.",
     quoteDisclaimer: "This estimate is prepared by a licensed electrical contractor. All work will comply with AS/NZS 3000:2018 Wiring Rules. GST of 10% is included where marked. A Certificate of Compliance for Electrical Work (CCEW) will be provided upon completion. Prices are valid for 30 days from the date of issue.",
+  },
+  "ev-charging": {
+    licensingBodies: {
+      NSW: { body: "NSW Fair Trading", type: "Electrical Contractor Licence", url: "https://www.fairtrading.nsw.gov.au/trades-and-businesses/licensing/electrical-contractor-licence" },
+      VIC: { body: "Energy Safe Victoria (ESV)", type: "Electrical Contractor Licence", url: "https://www.esv.vic.gov.au/licences-and-registrations/electrical-contractors/" },
+      QLD: { body: "QBCC / Electrical Safety Office", type: "Electrical Contractor Licence", url: "https://www.qbcc.qld.gov.au/licences/types/electrical" },
+      SA: { body: "Consumer and Business Services SA", type: "Electrical Contractor Licence (SA limits single-phase EVSE to 20A unless smart-apply exemption)", url: "https://www.cbs.sa.gov.au/licences/electrical" },
+      WA: { body: "EnergySafety WA", type: "Electrical Contractor Licence", url: "https://www.commerce.wa.gov.au/worksafe/electrical-licensing" },
+      TAS: { body: "WorkSafe Tasmania", type: "Electrical Contractor Licence", url: "https://worksafe.tas.gov.au/topics/licensing/electrical-workers-and-contractors" },
+      NT: { body: "NT WorkSafe", type: "Electrical Contractor Licence (NT limits single-phase EVSE to 25A)", url: "https://worksafe.nt.gov.au/licences-and-registrations/electrical" },
+      ACT: { body: "Access Canberra", type: "Electrical Contractor Licence (ACT limits single-phase EVSE to 25A)", url: "https://www.accesscanberra.act.gov.au/s/article/electrical-contractor-licence" },
+    },
+    standards: [
+      { code: "AS/NZS 3000:2018 Appendix P", title: "Wiring Rules — Dedicated circuits, RCDs, and overcurrent protection for EVSE" },
+      { code: "AS/NZS 3008.1.1", title: "Selection of Cables — 6mm² minimum for 32A domestic EVSE" },
+      { code: "AS/NZS 3017:2022", title: "Electrical Installations — Verification Guidelines (testing & commissioning)" },
+      { code: "IEC 61851-1", title: "EV Conductive Charging Systems — General Requirements (Mode 1-4 charging)" },
+      { code: "IEC 61851-23", title: "DC EV Supply Equipment — requirements for DC fast chargers" },
+      { code: "AS/NZS 3820", title: "Essential Safety Requirements for Electrical Equipment (EESS/RCM compliance)" },
+      { code: "AS 4777.1", title: "Grid Connection of Energy Systems — for solar/EV integration and smart charging" },
+    ],
+    whsNotice: "All EV charger installation and repair work must be performed by a licensed electrician. A Certificate of Compliance for Electrical Work (CCEW) must be issued upon completion. EVSE installations must comply with AS/NZS 3000:2018 Appendix P. State-specific load limits: SA/QLD max 20A single-phase (unless exemption); ACT/NT max 25A single-phase; NSW/VIC/WA/TAS permit 32A single-phase. For installations >10kW, DNSP approval may be required. IP44 minimum for outdoor installations (IP65 recommended). IK07 impact protection required for public/commercial sites.",
+    quoteDisclaimer: "This estimate is prepared by a licensed electrical contractor specialising in EV charging infrastructure. All work will comply with AS/NZS 3000:2018 Wiring Rules (Appendix P) and IEC 61851 EV Charging Standards. State-specific load limits and DNSP requirements will be observed. A Certificate of Compliance for Electrical Work (CCEW) will be provided upon completion. All EV chargers supplied must carry the Regulatory Compliance Mark (RCM). Prices are valid for 30 days from the date of issue.",
   },
   gasfitting: {
     licensingBodies: {
