@@ -302,6 +302,7 @@ export const INDUSTRY_BENCHMARKS: Record<string, {
     avgQuoteValue: { small: 1800, medium: 6500, large: 35000 },
     sections: [
       "Preliminaries & Site Assessment",
+      "DNSP Application & Grid Connection",
       "Switchboard Upgrade & Modifications",
       "Dedicated Circuit & Cable Run",
       "Conduit & Cable Management",
@@ -863,7 +864,7 @@ PROJECT BENCHMARKS:
     },
     "ev-charging": {
       title: "EV charging installation, maintenance, and repair",
-      specialist: "senior Australian licensed electrician specialising in Electric Vehicle Supply Equipment (EVSE) installation, maintenance, and fault diagnosis — with deep knowledge of AS/NZS 3000:2018 Appendix P, IEC 61851 charging standards, and state-specific load limits across all Australian states",
+      specialist: "senior Australian licensed electrician specialising in Electric Vehicle Supply Equipment (EVSE) installation, maintenance, and fault diagnosis — including DC fast chargers (50kW-615kW), Tesla Supercharger infrastructure, and network operator maintenance contracts — with deep knowledge of AS/NZS 3000:2018 Appendix P, IEC 61851 charging standards, DNSP approval processes, and state-specific load limits across all Australian states",
       pricingBenchmarks: `PRICING BENCHMARKS (2024-25 Australian EV charging trade pricing):
 RESIDENTIAL INSTALLATION:
 - Site assessment / pre-installation inspection: $150-350
@@ -896,7 +897,7 @@ COMMERCIAL INSTALLATION:
 - DNSP application and connection fee (>10kW): $1,500-8,000 (varies by DNSP)
 - Switchboard upgrade for commercial multi-bay: $3,000-15,000
 
-MAINTENANCE & REPAIR:
+MAINTENANCE & REPAIR (AC WALLBOX — INDEPENDENTLY SERVICEABLE):
 - Call-out fee (standard): $120-180
 - Call-out fee (after hours/emergency): $220-400
 - Fault diagnosis and reset (GFCI trip, communication error): $150-350
@@ -904,8 +905,37 @@ MAINTENANCE & REPAIR:
 - Firmware update and network reconfiguration: $150-300
 - Connector/cable replacement (Type 2): $280-550 (parts + labour)
 - GFCI/RCD replacement: $180-380 (parts + labour)
-- Annual preventive maintenance service: $250-550
-- Electrician labour: $\${labourRate.min}-\${labourRate.max}/hr`,
+- Annual preventive maintenance service (residential): $250-550
+- Annual preventive maintenance service (commercial DC fast charger per unit): $1,500-3,500
+- Annual comprehensive maintenance contract (high-power DC, per unit): $5,000-7,000
+- Electrician labour: $\${labourRate.min}-\${labourRate.max}/hr
+
+DC FAST CHARGER INFRASTRUCTURE (what an electrician CAN quote):
+- High-voltage switchboard for DC fast charger site: $8,000-25,000 (design + supply + install)
+- Supply cable from switchboard to DC charger cabinet (per lm, 3-phase HV): $85-180/lm
+- Underground conduit and cable (per lm, inc. excavation, sand, backfill): $120-250/lm
+- Concrete equipment pad for DC fast charger: $1,200-3,500 (inc. civil works)
+- Protection relay installation and commissioning: $2,500-6,000
+- Metering installation (NMI-compliant, AS 62053-22): $1,800-4,500
+- DNSP application and connection (>100kW site): $5,000-25,000 (varies by DNSP — Provisional Sum)
+- Earthing system design and installation (DC fast charger site): $2,000-6,000
+- Multi-charger load management system (OCPP): $3,000-8,000
+- Site commissioning and testing (DC fast charger infrastructure): $2,000-5,000
+
+TESLA SUPERCHARGER — ELECTRICIAN SCOPE (infrastructure only):
+- Electrical supply from grid/transformer to Supercharger cabinet: $15,000-80,000+ (Provisional Sum)
+- Civil works: trenching, conduit, cable pits, concrete pads: $8,000-40,000
+- Metering and protection equipment: $3,000-8,000
+- DNSP connection approval (V3 Supercharger = 250kW, V4 = 615kW — major supply upgrade almost always required)
+- NOTE: The Supercharger cabinet itself is Tesla proprietary — Tesla installs and maintains it. Electrician scope is INFRASTRUCTURE ONLY
+
+NETWORK OPERATOR MAINTENANCE CONTRACTS (Evie, ChargePoint, Chargefox, AmpCharge):
+- Routine site inspection (visual, cable check, cleaning): $180-350 per visit
+- Preventive maintenance visit (per charger, quarterly): $250-500
+- Emergency call-out (network operator SLA): $350-600 (after hours)
+- Annual maintenance contract (AC charger): $800-1,500/year
+- Annual maintenance contract (DC fast charger 50kW): $3,500-7,000/year
+- NOTE: Network operators require OEM certification for internal repairs — electrician scope is external electrical work, cabling, switchboard, and safety compliance only`,
       criticalRules: `CRITICAL COMPLIANCE RULES FOR EV CHARGER ESTIMATING:
 - ALWAYS confirm the EV charger type: Mode 1 (standard GPO), Mode 2 (portable EVSE), Mode 3 (dedicated AC wallbox), or Mode 4 (DC fast charger)
 - ALWAYS check state-specific load limits: SA/QLD max 20A single-phase (4.6kW) unless SA smart-apply exemption granted; ACT/NT max 25A single-phase (5.7kW); NSW/VIC/WA/TAS permit 32A single-phase (7.4kW)
@@ -923,7 +953,16 @@ MAINTENANCE & REPAIR:
 - NEVER include the DNSP supply upgrade cost (poles, cables, transformer) — this is done by the network distributor
 - For strata/apartment buildings: flag that strata approval may be required (NSW Strata Schemes Management Act)
 - For commercial: check if OCPP network connectivity is required — add network setup as separate line item
-- Include Provisional Sum for any builder's work (trenching, concrete cutting, making good)`,
+- Include Provisional Sum for any builder's work (trenching, concrete cutting, making good)
+
+DC FAST CHARGER & SUPERCHARGER SCOPE RULES (CRITICAL):
+- TESLA SUPERCHARGER: A licensed electrician can quote and perform the ELECTRICAL INFRASTRUCTURE ONLY (supply cable, switchboard, civil works, metering, earthing). The Supercharger cabinet itself is Tesla proprietary — Tesla installs and maintains it. NEVER include the Supercharger unit cost in an electrician estimate.
+- TRITIUM CHARGERS: Tritium (Australian-made, Veefil-RT 50kW, Veefil-PK 175kW+) was acquired by Exicom in 2023. Spare parts availability has been impacted. Internal repairs require Tritium-certified technicians or authorised partners (e.g. Kentronics). Electrician scope: external electrical supply, cabling, switchboard, commissioning, and visual maintenance only.
+- ABB TERRA DC CHARGERS: Internal repairs require ABB-certified personnel only. Electrician scope: electrical supply installation, external visual inspections, and safety compliance. ABB provides remote diagnostics and SLA-based on-site support through their certified network.
+- KEMPOWER CHARGERS: Installation, commissioning, in-depth service, and warranty work require Kempower certification. Common faults: cable connection issues, emergency stop activations, SLAC timeouts, TCP errors, isolation faults. Electrician scope: initial site assessment, electrical infrastructure, basic visual inspection.
+- NETWORK OPERATOR CONTRACTS: To win maintenance contracts with Evie Networks, ChargePoint, Chargefox, or AmpCharge, electricians typically need OEM-specific certification (e.g. ChargePoint University, Tritium certification) in addition to their electrical licence. ChargePoint SLA requires next-business-day on-site repair after parts arrive. Jolt uses 4-week routine inspection cycles.
+- For DC fast charger sites >100kW: always flag that a substation upgrade may be required — this is a DNSP/utility scope item, not electrician scope. Add as a Provisional Sum with a note to confirm with DNSP.
+- For multi-charger commercial sites: include load management system (OCPP-based) as a separate line item — this prevents grid overload and is increasingly required by DNSPs`,
     },
     rendering: {
       title: "rendering and plastering",

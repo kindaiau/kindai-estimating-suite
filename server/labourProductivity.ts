@@ -291,6 +291,22 @@ export const EV_CHARGING_PRODUCTIVITY: ProductivityRate[] = [
   { task: "Testing and commissioning (commercial, per charger)", unit: "ea", minutesMin: 45, minutesAvg: 60, minutesMax: 90 },
   { task: "OCPP network configuration and testing", unit: "ea", minutesMin: 30, minutesAvg: 45, minutesMax: 90, notes: "Smart charging network setup" },
   { task: "Customer handover and demonstration", unit: "ea", minutesMin: 20, minutesAvg: 30, minutesMax: 45 },
+
+  // DC Fast Charger Infrastructure (Mode 4 — high-power commercial)
+  { task: "DC fast charger site assessment and DNSP pre-application", unit: "ea", minutesMin: 120, minutesAvg: 180, minutesMax: 300, notes: "Includes load assessment, DNSP requirements, site survey" },
+  { task: "High-voltage switchboard design and installation (DC fast charger site)", unit: "ea", minutesMin: 480, minutesAvg: 720, minutesMax: 1200, notes: "8-20 hrs; includes design, supply, install, and commissioning" },
+  { task: "3-phase HV supply cable run to DC charger cabinet (per lm)", unit: "lm", minutesMin: 15, minutesAvg: 22, minutesMax: 35, notes: "Large cable, heavy conduit — significantly more than standard cable runs" },
+  { task: "Concrete equipment pad for DC fast charger (inc. civil)", unit: "ea", minutesMin: 240, minutesAvg: 360, minutesMax: 480, notes: "4-8 hrs; includes formwork, pour, cure — often subcontracted" },
+  { task: "Protection relay installation and commissioning", unit: "ea", minutesMin: 120, minutesAvg: 180, minutesMax: 300 },
+  { task: "NMI-compliant metering installation (AS 62053-22)", unit: "ea", minutesMin: 90, minutesAvg: 120, minutesMax: 180 },
+  { task: "Earthing system for DC fast charger site (stakes, bonding, testing)", unit: "ea", minutesMin: 120, minutesAvg: 180, minutesMax: 300 },
+  { task: "OCPP load management system installation and configuration", unit: "ea", minutesMin: 120, minutesAvg: 180, minutesMax: 300, notes: "Network setup, charger registration, load balancing config" },
+  { task: "DC fast charger site commissioning and testing (full site)", unit: "ea", minutesMin: 240, minutesAvg: 360, minutesMax: 480, notes: "4-8 hrs; includes all chargers, metering, protection, OCPP" },
+  // Network Operator Maintenance
+  { task: "Routine site inspection (visual, cable check, cleaning — per charger)", unit: "ea", minutesMin: 20, minutesAvg: 30, minutesMax: 45, notes: "Per charger; add travel/call-out separately" },
+  { task: "Quarterly preventive maintenance visit (per DC fast charger)", unit: "ea", minutesMin: 45, minutesAvg: 60, minutesMax: 90 },
+  { task: "Emergency call-out and fault diagnosis (DC fast charger)", unit: "ea", minutesMin: 60, minutesAvg: 90, minutesMax: 180, notes: "Diagnosis only; internal repairs may require OEM certification" },
+
   // Maintenance & Repair
   { task: "Fault diagnosis and reset (GFCI trip, comms error)", unit: "ea", minutesMin: 30, minutesAvg: 45, minutesMax: 90 },
   { task: "Cable and connector inspection (visual + electrical)", unit: "ea", minutesMin: 20, minutesAvg: 30, minutesMax: 45 },
