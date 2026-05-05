@@ -37,6 +37,7 @@ import MotylDemo from "./pages/MotylDemo";
 import EbookGuide from "./pages/EbookGuide";
 import GetGasDemo from "./pages/GetGasDemo";
 import AIHelpAssistant from "./components/AIHelpAssistant";
+import PostHogPageTracker from "./components/PostHogPageTracker";
 
 function Router() {
   return (
@@ -86,6 +87,7 @@ function App() {
         <TooltipProvider>
           <Toaster position="top-right" richColors />
           <Analytics />
+          <PostHogPageTracker />
           <Router />
           <AIHelpAssistant />
         </TooltipProvider>

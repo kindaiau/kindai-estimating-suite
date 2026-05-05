@@ -7,7 +7,11 @@ import superjson from "superjson";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App";
 import { getLoginUrl } from "./const";
+import { initPostHog } from "./lib/posthog";
 import "./index.css";
+
+// Initialise PostHog analytics (session replay, funnel analysis, feature usage)
+initPostHog();
 
 const queryClient = new QueryClient();
 

@@ -17,6 +17,7 @@ import {
 import { useState } from "react";
 import { EstimateAgentChat } from "@/components/EstimateAgentChat";
 import { pixelSendQuote } from "@/lib/metaPixel";
+import { ph } from "@/lib/posthog";
 import { useLocation, useParams } from "wouter";
 
 const CATEGORIES = ["Materials", "Labour", "Plant & Equipment", "Subcontract", "Preliminaries", "Other"];
@@ -265,6 +266,7 @@ export default function EstimateBuilder() {
       toast.success("PDF generated! Opening now...");
       window.open(data.url, "_blank");
       utils.estimates.get.invalidate();
+      ph.quoteGenerated(estimate?.trade ?? "unknown", parseFloat(estimate?.total as string) || 0);
     },
     onError: (e) => toast.error("PDF failed: " + e.message),
   });
@@ -276,6 +278,7 @@ export default function EstimateBuilder() {
       utils.estimates.get.invalidate();
       // Fire SendQuote pixel event
       pixelSendQuote({ trade: estimate?.trade });
+      ph.quoteSent(estimate?.trade ?? "unknown");
     },
     onError: (e) => toast.error("Failed to send quote: " + e.message),
   });

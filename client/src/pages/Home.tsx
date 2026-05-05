@@ -12,6 +12,7 @@ import { motion, useInView, AnimatePresence, useMotionValueEvent, useScroll } fr
 import { useRef, useEffect, useState } from "react";
 import { pixelViewContent } from "@/lib/metaPixel";
 import PilotSpotCounter from "@/components/PilotSpotCounter";
+import { ph } from "@/lib/posthog";
 
 // Design note: Australian workshop brutalism — blunt pain-first messaging, tradie-friendly proof, and a clear path from ad click to pilot sign-up.
 
@@ -200,6 +201,7 @@ export default function Home() {
   };
 
   const handleTryAI = () => {
+    ph.ctaClicked("hero");
     if (isAuthenticated) navigate("/ai-takeoff");
     else navigate("/beta");
   };
