@@ -64,6 +64,41 @@ function useIsAdTraffic() {
   return isAd;
 }
 
+// A/B Test: Hero headline experiment for ad traffic
+// Variant A: "From Plans to Quote in Minutes." (benefit-led)
+// Variant B: "Stop Losing Jobs to Slow Quotes." (pain-led)
+const HERO_VARIANTS = {
+  A: "From Plans to Quote\nin Minutes.",
+  B: "Stop Losing Jobs\nto Slow Quotes.",
+} as const;
+
+function useHeroVariant(isAdTraffic: boolean): "A" | "B" {
+  const [variant, setVariant] = useState<"A" | "B">("A");
+  const tracked = useRef(false);
+
+  useEffect(() => {
+    if (!isAdTraffic) return; // Only A/B test ad traffic
+
+    const stored = localStorage.getItem("kindai_hero_variant");
+    if (stored === "A" || stored === "B") {
+      setVariant(stored);
+    } else {
+      // 50/50 random assignment
+      const assigned = Math.random() < 0.5 ? "A" : "B";
+      localStorage.setItem("kindai_hero_variant", assigned);
+      setVariant(assigned);
+    }
+  }, [isAdTraffic]);
+
+  useEffect(() => {
+    if (!isAdTraffic || tracked.current) return;
+    tracked.current = true;
+    ph.heroExperimentExposed(variant, HERO_VARIANTS[variant].replace("\n", " "));
+  }, [isAdTraffic, variant]);
+
+  return variant;
+}
+
 // Design note: Australian workshop brutalism — blunt pain-first messaging, tradie-friendly proof, and a clear path from ad click to pilot sign-up.
 
 // Reusable scroll-triggered fade-up wrapper
@@ -241,6 +276,7 @@ export default function Home() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
   const isAdTraffic = useIsAdTraffic();
+  const heroVariant = useHeroVariant(isAdTraffic);
   const [showExitPopup, setShowExitPopup] = useState(false);
   const exitShownRef = useRef(false);
   const videoSectionRef = useRef<HTMLDivElement>(null);
@@ -282,6 +318,9 @@ export default function Home() {
 
   const handleTryAI = () => {
     ph.ctaClicked("hero");
+    if (isAdTraffic) {
+      ph.heroExperimentCTAClicked(heroVariant, "claim_pilot_spot");
+    }
     if (isAuthenticated) navigate("/ai-takeoff");
     else navigate("/beta");
   };
@@ -329,9 +368,15 @@ export default function Home() {
                 <ChevronRight className="w-3.5 h-3.5" />
               </motion.a>
 
-              {/* HERO HEADLINE — only this in brand colours */}
+              {/* HERO HEADLINE — A/B tested for ad traffic */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.05] mb-8">
-                <span className="kindai-gradient-text">From Plans to Quote<br className="hidden sm:block" /> in Minutes.</span>
+                <span className="kindai-gradient-text">
+                  {isAdTraffic
+                    ? HERO_VARIANTS[heroVariant].split("\n").map((line: string, i: number) => (
+                        <span key={i}>{line}{i === 0 && <br className="hidden sm:block" />}</span>
+                      ))
+                    : <>From Plans to Quote<br className="hidden sm:block" /> in Minutes.</>}
+                </span>
               </h1>
 
               <p className="text-lg sm:text-xl text-white/70 max-w-lg mx-auto lg:mx-0 mb-10 leading-relaxed">

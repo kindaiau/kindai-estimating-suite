@@ -986,3 +986,9 @@
 - [ ] Implement website changes to reduce bounce rate
 - [ ] Implement changes to increase signup conversion rate
 - [ ] Save checkpoint and publish
+
+## A/B Test — Hero Headline (6 May 2026)
+- [x] Implement 50/50 split for ad traffic: Variant A "From Plans to Quote in Minutes" vs Variant B "Stop Losing Jobs to Slow Quotes"
+- [x] Persist variant in localStorage so returning visitors see the same headline
+- [x] Track variant in PostHog (hero_experiment_exposed + hero_experiment_cta_clicked events)
+- [ ] Save checkpoint and publish

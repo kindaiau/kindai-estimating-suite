@@ -141,6 +141,14 @@ export const ph = {
   /** User submitted ebook lead form */
   ebookLeadSubmitted: (trade?: string) =>
     trackEvent("ebook_lead_submitted", { trade }),
+
+  /** A/B test: hero headline experiment exposure */
+  heroExperimentExposed: (variant: "A" | "B", headline: string) =>
+    trackEvent("hero_experiment_exposed", { variant, headline }),
+
+  /** A/B test: hero CTA clicked with variant context */
+  heroExperimentCTAClicked: (variant: "A" | "B", cta: string) =>
+    trackEvent("hero_experiment_cta_clicked", { variant, cta }),
 };
 
 export default posthog;
