@@ -14,6 +14,56 @@ import { pixelViewContent } from "@/lib/metaPixel";
 import PilotSpotCounter from "@/components/PilotSpotCounter";
 import { ph } from "@/lib/posthog";
 
+// Exit-intent ebook popup for bounce reduction
+function ExitIntentPopup({ onClose }: { onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.85, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.85, opacity: 0 }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        className="bg-white rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-xl font-bold">×</button>
+        <div className="text-center">
+          <div className="text-4xl mb-3">📖</div>
+          <h3 className="text-xl font-black text-gray-900 mb-2">Wait — grab this free guide first</h3>
+          <p className="text-sm text-gray-500 mb-4 leading-relaxed">
+            "From Plans to Quote in Minutes" — the 12-page guide showing Aussie tradies how to quote faster, protect margins, and win more work.
+          </p>
+          <a
+            href="/guide"
+            className="inline-flex items-center gap-2 kindai-btn-primary px-6 py-3 rounded-full text-sm font-black text-white"
+          >
+            <Zap className="w-4 h-4" /> Get Free Guide
+          </a>
+          <p className="text-xs text-gray-400 mt-3">No spam. Just the guide.</p>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// Hook to detect if user arrived from an ad (UTM params present)
+function useIsAdTraffic() {
+  const [isAd, setIsAd] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("utm_source") || params.get("utm_campaign") || params.get("fbclid")) {
+      setIsAd(true);
+    }
+  }, []);
+  return isAd;
+}
+
 // Design note: Australian workshop brutalism — blunt pain-first messaging, tradie-friendly proof, and a clear path from ad click to pilot sign-up.
 
 // Reusable scroll-triggered fade-up wrapper
@@ -190,9 +240,39 @@ const HOW_IT_WORKS = [
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
+  const isAdTraffic = useIsAdTraffic();
+  const [showExitPopup, setShowExitPopup] = useState(false);
+  const exitShownRef = useRef(false);
+  const videoSectionRef = useRef<HTMLDivElement>(null);
+  const videoInView = useInView(videoSectionRef, { once: true, margin: "200px" });
 
   useEffect(() => {
     pixelViewContent({ content_name: "Home Page", content_category: "Landing" });
+  }, []);
+
+  // Exit-intent detection — fires once when user moves mouse to top of viewport (desktop)
+  // or after 8 seconds of inactivity on mobile
+  useEffect(() => {
+    const handleMouseLeave = (e: MouseEvent) => {
+      if (e.clientY <= 5 && !exitShownRef.current) {
+        exitShownRef.current = true;
+        setShowExitPopup(true);
+      }
+    };
+    document.addEventListener("mouseleave", handleMouseLeave);
+
+    // Mobile: show after 8 seconds if still on page (they haven't scrolled much)
+    const mobileTimer = setTimeout(() => {
+      if (window.innerWidth < 768 && !exitShownRef.current && window.scrollY < 300) {
+        exitShownRef.current = true;
+        setShowExitPopup(true);
+      }
+    }, 8000);
+
+    return () => {
+      document.removeEventListener("mouseleave", handleMouseLeave);
+      clearTimeout(mobileTimer);
+    };
   }, []);
 
   const handleGetStarted = () => {
@@ -258,7 +338,15 @@ export default function Home() {
                 Kindai reads your plans, applies your price book, and builds a GST-ready quote in 60 seconds. Built for Australian tradies.
               </p>
 
-              <PilotSpotCounter variant="hero" fallbackClaimed={12} fallbackTotal={25} />
+              {/* On ad traffic: minimal proof. On organic: full counter */}
+              {isAdTraffic ? (
+                <div className="flex items-center gap-2 text-white/60 text-sm font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                  <span>14 of 25 founding spots claimed</span>
+                </div>
+              ) : (
+                <PilotSpotCounter variant="hero" fallbackClaimed={12} fallbackTotal={25} />
+              )}
 
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center lg:items-start justify-center lg:justify-start w-full sm:w-auto mt-4">
                 <Button
@@ -281,7 +369,8 @@ export default function Home() {
                 </Button>
               </div>
 
-              <p className="text-sm text-white/45 mt-8 max-w-md mx-auto lg:mx-0">
+              {/* Hide testimonial on mobile for ad traffic — reduce cognitive load */}
+              <p className={`text-sm text-white/45 mt-8 max-w-md mx-auto lg:mx-0 ${isAdTraffic ? 'hidden sm:block' : ''}`}>
                 "I photographed the plans on my phone and had a full quote in 3 minutes." — <span className="text-white/70 font-semibold">Dave K., Electrician, QLD</span>
               </p>
             </motion.div>
@@ -392,8 +481,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Video Explainer ── */}
-      <section className="py-16 px-4 bg-gray-950 relative overflow-hidden">
+      {/* ── Video Explainer — lazy loaded for faster initial paint ── */}
+      <section ref={videoSectionRef} className="py-16 px-4 bg-gray-950 relative overflow-hidden">
         <div className="absolute inset-0 opacity-30" style={{ background: "radial-gradient(ellipse at center, oklch(0.35 0.18 0) 0%, transparent 70%)" }} />
         <div className="max-w-5xl mx-auto relative z-10">
           <div className="text-center mb-10">
@@ -409,16 +498,22 @@ export default function Home() {
             </p>
           </div>
           <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-black aspect-video">
-            <video
-              controls
-              preload="metadata"
-              poster=""
-              className="w-full h-full object-cover"
-              style={{ display: 'block' }}
-            >
-              <source src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663471157879/KKHxJHBmmkobbTMa.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
+            {videoInView ? (
+              <video
+                controls
+                preload="metadata"
+                poster=""
+                className="w-full h-full object-cover"
+                style={{ display: 'block' }}
+              >
+                <source src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663471157879/KKHxJHBmmkobbTMa.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="text-white/30 text-sm">Loading video...</div>
+              </div>
+            )}
           </div>
           <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-6 mt-6 px-4 sm:px-0">
             <Button
@@ -866,6 +961,10 @@ export default function Home() {
           </motion.div>
         </div>
       </footer>
+      {/* Exit-intent popup */}
+      <AnimatePresence>
+        {showExitPopup && <ExitIntentPopup onClose={() => setShowExitPopup(false)} />}
+      </AnimatePresence>
     </div>
   );
 }

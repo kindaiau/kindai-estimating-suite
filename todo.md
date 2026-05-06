@@ -976,3 +976,13 @@
 - [ ] Wire ebook nurture cron job (Day 2/4/7/10 emails via Resend)
 - [ ] Record Motyl AI Takeoff demo screen recording
 - [ ] Save checkpoint and publish
+
+## Analytics Deep-Dive & Bounce Rate Fix (6 May 2026)
+- [ ] Pull website analytics data (Umami/built-in analytics)
+- [ ] Pull social media performance data (Facebook + Instagram via MCP)
+- [ ] Pull Meta Ads performance data via MCP
+- [ ] Diagnose bounce rate root causes
+- [ ] Produce full analytics report with actionable findings
+- [ ] Implement website changes to reduce bounce rate
+- [ ] Implement changes to increase signup conversion rate
+- [ ] Save checkpoint and publish
