@@ -992,3 +992,9 @@
 - [x] Persist variant in localStorage so returning visitors see the same headline
 - [x] Track variant in PostHog (hero_experiment_exposed + hero_experiment_cta_clicked events)
 - [ ] Save checkpoint and publish
+
+## Meta CAPI Secrets (7 May 2026)
+- [x] Add META_PIXEL_ID secret to project
+- [x] Add META_CONVERSIONS_API_ACCESS_TOKEN secret to project
+- [x] Validate secrets with vitest (test PageView event sent successfully, events_received >= 1)
+- [x] Server-side Facebook conversion tracking now live (signups, page views, ebook captures)
