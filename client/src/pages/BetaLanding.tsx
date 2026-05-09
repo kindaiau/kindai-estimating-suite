@@ -10,7 +10,6 @@ import SEO from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2, Zap, Users, Shield, Clock, ChevronRight, Star, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
@@ -19,6 +18,9 @@ import { motion, AnimatePresence } from "framer-motion";
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
 
 const BETA_END_DATE = new Date("2026-05-15T23:59:59+09:30"); // May 15, 2026 ACST
+const PILOT_SPOTS_CLAIMED = 12;
+const PILOT_SPOTS_TOTAL = 25;
+const PILOT_SPOTS_REMAINING = 13;
 
 function useCountdown(target: Date) {
   const [now, setNow] = useState(() => new Date());
@@ -60,28 +62,47 @@ const TRADES = [
 
 export default function BetaLanding() {
   const [form, setForm] = useState({
-    name: "", email: "", company: "", trade: "", state: "" as "" | "NSW" | "VIC" | "QLD" | "SA" | "WA" | "TAS" | "NT" | "ACT",
+    name: "", email: "", phone: "", company: "", trade: "", state: "" as "" | "NSW" | "VIC" | "QLD" | "SA" | "WA" | "TAS" | "NT" | "ACT",
     projectSize: "" as "" | "sole_trader" | "small_builder" | "mid_tier" | "enterprise",
     feedback: "",
+    intent: "Pilot Spot Request" as "Pilot Spot Request" | "Paid Pilot Setup" | "Setup Call Request",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [paidSetupSecured, setPaidSetupSecured] = useState(false);
   const [spotNumber, setSpotNumber] = useState<number | null>(null);
   const [formStarted, setFormStarted] = useState(false);
   const leadEventIdRef = useRef<string | null>(null);
+  const pilotSetupCheckoutMutation = trpc.billing.createPilotSetupCheckout.useMutation();
 
   // Fire ViewBetaPage pixel event on mount
   useEffect(() => {
     pixelViewBetaPage();
     trackEvent("beta_viewed", getAnalyticsContext());
+    const params = new URLSearchParams(window.location.search);
+    const intent = params.get("intent");
+    if (params.get("paid_setup") === "success") {
+      setSubmitted(true);
+      setPaidSetupSecured(true);
+      toast.success("Payment received. Matt will follow up to book your setup sprint.");
+      trackEvent("checkout_succeeded", {
+        ...getAnalyticsContext(),
+        product: "founding_pilot_setup",
+        sessionId: params.get("session_id") ?? undefined,
+      });
+    }
+    if (params.get("checkout") === "cancelled") {
+      toast.info("Checkout was cancelled. Your pilot request is still saved.");
+      trackEvent("checkout_cancelled", {
+        ...getAnalyticsContext(),
+        product: "founding_pilot_setup",
+      });
+    }
+    if (intent === "paid-setup") setForm((current) => ({ ...current, intent: "Paid Pilot Setup" }));
+    if (intent === "setup-call") setForm((current) => ({ ...current, intent: "Setup Call Request" }));
   }, []);
 
-  const { data: stats } = trpc.beta.getStats.useQuery(undefined, {
-    staleTime: 60_000, // cache for 60s to prevent excessive polling
-    refetchInterval: 60_000, // refresh every 60s (was 30s)
-  });
-
   const signupMutation = trpc.beta.signup.useMutation({
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (data.alreadyRegistered) {
         toast.info("You're already on the beta list! We'll be in touch.");
         setSubmitted(true);
@@ -89,6 +110,7 @@ export default function BetaLanding() {
           trade: form.trade,
           state: form.state,
           projectSize: form.projectSize,
+          intent: form.intent,
           alreadyRegistered: true,
         });
         leadEventIdRef.current = null;
@@ -100,6 +122,7 @@ export default function BetaLanding() {
           trade: form.trade,
           state: form.state,
           projectSize: form.projectSize,
+          intent: form.intent,
           reason: "beta_full",
         });
         leadEventIdRef.current = null;
@@ -120,9 +143,40 @@ export default function BetaLanding() {
         projectSize: form.projectSize,
         hasCompany: Boolean(form.company),
         hasFeedback: Boolean(form.feedback),
+        intent: form.intent,
         spotNumber: data.spotNumber ?? 0,
       });
       leadEventIdRef.current = null;
+
+      if (form.intent === "Paid Pilot Setup") {
+        toast.loading("Opening secure Stripe checkout...", { id: "pilot-setup-checkout" });
+        try {
+          trackEvent("checkout_started", {
+            ...getAnalyticsContext(),
+            product: "founding_pilot_setup",
+            intent: form.intent,
+            trade: form.trade,
+            state: form.state,
+          });
+          const checkout = await pilotSetupCheckoutMutation.mutateAsync({
+            name: form.name,
+            email: form.email,
+            phone: form.phone || undefined,
+            tradeType: form.trade || undefined,
+            origin: window.location.origin,
+          });
+          toast.dismiss("pilot-setup-checkout");
+          window.location.assign(checkout.url);
+        } catch (err) {
+          toast.error("Your lead is saved, but Stripe checkout did not open. Matt will follow up manually.", {
+            id: "pilot-setup-checkout",
+          });
+          trackEvent("beta_signup_failed", {
+            intent: form.intent,
+            reason: err instanceof Error ? err.message : "unknown",
+          });
+        }
+      }
     },
     onError: (err) => {
       toast.error(err.message || "Something went wrong. Please try again.");
@@ -130,6 +184,7 @@ export default function BetaLanding() {
         trade: form.trade,
         state: form.state,
         projectSize: form.projectSize,
+        intent: form.intent,
         reason: err.message ? "server_error" : "unknown",
       });
       leadEventIdRef.current = null;
@@ -154,6 +209,7 @@ export default function BetaLanding() {
         trade: form.trade,
         state: form.state,
         projectSize: form.projectSize,
+        intent: form.intent,
         reason: "validation_missing_name_or_email",
       });
       return;
@@ -161,24 +217,36 @@ export default function BetaLanding() {
 
     const leadEventId = generateMetaEventId("beta_lead");
     const metaContext = getMetaBrowserContext();
+    const analyticsContext = getAnalyticsContext();
     leadEventIdRef.current = leadEventId;
     trackEvent("beta_signup_submitted", {
+      ...analyticsContext,
       trade: form.trade,
       state: form.state,
       projectSize: form.projectSize,
       hasCompany: Boolean(form.company),
       hasFeedback: Boolean(form.feedback),
+      intent: form.intent,
     });
 
     signupMutation.mutate({
       name: form.name,
       email: form.email,
+      phone: form.phone || undefined,
       company: form.company || undefined,
       trade: form.trade || undefined,
+      intent: form.intent,
       state: form.state || undefined,
       projectSize: form.projectSize || undefined,
       feedback: form.feedback || undefined,
       source: "beta_page",
+      utmSource: analyticsContext.utmSource || undefined,
+      utmMedium: analyticsContext.utmMedium || undefined,
+      utmCampaign: analyticsContext.utmCampaign || undefined,
+      utmContent: analyticsContext.utmContent || undefined,
+      utmTerm: analyticsContext.utmTerm || undefined,
+      landingPath: analyticsContext.path || undefined,
+      referrerHost: analyticsContext.referrer || undefined,
       sourceUrl: metaContext.sourceUrl,
       leadEventId,
       fbp: metaContext.fbp,
@@ -186,9 +254,9 @@ export default function BetaLanding() {
     });
   };
 
-  const claimed = stats?.claimed ?? 0;
-  const remaining = stats?.remaining ?? 25;
-  const pct = Math.min(100, Math.round((claimed / 25) * 100));
+  const claimed = PILOT_SPOTS_CLAIMED;
+  const remaining = PILOT_SPOTS_REMAINING;
+  const pct = Math.min(100, Math.round((claimed / PILOT_SPOTS_TOTAL) * 100));
   const countdown = useCountdown(BETA_END_DATE);
 
   return (
@@ -215,10 +283,10 @@ export default function BetaLanding() {
               Beta closes in {countdown.days}d {countdown.hours}h {countdown.minutes}m {countdown.seconds}s
             </div>
             <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-7xl">
-              Quote jobs in <span className="text-amber-400">minutes</span>, not days.
+              Quote faster without missing costs.
             </h1>
             <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-gray-300 sm:text-xl">
-              Kindai turns plans, scope and labour into fast, accurate construction estimates — built for Australian trades, builders and quantity surveyors.
+              Kindai helps Australian tradies turn job notes, photos, plans, and supplier pricing into cleaner quote drafts — faster, with GST-aware logic and margin protection.
             </p>
 
             <div className="mx-auto mt-8 grid max-w-3xl gap-3 text-left sm:grid-cols-2">
@@ -231,18 +299,25 @@ export default function BetaLanding() {
             </div>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <a href="#beta-form">
+              <a href="#beta-form" onClick={() => updateForm({ intent: "Pilot Spot Request" })}>
                 <Button size="lg" className="h-12 rounded-2xl bg-amber-400 px-8 text-base font-semibold text-gray-950 hover:bg-amber-300">
-                  Claim my spot <ArrowRight className="ml-2 h-4 w-4" />
+                  Claim Your Pilot Spot <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </a>
-              <p className="text-sm text-gray-400">Only {remaining} founding beta spots remaining</p>
+              <a href="#beta-form" onClick={() => updateForm({ intent: "Setup Call Request" })}>
+                <Button size="lg" variant="outline" className="h-12 rounded-2xl border-white/20 px-8 text-base font-semibold text-white hover:bg-white/10">
+                  Book a 15-Minute Setup Call
+                </Button>
+              </a>
             </div>
+            <p className="mt-5 text-sm font-semibold text-amber-200">
+              {claimed} of {PILOT_SPOTS_TOTAL} pilot spots claimed — {remaining} spots remaining.
+            </p>
           </motion.div>
 
           <div className="mt-12 w-full max-w-3xl">
             <div className="mb-3 flex items-center justify-between text-sm text-gray-400">
-              <span>{claimed}/25 spots claimed</span>
+              <span>{claimed}/{PILOT_SPOTS_TOTAL} spots claimed</span>
               <span>{pct}% full</span>
             </div>
             <div className="h-3 overflow-hidden rounded-full bg-white/10">
@@ -253,6 +328,54 @@ export default function BetaLanding() {
                 className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500"
               />
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-amber-400/20 bg-amber-400/10 py-12">
+        <div className="mx-auto grid max-w-7xl gap-8 px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-300">Founding Pilot Setup Sprint</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              We help set up your first quoting workflow with you.
+            </h2>
+            <p className="mt-4 text-base leading-8 text-gray-300">
+              Instead of leaving you to figure out new software alone, we help set up one of your common job types with you.
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {[
+                "1 setup call",
+                "1 quoting workflow for a common job type",
+                "GST-aware estimate structure",
+                "supplier pricing structure",
+                "margin and cost checks",
+                "founder-led onboarding",
+                "7 days of support",
+              ].map((item) => (
+                <div key={item} className="flex items-start gap-3 text-gray-100">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 text-amber-300" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-gray-950/80 p-6 shadow-2xl">
+            <h3 className="text-2xl font-bold text-white">Want to skip the waitlist?</h3>
+            <p className="mt-4 text-gray-300">
+              Secure a founding pilot setup and Matt will personally help set up your first quoting workflow. Your first 6 months of Kindai are included.
+            </p>
+            <div className="mt-5 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4 text-center">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-300">Founding offer</p>
+              <p className="mt-1 text-3xl font-extrabold text-white">A$1,000</p>
+              <p className="mt-1 text-sm text-gray-300">Setup + first 6 months included</p>
+            </div>
+            <a href="#beta-form" onClick={() => updateForm({ intent: "Paid Pilot Setup" })}>
+              <Button className="mt-6 h-12 w-full rounded-2xl bg-amber-400 text-base font-semibold text-gray-950 hover:bg-amber-300">
+                Secure Pilot Setup
+              </Button>
+            </a>
+            <p className="mt-3 text-center text-xs text-gray-500">Secure Stripe checkout opens after your first-step details are saved.</p>
+            <p className="mt-4 text-center text-xs text-gray-500">Limited founding pilot spots available.</p>
           </div>
         </div>
       </section>
@@ -281,19 +404,19 @@ export default function BetaLanding() {
       <section id="beta-form" className="border-t border-white/10 bg-white/[0.03] py-16">
         <div className="mx-auto grid max-w-7xl gap-10 px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-300">Founding Member Beta</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-300">Founding Pilot Setup Sprint</p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              Get in early and lock in the unfair advantage.
+              Claim your spot before the final 13 are gone.
             </h2>
             <p className="mt-4 max-w-2xl text-base leading-8 text-gray-300">
-              We are accepting a small group of Australian trades, builders and estimating teams into the first release of Kindai. If you quote jobs, tender projects or waste too much time on takeoffs, this is for you.
+              Leave your details and Matt will follow up personally. We collect the job details after the first conversion, not before it.
             </p>
 
             <div className="mt-8 space-y-4">
               {[
-                "Upload plans and generate takeoffs faster",
-                "Build estimates with labour, materials and margin in one workflow",
-                "Help shape the product with direct founder access",
+                "Fast first step: name, email, optional phone and trade",
+                "Your intent is recorded so the follow-up matches what you asked for",
+                "Pilot spots are reviewed personally by Matt",
               ].map((item) => (
                 <div key={item} className="flex items-start gap-3 text-gray-200">
                   <CheckCircle2 className="mt-0.5 h-5 w-5 text-amber-300" />
@@ -318,7 +441,9 @@ export default function BetaLanding() {
                   </div>
                   <h3 className="mt-5 text-2xl font-bold text-white">You’re on the list.</h3>
                   <p className="mt-3 text-gray-300">
-                    Welcome to the Kindai beta. We’ll reach out with onboarding details and next steps shortly.
+                    {paidSetupSecured
+                      ? "Your paid pilot setup is secured. Matt will follow up to book your setup sprint and confirm the first quoting workflow."
+                      : "Welcome to the Kindai beta. We’ll reach out with onboarding details and next steps shortly."}
                   </p>
                   {spotNumber ? (
                     <p className="mt-4 inline-flex rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-sm font-medium text-amber-300">
@@ -357,17 +482,17 @@ export default function BetaLanding() {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-200">Company</label>
+                    <label className="mb-2 block text-sm font-medium text-gray-200">Phone <span className="text-gray-500">(optional)</span></label>
                     <Input
-                      value={form.company}
-                      onChange={(e) => updateForm({ company: e.target.value })}
-                      placeholder="Kindai"
+                      value={form.phone}
+                      onChange={(e) => updateForm({ phone: e.target.value })}
+                      placeholder="0400 000 000"
                       className="h-12 rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-gray-500"
                     />
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-200">Trade</label>
+                    <label className="mb-2 block text-sm font-medium text-gray-200">Trade type <span className="text-gray-500">(optional)</span></label>
                     <Select value={form.trade} onValueChange={(value) => updateForm({ trade: value })}>
                       <SelectTrigger className="h-12 rounded-2xl border-white/10 bg-white/5 text-white">
                         <SelectValue placeholder="Select your trade" />
@@ -380,53 +505,19 @@ export default function BetaLanding() {
                     </Select>
                   </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-200">State</label>
-                      <Select value={form.state} onValueChange={(value: typeof form.state) => updateForm({ state: value })}>
-                        <SelectTrigger className="h-12 rounded-2xl border-white/10 bg-white/5 text-white">
-                          <SelectValue placeholder="Select state" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"] as const).map((state) => (
-                            <SelectItem key={state} value={state}>{state}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-gray-200">Business size</label>
-                      <Select value={form.projectSize} onValueChange={(value: typeof form.projectSize) => updateForm({ projectSize: value })}>
-                        <SelectTrigger className="h-12 rounded-2xl border-white/10 bg-white/5 text-white">
-                          <SelectValue placeholder="Select size" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="sole_trader">Sole trader</SelectItem>
-                          <SelectItem value="small_builder">Small builder</SelectItem>
-                          <SelectItem value="mid_tier">Mid-tier / growing team</SelectItem>
-                          <SelectItem value="enterprise">Enterprise</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-200">Biggest quoting pain right now?</label>
-                    <Textarea
-                      value={form.feedback}
-                      onChange={(e) => updateForm({ feedback: e.target.value })}
-                      placeholder="Slow takeoffs, missed items, pricing inconsistency, tender pressure…"
-                      className="min-h-[120px] rounded-2xl border-white/10 bg-white/5 text-white placeholder:text-gray-500"
-                    />
+                  <div className="rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-300">Intent</p>
+                    <p className="mt-1 text-sm text-gray-200">{form.intent}</p>
                   </div>
 
                   <Button
                     type="submit"
-                    disabled={signupMutation.isPending}
+                    disabled={signupMutation.isPending || pilotSetupCheckoutMutation.isPending}
                     className="h-12 w-full rounded-2xl bg-amber-400 text-base font-semibold text-gray-950 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {signupMutation.isPending ? "Claiming your spot..." : "Claim my founding member spot"}
+                    {signupMutation.isPending || pilotSetupCheckoutMutation.isPending
+                      ? form.intent === "Paid Pilot Setup" ? "Opening secure checkout..." : "Sending your request..."
+                      : form.intent === "Paid Pilot Setup" ? "Secure My Pilot Setup" : "Claim Your Pilot Spot"}
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
 

@@ -5,10 +5,11 @@ import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import { getDb } from "../db";
 import { users } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
-import { PLANS, getPlanById } from "../stripe/products";
+import { PILOT_SETUP_OFFER, PLANS, getPlanById, getPlanCheckoutAmount } from "../stripe/products";
 import {
   findOrCreateCustomer,
   createCheckoutSession,
+  createPilotSetupCheckoutSession,
   createPortalSession,
   getStripe,
 } from "../stripe/stripe";
@@ -134,10 +135,7 @@ export const billingRouter = router({
         });
       }
 
-      const priceAmount =
-        input.interval === "yearly"
-          ? Math.round(plan.priceYearly / 12) // Monthly amount for yearly billing
-          : plan.priceMonthly;
+      const priceAmount = getPlanCheckoutAmount(plan, input.interval);
 
       // Search for existing price or create one
       const prices = await stripe.prices.list({
@@ -179,6 +177,33 @@ export const billingRouter = router({
         userEmail: user.email ?? ctx.user.email ?? "",
         userName: user.name ?? ctx.user.name ?? undefined,
         origin: input.origin,
+      });
+
+      return { url: checkoutUrl };
+    }),
+
+  /** Create a one-time Stripe Checkout Session for the founding pilot setup sprint */
+  createPilotSetupCheckout: publicProcedure
+    .input(
+      z.object({
+        name: z.string().min(1),
+        email: z.string().email(),
+        phone: z.string().optional(),
+        tradeType: z.string().optional(),
+        origin: z.string().url(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const checkoutUrl = await createPilotSetupCheckoutSession({
+        name: input.name,
+        email: input.email,
+        phone: input.phone,
+        tradeType: input.tradeType,
+        origin: input.origin,
+        amount: PILOT_SETUP_OFFER.amount,
+        currency: PILOT_SETUP_OFFER.currency,
+        productName: PILOT_SETUP_OFFER.name,
+        productDescription: PILOT_SETUP_OFFER.description,
       });
 
       return { url: checkoutUrl };

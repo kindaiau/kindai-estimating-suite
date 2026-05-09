@@ -56,7 +56,7 @@ const TIERS = [
       { label: "Correction Learning Loop", included: true },
       { label: "Orchestrated AI Workflow", included: true },
       { label: "Accuracy Dashboard", included: true },
-      { label: "Xero Integration", included: true },
+      { label: "Client-owned accounting integration", included: true },
       { label: "PDF Export", included: true },
       { label: "Team Members", value: "5" },
     ],
@@ -77,7 +77,7 @@ const TIERS = [
       { label: "Unlimited team members", included: true },
       { label: "Dedicated onboarding", included: true },
       { label: "Custom supplier price books", included: true },
-      { label: "API and workflow integrations", included: true },
+      { label: "Custom accounting and job-management workflows", included: true },
       { label: "Priority support", included: true },
       { label: "White-label Branding", included: true },
       { label: "Custom AI Training Data", included: true },
@@ -90,8 +90,8 @@ const FEATURE_HIGHLIGHTS = [
   { icon: Database, title: "Company Memory", desc: "Your price book, AI instructions, and job templates — the AI learns your business and applies your rates automatically", tier: "Pro+" },
   { icon: GitBranch, title: "Correction Learning", desc: "Every edit you make trains the AI. After 10 jobs it starts pre-adjusting based on your patterns", tier: "Sole Tradie+" },
   { icon: BarChart3, title: "Accuracy Dashboard", desc: "Track estimated vs actual, see where the AI is over/under, and measure improvement over time", tier: "Pro+" },
-  { icon: FileText, title: "Xero Integration", desc: "Push any quote directly to Xero as a draft invoice. One click from estimate to invoice.", tier: "Pro+" },
-  { icon: Shield, title: "Custom Workflows", desc: "Team controls, custom integrations, onboarding, and commercial support for larger operations.", tier: "Enterprise" },
+  { icon: FileText, title: "Client-Owned Integrations", desc: "Connect the accounting or job-management tools your business already uses, without using Kindai's own accounts.", tier: "Pro+" },
+  { icon: Shield, title: "Custom Workflows", desc: "We can integrate your current stack or recommend and build a cleaner system for quoting, jobs, accounting, and reporting.", tier: "Enterprise" },
 ];
 
 const COMPETITOR_BENCHMARKS = [
@@ -101,7 +101,7 @@ const COMPETITOR_BENCHMARKS = [
   { name: "Groundplan", price: "From $75/user/mo", notes: "Per-user/operator pricing" },
   { name: "CabMaster", price: "A$106–$321/mo", notes: "Annual plans, cabinet-specific" },
   { name: "Kindai Sole Tradie", price: "A$149/mo", notes: "AI takeoff, company memory, PDF quotes", highlight: true },
-  { name: "Kindai Pro", price: "A$450/mo", notes: "Full AI orchestration + Xero + accuracy dashboard", highlight: true },
+  { name: "Kindai Pro", price: "A$450/mo", notes: "Full AI orchestration + integrations + accuracy dashboard", highlight: true },
 ];
 
 // ─── Premium animated footer ──────────────────────────────────────────────────
@@ -599,7 +599,7 @@ export default function Pricing() {
             {[
               {
                 q: "What's the difference between Sole Tradie and Pro?",
-                a: "Sole Tradie gives one operator AI takeoffs, company memory, correction learning and PDF quotes. Pro adds unlimited AI volume, the full orchestration workflow, Xero, accuracy reporting and team seats.",
+                a: "Sole Tradie gives one operator AI takeoffs, company memory, correction learning and PDF quotes. Pro adds unlimited AI volume, the full orchestration workflow, client-owned accounting integrations, accuracy reporting and team seats.",
               },
               {
                 q: "What is Company Memory?",
@@ -612,6 +612,10 @@ export default function Pricing() {
               {
                 q: "Can I import my own supplier pricing?",
                 a: "Yes. Sole Tradie and Pro both support your own price book. Pro and Enterprise customers can add deeper supplier workflows and custom setup support.",
+              },
+              {
+                q: "Can Kindai work with my current accounting or job-management system?",
+                a: "Yes. We can connect to the tools your business already uses, such as Xero, ServiceM8, MYOB, QuickBooks, Procore, Buildxact, or similar systems. For messy setups, we can also recommend and build a cleaner workflow.",
               },
               {
                 q: "Is my data used to train AI models?",

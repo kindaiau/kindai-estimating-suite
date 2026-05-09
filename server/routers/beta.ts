@@ -7,6 +7,7 @@ import { notifyOwner } from "../_core/notification";
 import { createBetaSignupInHubSpot } from "../hubspot";
 import { sendBetaWelcomeEmail } from "../welcomeEmail";
 import { scheduleNurtureForSignup } from "./betaNurture";
+import { sendPilotLeadEmails } from "../resendEmail";
 import {
   buildMetaUserData,
   extractMetaClickIdentifiers,
@@ -35,13 +36,21 @@ export const betaRouter = router({
       z.object({
         name: z.string().min(2).max(100),
         email: z.string().email(),
+        phone: z.string().max(30).optional(),
         company: z.string().max(255).optional(),
         trade: z.string().max(64).optional(),
+        intent: z.enum(["Pilot Spot Request", "Paid Pilot Setup", "Setup Call Request"]).optional(),
         state: z.enum(["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"]).optional(),
         projectSize: z.enum(["sole_trader", "small_builder", "mid_tier", "enterprise"]).optional(),
         feedback: z.string().max(1000).optional(),
         source: z.string().max(64).optional(),
         utmCampaign: z.string().max(128).optional(),
+        utmSource: z.string().max(128).optional(),
+        utmMedium: z.string().max(128).optional(),
+        utmContent: z.string().max(128).optional(),
+        utmTerm: z.string().max(128).optional(),
+        landingPath: z.string().max(255).optional(),
+        referrerHost: z.string().max(255).optional(),
         sourceUrl: z.string().url().max(2048).optional(),
         leadEventId: z.string().max(255).optional(),
         fbp: z.string().max(255).optional(),
@@ -73,13 +82,21 @@ export const betaRouter = router({
       const insertResult = await db.insert(betaSignups).values({
         name: input.name,
         email: input.email,
+        phone: input.phone,
         company: input.company,
         trade: input.trade,
         state: input.state,
         projectSize: input.projectSize,
         feedback: input.feedback,
         source: input.source ?? "website",
+        intent: input.intent ?? "Pilot Spot Request",
         utmCampaign: input.utmCampaign,
+        utmSource: input.utmSource,
+        utmMedium: input.utmMedium,
+        utmContent: input.utmContent,
+        utmTerm: input.utmTerm,
+        landingPath: input.landingPath,
+        referrerHost: input.referrerHost,
         status: "pending",
       });
       const signupId = Number((insertResult as any)[0]?.insertId ?? (insertResult as any).insertId ?? claimed + 1);
@@ -103,9 +120,16 @@ export const betaRouter = router({
           content_name: "Beta Sign-up",
           content_category: "Kindai Estimating Suite",
           source: input.source ?? "website",
+          intent: input.intent ?? "Pilot Spot Request",
           trade: input.trade,
           state: input.state,
           project_size: input.projectSize,
+          utm_source: input.utmSource,
+          utm_medium: input.utmMedium,
+          utm_campaign: input.utmCampaign,
+          utm_content: input.utmContent,
+          utm_term: input.utmTerm,
+          landing_path: input.landingPath,
           spot_number: claimed + 1,
         },
         userData: buildMetaUserData({
@@ -123,18 +147,28 @@ export const betaRouter = router({
       // Notify owner
       await notifyOwner({
         title: "🎉 New Beta Signup!",
-        content: `${input.name} (${input.email}) from ${input.company ?? "unknown company"} just joined the Kindai beta. Trade: ${input.trade ?? "not specified"}. State: ${input.state ?? "not specified"}. Spot #${claimed + 1} of ${BETA_SPOTS_TOTAL}.`,
+        content: `${input.name} (${input.email}) requested a Kindai pilot. Phone: ${input.phone ?? "not provided"}. Trade: ${input.trade ?? "not specified"}. Intent: ${input.intent ?? "Pilot Spot Request"}. Spot #${claimed + 1} of ${BETA_SPOTS_TOTAL}.`,
       });
 
       const spotNumber = claimed + 1;
 
-      // Send welcome email via Gmail (fire-and-forget)
-      sendBetaWelcomeEmail({
+      sendPilotLeadEmails({
         name: input.name,
         email: input.email,
-        spotNumber,
-        trade: input.trade,
-      }).catch((err: unknown) => console.error("[Email] Failed to send welcome email:", err));
+        phone: input.phone,
+        tradeType: input.trade,
+        intent: input.intent ?? "Pilot Spot Request",
+      })
+        .then((result) => {
+          if (result.leadSent) return;
+          return sendBetaWelcomeEmail({
+            name: input.name,
+            email: input.email,
+            spotNumber,
+            trade: input.trade,
+          });
+        })
+        .catch((err: unknown) => console.error("[Resend] Failed to send pilot lead emails:", err));
 
       // Schedule nurture email sequence (fire-and-forget)
       scheduleNurtureForSignup({

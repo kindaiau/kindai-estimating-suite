@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "./loadEnv";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
@@ -11,6 +11,7 @@ import { registerStripeWebhook } from "../stripe/webhook";
 import { fbLeadWebhookRouter } from "../routes/fbLeadWebhook";
 import { xeroCallbackRouter } from "../routes/xeroCallback";
 import { orchestratedTakeoffRouter } from "../routes/orchestratedTakeoff";
+import { adEngineRouter } from "../ad-engine/routes";
 import { seedMaterials } from "../seedMaterials";
 import { processDueNurtureEmails } from "../routers/betaNurture";
 import helmet from "helmet";
@@ -106,6 +107,9 @@ async function startServer() {
 
   // Orchestrated AI Takeoff (SSE streaming)
   app.use(orchestratedTakeoffRouter);
+
+  // Kindai Ad Engine API
+  app.use("/api/ad-engine", adEngineRouter);
 
   // Apply stricter rate limiting to public LLM endpoints
   app.use("/api/trpc/demo.runDemo", publicLLMRateLimit);

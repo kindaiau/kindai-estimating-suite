@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
-import { PLANS, getPlanById, formatPrice, calculateROI } from "./stripe/products";
+import {
+  PILOT_SETUP_OFFER,
+  PLANS,
+  calculateROI,
+  formatPrice,
+  getPlanById,
+  getPlanCheckoutAmount,
+} from "./stripe/products";
 
 // ─── Test helpers ──────────────────────────────────────────────────────────────
 
@@ -101,6 +108,20 @@ describe("Stripe Products & Plans (5-Tier Enterprise Value-Based)", () => {
     const discount = 1 - solo.priceYearly / monthlyAnnualised;
     expect(discount).toBeGreaterThanOrEqual(0.15);
     expect(discount).toBeLessThanOrEqual(0.25);
+  });
+
+  it("uses the annual total when creating yearly Stripe prices", () => {
+    const solo = getPlanById("sole_trader")!;
+    expect(getPlanCheckoutAmount(solo, "monthly")).toBe(14900);
+    expect(getPlanCheckoutAmount(solo, "yearly")).toBe(143040);
+  });
+
+  it("defines the one-time founding pilot setup offer", () => {
+    expect(PILOT_SETUP_OFFER.name).toContain("Founding Pilot Setup");
+    expect(PILOT_SETUP_OFFER.name).toContain("6 Months");
+    expect(PILOT_SETUP_OFFER.description).toContain("first 6 months");
+    expect(PILOT_SETUP_OFFER.amount).toBe(100000);
+    expect(PILOT_SETUP_OFFER.currency).toBe("aud");
   });
 
   it("all plans have features array", () => {

@@ -41,6 +41,8 @@ const SPA_ROUTE_PATTERNS = [
   /^\/motyl$/,
   /^\/moytle$/,
   /^\/getgas$/,
+  /^\/ad-engine$/,
+  /^\/ad-engine\/creative$/,
   /^\/404$/,
 ];
 

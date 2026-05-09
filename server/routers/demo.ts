@@ -182,6 +182,8 @@ ELECTRICAL-SPECIFIC RULES:
 - Measure cable runs from plan dimensions
 - Every circuit needs a breaker in the switchboard
 - Include conduit for wet areas, external, and underground runs
+- EV charger jobs must include charger hardware, dedicated 6mm² minimum circuit cabling, 40A Type A RCD/RCBO protection, isolator where required/advisable, testing, commissioning, and switchboard/load-management allowance where capacity is unknown
+- Never price a residential smart EV wall charger below $700 unless an exact supplied model is specified; use $1,200 as the default buyer allowance for Ocular/Zappi/Wallbox/Evnex-class chargers and $1,500-$2,200 for premium solar/OCPP units
 - Smoke alarms: required in every bedroom, hallway, and living area per AS3786`,
     plumbing: `
 PLUMBING-SPECIFIC RULES:

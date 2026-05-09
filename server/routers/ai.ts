@@ -526,6 +526,18 @@ function buildTradePrompt(mode: "vision" | "text", trade: string, customRates?: 
 - RCD/RCBO 20A: $35-55 trade
 - 3-phase switchboard (12-way): $280-420 trade
 - Smoke alarm (interconnectable): $45-65 trade
+- EV charger — Tesla Gen 3 Wall Connector: $745 retail / $700-745 trade
+- EV charger — Evnex E2 Flex/Core/Plus: $799-$1,399 retail / $700-$1,250 trade
+- EV charger — Ocular IQ Home Solar 7kW: $1,195 retail / $1,050-$1,200 trade
+- EV charger — Ocular IQ Wallbox V2 7kW: $1,769 retail / $1,450-$1,650 trade
+- EV charger — Zappi/Wallbox/Premium solar unit allowance: $1,500-$2,200 retail / $1,200-$1,800 trade
+- EV charger — 22kW single/three-phase wall charger allowance: $1,500-$2,400 retail / $1,250-$2,000 trade
+- EV charger circuit protection, 40A Type A RCBO/RCD: $90-$220 trade depending on 1P/3P
+- Type B EV RCD allowance where no built-in 6mA DC fault detection: $350-$650 trade
+- 6mm² dedicated EV circuit cable: $6.50-$9.50/m trade; three-phase 6mm cable: $16-$24/m trade
+- Weatherproof EV isolator 40A-63A: $45-$95 trade where required/advisable
+- Standard residential EV charger installation labour and commissioning: $800-$1,400 excluding charger
+- EV switchboard upgrade/load-management provisional allowance: $450-$1,200 where board capacity or supply limits are uncertain
 - Licensed electrician labour: $${labourRate.min}-${labourRate.max}/hr
 - Apprentice labour: $38-55/hr`,
       criticalRules: `- Count every GPO, light point, switch, and circuit on the plan
@@ -534,6 +546,10 @@ function buildTradePrompt(mode: "vision" | "text", trade: string, customRates?: 
 - Include conduit where required (wet areas, external, underground)
 - Safety systems: smoke alarms required in every bedroom, hallway, and living area per AS3786
 - Data points: include Cat6 cable, wall plates, and patch panel
+- EV chargers: never price a smart residential wall charger below $700 unless the exact supplied model is known; use $1,200 as the default buyer allowance for Ocular/Zappi/Wallbox/Evnex-class chargers when brand is not specified
+- EV chargers: include the charger hardware, dedicated circuit cable, 40A RCD/RCBO protection, isolator where board is not adjacent/visible, testing, commissioning, and a switchboard/load-management provisional sum where capacity is unknown
+- EV chargers: 32A domestic installs need a dedicated circuit and minimum 6mm² cable; check state supply limits and main switch capacity
+- EV chargers: if the charger does not have built-in 6mA DC fault detection, include a Type B RCD allowance instead of cheap Type A-only protection
 - All labour as separate line items per section`,
     },
      plumbing: {

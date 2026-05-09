@@ -23,6 +23,7 @@ AI-assisted estimating and quoting software for Australian trades and joinery te
 - AI takeoff and AI-assisted content generation
 - Storage-backed artefacts and PDF upload flows
 - Email delivery and CRM integrations
+- Client-owned accounting and job-management integrations. Kindai can connect to the customer's own Xero, ServiceM8, MYOB, QuickBooks, Procore, or similar account; it should not rely on Matthew's personal accounts.
 
 ### Partially exposed / roadmap
 
@@ -73,6 +74,26 @@ pnpm check
 pnpm test
 pnpm build
 ```
+
+Live third-party integration checks are opt-in because customers own those accounts:
+
+```bash
+pnpm test:integrations
+```
+
+## Revenue Funnel Checklist
+
+- Pilot spots counter visible above fold
+- Paid setup offer visible
+- Form asks minimal fields first
+- Lead receives Resend confirmation
+- Matthew receives Resend notification
+- Paid pilot checkout returns to `/beta?paid_setup=success&session_id={CHECKOUT_SESSION_ID}`
+- Stripe webhook sends the paid pilot receipt and owner booking prompt
+- Form intent/source is recorded
+- CTA buttons route correctly
+- Mobile hero and form checked
+- Existing Meta tracking remains intact
 
 ## Deployment notes
 

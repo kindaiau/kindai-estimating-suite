@@ -19,6 +19,8 @@ export type AnalyticsEventName =
   | "pricing_viewed"
   | "pricing_plan_clicked"
   | "checkout_started"
+  | "checkout_succeeded"
+  | "checkout_cancelled"
   | "enterprise_contact_clicked"
   | "beta_viewed"
   | "beta_form_started"

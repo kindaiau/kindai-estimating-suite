@@ -1,8 +1,18 @@
 import { Router, raw } from "express";
 import { getStripe } from "./stripe";
+import { ENV } from "../_core/env";
 import { getDb } from "../db";
 import { users } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { sendPilotPaymentEmails } from "../resendEmail";
+
+function isPaidPilotSetupSession(session: any) {
+  return (
+    session.mode === "payment" &&
+    session.payment_status === "paid" &&
+    session.metadata?.kindai_flow === "founding_pilot_setup"
+  );
+}
 
 export function registerStripeWebhook(app: Router) {
   // IMPORTANT: raw body parser MUST be applied before express.json()
@@ -13,7 +23,7 @@ export function registerStripeWebhook(app: Router) {
     async (req, res) => {
       const stripe = getStripe();
       const sig = req.headers["stripe-signature"];
-      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      const webhookSecret = ENV.stripeWebhookSecret;
 
       if (!sig || !webhookSecret) {
         console.error("[Stripe Webhook] Missing signature or webhook secret");
@@ -40,6 +50,30 @@ export function registerStripeWebhook(app: Router) {
         switch (event.type) {
           case "checkout.session.completed": {
             const session = event.data.object as any;
+            if (isPaidPilotSetupSession(session)) {
+              const customerDetails = session.customer_details ?? {};
+              await sendPilotPaymentEmails({
+                name:
+                  session.metadata?.customer_name ||
+                  customerDetails.name ||
+                  "Kindai pilot customer",
+                email:
+                  session.metadata?.customer_email ||
+                  customerDetails.email ||
+                  session.customer_email,
+                phone:
+                  session.metadata?.customer_phone ||
+                  customerDetails.phone ||
+                  undefined,
+                tradeType: session.metadata?.trade_type || undefined,
+                amountPaid: session.amount_total ?? 0,
+                currency: session.currency ?? "aud",
+                stripeSessionId: session.id,
+              });
+              console.log(`[Stripe Webhook] Paid pilot setup completed for ${session.customer_email ?? session.metadata?.customer_email}`);
+              break;
+            }
+
             const userId = session.client_reference_id
               ? parseInt(session.client_reference_id)
               : session.metadata?.user_id

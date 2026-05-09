@@ -6,7 +6,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Zap, Shield, Brain, FileText, Users, BarChart3,
   ChevronRight, CheckCircle2, Star, ArrowRight, HardHat,
-  Camera, Sparkles, DollarSign, Truck, Clock, Upload, Play
+  Camera, Sparkles, DollarSign, Truck, Clock, Upload, Play, Download, X
 } from "lucide-react";
 import { motion, useInView, AnimatePresence, useMotionValueEvent, useScroll } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
@@ -95,7 +95,7 @@ function ScrollNav({ isAuthenticated, navigate, handleGetStarted }: {
                 Log In
               </Button>
               <Button onClick={handleGetStarted} className="kindai-btn-primary px-5 rounded-full text-sm font-bold hidden sm:flex">
-                Get Started Free
+                Claim Pilot Spot
               </Button>
             </>
           )}
@@ -140,7 +140,7 @@ function AIThatLearnsSection() {
             <CheckCircle2 className="w-4 h-4 text-green-500" /> Correction learning
           </span>
           <span className="flex items-center gap-2 rounded-full bg-gray-50 px-4 py-2 border border-gray-200 text-sm font-semibold text-gray-700">
-            <CheckCircle2 className="w-4 h-4 text-green-500" /> Xero integration
+            <CheckCircle2 className="w-4 h-4 text-green-500" /> Client-owned integrations
           </span>
         </motion.div>
       </motion.div>
@@ -149,6 +149,8 @@ function AIThatLearnsSection() {
 }
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
+const LEAD_MAGNET_EMBED_URL = "https://gamma.app/embed/da7nlnmphqpc4lb";
+const LEAD_MAGNET_PDF_URL = "/kindai.pdf";
 
 const TRADES = [
   { id: "electrical", name: "Electrical", emoji: "⚡", colour: "from-yellow-400 to-orange-500" },
@@ -171,6 +173,7 @@ const FEATURES = [
   { icon: Shield, title: "Australian Compliance", desc: "Draft quotes with GST, configurable Award labour rates, state licensing prompts, and WHS notices. Every quote reviewed by your team before sending.", colour: "text-blue-500 bg-blue-50" },
   { icon: Users, title: "Fair Work Labour Rates", desc: "Pre-loaded Award rates for all 10 trades as a starting point. Override with your own enterprise agreement rates, supplier price books, and custom markup rules.", colour: "text-cyan-500 bg-cyan-50" },
   { icon: BarChart3, title: "Win Rate Dashboard", desc: "Track every quote — sent, accepted, declined. See your win rate, average job value, and total revenue pipeline at a glance.", colour: "text-purple-500 bg-purple-50" },
+  { icon: FileText, title: "Accounting & Job Management Setup", desc: "Connect the tools you already use, like Xero, ServiceM8, MYOB, QuickBooks, Procore, or Buildxact. If your setup is messy, we can recommend or build a cleaner workflow around your business.", colour: "text-slate-500 bg-slate-50" },
 ];
 
 const TESTIMONIALS = [
@@ -186,21 +189,41 @@ const HOW_IT_WORKS = [
 ];
 
 export default function Home() {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
+  const [showGuidePopup, setShowGuidePopup] = useState(false);
 
   useEffect(() => {
     pixelViewContent({ content_name: "Home Page", content_category: "Landing" });
   }, []);
 
+  useEffect(() => {
+    if (isAuthenticated) return;
+
+    const hasSeenGuide = window.sessionStorage.getItem("kindai-guide-popup-seen") === "true";
+    if (hasSeenGuide) return;
+
+    const timer = window.setTimeout(() => {
+      setShowGuidePopup(true);
+      window.sessionStorage.setItem("kindai-guide-popup-seen", "true");
+    }, 1800);
+
+    return () => window.clearTimeout(timer);
+  }, [isAuthenticated]);
+
   const handleGetStarted = () => {
     if (isAuthenticated) navigate("/ai-takeoff");
-    else navigate("/beta");
+    else navigate("/beta?intent=pilot");
   };
 
   const handleTryAI = () => {
     if (isAuthenticated) navigate("/ai-takeoff");
-    else navigate("/beta");
+    else navigate("/beta?intent=pilot");
+  };
+
+  const openGuidePopup = () => {
+    setShowGuidePopup(true);
+    window.sessionStorage.setItem("kindai-guide-popup-seen", "true");
   };
 
   return (
@@ -216,6 +239,85 @@ export default function Home() {
       <FAQSchema />
       {/* ── Nav ── */}
       <ScrollNav isAuthenticated={isAuthenticated} navigate={navigate} handleGetStarted={handleGetStarted} />
+
+      <AnimatePresence>
+        {showGuidePopup ? (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/80 px-4 py-6 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="kindai-guide-title"
+              className="relative flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-white shadow-2xl"
+              initial={{ opacity: 0, y: 24, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.98 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+            >
+              <button
+                type="button"
+                aria-label="Close guide popup"
+                onClick={() => setShowGuidePopup(false)}
+                className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-gray-950/80 text-white transition hover:bg-gray-800"
+              >
+                <X className="h-4 w-4" />
+              </button>
+
+              <div className="grid min-h-0 flex-1 lg:grid-cols-[1fr_320px]">
+                <div className="min-h-[360px] bg-gray-950 sm:min-h-[450px]">
+                  <iframe
+                    src={LEAD_MAGNET_EMBED_URL}
+                    className="h-full min-h-[360px] w-full border-0 sm:min-h-[450px]"
+                    allow="fullscreen"
+                    title="Kindai"
+                  />
+                </div>
+
+                <div className="flex flex-col justify-between gap-6 p-6 sm:p-8">
+                  <div>
+                    <div className="mb-4 flex items-center gap-3">
+                      <img src={LOGO_URL} alt="Kindai" className="h-11 w-11 object-contain" />
+                      <span className="text-xl font-black kindai-gradient-text">kindai</span>
+                    </div>
+                    <p className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-orange-500">
+                      Free download
+                    </p>
+                    <h2 id="kindai-guide-title" className="text-2xl font-black leading-tight text-gray-950">
+                      The Kindai AI estimating guide
+                    </h2>
+                    <p className="mt-3 text-sm leading-6 text-gray-600">
+                      A simple breakdown of how Kindai helps turn plans, notes, and supplier pricing into cleaner quote drafts.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <a
+                      href={LEAD_MAGNET_PDF_URL}
+                      download="kindai.pdf"
+                      className="inline-flex h-12 w-full items-center justify-center rounded-full bg-gray-950 px-5 text-sm font-black text-white transition hover:bg-gray-800"
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Download PDF
+                    </a>
+                    <Button
+                      type="button"
+                      onClick={handleGetStarted}
+                      className="kindai-btn-primary h-12 w-full rounded-full text-sm font-black"
+                    >
+                      Claim Pilot Spot
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
 
       {/* ── HERO: Clean, spacious, mobile-first ── */}
@@ -242,17 +344,17 @@ export default function Home() {
                 className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-500/20 border border-orange-500/50 text-orange-300 text-xs font-black mb-8 cursor-pointer hover:bg-orange-500/30 transition-colors"
               >
                 <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
-                PILOT PROGRAM — ONLY 25 FOUNDING SPOTS
+                12 OF 25 PILOT SPOTS CLAIMED — 13 SPOTS REMAINING
                 <ChevronRight className="w-3.5 h-3.5" />
               </motion.a>
 
               {/* HERO HEADLINE — only this in brand colours */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.05] mb-8">
-                <span className="kindai-gradient-text">From Plans to Quote<br className="hidden sm:block" /> in Minutes.</span>
+                <span className="kindai-gradient-text">Quote faster without<br className="hidden sm:block" /> missing costs.</span>
               </h1>
 
               <p className="text-lg sm:text-xl text-white/70 max-w-lg mx-auto lg:mx-0 mb-10 leading-relaxed">
-                Kindai reads your plans, applies your price book, and builds a GST-ready quote in 60 seconds. Built for Australian tradies.
+                Kindai helps Australian tradies turn job notes, photos, plans, and supplier pricing into cleaner quote drafts — faster, with GST-aware logic and margin protection.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center lg:items-start justify-center lg:justify-start w-full sm:w-auto">
@@ -262,22 +364,22 @@ export default function Home() {
                   className="kindai-btn-primary w-full sm:w-auto px-6 sm:px-8 py-4 rounded-full text-base font-black h-auto shadow-2xl"
                 >
                   <Camera className="w-5 h-5 mr-2" />
-                  Claim Free Pilot Spot
+                  Claim Your Pilot Spot
                   <ChevronRight className="w-5 h-5 ml-2" />
                 </Button>
                 <Button
-                  onClick={() => navigate("/demo")}
+                  onClick={openGuidePopup}
                   size="lg"
                   variant="outline"
                   className="w-full sm:w-auto px-6 sm:px-8 py-4 rounded-full text-base font-black h-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
                 >
-                  <Play className="w-5 h-5 mr-2" />
-                  Watch Demo
+                  <Download className="w-5 h-5 mr-2" />
+                  Download Free Guide
                 </Button>
               </div>
 
               <p className="text-sm text-white/45 mt-8 max-w-md mx-auto lg:mx-0">
-                "I photographed the plans on my phone and had a full quote in 3 minutes." — <span className="text-white/70 font-semibold">Dave K., Electrician, QLD</span>
+                12 of 25 pilot spots claimed — 13 spots remaining.
               </p>
             </motion.div>
 
@@ -764,7 +866,7 @@ export default function Home() {
             {/* Brand */}
             <FadeUp>
               <div className="flex items-center gap-2.5 mb-4">
-                <img src={LOGO_URL} alt="Kindai" className="h-9 w-9" />
+                <img src={LOGO_URL} alt="Kindai" loading="lazy" className="h-9 w-9" />
                 <span className="text-xl font-black kindai-gradient-text">kindai</span>
               </div>
               <p className="text-gray-400 text-sm leading-relaxed mb-5">

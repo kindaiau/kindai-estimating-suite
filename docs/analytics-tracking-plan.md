@@ -6,6 +6,12 @@ Kindai analytics should help the team make product and marketing decisions witho
 
 Recommended setup for product decisions is Umami or Plausible. Cloudflare Web Analytics is still useful for traffic and performance, but it does not receive the custom product events listed below.
 
+Meta paid acquisition uses three layers:
+
+1. Browser Meta Pixel for page views and front-end intent events.
+2. Server-side Meta Conversions API for deduplicated lead and approval events.
+3. Kindai Ad Engine for daily Meta Marketing API metrics, CPA/ROAS summaries, and monitor-mode recommendations.
+
 Configure Umami with:
 
 ```bash
@@ -29,6 +35,20 @@ VITE_PLAUSIBLE_SCRIPT_URL=https://plausible.io/js/script.js
 If the live host already injects a compatible tracker, leave `VITE_ANALYTICS_ALLOW_EXISTING_TRACKERS=true`. This lets Kindai send the same privacy-filtered product events to an existing `window.umami` or `window.plausible` tracker.
 
 Set `VITE_ANALYTICS_DISABLED=true` to disable client analytics.
+
+Configure Meta ads tracking with:
+
+```bash
+VITE_META_PIXEL_ID=your-pixel-id
+META_PIXEL_ID=your-pixel-id
+META_CONVERSIONS_API_ACCESS_TOKEN=your-capi-token
+META_MARKETING_ACCESS_TOKEN=your-marketing-api-token
+META_AD_ACCOUNT_ID=act_your-ad-account-id
+WEBHOOK_SECRET=your-zapier-webhook-secret
+FB_WEBHOOK_VERIFY_TOKEN=your-facebook-webhook-verify-token
+```
+
+The FB lead webhook requires `WEBHOOK_SECRET` in production. Direct Facebook webhook verification requires `FB_WEBHOOK_VERIFY_TOKEN` in production.
 
 ## Privacy Rules
 
@@ -54,6 +74,8 @@ The client analytics helper drops risky property keys before events leave the br
 | `pricing_viewed` | Pricing page demand and campaign quality |
 | `pricing_plan_clicked` | Plan interest by tier and billing interval |
 | `checkout_started` | Paid conversion start |
+| `checkout_succeeded` | Paid pilot checkout returned successfully |
+| `checkout_cancelled` | Paid pilot checkout cancellation |
 | `enterprise_contact_clicked` | Enterprise intent |
 | `beta_viewed` | Beta landing traffic |
 | `beta_form_started` | Form engagement |
@@ -81,6 +103,21 @@ The client analytics helper drops risky property keys before events leave the br
 | `quote_assurance_blocked` | Risk control doing its job |
 | `quote_link_viewed` | Client quote portal views |
 | `quote_response_submitted` | Client accepted/declined outcome |
+
+## Paid Attribution Fields
+
+Store these fields on lead records so ad spend can be judged properly:
+
+| Field | Purpose |
+| --- | --- |
+| `source` | Lead source such as `beta_page` or `fb_ad` |
+| `utmSource` | Campaign source, usually `facebook` or `instagram` |
+| `utmMedium` | Medium such as `paid_social` |
+| `utmCampaign` | Campaign name/id |
+| `utmContent` | Creative/ad variant |
+| `utmTerm` | Audience/ad-set detail |
+| `landingPath` | Page where the lead converted |
+| `referrerHost` | Previous site host without full URL |
 
 ## Dashboard Views To Build
 

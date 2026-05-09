@@ -27,7 +27,7 @@ xeroCallbackRouter.get("/api/xero/callback", async (req, res) => {
     const clientId = ENV.xeroClientId;
     const clientSecret = ENV.xeroClientSecret;
     if (!clientId || !clientSecret) {
-      return res.status(500).send("Xero credentials not configured");
+      return res.status(500).send("Xero OAuth app is not configured. Customers connect their own Xero account after the platform connector is enabled.");
     }
 
     const redirectUri = `${stateData.origin}/api/xero/callback`;

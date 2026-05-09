@@ -1,5 +1,6 @@
 import { AXIOS_TIMEOUT_MS, COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { ForbiddenError } from "@shared/_core/errors";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import axios, { type AxiosInstance } from "axios";
 import { parse as parseCookieHeader } from "cookie";
 import type { Request } from "express";
@@ -85,10 +86,20 @@ const createOAuthHttpClient = (): AxiosInstance =>
 class SDKServer {
   private readonly client: AxiosInstance;
   private readonly oauthService: OAuthService;
+  private readonly supabase: SupabaseClient | null;
 
   constructor(client: AxiosInstance = createOAuthHttpClient()) {
     this.client = client;
     this.oauthService = new OAuthService(this.client);
+    this.supabase =
+      ENV.supabaseUrl && ENV.supabaseAnonKey
+        ? createClient(ENV.supabaseUrl, ENV.supabaseAnonKey, {
+            auth: {
+              persistSession: false,
+              autoRefreshToken: false,
+            },
+          })
+        : null;
   }
 
   private deriveLoginMethod(
@@ -256,7 +267,54 @@ class SDKServer {
     } as GetUserInfoWithJwtResponse;
   }
 
+  private getBearerToken(req: Request): string | null {
+    const authorization = req.headers.authorization;
+    if (!authorization?.startsWith("Bearer ")) return null;
+
+    const token = authorization.slice("Bearer ".length).trim();
+    return token.length > 0 ? token : null;
+  }
+
+  private async authenticateSupabaseRequest(req: Request): Promise<User | null> {
+    const accessToken = this.getBearerToken(req);
+    if (!accessToken || !this.supabase) return null;
+
+    const { data, error } = await this.supabase.auth.getUser(accessToken);
+    if (error || !data.user) {
+      throw ForbiddenError("Invalid Supabase session");
+    }
+
+    const supabaseUser = data.user;
+    const email = supabaseUser.email ?? null;
+    const displayName =
+      typeof supabaseUser.user_metadata.name === "string"
+        ? supabaseUser.user_metadata.name
+        : typeof supabaseUser.user_metadata.full_name === "string"
+          ? supabaseUser.user_metadata.full_name
+          : email;
+    const openId = `supabase:${supabaseUser.id}`;
+    const signedInAt = new Date();
+
+    await db.upsertUser({
+      openId,
+      name: displayName,
+      email,
+      loginMethod: "supabase",
+      lastSignedIn: signedInAt,
+    });
+
+    const user = await db.getUserByOpenId(openId);
+    if (!user) {
+      throw ForbiddenError("Failed to sync Supabase user");
+    }
+
+    return user;
+  }
+
   async authenticateRequest(req: Request): Promise<User> {
+    const supabaseUser = await this.authenticateSupabaseRequest(req);
+    if (supabaseUser) return supabaseUser;
+
     // Regular authentication flow
     const cookies = this.parseCookies(req.headers.cookie);
     const sessionCookie = cookies.get(COOKIE_NAME);

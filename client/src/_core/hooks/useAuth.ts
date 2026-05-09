@@ -1,4 +1,5 @@
 import { getLoginUrl } from "@/const";
+import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
@@ -10,6 +11,7 @@ type UseAuthOptions = {
 
 export function useAuth(options?: UseAuthOptions) {
   const { redirectOnUnauthenticated = false, redirectPath } = options ?? {};
+  const supabaseAuth = useSupabaseAuth();
   const utils = trpc.useUtils();
 
   const meQuery = trpc.auth.me.useQuery(undefined, {
@@ -35,15 +37,16 @@ export function useAuth(options?: UseAuthOptions) {
       }
       throw error;
     } finally {
+      await supabaseAuth.signOut();
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
     }
-  }, [logoutMutation, utils]);
+  }, [logoutMutation, supabaseAuth, utils]);
 
   const state = useMemo(() => {
     return {
       user: meQuery.data ?? null,
-      loading: meQuery.isLoading || logoutMutation.isPending,
+      loading: supabaseAuth.loading || meQuery.isLoading || logoutMutation.isPending,
       error: meQuery.error ?? logoutMutation.error ?? null,
       isAuthenticated: Boolean(meQuery.data),
     };
@@ -53,6 +56,7 @@ export function useAuth(options?: UseAuthOptions) {
     meQuery.isLoading,
     logoutMutation.error,
     logoutMutation.isPending,
+    supabaseAuth.loading,
   ]);
 
   // Persist user info for Manus runtime integrations — must be a side-effect, not inside useMemo

@@ -1,6 +1,7 @@
 import {
   bigint,
   boolean,
+  date,
   decimal,
   index,
   int,
@@ -457,12 +458,20 @@ export const betaSignups = mysqlTable("beta_signups", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }).notNull().unique(),
+  phone: varchar("phone", { length: 30 }),
   company: varchar("company", { length: 255 }),
   trade: varchar("trade", { length: 64 }),
   state: mysqlEnum("state", ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"]),
   projectSize: mysqlEnum("projectSize", ["sole_trader", "small_builder", "mid_tier", "enterprise"]),
   source: varchar("source", { length: 64 }).default("website"), // fb_ad, linkedin, organic, etc.
+  intent: varchar("intent", { length: 64 }).default("Pilot Spot Request"),
   utmCampaign: varchar("utmCampaign", { length: 128 }),
+  utmSource: varchar("utmSource", { length: 128 }),
+  utmMedium: varchar("utmMedium", { length: 128 }),
+  utmContent: varchar("utmContent", { length: 128 }),
+  utmTerm: varchar("utmTerm", { length: 128 }),
+  landingPath: varchar("landingPath", { length: 255 }),
+  referrerHost: varchar("referrerHost", { length: 255 }),
   feedback: text("feedback"), // optional "what's your biggest quoting pain?"
   status: mysqlEnum("status", ["pending", "approved", "active", "churned"]).default("pending").notNull(),
   userId: int("userId"), // linked once they sign up
@@ -632,3 +641,51 @@ export const jobOutcomes = mysqlTable("job_outcomes", {
 
 export type JobOutcome = typeof jobOutcomes.$inferSelect;
 export type InsertJobOutcome = typeof jobOutcomes.$inferInsert;
+
+// ─── Kindai Ad Engine ───────────────────────────────────────────────────────
+export const adEngineRawInsights = mysqlTable("ad_engine_raw_insights", {
+  id: int("id").autoincrement().primaryKey(),
+  source: varchar("source", { length: 64 }).notNull(),
+  accountId: varchar("accountId", { length: 100 }).notNull(),
+  campaignId: varchar("campaignId", { length: 100 }).notNull(),
+  adSetId: varchar("adSetId", { length: 100 }),
+  adId: varchar("adId", { length: 100 }),
+  metricDate: date("metricDate").notNull(),
+  payload: json("payload").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  accountDateIdx: index("ad_engine_raw_account_date_idx").on(table.accountId, table.metricDate),
+  campaignDateIdx: index("ad_engine_raw_campaign_date_idx").on(table.campaignId, table.metricDate),
+}));
+
+export type AdEngineRawInsight = typeof adEngineRawInsights.$inferSelect;
+export type InsertAdEngineRawInsight = typeof adEngineRawInsights.$inferInsert;
+
+export const adEngineNormalizedMetrics = mysqlTable("ad_engine_normalized_metrics", {
+  id: int("id").autoincrement().primaryKey(),
+  accountId: varchar("accountId", { length: 100 }).notNull(),
+  campaignId: varchar("campaignId", { length: 100 }).notNull(),
+  campaignName: varchar("campaignName", { length: 255 }),
+  adSetId: varchar("adSetId", { length: 100 }).notNull(),
+  adSetName: varchar("adSetName", { length: 255 }),
+  adId: varchar("adId", { length: 100 }),
+  adName: varchar("adName", { length: 255 }),
+  metricDate: date("metricDate").notNull(),
+  spend: decimal("spend", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  impressions: int("impressions").default(0).notNull(),
+  clicks: int("clicks").default(0).notNull(),
+  conversions: decimal("conversions", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  revenue: decimal("revenue", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  roas: decimal("roas", { precision: 10, scale: 4 }).default("0.0000").notNull(),
+  cpa: decimal("cpa", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  cpm: decimal("cpm", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  ctr: decimal("ctr", { precision: 10, scale: 4 }).default("0.0000").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  accountDateIdx: index("ad_engine_metrics_account_date_idx").on(table.accountId, table.metricDate),
+  adSetDateIdx: index("ad_engine_metrics_adset_date_idx").on(table.adSetId, table.metricDate),
+}));
+
+export type AdEngineNormalizedMetric = typeof adEngineNormalizedMetrics.$inferSelect;
+export type InsertAdEngineNormalizedMetric = typeof adEngineNormalizedMetrics.$inferInsert;
