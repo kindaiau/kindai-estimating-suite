@@ -657,3 +657,26 @@ export const jobOutcomes = mysqlTable("job_outcomes", {
 
 export type JobOutcome = typeof jobOutcomes.$inferSelect;
 export type InsertJobOutcome = typeof jobOutcomes.$inferInsert;
+
+// ─── Waitlist (Beta Full — Interest Form) ─────────────────────────────────────
+export const waitlist = mysqlTable("waitlist", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  trade: varchar("trade", { length: 128 }).notNull(), // what trade/business they're in
+  reason: text("reason").notNull(), // why they want access
+  phone: varchar("phone", { length: 20 }),
+  // Tracking
+  source: varchar("source", { length: 128 }).default("homepage"), // homepage, guide, pricing, etc.
+  utmSource: varchar("utmSource", { length: 128 }),
+  utmCampaign: varchar("utmCampaign", { length: 128 }),
+  // Status
+  status: mysqlEnum("waitlistStatus", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  approvedAt: bigint("approvedAt", { mode: "number" }),
+  confirmationSentAt: bigint("confirmationSentAt", { mode: "number" }),
+  hubspotContactId: varchar("hubspotContactId", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type WaitlistEntry = typeof waitlist.$inferSelect;
+export type InsertWaitlistEntry = typeof waitlist.$inferInsert;

@@ -998,3 +998,11 @@
 - [x] Add META_CONVERSIONS_API_ACCESS_TOKEN secret to project
 - [x] Validate secrets with vitest (test PageView event sent successfully, events_received >= 1)
 - [x] Server-side Facebook conversion tracking now live (signups, page views, ebook captures)
+
+## Beta Full — Waitlist Form (9 May 2026)
+- [x] Add waitlist table to database schema (name, email, trade, reason, created_at)
+- [x] Create waitlist tRPC router (public capture + admin list)
+- [x] Update homepage: replace "Claim Free Pilot Spot" with "All Beta Spots Filled" + waitlist form
+- [x] Form fields: name, email, what trade/business, why you want access
+- [x] Send confirmation email via Resend when someone joins waitlist
+- [x] Save checkpoint and publish

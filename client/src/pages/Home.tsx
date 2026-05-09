@@ -4,15 +4,20 @@ import { SoftwareAppSchema, OrganizationSchema, FAQSchema } from "@/components/S
 import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Zap, Shield, Brain, FileText, Users, BarChart3,
   ChevronRight, CheckCircle2, Star, ArrowRight, HardHat,
-  Camera, Sparkles, DollarSign, Truck, Clock, Upload, Play
+  Camera, Sparkles, DollarSign, Truck, Clock, Upload, Play, Lock
 } from "lucide-react";
 import { motion, useInView, AnimatePresence, useMotionValueEvent, useScroll } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
-import { pixelViewContent } from "@/lib/metaPixel";
+import { pixelViewContent, pixelLead, generateMetaEventId, getMetaBrowserContext } from "@/lib/metaPixel";
 import PilotSpotCounter from "@/components/PilotSpotCounter";
 import { ph } from "@/lib/posthog";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 // Exit-intent ebook popup for bounce reduction
 function ExitIntentPopup({ onClose }: { onClose: () => void }) {
@@ -101,6 +106,143 @@ function useHeroVariant(isAdTraffic: boolean): "A" | "B" {
 
 // Design note: Australian workshop brutalism — blunt pain-first messaging, tradie-friendly proof, and a clear path from ad click to pilot sign-up.
 
+// ─── Waitlist Form (Beta Full) ────────────────────────────────────────────────
+const WAITLIST_TRADES = [
+  "Electrical", "Plumbing & Drainage", "Carpentry & Joinery", "Concreting",
+  "HVAC", "Flooring", "Landscaping & Irrigation", "Cabinet Making & Joinery",
+  "Rendering & Plastering", "Painting & Decorating", "Bricklaying & Blocklaying",
+  "Roofing", "Tiling", "Waterproofing", "Fire Protection",
+  "Glazing & Aluminium", "Quantity Surveying", "Demolition & Excavation",
+  "Swimming Pool Construction", "Steel Fabrication & Structural",
+  "Gas Installation & Gasfitting", "Gas Maintenance & Servicing",
+  "General Building / Builder", "Other",
+];
+
+function WaitlistFormInline() {
+  const [form, setForm] = useState({ name: "", email: "", trade: "", reason: "" });
+  const [submitted, setSubmitted] = useState(false);
+  const leadEventIdRef = useRef<string | null>(null);
+
+  const joinMutation = trpc.waitlist.join.useMutation({
+    onSuccess: (data) => {
+      if (data.alreadyRegistered) {
+        toast.info("You're already on the waitlist! We'll be in touch.");
+        setSubmitted(true);
+        return;
+      }
+      setSubmitted(true);
+      toast.success("You're on the list! We'll be in touch soon.");
+      ph.waitlistSubmitted(form.trade);
+
+      const leadEventId = leadEventIdRef.current ?? generateMetaEventId("waitlist_lead");
+      pixelLead(
+        { content_name: "Waitlist Signup", content_category: "Kindai Estimating Suite", value: 0 },
+        { eventId: leadEventId }
+      );
+      leadEventIdRef.current = null;
+    },
+    onError: (err) => {
+      toast.error(err.message || "Something went wrong. Please try again.");
+      leadEventIdRef.current = null;
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.name || !form.email || !form.trade || !form.reason) {
+      toast.error("Please fill in all fields.");
+      return;
+    }
+
+    const leadEventId = generateMetaEventId("waitlist_lead");
+    const metaContext = getMetaBrowserContext();
+    leadEventIdRef.current = leadEventId;
+
+    const params = new URLSearchParams(window.location.search);
+
+    joinMutation.mutate({
+      name: form.name,
+      email: form.email,
+      trade: form.trade,
+      reason: form.reason,
+      source: "homepage",
+      utmSource: params.get("utm_source") || undefined,
+      utmCampaign: params.get("utm_campaign") || undefined,
+    });
+  };
+
+  if (submitted) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white/10 backdrop-blur-xl rounded-2xl border border-green-500/30 p-6 max-w-md mx-auto lg:mx-0 text-center"
+      >
+        <CheckCircle2 className="w-10 h-10 text-green-400 mx-auto mb-3" />
+        <h3 className="text-xl font-black text-white mb-2">You're on the list!</h3>
+        <p className="text-white/60 text-sm leading-relaxed">
+          We're reviewing applications now. When a spot opens up or we expand access, you'll be one of the first to know.
+        </p>
+        <a
+          href="/guide"
+          className="inline-flex items-center gap-2 mt-4 kindai-btn-primary px-5 py-2.5 rounded-full text-sm font-bold text-white"
+        >
+          <Zap className="w-4 h-4" /> Grab the Free Guide While You Wait
+        </a>
+      </motion.div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="max-w-md mx-auto lg:mx-0 space-y-3">
+      <p className="text-white/50 text-sm font-semibold mb-1">
+        Missed out? Tell us about your business and we'll get back to you.
+      </p>
+      <Input
+        placeholder="Your name"
+        value={form.name}
+        onChange={(e) => setForm({ ...form, name: e.target.value })}
+        className="bg-white/10 border-white/20 text-white placeholder:text-white/40 h-11 rounded-xl"
+      />
+      <Input
+        type="email"
+        placeholder="Email address"
+        value={form.email}
+        onChange={(e) => setForm({ ...form, email: e.target.value })}
+        className="bg-white/10 border-white/20 text-white placeholder:text-white/40 h-11 rounded-xl"
+      />
+      <Select value={form.trade} onValueChange={(v) => setForm({ ...form, trade: v })}>
+        <SelectTrigger className="bg-white/10 border-white/20 text-white h-11 rounded-xl [&>span]:text-white/40 data-[state=open]:border-white/40">
+          <SelectValue placeholder="What trade are you in?" />
+        </SelectTrigger>
+        <SelectContent>
+          {WAITLIST_TRADES.map((t) => (
+            <SelectItem key={t} value={t}>{t}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Textarea
+        placeholder="Why do you want access? (e.g. what you do, how many jobs you quote per week)"
+        value={form.reason}
+        onChange={(e) => setForm({ ...form, reason: e.target.value })}
+        className="bg-white/10 border-white/20 text-white placeholder:text-white/40 rounded-xl min-h-[80px] resize-none"
+      />
+      <Button
+        type="submit"
+        size="lg"
+        disabled={joinMutation.isPending}
+        className="kindai-btn-primary w-full px-6 py-3.5 rounded-full text-sm font-black h-auto shadow-2xl"
+      >
+        {joinMutation.isPending ? "Submitting..." : "Join the Waitlist"}
+        <ArrowRight className="w-4 h-4 ml-2" />
+      </Button>
+      <p className="text-white/30 text-xs text-center">
+        We review every application. No spam, ever.
+      </p>
+    </form>
+  );
+}
+
 // Reusable scroll-triggered fade-up wrapper
 function FadeUp({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
   const ref = useRef(null);
@@ -182,7 +324,7 @@ function ScrollNav({ isAuthenticated, navigate, handleGetStarted }: {
                 Log In
               </Button>
               <Button onClick={handleGetStarted} className="kindai-btn-primary px-5 rounded-full text-sm font-bold hidden sm:flex">
-                Get Started Free
+                Join Waitlist
               </Button>
             </>
           )}
@@ -313,16 +455,13 @@ export default function Home() {
 
   const handleGetStarted = () => {
     if (isAuthenticated) navigate("/ai-takeoff");
-    else navigate("/beta");
+    else window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleTryAI = () => {
-    ph.ctaClicked("hero");
-    if (isAdTraffic) {
-      ph.heroExperimentCTAClicked(heroVariant, "claim_pilot_spot");
-    }
+    ph.ctaClicked("waitlist_cta");
     if (isAuthenticated) navigate("/ai-takeoff");
-    else navigate("/beta");
+    else window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -355,18 +494,16 @@ export default function Home() {
               transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
               className="text-center lg:text-left"
             >
-              {/* BETA BANNER */}
-              <motion.a
-                href="/beta"
+              {/* BETA FULL BADGE */}
+              <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-500/20 border border-orange-500/50 text-orange-300 text-xs font-black mb-8 cursor-pointer hover:bg-orange-500/30 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-500/20 border border-green-500/50 text-green-300 text-xs font-black mb-8"
               >
-                <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse" />
-                PILOT PROGRAM — ONLY 25 FOUNDING SPOTS
-                <ChevronRight className="w-3.5 h-3.5" />
-              </motion.a>
+                <Lock className="w-3.5 h-3.5" />
+                ALL 25 BETA SPOTS FILLED
+              </motion.div>
 
               {/* HERO HEADLINE — A/B tested for ad traffic */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.05] mb-8">
@@ -383,41 +520,8 @@ export default function Home() {
                 Kindai reads your plans, applies your price book, and builds a GST-ready quote in 60 seconds. Built for Australian tradies.
               </p>
 
-              {/* On ad traffic: minimal proof. On organic: full counter */}
-              {isAdTraffic ? (
-                <div className="flex items-center gap-2 text-white/60 text-sm font-semibold">
-                  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                  <span>14 of 25 founding spots claimed</span>
-                </div>
-              ) : (
-                <PilotSpotCounter variant="hero" fallbackClaimed={12} fallbackTotal={25} />
-              )}
-
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center lg:items-start justify-center lg:justify-start w-full sm:w-auto mt-4">
-                <Button
-                  onClick={handleTryAI}
-                  size="lg"
-                  className="kindai-btn-primary w-full sm:w-auto px-4 sm:px-8 py-3 sm:py-4 rounded-full text-sm sm:text-base font-black h-auto shadow-2xl"
-                >
-                  <Camera className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                  Claim Free Pilot Spot
-                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
-                </Button>
-                <Button
-                  onClick={() => navigate("/demo")}
-                  size="lg"
-                  variant="outline"
-                  className="w-full sm:w-auto px-4 sm:px-8 py-3 sm:py-4 rounded-full text-sm sm:text-base font-black h-auto border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
-                >
-                  <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                  Watch Demo
-                </Button>
-              </div>
-
-              {/* Hide testimonial on mobile for ad traffic — reduce cognitive load */}
-              <p className={`text-sm text-white/45 mt-8 max-w-md mx-auto lg:mx-0 ${isAdTraffic ? 'hidden sm:block' : ''}`}>
-                "I photographed the plans on my phone and had a full quote in 3 minutes." — <span className="text-white/70 font-semibold">Dave K., Electrician, QLD</span>
-              </p>
+              {/* Waitlist form inline */}
+              <WaitlistFormInline />
             </motion.div>
 
             {/* Right: Visual mockup of the AI flow */}
@@ -566,7 +670,7 @@ export default function Home() {
               size="lg"
               className="kindai-btn-primary w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-full text-sm sm:text-base font-black h-auto shadow-xl"
             >
-              <Camera className="w-4 h-4 sm:w-5 sm:h-5 mr-2" /> Claim Free Pilot Spot
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 mr-2" /> Join the Waitlist
             </Button>
             <Button
               onClick={() => navigate("/demo")}
@@ -612,7 +716,7 @@ export default function Home() {
               size="lg"
               className="kindai-btn-primary px-8 py-4 rounded-full text-base font-black h-auto shadow-xl"
             >
-              <Sparkles className="w-5 h-5 mr-2" /> Try It Now — Free
+              <Sparkles className="w-5 h-5 mr-2" /> Join the Waitlist
             </Button>
           </div>
         </div>
@@ -875,8 +979,8 @@ export default function Home() {
             size="lg"
             className="kindai-btn-primary px-10 py-4 rounded-full text-base font-black h-auto shadow-xl"
           >
-            <Camera className="w-5 h-5 mr-2" />
-            Start Your Pilot — Free
+            <ArrowRight className="w-5 h-5 mr-2" />
+            Join the Waitlist
             <ChevronRight className="w-5 h-5 ml-2" />
           </Button>
           <p className="text-xs text-gray-400 mt-4">No lock-in. Enterprise onboarding included. Cancel anytime.</p>

@@ -149,6 +149,10 @@ export const ph = {
   /** A/B test: hero CTA clicked with variant context */
   heroExperimentCTAClicked: (variant: "A" | "B", cta: string) =>
     trackEvent("hero_experiment_cta_clicked", { variant, cta }),
+
+  /** Waitlist form submitted (beta full) */
+  waitlistSubmitted: (trade: string) =>
+    trackEvent("waitlist_submitted", { trade }),
 };
 
 export default posthog;
