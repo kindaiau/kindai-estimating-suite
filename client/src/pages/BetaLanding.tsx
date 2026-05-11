@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2, Zap, Users, Shield, Clock, ChevronRight, Star, ArrowRight } from "lucide-react";
+import PilotSpotCounter from "@/components/PilotSpotCounter";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -427,6 +428,7 @@ export default function BetaLanding() {
           </div>
 
           <div className="rounded-3xl border border-white/10 bg-gray-950/70 p-6 shadow-2xl shadow-amber-950/20 backdrop-blur-xl sm:p-8">
+            {!submitted && <PilotSpotCounter variant="form" fallbackClaimed={12} fallbackTotal={25} />}
             <AnimatePresence mode="wait">
               {submitted ? (
                 <motion.div

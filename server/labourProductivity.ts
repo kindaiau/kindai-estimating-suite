@@ -260,6 +260,63 @@ export const CABINETRY_PRODUCTIVITY: ProductivityRate[] = [
   { task: "Bathroom vanity installation", unit: "ea", minutesMin: 60, minutesAvg: 75, minutesMax: 100 },
 ];
 
+
+// ─── EV CHARGING ──────────────────────────────────────────────────────────────
+// Source: EVSE Australia, Terawatt, KM Electric, industry benchmarks (2024-25)
+export const EV_CHARGING_PRODUCTIVITY: ProductivityRate[] = [
+  // Site Assessment & Preliminaries
+  { task: "Pre-installation site assessment (residential)", unit: "ea", minutesMin: 45, minutesAvg: 60, minutesMax: 90, notes: "Assess switchboard, cable route, load capacity" },
+  { task: "Pre-installation site assessment (commercial)", unit: "ea", minutesMin: 90, minutesAvg: 120, minutesMax: 180, notes: "Multi-bay, load management, DNSP requirements" },
+  // Switchboard Work
+  { task: "Add dedicated RCBO/circuit to existing switchboard", unit: "ea", minutesMin: 45, minutesAvg: 60, minutesMax: 90 },
+  { task: "Switchboard upgrade for EV (load balancing, new circuits)", unit: "ea", minutesMin: 180, minutesAvg: 240, minutesMax: 360, notes: "3-6 hrs depending on complexity" },
+  { task: "Install Type B RCD", unit: "ea", minutesMin: 30, minutesAvg: 45, minutesMax: 60 },
+  { task: "Install 4-pole RCBO (three-phase EVSE)", unit: "ea", minutesMin: 30, minutesAvg: 45, minutesMax: 60 },
+  // Cable Runs
+  { task: "Cable run — surface mount (per lm)", unit: "lm", minutesMin: 3, minutesAvg: 5, minutesMax: 8 },
+  { task: "Cable run — concealed in wall/ceiling (per lm)", unit: "lm", minutesMin: 8, minutesAvg: 12, minutesMax: 18 },
+  { task: "Cable run — in conduit (per lm)", unit: "lm", minutesMin: 7, minutesAvg: 10, minutesMax: 14 },
+  { task: "Underground cable in conduit — trenching (per lm)", unit: "lm", minutesMin: 20, minutesAvg: 30, minutesMax: 45, notes: "Includes conduit, sand bedding, backfill" },
+  // Charger Installation
+  { task: "Residential wallbox installation (Mode 3, single-phase, simple)", unit: "ea", minutesMin: 90, minutesAvg: 120, minutesMax: 180, notes: "2-3 hrs; switchboard within 10m, no trenching" },
+  { task: "Residential wallbox installation (Mode 3, single-phase, complex)", unit: "ea", minutesMin: 180, minutesAvg: 240, minutesMax: 360, notes: "3-6 hrs; switchboard upgrade or long cable run" },
+  { task: "Residential wallbox installation (Mode 3, three-phase)", unit: "ea", minutesMin: 240, minutesAvg: 300, minutesMax: 420, notes: "4-7 hrs; includes 4-pole RCBO, three-phase cable" },
+  { task: "Commercial wallbox installation (per bay, AC 7.4-22kW)", unit: "ea", minutesMin: 120, minutesAvg: 180, minutesMax: 240, notes: "2-4 hrs per bay; assumes distribution board nearby" },
+  { task: "DC fast charger installation (50kW+)", unit: "ea", minutesMin: 480, minutesAvg: 600, minutesMax: 960, notes: "8-16 hrs; includes switchboard, metering, civil coordination" },
+  // Earthing
+  { task: "Earth stake installation", unit: "ea", minutesMin: 30, minutesAvg: 45, minutesMax: 60 },
+  { task: "Equipotential bonding (EV charger to earth)", unit: "ea", minutesMin: 20, minutesAvg: 30, minutesMax: 45 },
+  // Testing & Commissioning
+  { task: "Testing and commissioning per AS/NZS 3017 (residential)", unit: "ea", minutesMin: 30, minutesAvg: 45, minutesMax: 60, notes: "RCD test, insulation resistance, earth loop impedance" },
+  { task: "Testing and commissioning (commercial, per charger)", unit: "ea", minutesMin: 45, minutesAvg: 60, minutesMax: 90 },
+  { task: "OCPP network configuration and testing", unit: "ea", minutesMin: 30, minutesAvg: 45, minutesMax: 90, notes: "Smart charging network setup" },
+  { task: "Customer handover and demonstration", unit: "ea", minutesMin: 20, minutesAvg: 30, minutesMax: 45 },
+
+  // DC Fast Charger Infrastructure (Mode 4 — high-power commercial)
+  { task: "DC fast charger site assessment and DNSP pre-application", unit: "ea", minutesMin: 120, minutesAvg: 180, minutesMax: 300, notes: "Includes load assessment, DNSP requirements, site survey" },
+  { task: "High-voltage switchboard design and installation (DC fast charger site)", unit: "ea", minutesMin: 480, minutesAvg: 720, minutesMax: 1200, notes: "8-20 hrs; includes design, supply, install, and commissioning" },
+  { task: "3-phase HV supply cable run to DC charger cabinet (per lm)", unit: "lm", minutesMin: 15, minutesAvg: 22, minutesMax: 35, notes: "Large cable, heavy conduit — significantly more than standard cable runs" },
+  { task: "Concrete equipment pad for DC fast charger (inc. civil)", unit: "ea", minutesMin: 240, minutesAvg: 360, minutesMax: 480, notes: "4-8 hrs; includes formwork, pour, cure — often subcontracted" },
+  { task: "Protection relay installation and commissioning", unit: "ea", minutesMin: 120, minutesAvg: 180, minutesMax: 300 },
+  { task: "NMI-compliant metering installation (AS 62053-22)", unit: "ea", minutesMin: 90, minutesAvg: 120, minutesMax: 180 },
+  { task: "Earthing system for DC fast charger site (stakes, bonding, testing)", unit: "ea", minutesMin: 120, minutesAvg: 180, minutesMax: 300 },
+  { task: "OCPP load management system installation and configuration", unit: "ea", minutesMin: 120, minutesAvg: 180, minutesMax: 300, notes: "Network setup, charger registration, load balancing config" },
+  { task: "DC fast charger site commissioning and testing (full site)", unit: "ea", minutesMin: 240, minutesAvg: 360, minutesMax: 480, notes: "4-8 hrs; includes all chargers, metering, protection, OCPP" },
+  // Network Operator Maintenance
+  { task: "Routine site inspection (visual, cable check, cleaning — per charger)", unit: "ea", minutesMin: 20, minutesAvg: 30, minutesMax: 45, notes: "Per charger; add travel/call-out separately" },
+  { task: "Quarterly preventive maintenance visit (per DC fast charger)", unit: "ea", minutesMin: 45, minutesAvg: 60, minutesMax: 90 },
+  { task: "Emergency call-out and fault diagnosis (DC fast charger)", unit: "ea", minutesMin: 60, minutesAvg: 90, minutesMax: 180, notes: "Diagnosis only; internal repairs may require OEM certification" },
+
+  // Maintenance & Repair
+  { task: "Fault diagnosis and reset (GFCI trip, comms error)", unit: "ea", minutesMin: 30, minutesAvg: 45, minutesMax: 90 },
+  { task: "Cable and connector inspection (visual + electrical)", unit: "ea", minutesMin: 20, minutesAvg: 30, minutesMax: 45 },
+  { task: "Type 2 connector/cable replacement", unit: "ea", minutesMin: 45, minutesAvg: 60, minutesMax: 90 },
+  { task: "RCD/GFCI replacement (EV circuit)", unit: "ea", minutesMin: 30, minutesAvg: 45, minutesMax: 60 },
+  { task: "Firmware update and network reconfiguration", unit: "ea", minutesMin: 20, minutesAvg: 30, minutesMax: 60 },
+  { task: "Annual preventive maintenance service (residential)", unit: "ea", minutesMin: 45, minutesAvg: 60, minutesMax: 90 },
+  { task: "Annual preventive maintenance service (commercial, per charger)", unit: "ea", minutesMin: 60, minutesAvg: 90, minutesMax: 120 },
+];
+
 // ─── HELPER: Get productivity data for a trade ─────────────────────────────────
 export function getProductivityForTrade(trade: string): ProductivityRate[] {
   const tradeMap: Record<string, ProductivityRate[]> = {
@@ -276,6 +333,9 @@ export function getProductivityForTrade(trade: string): ProductivityRate[] {
     landscaping: LANDSCAPING_PRODUCTIVITY,
     cabinetry: CABINETRY_PRODUCTIVITY,
     "cabinet making": CABINETRY_PRODUCTIVITY,
+    "ev-charging": EV_CHARGING_PRODUCTIVITY,
+    "ev charging": EV_CHARGING_PRODUCTIVITY,
+    evcharging: EV_CHARGING_PRODUCTIVITY,
   };
   const key = trade.toLowerCase().replace(/[^a-z ]/g, "");
   return tradeMap[key] ?? [];

@@ -935,4 +935,74 @@
 - [x] Upgrade Motyl demo page: added How It Works section, competitive comparison table, Microvellum integration, upgraded CTA
 - [x] Added /moytle route alias (both /motyl and /moytle now work)
 - [x] Updated hero stat from $60K+ to $100K+ saving (matches Motyl's volume)
+- [x] Save checkpoint and publish
+
+## URGENT: Switch Email System from Gmail SMTP to Resend API (28 Apr 2026)
+- [x] Created resendSender.ts — Resend API email sender (replaces gmailSender.ts)
+- [x] Updated welcomeEmail.ts to use Resend instead of Gmail
+- [x] Updated betaNurture.ts to use Resend instead of Gmail
+- [x] Updated env.ts to require RESEND_API_KEY (not BREVO_API_KEY)
+- [x] Updated server cron log messages from Gmail to Resend
+- [x] Wrote 21 vitest tests for Resend email integration (all passing)
+- [x] Approved all 10 beta signups
+- [x] Built apology/welcome-back email (Matt's voice, honest, with ebook gift)
+- [x] Added admin endpoints: beta.sendApology + beta.sendApologyBulk
+- [x] Sent apology emails to all 10 beta users (10/10 delivered via Resend)
+- [x] Included ebook gift: "From Plans to Quote in Minutes"
+- [x] All email links point to kindaiestimator.com (dashboard, AI takeoff, beta)
+- [x] Full campaign flow working: signup → welcome → nurture day1/3/7/14 via Resend
+- [x] Re-queued 23 failed nurture emails + 40 total now scheduled via Resend
+- [x] Save checkpoint and publish fix to production
+
+## Lead Gen Machine — Ebook Funnel (29 Apr 2026)
+- [x] Build /guide landing page — email capture + instant ebook delivery via Resend
+- [x] Add ebook_leads table to database schema (migration 0015 applied)
+- [x] Add ebook.capture tRPC procedure (public) + ebook.list + ebook.stats admin procedures
+- [x] Wire 5-email ebook nurture sequence (Day 0, 2, 4, 7, 10) via Resend
+- [x] Write 21 vitest tests for ebook email sequence (all passing)
+- [x] Write Facebook/Instagram ad copy + creative brief (Pain angle + Curiosity angle)
+- [x] Organic post copy for Facebook groups + LinkedIn
+- [x] Save checkpoint and publish
+
+## Pricing Page — Takeoff Tier Restructure (29 Apr 2026)
+- [ ] Rename takeoff types: Quick Quote / Plan Reading (Vision AI) / Full AI Takeoff
+- [ ] Add AI model labels (GPT-4o multimodal, Vision AI badge on Plan Reading)
+- [ ] Add multimodal credibility quotes/callouts to pricing page
+- [ ] Update tier feature lists with new takeoff structure
 - [ ] Save checkpoint and publish
+
+## Three Follow-Up Tasks (30 Apr 2026)
+- [ ] Add Plan Reading FAQ entries to pricing page (file types, accuracy, commercial jobs)
+- [ ] Wire ebook nurture cron job (Day 2/4/7/10 emails via Resend)
+- [ ] Record Motyl AI Takeoff demo screen recording
+- [ ] Save checkpoint and publish
+
+## Analytics Deep-Dive & Bounce Rate Fix (6 May 2026)
+- [ ] Pull website analytics data (Umami/built-in analytics)
+- [ ] Pull social media performance data (Facebook + Instagram via MCP)
+- [ ] Pull Meta Ads performance data via MCP
+- [ ] Diagnose bounce rate root causes
+- [ ] Produce full analytics report with actionable findings
+- [ ] Implement website changes to reduce bounce rate
+- [ ] Implement changes to increase signup conversion rate
+- [ ] Save checkpoint and publish
+
+## A/B Test — Hero Headline (6 May 2026)
+- [x] Implement 50/50 split for ad traffic: Variant A "From Plans to Quote in Minutes" vs Variant B "Stop Losing Jobs to Slow Quotes"
+- [x] Persist variant in localStorage so returning visitors see the same headline
+- [x] Track variant in PostHog (hero_experiment_exposed + hero_experiment_cta_clicked events)
+- [ ] Save checkpoint and publish
+
+## Meta CAPI Secrets (7 May 2026)
+- [x] Add META_PIXEL_ID secret to project
+- [x] Add META_CONVERSIONS_API_ACCESS_TOKEN secret to project
+- [x] Validate secrets with vitest (test PageView event sent successfully, events_received >= 1)
+- [x] Server-side Facebook conversion tracking now live (signups, page views, ebook captures)
+
+## Beta Full — Waitlist Form (9 May 2026)
+- [x] Add waitlist table to database schema (name, email, trade, reason, created_at)
+- [x] Create waitlist tRPC router (public capture + admin list)
+- [x] Update homepage: replace "Claim Free Pilot Spot" with "All Beta Spots Filled" + waitlist form
+- [x] Form fields: name, email, what trade/business, why you want access
+- [x] Send confirmation email via Resend when someone joins waitlist
+- [x] Save checkpoint and publish

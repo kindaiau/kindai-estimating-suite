@@ -35,8 +35,10 @@ import { lazy, Suspense } from "react";
 import CompanySettings from "./pages/CompanySettings";
 import AccuracyDashboard from "./pages/AccuracyDashboard";
 import MotylDemo from "./pages/MotylDemo";
+import EbookGuide from "./pages/EbookGuide";
 import GetGasDemo from "./pages/GetGasDemo";
 import AIHelpAssistant from "./components/AIHelpAssistant";
+import PostHogPageTracker from "./components/PostHogPageTracker";
 import Login from "./pages/Login";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -89,6 +91,7 @@ function Router() {
         <Route path="/settings" component={protectedPage(CompanySettings)} />
         <Route path="/accuracy" component={protectedPage(AccuracyDashboard)} />
         <Route path="/motyl" component={MotylDemo} />
+        <Route path="/guide" component={EbookGuide} />
         <Route path="/moytle" component={MotylDemo} />
         <Route path="/getgas" component={GetGasDemo} />
         <Route path="/launch-engine/brand-scan" component={LaunchEngineBrandScanPage} />
@@ -111,6 +114,7 @@ function App() {
           <Toaster position="top-right" richColors />
           <MetaPixel />
           <Analytics />
+          <PostHogPageTracker />
           <Router />
           <AIHelpAssistant />
         </TooltipProvider>

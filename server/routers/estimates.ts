@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { TRPCError } from "@trpc/server";
 import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -10,7 +9,11 @@ import { GST_RATE } from "../../shared/trades";
 import { generateQuotePdf } from "../pdfGenerator";
 import { storagePut } from "../storage";
 import { INDUSTRY_BENCHMARKS } from "./ai";
-import { buildQuoteAssuranceReport } from "../assurance";
+import {
+  buildMetaUserData,
+  extractMetaClickIdentifiers,
+  sendMetaConversionEvent,
+} from "../metaCapi";
 
 export const estimatesRouter = router({
   list: protectedProcedure.input(z.object({ projectId: z.number().optional() })).query(async ({ ctx, input }) => {
@@ -38,16 +41,6 @@ export const estimatesRouter = router({
     return { ...estimate, lineItems: items };
   }),
 
-  getAssurance: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
-    const db = requireDatabase(await getDb());
-    const [estimate] = await db.select().from(estimates)
-      .where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)))
-      .limit(1);
-    if (!estimate) return null;
-    const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, input.id));
-    return buildQuoteAssuranceReport(estimate, items);
-  }),
-
   create: protectedProcedure.input(z.object({
     projectId: z.number(),
     trade: z.string(),
@@ -71,7 +64,44 @@ export const estimatesRouter = router({
       complianceState: input.complianceState,
       notes: input.notes,
     } as any);
-    return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0), quoteNumber };
+    const newEstimateId = Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0);
+
+    // ─── Meta CAPI: ViewContent (new estimate created = viewing estimator) ──
+    const { fbp, fbc } = extractMetaClickIdentifiers(ctx.req.headers.cookie);
+    const clientIpAddress =
+      (ctx.req.headers["x-forwarded-for"] as string | undefined)
+        ?.split(",")
+        .map((v) => v.trim())
+        .find(Boolean) ?? ctx.req.socket.remoteAddress ?? undefined;
+    const clientUserAgent = ctx.req.headers["user-agent"] ?? undefined;
+
+    sendMetaConversionEvent({
+      eventName: "ViewContent",
+      eventId: `estimate_create_${newEstimateId}_${Date.now()}`,
+      actionSource: "website",
+      eventSourceUrl: "https://kindaiestimator.com/ai-takeoff",
+      customData: {
+        currency: "AUD",
+        value: 0,
+        content_name: `New Estimate: ${input.title}`,
+        content_category: input.trade,
+        content_ids: [String(newEstimateId)],
+      },
+      userData: buildMetaUserData({
+        email: ctx.user.email ?? undefined,
+        clientIpAddress,
+        clientUserAgent,
+        fbp,
+        fbc,
+      }),
+    }).catch((err: unknown) => {
+      console.error(
+        "[Meta CAPI] Failed to send ViewContent event:",
+        err instanceof Error ? err.message : String(err)
+      );
+    });
+
+    return { id: newEstimateId, quoteNumber };
   }),
 
   update: protectedProcedure.input(z.object({
@@ -88,22 +118,6 @@ export const estimatesRouter = router({
   })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     const { id, margin, ...rest } = input;
-
-    if (rest.status === "sent") {
-      const [estimate] = await db.select().from(estimates)
-        .where(and(eq(estimates.id, id), eq(estimates.userId, ctx.user.id)))
-        .limit(1);
-      if (!estimate) throw new TRPCError({ code: "NOT_FOUND", message: "Estimate not found" });
-      const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, id));
-      const assurance = buildQuoteAssuranceReport(estimate, items);
-      if (!assurance.canIssue) {
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: `Quote assurance blocked sending: ${assurance.issueBlocks[0]}`,
-        });
-      }
-    }
-
     const data: Record<string, unknown> = { ...rest };
     if (margin !== undefined) data.margin = margin.toString();
     await db.update(estimates).set(data as any).where(and(eq(estimates.id, id), eq(estimates.userId, ctx.user.id)));
@@ -410,14 +424,6 @@ export const estimatesRouter = router({
     // Load line items
     const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, input.id));
 
-    const assurance = buildQuoteAssuranceReport(estimate, items);
-    if (!assurance.canIssue) {
-      throw new TRPCError({
-        code: "PRECONDITION_FAILED",
-        message: `Quote assurance blocked PDF export: ${assurance.issueBlocks[0]}`,
-      });
-    }
-
     // Load user profile
     const [user] = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
 
@@ -474,7 +480,6 @@ export const estimatesRouter = router({
       notes: estimate.notes || undefined,
       aiConfidenceScore: estimate.aiConfidenceScore || undefined,
       aiAssumptions: (estimate.aiAssumptions as string[]) || undefined,
-      assurance,
       companyLogoUrl: tradeProfile?.logoUrl || undefined,
       brandColor: tradeProfile?.brandColour || undefined,
     };
@@ -491,6 +496,41 @@ export const estimatesRouter = router({
       quotePdfUrl: url,
       quotePdfKey: fileKey,
     } as any).where(eq(estimates.id, input.id));
+
+    // ─── Meta CAPI: Purchase (quote PDF generated = quote sent to client) ──
+    const pdfFbIds = extractMetaClickIdentifiers(ctx.req.headers.cookie);
+    const pdfClientIp =
+      (ctx.req.headers["x-forwarded-for"] as string | undefined)
+        ?.split(",")
+        .map((v) => v.trim())
+        .find(Boolean) ?? ctx.req.socket.remoteAddress ?? undefined;
+
+    sendMetaConversionEvent({
+      eventName: "Purchase",
+      eventId: `quote_pdf_${input.id}_${Date.now()}`,
+      actionSource: "website",
+      eventSourceUrl: "https://kindaiestimator.com/dashboard",
+      customData: {
+        currency: "AUD",
+        value: totalNum,
+        content_name: `Quote: ${estimate.quoteNumber}`,
+        content_category: estimate.trade,
+        content_ids: [String(input.id)],
+        num_items: items.length,
+      },
+      userData: buildMetaUserData({
+        email: ctx.user.email ?? undefined,
+        clientIpAddress: pdfClientIp,
+        clientUserAgent: ctx.req.headers["user-agent"] ?? undefined,
+        fbp: pdfFbIds.fbp,
+        fbc: pdfFbIds.fbc,
+      }),
+    }).catch((err: unknown) => {
+      console.error(
+        "[Meta CAPI] Failed to send Purchase event:",
+        err instanceof Error ? err.message : String(err)
+      );
+    });
 
     return { url, fileKey };
   }),

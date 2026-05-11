@@ -98,6 +98,19 @@ export const AUSTRALIAN_SUPPLIERS: Record<string, Array<{
     { name: "Rinnai Australia", type: "trade", website: "https://www.rinnai.com.au", trades: ["gas-maintenance"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "OEM parts for Rinnai gas appliances. Warranty and service support." },
     { name: "Rheem Australia", type: "trade", website: "https://www.rheem.com.au", trades: ["gas-maintenance"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "OEM parts for Rheem gas hot water systems. Warranty and service support." },
   ],
+  "ev-charging": [
+    { name: "Wallbox Australia", type: "trade", website: "https://wallbox.com/en_au", trades: ["ev-charging"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Premium smart EV chargers. Pulsar Plus 7.4kW ~$1,200 trade. Quasar 2 bidirectional V2H charger. OCPP compatible." },
+    { name: "Clipsal (Schneider Electric)", type: "trade", website: "https://www.clipsal.com", trades: ["ev-charging"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Australian-brand EV chargers. EVLink range 7.4kW-22kW. Available through Rexel and Clipsal distributors. Trade pricing." },
+    { name: "Zappi (myenergi)", type: "trade", website: "https://www.myenergi.com/au", trades: ["ev-charging"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Solar-integrated smart charger. Zappi 7.4kW ~$1,400 trade. Eco mode diverts excess solar to EV. Popular with solar-equipped homes." },
+    { name: "Tesla Wall Connector", type: "trade", website: "https://www.tesla.com/en_AU/support/home-charging-installation", trades: ["ev-charging"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Tesla Wall Connector Gen 3 ~$750 trade. 11.5kW max. Works with all EVs via Type 2 adapter. Requires Tesla-certified installer for warranty." },
+    { name: "Fronius Wattpilot", type: "trade", website: "https://www.fronius.com/en-au", trades: ["ev-charging"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Solar-optimised EV charger. Wattpilot 11J and 22J. Integrates with Fronius inverters. Available through solar/electrical wholesalers." },
+    { name: "ABB Terra", type: "trade", website: "https://new.abb.com/ev-charging/au", trades: ["ev-charging"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Commercial and DC fast chargers. Terra AC wallbox 7.4-22kW. Terra DC fast chargers 24-180kW. Suitable for commercial/fleet installations." },
+    { name: "Tritium", type: "trade", website: "https://www.tritiumcharging.com", trades: ["ev-charging"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Australian-made DC fast chargers. Veefil-RT 50kW, Veefil-PK 175kW+. Used in public charging networks. Commercial/highway installations." },
+    { name: "Kempower", type: "trade", website: "https://kempower.com/au", trades: ["ev-charging"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Modular DC charging systems. Satellite chargers 11-200kW. Used for fleet depots and commercial hubs." },
+    { name: "Rexel Australia", type: "trade", website: "https://www.rexel.com.au", trades: ["ev-charging"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Major electrical wholesaler stocking EVSE hardware, cable, conduit, switchboard components, RCDs, and MCBs for EV installations." },
+    { name: "Middy's Electrical", type: "trade", website: "https://www.middys.com.au", trades: ["ev-charging"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Australia's largest independent electrical wholesaler. Stocks EV charging hardware, cable, conduit, switchboard gear. Trade pricing 20-40% below retail." },
+    { name: "EVSE Australia", type: "trade", website: "https://evse.com.au", trades: ["ev-charging"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Specialist EV charging equipment supplier. Wide range of residential and commercial chargers, cables, accessories, and installation hardware." },
+  ],
   rendering: [
     { name: "CSR Gyprock", type: "trade", website: "https://www.csr.com.au", trades: ["rendering"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Australia's leading plasterboard and render supplier." },
     { name: "Dulux AcraTex", type: "trade", website: "https://www.dulux.com.au", trades: ["rendering"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Specialist texture and render coatings." },
@@ -281,6 +294,26 @@ export const INDUSTRY_BENCHMARKS: Record<string, {
     winRateBenchmark: 60,
     avgQuoteValue: { small: 1800, medium: 8500, large: 45000 },
     sections: ["Preliminaries & Compliance", "Gas Main & Meter Connection", "Gas Pipe Runs (Internal)", "Gas Pipe Runs (External/Underground)", "Regulators & Valves", "Appliance Connections — Cooktop/Oven", "Appliance Connections — Hot Water", "Appliance Connections — Heating", "Appliance Connections — BBQ/Outdoor", "Leak Testing & Commissioning", "Gas Compliance Certificate"],
+  },
+  "ev-charging": {
+    labourRateRange: { min: 95, max: 140, median: 115 },
+    marginRange: { min: 25, max: 45, median: 32 },
+    costPerM2: { residential: { min: 800, max: 4500 }, commercial: { min: 3000, max: 50000 } },
+    winRateBenchmark: 65,
+    avgQuoteValue: { small: 1800, medium: 6500, large: 35000 },
+    sections: [
+      "Preliminaries & Site Assessment",
+      "DNSP Application & Grid Connection",
+      "Switchboard Upgrade & Modifications",
+      "Dedicated Circuit & Cable Run",
+      "Conduit & Cable Management",
+      "EV Charger Supply & Installation",
+      "Earthing & RCD Protection",
+      "Network & Smart Charging Setup",
+      "Trenching & Civil Works",
+      "Testing, Commissioning & Handover",
+      "Certificate of Compliance (CCEW)",
+    ],
   },
   "gas-maintenance": {
     labourRateRange: { min: 95, max: 140, median: 115 },
@@ -845,6 +878,108 @@ PROJECT BENCHMARKS:
 - Include travel/call-out as a separate line item
 - For multi-unit/commercial: price per appliance with a site assessment fee
 - State-specific: some states require annual gas compliance checks for rental properties`,
+    },
+    "ev-charging": {
+      title: "EV charging installation, maintenance, and repair",
+      specialist: "senior Australian licensed electrician specialising in Electric Vehicle Supply Equipment (EVSE) installation, maintenance, and fault diagnosis — including DC fast chargers (50kW-615kW), Tesla Supercharger infrastructure, and network operator maintenance contracts — with deep knowledge of AS/NZS 3000:2018 Appendix P, IEC 61851 charging standards, DNSP approval processes, and state-specific load limits across all Australian states",
+      pricingBenchmarks: `PRICING BENCHMARKS (2024-25 Australian EV charging trade pricing):
+RESIDENTIAL INSTALLATION:
+- Site assessment / pre-installation inspection: $150-350
+- Level 1 — 10A/15A GPO upgrade (Mode 1): $180-450 (labour only)
+- Level 2 — Single-phase 7.4kW wallbox (Mode 3), simple install: $800-1,500 (labour only, 2-4 hrs)
+- Level 2 — Single-phase 7.4kW wallbox, complex (switchboard upgrade needed): $1,500-3,500 (labour only, 4-8 hrs)
+- Level 2 — Three-phase 22kW wallbox: $2,000-4,500 (labour only, 5-10 hrs)
+- Switchboard upgrade for EV (add circuit, RCBO, load balancing): $800-2,500
+- Cable run (per lm, surface mount): $15-25/lm
+- Cable run (per lm, concealed/conduit): $30-55/lm
+- Trenching for underground cable (per lm, inc. conduit): $45-120/lm
+- Type B RCD (if required): $280-450 supply + install
+- Certificate of Compliance for Electrical Work (CCEW): $80-180
+
+CHARGER HARDWARE (supply only — trade pricing):
+- Wallbox Pulsar Plus 7.4kW: $1,100-1,400 trade
+- Zappi 7.4kW (solar integration): $1,200-1,500 trade
+- Tesla Wall Connector Gen 3 (11.5kW): $700-900 trade
+- Fronius Wattpilot 11J: $1,100-1,400 trade
+- Clipsal EVLink 7.4kW: $900-1,200 trade
+- Clipsal EVLink 22kW (3-phase): $1,400-1,800 trade
+- ABB Terra AC 22kW (commercial): $2,200-3,000 trade
+- Tritium Veefil-RT 50kW DC fast charger: $18,000-28,000 trade
+
+COMMERCIAL INSTALLATION:
+- Commercial multi-bay AC installation (per bay, 7.4kW): $1,800-4,500 (labour + cabling)
+- Commercial multi-bay AC installation (per bay, 22kW): $2,500-6,000 (labour + cabling)
+- DC fast charger installation (50kW): $8,000-20,000 (labour, civil, electrical)
+- Load management / OCPP network setup: $500-2,500
+- DNSP application and connection fee (>10kW): $1,500-8,000 (varies by DNSP)
+- Switchboard upgrade for commercial multi-bay: $3,000-15,000
+
+MAINTENANCE & REPAIR (AC WALLBOX — INDEPENDENTLY SERVICEABLE):
+- Call-out fee (standard): $120-180
+- Call-out fee (after hours/emergency): $220-400
+- Fault diagnosis and reset (GFCI trip, communication error): $150-350
+- Cable and connector inspection: $120-250
+- Firmware update and network reconfiguration: $150-300
+- Connector/cable replacement (Type 2): $280-550 (parts + labour)
+- GFCI/RCD replacement: $180-380 (parts + labour)
+- Annual preventive maintenance service (residential): $250-550
+- Annual preventive maintenance service (commercial DC fast charger per unit): $1,500-3,500
+- Annual comprehensive maintenance contract (high-power DC, per unit): $5,000-7,000
+- Electrician labour: $\${labourRate.min}-\${labourRate.max}/hr
+
+DC FAST CHARGER INFRASTRUCTURE (what an electrician CAN quote):
+- High-voltage switchboard for DC fast charger site: $8,000-25,000 (design + supply + install)
+- Supply cable from switchboard to DC charger cabinet (per lm, 3-phase HV): $85-180/lm
+- Underground conduit and cable (per lm, inc. excavation, sand, backfill): $120-250/lm
+- Concrete equipment pad for DC fast charger: $1,200-3,500 (inc. civil works)
+- Protection relay installation and commissioning: $2,500-6,000
+- Metering installation (NMI-compliant, AS 62053-22): $1,800-4,500
+- DNSP application and connection (>100kW site): $5,000-25,000 (varies by DNSP — Provisional Sum)
+- Earthing system design and installation (DC fast charger site): $2,000-6,000
+- Multi-charger load management system (OCPP): $3,000-8,000
+- Site commissioning and testing (DC fast charger infrastructure): $2,000-5,000
+
+TESLA SUPERCHARGER — ELECTRICIAN SCOPE (infrastructure only):
+- Electrical supply from grid/transformer to Supercharger cabinet: $15,000-80,000+ (Provisional Sum)
+- Civil works: trenching, conduit, cable pits, concrete pads: $8,000-40,000
+- Metering and protection equipment: $3,000-8,000
+- DNSP connection approval (V3 Supercharger = 250kW, V4 = 615kW — major supply upgrade almost always required)
+- NOTE: The Supercharger cabinet itself is Tesla proprietary — Tesla installs and maintains it. Electrician scope is INFRASTRUCTURE ONLY
+
+NETWORK OPERATOR MAINTENANCE CONTRACTS (Evie, ChargePoint, Chargefox, AmpCharge):
+- Routine site inspection (visual, cable check, cleaning): $180-350 per visit
+- Preventive maintenance visit (per charger, quarterly): $250-500
+- Emergency call-out (network operator SLA): $350-600 (after hours)
+- Annual maintenance contract (AC charger): $800-1,500/year
+- Annual maintenance contract (DC fast charger 50kW): $3,500-7,000/year
+- NOTE: Network operators require OEM certification for internal repairs — electrician scope is external electrical work, cabling, switchboard, and safety compliance only`,
+      criticalRules: `CRITICAL COMPLIANCE RULES FOR EV CHARGER ESTIMATING:
+- ALWAYS confirm the EV charger type: Mode 1 (standard GPO), Mode 2 (portable EVSE), Mode 3 (dedicated AC wallbox), or Mode 4 (DC fast charger)
+- ALWAYS check state-specific load limits: SA/QLD max 20A single-phase (4.6kW) unless SA smart-apply exemption granted; ACT/NT max 25A single-phase (5.7kW); NSW/VIC/WA/TAS permit 32A single-phase (7.4kW)
+- ALWAYS include a dedicated circuit per AS/NZS 3000:2018 Appendix P — no shared circuits
+- ALWAYS specify RCD type: Type A RCD minimum; Type B RCD required if charger does not have internal DC fault current protection above 6mA
+- ALWAYS include cable sizing per AS/NZS 3008: minimum 6mm² for 32A domestic EVSE
+- ALWAYS include a Certificate of Compliance for Electrical Work (CCEW) as a line item
+- For outdoor installations: minimum IP44 ingress protection; IP65 recommended; IK07 impact protection for public/commercial
+- For commercial installations >10kW: flag that DNSP (network distributor) approval may be required — add as Provisional Sum
+- For three-phase installations: include 4-pole RCBO per AS/NZS 3000:2018 Appendix P
+- For solar integration: check if Zappi/Fronius Wattpilot or similar solar-divert charger is appropriate — flag as option
+- For DC fast chargers (Mode 4): separate switchboard, dedicated metering, and DNSP supply upgrade almost always required
+- ALWAYS include testing and commissioning per AS/NZS 3017:2022 as a line item
+- For repairs: ALWAYS include fault diagnosis as a separate line item before parts/labour
+- NEVER include the DNSP supply upgrade cost (poles, cables, transformer) — this is done by the network distributor
+- For strata/apartment buildings: flag that strata approval may be required (NSW Strata Schemes Management Act)
+- For commercial: check if OCPP network connectivity is required — add network setup as separate line item
+- Include Provisional Sum for any builder's work (trenching, concrete cutting, making good)
+
+DC FAST CHARGER & SUPERCHARGER SCOPE RULES (CRITICAL):
+- TESLA SUPERCHARGER: A licensed electrician can quote and perform the ELECTRICAL INFRASTRUCTURE ONLY (supply cable, switchboard, civil works, metering, earthing). The Supercharger cabinet itself is Tesla proprietary — Tesla installs and maintains it. NEVER include the Supercharger unit cost in an electrician estimate.
+- TRITIUM CHARGERS: Tritium (Australian-made, Veefil-RT 50kW, Veefil-PK 175kW+) was acquired by Exicom in 2023. Spare parts availability has been impacted. Internal repairs require Tritium-certified technicians or authorised partners (e.g. Kentronics). Electrician scope: external electrical supply, cabling, switchboard, commissioning, and visual maintenance only.
+- ABB TERRA DC CHARGERS: Internal repairs require ABB-certified personnel only. Electrician scope: electrical supply installation, external visual inspections, and safety compliance. ABB provides remote diagnostics and SLA-based on-site support through their certified network.
+- KEMPOWER CHARGERS: Installation, commissioning, in-depth service, and warranty work require Kempower certification. Common faults: cable connection issues, emergency stop activations, SLAC timeouts, TCP errors, isolation faults. Electrician scope: initial site assessment, electrical infrastructure, basic visual inspection.
+- NETWORK OPERATOR CONTRACTS: To win maintenance contracts with Evie Networks, ChargePoint, Chargefox, or AmpCharge, electricians typically need OEM-specific certification (e.g. ChargePoint University, Tritium certification) in addition to their electrical licence. ChargePoint SLA requires next-business-day on-site repair after parts arrive. Jolt uses 4-week routine inspection cycles.
+- For DC fast charger sites >100kW: always flag that a substation upgrade may be required — this is a DNSP/utility scope item, not electrician scope. Add as a Provisional Sum with a note to confirm with DNSP.
+- For multi-charger commercial sites: include load management system (OCPP-based) as a separate line item — this prevents grid overload and is increasingly required by DNSPs`,
     },
     rendering: {
       title: "rendering and plastering",

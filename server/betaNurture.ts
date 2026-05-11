@@ -8,7 +8,7 @@
  *   Email 4 (Day 14): Urgency close — "Your beta access won't last forever"
  *
  * All emails written in Matt Symons' voice: direct, warm, Aussie, no-fluff.
- * Sent via Gmail SMTP (nodemailer). AU Spam Act compliant.
+ * Sent via Resend API (kindai.com.au domain). AU Spam Act compliant.
  */
 
 import {
@@ -18,7 +18,7 @@ import {
   brandedSignature,
   BRAND,
 } from "./emailBrand";
-import { sendEmail } from "./gmailSender";
+import { sendEmail } from "./resendSender";
 
 const BASE_URL = BRAND.baseUrl;
 
@@ -434,7 +434,7 @@ export function buildNurtureEmail(
   return EMAIL_BUILDERS[key](data);
 }
 
-// ─── Send via Gmail SMTP ─────────────────────────────────────────────────────
+// ─── Send via Resend API ─────────────────────────────────────────────────────
 
 export async function sendNurtureEmail(
   key: NurtureEmailKey,
@@ -442,15 +442,12 @@ export async function sendNurtureEmail(
 ): Promise<{ success: boolean; messageId?: string; error?: string }> {
   const content = buildNurtureEmail(key, data);
 
-  const gmailUser = process.env.GMAIL_USER;
-  const gmailPass = process.env.GMAIL_APP_PASSWORD;
-
-  if (!gmailUser || !gmailPass) {
-    console.warn("[Nurture] GMAIL_USER or GMAIL_APP_PASSWORD not set — skipping nurture email");
-    return { success: false, error: "Gmail credentials not configured" };
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("[Nurture] RESEND_API_KEY not set — skipping nurture email");
+    return { success: false, error: "Resend API key not configured" };
   }
 
-  const success = await sendEmail({
+  const messageId = await sendEmail({
     to: data.email,
     subject: content.subject,
     html: content.html,
@@ -458,8 +455,8 @@ export async function sendNurtureEmail(
     replyTo: "matt@kindaiestimator.com",
   });
 
-  if (success) {
-    return { success: true, messageId: `gmail-${Date.now()}` };
+  if (messageId) {
+    return { success: true, messageId };
   }
-  return { success: false, error: "Gmail SMTP send failed" };
+  return { success: false, error: "Resend API send failed" };
 }

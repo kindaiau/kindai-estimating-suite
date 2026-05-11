@@ -461,10 +461,10 @@ export const betaSignups = mysqlTable("beta_signups", {
   phone: varchar("phone", { length: 30 }),
   company: varchar("company", { length: 255 }),
   trade: varchar("trade", { length: 64 }),
+  intent: mysqlEnum("betaIntent", ["Pilot Spot Request", "Paid Pilot Setup", "Setup Call Request"]).default("Pilot Spot Request"),
   state: mysqlEnum("state", ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"]),
   projectSize: mysqlEnum("projectSize", ["sole_trader", "small_builder", "mid_tier", "enterprise"]),
   source: varchar("source", { length: 64 }).default("website"), // fb_ad, linkedin, organic, etc.
-  intent: varchar("intent", { length: 64 }).default("Pilot Spot Request"),
   utmCampaign: varchar("utmCampaign", { length: 128 }),
   utmSource: varchar("utmSource", { length: 128 }),
   utmMedium: varchar("utmMedium", { length: 128 }),
@@ -501,6 +501,31 @@ export const betaNurtureEmails = mysqlTable("beta_nurture_emails", {
 });
 export type BetaNurtureEmail = typeof betaNurtureEmails.$inferSelect;
 export type InsertBetaNurtureEmail = typeof betaNurtureEmails.$inferInsert;
+
+// ─── Ebook Leads (Free Guide Lead Magnet) ────────────────────────────────────
+export const ebookLeads = mysqlTable("ebook_leads", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  trade: varchar("trade", { length: 64 }),
+  source: varchar("source", { length: 128 }).default("guide_page"), // guide_page, fb_ad, organic, etc.
+  utmSource: varchar("utmSource", { length: 128 }),
+  utmCampaign: varchar("utmCampaign", { length: 128 }),
+  utmMedium: varchar("utmMedium", { length: 128 }),
+  ebookSentAt: bigint("ebookSentAt", { mode: "number" }), // UTC ms
+  // Nurture sequence tracking
+  nurtureDay2SentAt: bigint("nurtureDay2SentAt", { mode: "number" }),
+  nurtureDay4SentAt: bigint("nurtureDay4SentAt", { mode: "number" }),
+  nurtureDay7SentAt: bigint("nurtureDay7SentAt", { mode: "number" }),
+  nurtureDay10SentAt: bigint("nurtureDay10SentAt", { mode: "number" }),
+  // Conversion tracking
+  convertedToBeta: boolean("convertedToBeta").default(false),
+  convertedAt: bigint("convertedAt", { mode: "number" }),
+  hubspotContactId: varchar("hubspotContactId", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type EbookLead = typeof ebookLeads.$inferSelect;
+export type InsertEbookLead = typeof ebookLeads.$inferInsert;
 
 // ─── Company Profiles (Company-Wide Memory & Defaults) ──────────────────────
 export const companyProfiles = mysqlTable("company_profiles", {
@@ -689,3 +714,26 @@ export const adEngineNormalizedMetrics = mysqlTable("ad_engine_normalized_metric
 
 export type AdEngineNormalizedMetric = typeof adEngineNormalizedMetrics.$inferSelect;
 export type InsertAdEngineNormalizedMetric = typeof adEngineNormalizedMetrics.$inferInsert;
+
+// ─── Waitlist (Beta Full — Interest Form) ─────────────────────────────────────
+export const waitlist = mysqlTable("waitlist", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  trade: varchar("trade", { length: 128 }).notNull(), // what trade/business they're in
+  reason: text("reason").notNull(), // why they want access
+  phone: varchar("phone", { length: 20 }),
+  // Tracking
+  source: varchar("source", { length: 128 }).default("homepage"), // homepage, guide, pricing, etc.
+  utmSource: varchar("utmSource", { length: 128 }),
+  utmCampaign: varchar("utmCampaign", { length: 128 }),
+  // Status
+  status: mysqlEnum("waitlistStatus", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  approvedAt: bigint("approvedAt", { mode: "number" }),
+  confirmationSentAt: bigint("confirmationSentAt", { mode: "number" }),
+  hubspotContactId: varchar("hubspotContactId", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type WaitlistEntry = typeof waitlist.$inferSelect;
+export type InsertWaitlistEntry = typeof waitlist.$inferInsert;

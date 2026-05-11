@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `waitlist` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`name` varchar(255) NOT NULL,\n\t`email` varchar(320) NOT NULL,\n\t`trade` varchar(128) NOT NULL,\n\t`reason` text NOT NULL,\n\t`phone` varchar(20),\n\t`source` varchar(128) DEFAULT 'homepage',\n\t`utmSource` varchar(128),\n\t`utmCampaign` varchar(128),\n\t`waitlistStatus` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',\n\t`approvedAt` bigint,\n\t`confirmationSentAt` bigint,\n\t`hubspotContactId` varchar(64),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `waitlist_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `waitlist_email_unique` UNIQUE(`email`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3nRz7NtAsP3mGUV.6f09badccb2a --database UNVDthJPfT4ofd4pppvMM2 --execute CREATE TABLE `waitlist` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`name` varchar(255) NOT NULL,\n\t`email` varchar(320) NOT NULL,\n\t`trade` varchar(128) NOT NULL,\n\t`reason` text NOT NULL,\n\t`phone` varchar(20),\n\t`source` varchar(128) DEFAULT 'homepage',\n\t`utmSource` varchar(128),\n\t`utmCampaign` varchar(128),\n\t`waitlistStatus` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',\n\t`approvedAt` bigint,\n\t`confirmationSentAt` bigint,\n\t`hubspotContactId` varchar(64),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `waitlist_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `waitlist_email_unique` UNIQUE(`email`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1819
+}

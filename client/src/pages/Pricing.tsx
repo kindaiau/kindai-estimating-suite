@@ -5,93 +5,169 @@ import { Button } from "@/components/ui/button";
 import { Check, X, ArrowRight, Shield, Users, Zap, Crown, Sparkles, Brain, Database, GitBranch, BarChart3, FileText } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { pixelViewPricingPage, pixelInitiateCheckout } from "@/lib/metaPixel";
-import { getAnalyticsContext, trackEvent } from "@/lib/analytics";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { getLoginUrl } from "@/const";
 import { motion, useInView, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
-const ENTERPRISE_CONTACT_HREF = "mailto:matt@kindaiestimator.com?subject=Enterprise%20%26%20Custom%20Solutions";
 
 // ─── Tier definitions ─────────────────────────────────────────────────────────
+// Takeoff level labels shown on cards
+const TAKEOFF_LEVELS = {
+  quickQuote: { label: "Quick Quote", desc: "Text-based — describe the job, AI applies your price book", color: "bg-gray-100 text-gray-600" },
+  planReading: { label: "Plan Reading", desc: "Upload PDF plans — GPT-4o Vision reads dimensions & counts items", color: "bg-violet-100 text-violet-700", badge: "Vision AI" },
+  fullTakeoff: { label: "Full AI Takeoff", desc: "Plan Reading + orchestrated 5-step pipeline + correction history", color: "bg-orange-100 text-orange-700", badge: "Multimodal" },
+};
+
 const TIERS = [
   {
-    id: "sole_trader",
-    name: "Sole Tradie",
-    subtitle: "Owner-operators",
-    monthlyPrice: 149,
-    color: "from-pink-500 to-orange-500",
-    border: "border-orange-400",
-    badge: "MOST POPULAR",
-    cta: "Start Sole Tradie",
-    ctaVariant: "default" as const,
-    description: "For solo tradies who need fast takeoffs, clean quotes, and fewer nights stuck pricing jobs.",
+    id: "free",
+    name: "Free",
+    subtitle: "Try it out",
+    monthlyPrice: 0,
+    color: "from-gray-400 to-gray-500",
+    border: "border-gray-200",
+    badge: null,
+    cta: "Get Started Free",
+    ctaVariant: "outline" as const,
+    description: "Get a feel for the AI before you commit.",
+    takeoffs: { quickQuote: "3 / month", planReading: null, fullTakeoff: null },
     features: [
-      { label: "20 AI Takeoffs / month", included: true },
-      { label: "10 Vision Takeoffs / month", included: true },
-      { label: "Unlimited projects", included: true },
-      { label: "Company Memory (price book)", included: true },
-      { label: "Correction Learning Loop", included: true },
-      { label: "PDF Export", included: true },
+      { label: "Quick Quote — 3 / month", included: true },
+      { label: "Plan Reading (Vision AI)", included: false },
+      { label: "Full AI Takeoff", included: false },
+      { label: "5 Projects", included: true },
+      { label: "Company Memory", included: false },
+      { label: "Correction Learning", included: false },
+      { label: "Accuracy Dashboard", included: false },
+      { label: "Xero Integration", included: false },
+      { label: "PDF Export", included: false },
       { label: "Team Members", value: "1" },
     ],
   },
   {
     id: "pro",
     name: "Pro",
-    subtitle: "Growing trade teams",
-    monthlyPrice: 450,
+    subtitle: "Sole traders & subbies",
+    monthlyPrice: 149,
+    color: "from-pink-500 to-orange-500",
+    border: "border-orange-400",
+    badge: "MOST POPULAR",
+    cta: "Start Pro",
+    ctaVariant: "default" as const,
+    description: "Your prices, your rules. The AI learns your business from day one.",
+    takeoffs: { quickQuote: "Unlimited", planReading: "10 / month", fullTakeoff: null },
+    features: [
+      { label: "Quick Quote — Unlimited", included: true },
+      { label: "Plan Reading (Vision AI) — 10 / mo", included: true, highlight: true },
+      { label: "Full AI Takeoff", included: false },
+      { label: "50 Projects", included: true },
+      { label: "Company Memory (price book)", included: true },
+      { label: "Correction Learning Loop", included: true },
+      { label: "Accuracy Dashboard", included: false },
+      { label: "Xero Integration", included: false },
+      { label: "PDF Export", included: true },
+      { label: "Team Members", value: "1" },
+    ],
+  },
+  {
+    id: "business",
+    name: "Business",
+    subtitle: "Growing trade businesses",
+    monthlyPrice: 499,
     color: "from-blue-500 to-indigo-600",
     border: "border-blue-400",
     badge: "BEST VALUE",
-    cta: "Start Pro",
+    cta: "Start Business",
     ctaVariant: "default" as const,
-    description: "For teams that quote more volume, need smarter workflows, and want the AI to learn how the business prices.",
+    description: "Full AI orchestration, Xero sync, and accuracy tracking for serious businesses.",
+    takeoffs: { quickQuote: "Unlimited", planReading: "Unlimited", fullTakeoff: "20 / month" },
     features: [
-      { label: "Unlimited AI Takeoffs", included: true },
-      { label: "Unlimited Vision Takeoffs", included: true },
+      { label: "Quick Quote — Unlimited", included: true },
+      { label: "Plan Reading (Vision AI) — Unlimited", included: true, highlight: true },
+      { label: "Full AI Takeoff — 20 / mo", included: true, highlight: true },
       { label: "Unlimited Projects", included: true },
       { label: "Company Memory (price book)", included: true },
       { label: "Correction Learning Loop", included: true },
-      { label: "Orchestrated AI Workflow", included: true },
       { label: "Accuracy Dashboard", included: true },
-      { label: "Client-owned accounting integration", included: true },
+      { label: "Xero Integration", included: true },
       { label: "PDF Export", included: true },
-      { label: "Team Members", value: "5" },
+      { label: "Team Members", value: "3" },
     ],
   },
   {
     id: "enterprise",
-    name: "Enterprise & Custom Solutions",
-    subtitle: "Commercial builders & custom workflows",
+    name: "Enterprise",
+    subtitle: "Mid-size builders & estimators",
+    monthlyPrice: 1499,
+    color: "from-purple-500 to-pink-600",
+    border: "border-purple-400",
+    badge: null,
+    cta: "Start Enterprise",
+    ctaVariant: "default" as const,
+    description: "White-label, team management, priority support, and custom integrations.",
+    takeoffs: { quickQuote: "Unlimited", planReading: "Unlimited", fullTakeoff: "Unlimited" },
+    features: [
+      { label: "Quick Quote — Unlimited", included: true },
+      { label: "Plan Reading (Vision AI) — Unlimited", included: true, highlight: true },
+      { label: "Full AI Takeoff — Unlimited", included: true, highlight: true },
+      { label: "Unlimited Projects", included: true },
+      { label: "Company Memory (price book)", included: true },
+      { label: "Correction Learning Loop", included: true },
+      { label: "Accuracy Dashboard", included: true },
+      { label: "Xero Integration", included: true },
+      { label: "White-label Branding", included: true },
+      { label: "Team Members", value: "10" },
+      { label: "Priority Support", included: true },
+    ],
+  },
+  {
+    id: "enterprise_plus",
+    name: "Enterprise+",
+    subtitle: "Large builders & commercial",
     monthlyPrice: null,
     color: "from-amber-400 to-orange-600",
     border: "border-amber-400",
-    badge: "CONTACT",
-    cta: "Make Contact",
+    badge: "CUSTOM",
+    cta: "Talk to Us",
     ctaVariant: "outline" as const,
-    description: "Custom onboarding, integrations, data migration, multi-user controls, and commercial support built around your workflow.",
+    description: "Custom pricing built around your team size, usage volume, and integration needs.",
+    takeoffs: { quickQuote: "Unlimited", planReading: "Unlimited", fullTakeoff: "Unlimited" },
     features: [
-      { label: "Everything in Pro", included: true },
-      { label: "Unlimited team members", included: true },
-      { label: "Dedicated onboarding", included: true },
-      { label: "Custom supplier price books", included: true },
-      { label: "Custom accounting and job-management workflows", included: true },
-      { label: "Priority support", included: true },
-      { label: "White-label Branding", included: true },
+      { label: "Everything in Enterprise", included: true },
       { label: "Custom AI Training Data", included: true },
+      { label: "Unlimited Team Members", included: true },
+      { label: "Dedicated Account Manager", included: true },
+      { label: "SLA + DPA Agreement", included: true },
+      { label: "Custom Integrations", included: true },
+      { label: "On-site Onboarding", included: true },
+      { label: "Annual Contract Pricing", included: true },
     ],
   },
 ];
 
 const FEATURE_HIGHLIGHTS = [
-  { icon: Brain, title: "Orchestrated AI", desc: "5-step pipeline — Plan Interpretation → Quantity Extraction → Pricing → Business Rules → Draft Assembly", tier: "Pro+" },
-  { icon: Database, title: "Company Memory", desc: "Your price book, AI instructions, and job templates — the AI learns your business and applies your rates automatically", tier: "Pro+" },
-  { icon: GitBranch, title: "Correction Learning", desc: "Every edit you make trains the AI. After 10 jobs it starts pre-adjusting based on your patterns", tier: "Sole Tradie+" },
-  { icon: BarChart3, title: "Accuracy Dashboard", desc: "Track estimated vs actual, see where the AI is over/under, and measure improvement over time", tier: "Pro+" },
-  { icon: FileText, title: "Client-Owned Integrations", desc: "Connect the accounting or job-management tools your business already uses, without using Kindai's own accounts.", tier: "Pro+" },
-  { icon: Shield, title: "Custom Workflows", desc: "We can integrate your current stack or recommend and build a cleaner system for quoting, jobs, accounting, and reporting.", tier: "Enterprise" },
+  {
+    icon: Sparkles,
+    title: "Plan Reading — Vision AI",
+    desc: "Powered by GPT-4o multimodal. Upload any PDF plan and the AI visually reads dimensions, counts fixtures, identifies components, and builds a first-pass takeoff — just like a trained estimator would.",
+    tier: "Pro+",
+    aiLabel: "GPT-4o Vision",
+    aiColor: "bg-violet-100 text-violet-700",
+  },
+  {
+    icon: Brain,
+    title: "Full AI Takeoff — Multimodal",
+    desc: "The most advanced takeoff on the market. GPT-4o reads your plans, cross-references your price book, applies your correction history, and runs a 5-step orchestrated pipeline: Plan Interpretation → Quantity Extraction → Pricing → Business Rules → Draft Assembly.",
+    tier: "Business+",
+    aiLabel: "Multimodal AI",
+    aiColor: "bg-orange-100 text-orange-700",
+  },
+  { icon: Database, title: "Company Memory", desc: "Your price book, AI instructions, and job templates — the AI learns your business and applies your rates automatically", tier: "Pro+", aiLabel: null, aiColor: null },
+  { icon: GitBranch, title: "Correction Learning", desc: "Every edit you make trains the AI. After 10 jobs it starts pre-adjusting based on your patterns", tier: "Pro+", aiLabel: null, aiColor: null },
+  { icon: BarChart3, title: "Accuracy Dashboard", desc: "Track estimated vs actual, see where the AI is over/under, and measure improvement over time", tier: "Business+", aiLabel: null, aiColor: null },
+  { icon: FileText, title: "Xero Integration", desc: "Push any quote directly to Xero as a draft invoice. One click from estimate to invoice.", tier: "Business+", aiLabel: null, aiColor: null },
 ];
 
 const COMPETITOR_BENCHMARKS = [
@@ -100,8 +176,8 @@ const COMPETITOR_BENCHMARKS = [
   { name: "Kreo Pro", price: "$175/user/mo", notes: "Per-user pricing, annual billing" },
   { name: "Groundplan", price: "From $75/user/mo", notes: "Per-user/operator pricing" },
   { name: "CabMaster", price: "A$106–$321/mo", notes: "Annual plans, cabinet-specific" },
-  { name: "Kindai Sole Tradie", price: "A$149/mo", notes: "AI takeoff, company memory, PDF quotes", highlight: true },
-  { name: "Kindai Pro", price: "A$450/mo", notes: "Full AI orchestration + integrations + accuracy dashboard", highlight: true },
+  { name: "Kindai Pro", price: "A$149/mo", notes: "Company memory + correction learning, unlimited users", highlight: true },
+  { name: "Kindai Business", price: "A$499/mo", notes: "Full AI orchestration + Xero + accuracy dashboard", highlight: true },
 ];
 
 // ─── Premium animated footer ──────────────────────────────────────────────────
@@ -110,24 +186,9 @@ function PremiumFooter() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   const footerLinks = [
-    { label: "Product", links: [
-      { label: "AI Takeoff", href: "/ai-takeoff" },
-      { label: "Free Demo", href: "/demo" },
-      { label: "Help & Best Practices", href: "/help" },
-      { label: "Cabinet Joinery", href: "/cabinet-joinery" },
-    ] },
-    { label: "Company", links: [
-      { label: "About", href: "/about" },
-      { label: "Pricing", href: "/pricing" },
-      { label: "Beta Access", href: "/beta" },
-      { label: "Support", href: "/support" },
-    ] },
-    { label: "Legal", links: [
-      { label: "Privacy Policy", href: "/privacy-policy" },
-      { label: "Terms of Service", href: "/terms" },
-      { label: "Data Deletion", href: "/data-deletion" },
-      { label: "Security Contact", href: "/.well-known/security.txt" },
-    ] },
+    { label: "Product", links: ["AI Takeoff", "Company Memory", "Xero Integration", "Accuracy Dashboard"] },
+    { label: "Company", links: ["About", "Pricing", "Blog", "Careers"] },
+    { label: "Legal", links: ["Privacy Policy", "Terms of Service", "Security", "Support"] },
   ];
 
   return (
@@ -184,12 +245,12 @@ function PremiumFooter() {
               <h4 className="text-white font-black text-sm mb-4 tracking-wide uppercase">{col.label}</h4>
               <ul className="space-y-2.5">
                 {col.links.map(link => (
-                  <li key={link.href}>
+                  <li key={link}>
                     <a
-                      href={link.href}
-                      className="text-gray-300 text-sm hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
+                      href="#"
+                      className="text-gray-400 text-sm hover:text-white transition-colors duration-200 hover:translate-x-1 inline-block"
                     >
-                      {link.label}
+                      {link}
                     </a>
                   </li>
                 ))}
@@ -242,46 +303,27 @@ export default function Pricing() {
     onError: (err) => toast.error(err.message),
   });
 
-  useEffect(() => {
-    pixelViewPricingPage();
-    trackEvent("pricing_viewed", {
-      ...getAnalyticsContext(),
-      planCount: TIERS.length,
-    });
-  }, []);
+  useEffect(() => { pixelViewPricingPage(); }, []);
 
   const handleSubscribe = (tierId: string, price: number) => {
-    trackEvent("pricing_plan_clicked", {
-      tier: tierId,
-      interval: yearly ? "yearly" : "monthly",
-      priceMonthly: price,
-      authenticated: isAuthenticated,
-    });
-
-    if (tierId === "enterprise") {
-      trackEvent("enterprise_contact_clicked", {
-        location: "pricing",
-        tier: tierId,
-      });
-      window.location.href = ENTERPRISE_CONTACT_HREF;
-      return;
-    }
-
     if (!isAuthenticated) {
       window.location.href = getLoginUrl();
       return;
     }
-
+    if (tierId === "enterprise_plus") {
+      window.location.href = "mailto:matt@kindaiestimator.com?subject=Enterprise%2B%20Enquiry";
+      return;
+    }
+    if (tierId === "free") {
+      navigate("/dashboard");
+      return;
+    }
     pixelInitiateCheckout({ content_name: `Kindai ${tierId}`, value: price });
-    trackEvent("checkout_started", {
-      tier: tierId,
-      interval: yearly ? "yearly" : "monthly",
-      priceMonthly: price,
-    });
     // Map tier IDs to valid planId enum values
     const planIdMap: Record<string, "sole_trader" | "small_builder" | "mid_builder" | "enterprise"> = {
-      sole_trader: "sole_trader",
-      pro: "small_builder",
+      pro: "sole_trader",
+      business: "small_builder",
+      enterprise: "mid_builder",
     };
     const planId = planIdMap[tierId];
     if (!planId) return;
@@ -296,7 +338,7 @@ export default function Pricing() {
     <div className="min-h-screen bg-white text-gray-900">
       <SEO
         title="Pricing | Kindai Estimating Suite"
-        description="Sole Tradie at A$149/mo, Pro at A$450/mo, and Enterprise & Custom Solutions by contact. AI estimating that learns your rates, your rules, your business."
+        description="Free, Pro ($149), Business ($499), Enterprise ($1,499), Enterprise+ (custom). AI estimating that learns your rates, your rules, your business."
         canonical="/pricing"
         keywords="construction estimating software price Australia, AI estimating software pricing, trade estimating AI Australia"
       />
@@ -342,7 +384,7 @@ export default function Pricing() {
             animate={{ opacity: 1, y: 0 }}
             className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/30 rounded-full px-4 py-1.5 text-sm font-bold text-orange-400 mb-5"
           >
-            <Sparkles className="w-3.5 h-3.5" /> Simple trade pricing. Enterprise by contact.
+            <Sparkles className="w-3.5 h-3.5" /> 5 tiers. No per-user fees. Cancel anytime.
           </motion.div>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -359,7 +401,7 @@ export default function Pricing() {
             transition={{ delay: 0.2 }}
             className="text-gray-400 text-lg max-w-2xl mx-auto"
           >
-            Start with Sole Tradie, step up to Pro when the team grows, or talk to us about an enterprise setup built around your workflows.
+            Start free. Upgrade when you're ready. Every tier unlocks more intelligence — company memory, correction learning, orchestrated AI, and Xero integration.
           </motion.p>
         </div>
       </section>
@@ -370,12 +412,11 @@ export default function Pricing() {
           <span className={`text-sm font-bold ${!yearly ? "text-gray-900" : "text-gray-400"}`}>Monthly</span>
           <button
             onClick={() => setYearly(!yearly)}
-            aria-label={yearly ? "Switch to monthly billing" : "Switch to annual billing"}
             className={`relative w-12 h-6 rounded-full transition-colors ${yearly ? "bg-orange-500" : "bg-gray-300"}`}
           >
             <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${yearly ? "translate-x-7" : "translate-x-1"}`} />
           </button>
-          <span className={`text-sm font-bold ${yearly ? "text-gray-900" : "text-gray-600"}`}>Annual</span>
+          <span className={`text-sm font-bold ${yearly ? "text-gray-900" : "text-gray-400"}`}>Annual</span>
           {yearly && (
             <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">Save 20%</span>
           )}
@@ -385,7 +426,7 @@ export default function Pricing() {
       {/* Pricing cards */}
       <section className="pb-16 px-4 bg-gray-50">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
             {TIERS.map((tier, i) => {
               const price = tier.monthlyPrice !== null
                 ? (yearly ? Math.round(tier.monthlyPrice * 0.8) : tier.monthlyPrice)
@@ -423,13 +464,15 @@ export default function Pricing() {
                     {/* Icon + name */}
                     <div className="flex items-center gap-2.5 mb-3">
                       <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${tier.color} flex items-center justify-center shrink-0`}>
-                        {tier.id === "sole_trader" && <Users className="w-4 h-4 text-white" />}
-                        {tier.id === "pro" && <Brain className="w-4 h-4 text-white" />}
+                        {tier.id === "free" && <Zap className="w-4 h-4 text-white" />}
+                        {tier.id === "pro" && <Users className="w-4 h-4 text-white" />}
+                        {tier.id === "business" && <Brain className="w-4 h-4 text-white" />}
                         {tier.id === "enterprise" && <Shield className="w-4 h-4 text-white" />}
+                        {tier.id === "enterprise_plus" && <Crown className="w-4 h-4 text-white" />}
                       </div>
                       <div>
                         <div className={`font-black text-base ${isBestValue ? "text-white" : "text-gray-900"}`}>{tier.name}</div>
-                        <div className={`text-[11px] ${isBestValue ? "text-gray-300" : "text-gray-600"}`}>{tier.subtitle}</div>
+                        <div className={`text-[10px] ${isBestValue ? "text-gray-400" : "text-gray-400"}`}>{tier.subtitle}</div>
                       </div>
                     </div>
 
@@ -438,14 +481,14 @@ export default function Pricing() {
                       {isCustom ? (
                         <div>
                           <span className={`text-2xl font-black ${isBestValue ? "text-white" : "text-gray-900"}`}>Custom</span>
-                          <div className={`text-[11px] mt-0.5 ${isBestValue ? "text-gray-300" : "text-gray-600"}`}>Tailored to your business</div>
+                          <div className="text-[10px] text-gray-400 mt-0.5">Tailored to your business</div>
                         </div>
                       ) : (
                         <div>
                           <span className={`text-2xl font-black ${isBestValue ? "text-white" : "text-gray-900"}`}>
                             {price === 0 ? "Free" : `A$${price}`}
                           </span>
-                          {price !== 0 && <span className={`text-xs ${isBestValue ? "text-gray-300" : "text-gray-600"}`}>/mo</span>}
+                          {price !== 0 && <span className={`text-xs ${isBestValue ? "text-gray-400" : "text-gray-400"}`}>/mo</span>}
                           {yearly && price !== null && price > 0 && (
                             <div className="text-[10px] text-green-500 font-bold mt-0.5">A${price * 12}/yr</div>
                           )}
@@ -453,38 +496,24 @@ export default function Pricing() {
                       )}
                     </div>
 
-                    <p className={`text-xs mb-4 leading-relaxed ${isBestValue ? "text-gray-300" : "text-gray-600"}`}>
+                    <p className={`text-xs mb-4 leading-relaxed ${isBestValue ? "text-gray-400" : "text-gray-500"}`}>
                       {tier.description}
                     </p>
 
-                    {isCustom ? (
-                      <Button
-                        asChild
-                        variant={tier.ctaVariant}
-                        className={`w-full py-2.5 rounded-full font-black text-sm h-auto mb-4 ${
-                          isPopular ? "kindai-btn-primary" :
-                          isBestValue ? "bg-blue-500 hover:bg-blue-400 text-white border-0" :
-                          tier.id === "enterprise" ? "border-amber-500 text-amber-700 hover:bg-amber-50" :
-                          "border-gray-200 text-gray-700 hover:bg-gray-50"
-                        }`}
-                      >
-                        <a href={ENTERPRISE_CONTACT_HREF}>{tier.cta}</a>
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() => handleSubscribe(tier.id, tier.monthlyPrice ?? 0)}
-                        disabled={checkoutMutation.isPending}
-                        variant={tier.ctaVariant}
-                        className={`w-full py-2.5 rounded-full font-black text-sm h-auto mb-4 ${
-                          isPopular ? "kindai-btn-primary" :
-                          isBestValue ? "bg-blue-500 hover:bg-blue-400 text-white border-0" :
-                          tier.id === "enterprise" ? "border-amber-500 text-amber-700 hover:bg-amber-50" :
-                          "border-gray-200 text-gray-700 hover:bg-gray-50"
-                        }`}
-                      >
-                        {checkoutMutation.isPending ? "Loading..." : tier.cta}
-                      </Button>
-                    )}
+                    <Button
+                      onClick={() => handleSubscribe(tier.id, tier.monthlyPrice ?? 0)}
+                      disabled={checkoutMutation.isPending}
+                      variant={tier.ctaVariant}
+                      className={`w-full py-2.5 rounded-full font-black text-sm h-auto mb-4 ${
+                        isPopular ? "kindai-btn-primary" :
+                        isBestValue ? "bg-blue-500 hover:bg-blue-400 text-white border-0" :
+                        tier.id === "enterprise" ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white border-0 hover:opacity-90" :
+                        tier.id === "enterprise_plus" ? "border-amber-400 text-amber-600 hover:bg-amber-50" :
+                        "border-gray-200 text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      {checkoutMutation.isPending ? "Loading..." : tier.cta}
+                    </Button>
 
                     {/* Features */}
                     <div className="space-y-2">
@@ -499,7 +528,7 @@ export default function Pricing() {
                           ) : (
                             <Check className="w-3.5 h-3.5 text-green-500 shrink-0 mt-0.5" />
                           )}
-                          <span className={`${"included" in f && !f.included ? (isBestValue ? "text-gray-500" : "text-gray-500") : (isBestValue ? "text-gray-200" : "text-gray-700")}`}>
+                          <span className={`${"included" in f && !f.included ? (isBestValue ? "text-gray-600" : "text-gray-300") : (isBestValue ? "text-gray-300" : "text-gray-600")}`}>
                             {f.label}{"value" in f ? `: ${f.value}` : ""}
                           </span>
                         </div>
@@ -512,8 +541,89 @@ export default function Pricing() {
           </div>
 
           <p className="text-center text-xs text-gray-400 mt-6">
-            All prices in AUD. GST not included. Annual plans show the equivalent monthly rate.
+            All prices in AUD. GST not included. Cancel anytime on monthly plans.
           </p>
+        </div>
+      </section>
+
+      {/* Vision AI callout */}
+      <section className="py-14 px-4 bg-gray-950 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/3 w-96 h-96 rounded-full bg-violet-600/10 blur-3xl" />
+          <div className="absolute bottom-0 right-1/3 w-96 h-96 rounded-full bg-orange-600/10 blur-3xl" />
+        </div>
+        <div className="max-w-5xl mx-auto relative">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/30 rounded-full px-4 py-1.5 text-sm font-bold text-violet-400 mb-4">
+              <Sparkles className="w-3.5 h-3.5" /> Powered by GPT-4o Multimodal AI
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white mb-3">
+              Three levels of AI intelligence
+            </h2>
+            <p className="text-gray-400 text-sm max-w-xl mx-auto">
+              Each tier unlocks a more powerful AI engine. Start with Quick Quote, graduate to Vision AI plan reading, then run the full multimodal pipeline.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-5">
+            {[
+              {
+                level: "01",
+                name: "Quick Quote",
+                badge: "Free + Pro",
+                badgeColor: "bg-gray-700 text-gray-300",
+                desc: "Describe the job in plain English. The AI applies your price book, labour rates, and margin rules to build a GST-ready quote in seconds.",
+                model: "GPT-4o Text",
+                modelColor: "text-gray-400",
+                icon: "💬",
+              },
+              {
+                level: "02",
+                name: "Plan Reading",
+                badge: "Pro+",
+                badgeColor: "bg-violet-900/60 text-violet-300 border border-violet-700",
+                desc: "Upload any PDF plan. GPT-4o Vision reads the drawing like a trained estimator — counting fixtures, reading dimensions, identifying components — and builds the first-pass takeoff automatically.",
+                model: "GPT-4o Vision AI",
+                modelColor: "text-violet-400",
+                icon: "👁️",
+                highlight: true,
+              },
+              {
+                level: "03",
+                name: "Full AI Takeoff",
+                badge: "Business+",
+                badgeColor: "bg-orange-900/60 text-orange-300 border border-orange-700",
+                desc: "The complete pipeline. Plan Reading + your price book + correction history + 5-step orchestrated workflow: Plan Interpretation → Quantity Extraction → Pricing → Business Rules → Draft Assembly.",
+                model: "GPT-4o Multimodal",
+                modelColor: "text-orange-400",
+                icon: "🧠",
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={item.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className={`rounded-2xl p-6 border ${
+                  item.highlight
+                    ? "bg-violet-950/60 border-violet-700/50 shadow-lg shadow-violet-900/20"
+                    : "bg-gray-900 border-gray-800"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-3xl">{item.icon}</span>
+                  <span className={`text-[10px] font-black px-2.5 py-1 rounded-full ${item.badgeColor}`}>{item.badge}</span>
+                </div>
+                <div className="text-gray-600 text-xs font-bold mb-1">LEVEL {item.level}</div>
+                <h3 className="text-white font-black text-lg mb-3">{item.name}</h3>
+                <p className="text-gray-400 text-xs leading-relaxed mb-4">{item.desc}</p>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                  <span className={`text-xs font-bold ${item.modelColor}`}>{item.model}</span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -544,6 +654,9 @@ export default function Pricing() {
                 <div className="flex items-center gap-2 mb-2">
                   <h3 className="font-black text-gray-900 text-sm">{feat.title}</h3>
                   <span className="text-[10px] bg-orange-100 text-orange-600 font-bold px-2 py-0.5 rounded-full">{feat.tier}</span>
+                  {feat.aiLabel && (
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${feat.aiColor}`}>{feat.aiLabel}</span>
+                  )}
                 </div>
                 <p className="text-xs text-gray-500 leading-relaxed">{feat.desc}</p>
               </motion.div>
@@ -598,8 +711,8 @@ export default function Pricing() {
           <div className="space-y-5">
             {[
               {
-                q: "What's the difference between Sole Tradie and Pro?",
-                a: "Sole Tradie gives one operator AI takeoffs, company memory, correction learning and PDF quotes. Pro adds unlimited AI volume, the full orchestration workflow, client-owned accounting integrations, accuracy reporting and team seats.",
+                q: "What's the difference between Pro and Business?",
+                a: "Pro gives you company memory and correction learning — the AI knows your prices and learns from your edits. Business adds the full 5-step orchestrated AI workflow, Xero integration, accuracy dashboard, and 3 team members. If you're running a real business and want the AI to get smarter over time, Business is the right tier.",
               },
               {
                 q: "What is Company Memory?",
@@ -611,15 +724,23 @@ export default function Pricing() {
               },
               {
                 q: "Can I import my own supplier pricing?",
-                a: "Yes. Sole Tradie and Pro both support your own price book. Pro and Enterprise customers can add deeper supplier workflows and custom setup support.",
-              },
-              {
-                q: "Can Kindai work with my current accounting or job-management system?",
-                a: "Yes. We can connect to the tools your business already uses, such as Xero, ServiceM8, MYOB, QuickBooks, Procore, Buildxact, or similar systems. For messy setups, we can also recommend and build a cleaner workflow.",
+                a: "Yes — Pro and above. You can add your negotiated rates from any supplier directly into your price book. The AI will use your exact rates instead of market benchmarks.",
               },
               {
                 q: "Is my data used to train AI models?",
                 a: "No. Your uploaded plans, pricing, and job data are never used to train AI models. Your business data is not shared with any third party. Enterprise accounts can request a Data Processing Agreement.",
+              },
+              {
+                q: "What file types does Plan Reading (Vision AI) support?",
+                a: "Plan Reading accepts PDF plans, architectural drawings, and engineering documents. It works best with standard A1/A3 construction plans, joinery elevations, electrical schematics, and plumbing layouts. JPG and PNG images of hand-drawn or scanned plans also work. Maximum file size is 50MB per upload.",
+              },
+              {
+                q: "How accurate is the AI plan reading? Can I trust the numbers?",
+                a: "The AI returns a confidence score with every takeoff (typically 75–92% for clear plans). It flags assumptions it made — e.g. 'assumed 2-pac finish based on elevation style'. You always review and adjust before the quote goes out. Think of it as a trained estimator doing the first pass in 60 seconds — you do the final check. Most users find it gets 85–90% of items right on the first read.",
+              },
+              {
+                q: "Can it handle commercial jobs — large builders, joinery contractors, fitouts?",
+                a: "Yes — this is where Plan Reading shines. Commercial joinery packages, multi-apartment fitouts, and large builder projects are exactly what the Full AI Takeoff tier is built for. The AI reads multi-page plan sets, identifies component schedules, and applies your commercial pricing. Enterprise and Enterprise+ plans include custom AI training on your specific job types and materials.",
               },
             ].map((faq, i) => (
               <div key={i} className="bg-gray-50 rounded-xl p-5 border border-gray-100">
@@ -642,26 +763,26 @@ export default function Pricing() {
         </div>
         <div className="max-w-3xl mx-auto text-center relative">
           <h2 className="text-3xl font-black text-white mb-4">
-            Pick the plan that matches how you quote.
+            Start free. Upgrade when you're ready.
           </h2>
           <p className="text-gray-400 mb-8">
-            Sole Tradie is built for one operator. Pro is built for teams. Enterprise is handled directly so we can scope it properly.
+            No credit card required for the free plan. The AI gets smarter every job you do.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button
-              onClick={() => handleSubscribe("sole_trader", 149)}
+              onClick={() => handleSubscribe("free", 0)}
               size="lg"
               variant="outline"
               className="px-10 py-4 rounded-full text-base font-black h-auto border-white/20 text-white hover:bg-white/10 bg-transparent"
             >
-              Start Sole Tradie
+              Start Free
             </Button>
             <Button
-              onClick={() => handleSubscribe("pro", 450)}
+              onClick={() => handleSubscribe("pro", 149)}
               size="lg"
               className="kindai-btn-primary px-10 py-4 rounded-full text-base font-black h-auto shadow-xl"
             >
-              Start Pro — A$450/mo <ArrowRight className="w-5 h-5 ml-2" />
+              Start Pro — A$149/mo <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </div>
         </div>

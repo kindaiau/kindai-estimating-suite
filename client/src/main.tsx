@@ -8,8 +8,12 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import { SupabaseAuthProvider } from "./contexts/SupabaseAuthContext";
+import { initPostHog } from "./lib/posthog";
 import { supabase } from "./lib/supabase";
 import "./index.css";
+
+// Initialise PostHog analytics (session replay, funnel analysis, feature usage)
+initPostHog();
 
 const queryClient = new QueryClient();
 

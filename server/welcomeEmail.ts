@@ -1,7 +1,7 @@
 /**
  * Beta Welcome Email — Kindai Estimating Suite
  * Uses shared branded email template (emailBrand.ts).
- * Sent via Gmail SMTP (nodemailer).
+ * Sent via Resend API (kindai.com.au domain).
  */
 
 import {
@@ -14,7 +14,7 @@ import {
   brandedSignature,
   BRAND,
 } from "./emailBrand";
-import { sendEmail } from "./gmailSender";
+import { sendEmail } from "./resendSender";
 
 const BASE_URL = BRAND.baseUrl;
 
@@ -131,17 +131,14 @@ To unsubscribe, reply with "unsubscribe" to matt@kindaiestimator.com.`;
 }
 
 export async function sendBetaWelcomeEmail(data: WelcomeEmailData): Promise<void> {
-  const gmailUser = process.env.GMAIL_USER;
-  const gmailPass = process.env.GMAIL_APP_PASSWORD;
-
-  if (!gmailUser || !gmailPass) {
-    console.warn(`[Email] GMAIL credentials not set — skipping welcome email for ${data.email}`);
+  if (!process.env.RESEND_API_KEY) {
+    console.warn(`[Email] RESEND_API_KEY not set — skipping welcome email for ${data.email}`);
     return;
   }
 
   const subject = `G'day ${getFirstName(data.name)} — you're Founding Member #${data.spotNumber} of 25`;
 
-  const success = await sendEmail({
+  const messageId = await sendEmail({
     to: data.email,
     subject,
     html: buildHtmlEmail(data),
@@ -149,7 +146,9 @@ export async function sendBetaWelcomeEmail(data: WelcomeEmailData): Promise<void
     replyTo: "matt@kindaiestimator.com",
   });
 
-  if (!success) {
+  if (!messageId) {
     console.warn(`[Email] Welcome email failed for ${data.email} (spot #${data.spotNumber})`);
+  } else {
+    console.log(`[Email] Welcome email sent to ${data.email} (spot #${data.spotNumber}) — Resend ID: ${messageId}`);
   }
 }

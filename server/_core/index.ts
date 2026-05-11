@@ -14,6 +14,7 @@ import { orchestratedTakeoffRouter } from "../routes/orchestratedTakeoff";
 import { adEngineRouter } from "../ad-engine/routes";
 import { seedMaterials } from "../seedMaterials";
 import { processDueNurtureEmails } from "../routers/betaNurture";
+import { processEbookNurtureEmails } from "../ebookNurtureCron";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 
@@ -143,7 +144,7 @@ async function startServer() {
     // Seed default materials library on startup (idempotent)
     seedMaterials().catch(err => console.warn("[Seed] Materials seed failed:", err.message));
 
-    // ── Nurture email cron — runs every 15 minutes via Gmail SMTP ──
+    // ── Nurture email cron — runs every 15 minutes via Resend API ──
     setInterval(() => {
       processDueNurtureEmails().catch(err =>
         console.warn("[Nurture] Cron processing failed:", err.message)
@@ -155,7 +156,21 @@ async function startServer() {
         console.warn("[Nurture] Initial processing failed:", err.message)
       );
     }, 30_000);
-    console.log("[Nurture] Cron started — processing due emails every 15 minutes via Gmail SMTP");
+    console.log("[Nurture] Cron started — processing due emails every 15 minutes via Resend API");
+
+    // ── Ebook nurture cron — runs every 15 minutes via Resend API ──
+    setInterval(() => {
+      processEbookNurtureEmails().catch(err =>
+        console.warn("[EbookNurture] Cron processing failed:", err.message)
+      );
+    }, 15 * 60 * 1000);
+    // Also run once 60 seconds after startup
+    setTimeout(() => {
+      processEbookNurtureEmails().catch(err =>
+        console.warn("[EbookNurture] Initial processing failed:", err.message)
+      );
+    }, 60_000);
+    console.log("[EbookNurture] Cron started — processing Day 2/4/7/10 ebook nurture emails every 15 minutes");
   });
 }
 

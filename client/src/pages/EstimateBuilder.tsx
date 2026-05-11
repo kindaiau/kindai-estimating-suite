@@ -17,7 +17,7 @@ import {
 import { useState } from "react";
 import { EstimateAgentChat } from "@/components/EstimateAgentChat";
 import { pixelSendQuote } from "@/lib/metaPixel";
-import { trackEvent } from "@/lib/analytics";
+import { ph } from "@/lib/posthog";
 import { useLocation, useParams } from "wouter";
 
 const CATEGORIES = ["Materials", "Labour", "Plant & Equipment", "Subcontract", "Preliminaries", "Other"];
@@ -152,130 +152,6 @@ function BenchmarkPanel({ estimateId }: { estimateId: number }) {
   );
 }
 
-function AssurancePanel({
-  report,
-  isLoading,
-  onMarkReviewed,
-}: {
-  report: any;
-  isLoading: boolean;
-  onMarkReviewed: () => void;
-}) {
-  if (isLoading) return <div className="text-center py-12 text-muted-foreground text-sm">Running quote assurance checks...</div>;
-  if (!report) return <div className="text-center py-12 text-muted-foreground text-sm">No assurance report available yet.</div>;
-
-  const riskStyles: Record<string, string> = {
-    low: "bg-green-50 text-green-700 border-green-200",
-    medium: "bg-amber-50 text-amber-700 border-amber-200",
-    high: "bg-orange-50 text-orange-700 border-orange-200",
-    critical: "bg-red-50 text-red-700 border-red-200",
-  };
-  const statusStyles: Record<string, string> = {
-    pass: "bg-green-50 text-green-700",
-    warning: "bg-amber-50 text-amber-700",
-    fail: "bg-red-50 text-red-700",
-  };
-
-  return (
-    <div className="space-y-4">
-      <Card className={`border shadow-sm rounded-2xl ${report.canIssue ? "border-green-200 bg-green-50/40" : "border-red-200 bg-red-50/40"}`}>
-        <CardContent className="p-5">
-          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                {report.canIssue ? <CheckCircle2 className="w-5 h-5 text-green-600" /> : <AlertTriangle className="w-5 h-5 text-red-600" />}
-                <h3 className="font-black text-foreground">Quote Assurance</h3>
-                <Badge variant="outline" className={`capitalize ${riskStyles[report.overallRisk] ?? riskStyles.medium}`}>
-                  {report.overallRisk} risk
-                </Badge>
-              </div>
-              <p className="text-sm text-muted-foreground max-w-2xl">{report.summary}</p>
-              {!report.canIssue && report.issueBlocks.length > 0 && (
-                <ul className="mt-3 space-y-1">
-                  {report.issueBlocks.map((block: string, i: number) => (
-                    <li key={i} className="text-xs text-red-700 flex gap-1.5">
-                      <span className="font-black">Block:</span> {block}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-2 min-w-[280px]">
-              <div className="bg-white rounded-xl border p-3">
-                <div className="text-[10px] font-black text-muted-foreground uppercase">Quote Value</div>
-                <div className="font-black">${report.quoteValue.toLocaleString("en-AU")}</div>
-              </div>
-              <div className="bg-white rounded-xl border p-3">
-                <div className="text-[10px] font-black text-muted-foreground uppercase">Risk Score</div>
-                <div className="font-black">{report.riskScore}/100</div>
-              </div>
-              <div className="bg-white rounded-xl border p-3">
-                <div className="text-[10px] font-black text-muted-foreground uppercase">Value Band</div>
-                <div className="font-black capitalize">{String(report.valueBand).replace("_", " ")}</div>
-              </div>
-              <div className="bg-white rounded-xl border p-3">
-                <div className="text-[10px] font-black text-muted-foreground uppercase">Approval</div>
-                <div className="font-black capitalize">{String(report.approvalLevel).replace("_", " ")}</div>
-              </div>
-            </div>
-          </div>
-          {report.issueBlocks.some((block: string) => block.toLowerCase().includes("draft")) && (
-            <Button size="sm" className="mt-4 rounded-xl font-bold" onClick={onMarkReviewed}>
-              Mark Estimator Review Complete
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-
-      <div className="grid lg:grid-cols-2 gap-4">
-        <Card className="border shadow-sm rounded-2xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-black">Assurance Checks</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {report.checks.map((check: any) => (
-              <div key={check.id} className="rounded-xl border bg-white p-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-bold">{check.title}</div>
-                    <div className="text-xs text-muted-foreground mt-1">{check.message}</div>
-                  </div>
-                  <Badge className={`text-[10px] capitalize shrink-0 ${statusStyles[check.status] ?? statusStyles.warning}`}>{check.status}</Badge>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2">{check.recommendedAction}</div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card className="border shadow-sm rounded-2xl">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-black">Flagged Line Items</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {report.lineItemRisks.length === 0 ? (
-              <div className="text-sm text-muted-foreground py-6 text-center">No item-level risks detected.</div>
-            ) : report.lineItemRisks.slice(0, 8).map((risk: any, i: number) => (
-              <div key={`${risk.lineItemId ?? i}-${risk.description}`} className="rounded-xl border bg-white p-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="text-sm font-bold">{risk.description}</div>
-                  <Badge variant="outline" className={`text-[10px] capitalize shrink-0 ${riskStyles[risk.riskLevel] ?? riskStyles.medium}`}>{risk.riskLevel}</Badge>
-                </div>
-                <ul className="mt-2 space-y-1">
-                  {risk.reasons.map((reason: string) => (
-                    <li key={reason} className="text-xs text-muted-foreground">• {reason}</li>
-                  ))}
-                </ul>
-                <div className="text-xs text-muted-foreground mt-2">{risk.recommendedAction}</div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
 export default function EstimateBuilder() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
@@ -307,30 +183,15 @@ export default function EstimateBuilder() {
   const utils = trpc.useUtils();
   const { data: estimate, isLoading } = trpc.estimates.get.useQuery({ id: estimateId });
   const { data: lineItems, isLoading: itemsLoading } = trpc.estimates.getLineItems.useQuery({ estimateId });
-  const { data: assurance, isLoading: assuranceLoading } = trpc.estimates.getAssurance.useQuery(
-    { id: estimateId },
-    { enabled: Boolean(estimate) }
-  );
   const { data: compliance } = trpc.compliance.getProfile.useQuery(
     { trade: estimate?.trade ?? "", state: estimate?.complianceState ?? undefined },
     { enabled: !!estimate?.trade }
   );
 
-  const estimateAnalyticsProps = () => ({
-    trade: estimate?.trade ?? "",
-    status: estimate?.status ?? "",
-    total: parseFloat(String(estimate?.total ?? "0")) || 0,
-    lineItemCount: lineItems?.length ?? 0,
-    assuranceRisk: assurance?.overallRisk ?? "",
-    assuranceCanIssue: assurance?.canIssue ?? true,
-    assuranceValueBand: assurance?.valueBand ?? "",
-  });
-
   const addItem = trpc.estimates.addLineItem.useMutation({
     onSuccess: () => {
       toast.success("Item added");
       utils.estimates.getLineItems.invalidate();
-      utils.estimates.getAssurance.invalidate({ id: estimateId });
       recalc.mutate({ id: estimateId });
       setAddOpen(false);
       setNewItem({ category: "Materials", description: "", unit: "ea", quantity: "", unitRate: "", wasteFactor: "0", notes: "" });
@@ -341,7 +202,6 @@ export default function EstimateBuilder() {
   const deleteItem = trpc.estimates.deleteLineItem.useMutation({
     onSuccess: () => {
       utils.estimates.getLineItems.invalidate();
-      utils.estimates.getAssurance.invalidate({ id: estimateId });
       recalc.mutate({ id: estimateId });
     },
     onError: (e) => toast.error("Failed to delete item: " + e.message),
@@ -350,7 +210,6 @@ export default function EstimateBuilder() {
   const updateItem = trpc.estimates.updateLineItem.useMutation({
     onSuccess: () => {
       utils.estimates.getLineItems.invalidate();
-      utils.estimates.getAssurance.invalidate({ id: estimateId });
       recalc.mutate({ id: estimateId });
       setEditingId(null);
       toast.success("Item updated — correction recorded");
@@ -394,19 +253,12 @@ export default function EstimateBuilder() {
   };
 
   const recalc = trpc.estimates.recalculate.useMutation({
-    onSuccess: () => {
-      utils.estimates.get.invalidate();
-      utils.estimates.getAssurance.invalidate({ id: estimateId });
-    },
+    onSuccess: () => utils.estimates.get.invalidate(),
     onError: (e) => toast.error("Recalculate failed: " + e.message),
   });
 
   const updateStatus = trpc.estimates.update.useMutation({
-    onSuccess: () => {
-      toast.success("Updated");
-      utils.estimates.get.invalidate();
-      utils.estimates.getAssurance.invalidate({ id: estimateId });
-    },
+    onSuccess: () => { toast.success("Updated"); utils.estimates.get.invalidate(); },
   });
 
   const generatePdf = trpc.estimates.generatePdf.useMutation({
@@ -414,16 +266,9 @@ export default function EstimateBuilder() {
       toast.success("PDF generated! Opening now...");
       window.open(data.url, "_blank");
       utils.estimates.get.invalidate();
-      utils.estimates.getAssurance.invalidate({ id: estimateId });
-      trackEvent("quote_pdf_succeeded", estimateAnalyticsProps());
+      ph.quoteGenerated(estimate?.trade ?? "unknown", parseFloat(estimate?.total as string) || 0);
     },
-    onError: (e) => {
-      toast.error("PDF failed: " + e.message);
-      trackEvent("quote_pdf_failed", {
-        ...estimateAnalyticsProps(),
-        reason: "server_error",
-      });
-    },
+    onError: (e) => toast.error("PDF failed: " + e.message),
   });
 
   const sendQuote = trpc.quoteTokens.sendQuote.useMutation({
@@ -431,23 +276,11 @@ export default function EstimateBuilder() {
       setSentUrl(data.quoteUrl);
       toast.success("Quote link generated! Copy and send to your client.");
       utils.estimates.get.invalidate();
-      utils.estimates.getAssurance.invalidate({ id: estimateId });
       // Fire SendQuote pixel event
       pixelSendQuote({ trade: estimate?.trade });
-      trackEvent("quote_send_succeeded", {
-        ...estimateAnalyticsProps(),
-        expiryDays: parseInt(sendForm.expiryDays),
-        hasMessage: Boolean(sendForm.message),
-        hasEmail: Boolean(sendForm.clientEmail),
-      });
+      ph.quoteSent(estimate?.trade ?? "unknown");
     },
-    onError: (e) => {
-      toast.error("Failed to send quote: " + e.message);
-      trackEvent("quote_send_failed", {
-        ...estimateAnalyticsProps(),
-        reason: "server_error",
-      });
-    },
+    onError: (e) => toast.error("Failed to send quote: " + e.message),
   });
 
   const analyzePlan = trpc.ai.analyzePlan.useMutation({
@@ -501,19 +334,6 @@ export default function EstimateBuilder() {
     });
   };
 
-  const blockIfAssuranceFails = (action: string) => {
-    if (assurance && !assurance.canIssue) {
-      toast.error(`${action} blocked: ${assurance.issueBlocks[0]}`);
-      trackEvent("quote_assurance_blocked", {
-        ...estimateAnalyticsProps(),
-        action,
-        blockCount: assurance.issueBlocks.length,
-      });
-      return true;
-    }
-    return false;
-  };
-
   if (isLoading) return (
     <AppLayout><div className="p-6 animate-pulse space-y-4">
       <div className="h-8 w-64 bg-secondary rounded-xl" />
@@ -563,30 +383,15 @@ export default function EstimateBuilder() {
             </div>
             <div className="flex items-center gap-2">
               <Button
-                onClick={() => {
-                  if (blockIfAssuranceFails("Send to client")) return;
-                  trackEvent("quote_send_clicked", {
-                    ...estimateAnalyticsProps(),
-                    location: "estimate_header",
-                  });
-                  setSentUrl(null);
-                  setSendQuoteOpen(true);
-                }}
+                onClick={() => { setSentUrl(null); setSendQuoteOpen(true); }}
                 size="sm"
                 className="rounded-xl text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white h-8"
               >
                 <Send className="w-3.5 h-3.5 mr-1.5" /> Send to Client
               </Button>
               <Button
-                onClick={() => {
-                  if (blockIfAssuranceFails("PDF export")) return;
-                  trackEvent("quote_pdf_clicked", {
-                    ...estimateAnalyticsProps(),
-                    location: "estimate_header",
-                  });
-                  generatePdf.mutate({ id: estimateId });
-                }}
-                disabled={generatePdf.isPending || assurance?.canIssue === false}
+                onClick={() => generatePdf.mutate({ id: estimateId })}
+                disabled={generatePdf.isPending}
                 variant="outline"
                 size="sm"
                 className="rounded-xl text-xs font-bold border-pink-300 text-pink-600 hover:bg-pink-50 h-8"
@@ -616,29 +421,11 @@ export default function EstimateBuilder() {
           </div>
         </div>
 
-        {assurance && !assurance.canIssue && (
-          <Card className="border-red-200 bg-red-50 shadow-sm rounded-2xl">
-            <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-black text-red-900">Quote blocked by assurance checks</div>
-                  <div className="text-sm text-red-700">{assurance.issueBlocks[0]}</div>
-                </div>
-              </div>
-              <Button size="sm" variant="outline" className="rounded-xl border-red-300 text-red-700 hover:bg-red-100" onClick={() => updateStatus.mutate({ id: estimateId, status: "review" })}>
-                Mark Reviewed
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
         <Tabs defaultValue="items">
           <TabsList aria-label="Estimate sections" className="bg-gray-100 rounded-full p-1">
             <TabsTrigger value="items" className="text-xs rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm">Line Items</TabsTrigger>
             <TabsTrigger value="compliance" className="text-xs rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm">Compliance</TabsTrigger>
             <TabsTrigger value="summary" className="text-xs rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm">Quote Summary</TabsTrigger>
-            <TabsTrigger value="assurance" className="text-xs rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm">Assurance</TabsTrigger>
             <TabsTrigger value="benchmark" className="text-xs rounded-full data-[state=active]:bg-white data-[state=active]:shadow-sm">Market Benchmark</TabsTrigger>
           </TabsList>
 
@@ -1062,14 +849,9 @@ export default function EstimateBuilder() {
                     size="sm"
                     className="kindai-btn-primary rounded-full font-bold text-xs px-5"
                     onClick={() => {
-                      if (blockIfAssuranceFails("Mark as sent")) return;
-                      trackEvent("quote_send_clicked", {
-                        ...estimateAnalyticsProps(),
-                        location: "summary_mark_sent",
-                      });
                       updateStatus.mutate({ id: estimateId, status: "sent" });
+                      toast.success("Quote marked as sent!");
                     }}
-                    disabled={assurance?.canIssue === false}
                   >
                     Mark as Sent
                   </Button>
@@ -1077,15 +859,8 @@ export default function EstimateBuilder() {
                     size="sm"
                     variant="outline"
                     className="rounded-full font-bold text-xs"
-                    onClick={() => {
-                      if (blockIfAssuranceFails("PDF export")) return;
-                      trackEvent("quote_pdf_clicked", {
-                        ...estimateAnalyticsProps(),
-                        location: "summary_export",
-                      });
-                      generatePdf.mutate({ id: estimateId });
-                    }}
-                    disabled={generatePdf.isPending || assurance?.canIssue === false}
+                    onClick={() => generatePdf.mutate({ id: estimateId })}
+                    disabled={generatePdf.isPending}
                   >
                     {generatePdf.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Download className="w-3.5 h-3.5 mr-1.5" />}
                     Export PDF
@@ -1112,15 +887,6 @@ export default function EstimateBuilder() {
                 </CardContent>
               </Card>
             )}
-          </TabsContent>
-
-          {/* ── Quote Assurance Tab ── */}
-          <TabsContent value="assurance" className="space-y-4 mt-4">
-            <AssurancePanel
-              report={assurance}
-              isLoading={assuranceLoading}
-              onMarkReviewed={() => updateStatus.mutate({ id: estimateId, status: "review" })}
-            />
           </TabsContent>
 
           {/* ── Market Benchmark Tab ── */}
@@ -1214,25 +980,15 @@ export default function EstimateBuilder() {
             <Button variant="outline" onClick={() => { setSendQuoteOpen(false); setSentUrl(null); }}>Close</Button>
             {!sentUrl && (
               <Button
-                onClick={() => {
-                  if (blockIfAssuranceFails("Quote link")) return;
-                  trackEvent("quote_send_clicked", {
-                    ...estimateAnalyticsProps(),
-                    location: "quote_link_dialog",
-                    expiryDays: parseInt(sendForm.expiryDays),
-                    hasMessage: Boolean(sendForm.message),
-                    hasEmail: Boolean(sendForm.clientEmail),
-                  });
-                  sendQuote.mutate({
-                    estimateId,
-                    clientName: sendForm.clientName || "Client",
-                    clientEmail: sendForm.clientEmail || "",
-                    origin: window.location.origin,
-                    message: sendForm.message || undefined,
-                    expiryDays: parseInt(sendForm.expiryDays),
-                  });
-                }}
-                disabled={sendQuote.isPending || assurance?.canIssue === false}
+                onClick={() => sendQuote.mutate({
+                  estimateId,
+                  clientName: sendForm.clientName || "Client",
+                  clientEmail: sendForm.clientEmail || "",
+                  origin: window.location.origin,
+                  message: sendForm.message || undefined,
+                  expiryDays: parseInt(sendForm.expiryDays),
+                })}
+                disabled={sendQuote.isPending}
                 className="bg-orange-500 hover:bg-orange-600 text-white"
               >
                 {sendQuote.isPending ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Generating...</> : <><Send className="w-3.5 h-3.5 mr-1.5" /> Generate Quote Link</>}

@@ -136,6 +136,9 @@ export const ENV = {
   forgeApiUrl: readEnv("BUILT_IN_FORGE_API_URL"),
   forgeApiKey: readEnv("BUILT_IN_FORGE_API_KEY"),
   brevoApiKey: readEnv("BREVO_API_KEY"),
+  resendApiKey: readEnv("RESEND_API_KEY"),
+  resendFromEmail: readEnv("RESEND_FROM_EMAIL"),
+  matthewNotificationEmail: readEnv("MATTHEW_NOTIFICATION_EMAIL"),
   hubspotApiKey: readEnv("HUBSPOT_API_KEY"),
   openAiApiKey: readEnv("OPENAI_API_KEY"),
   openAiModel: readEnv("OPENAI_MODEL"),
@@ -159,11 +162,6 @@ export const ENV = {
   metaPageId: readEnv("META_PAGE_ID"),
   xeroClientId: readEnv("XERO_CLIENT_ID"),
   xeroClientSecret: readEnv("XERO_CLIENT_SECRET"),
-  gmailUser: readEnv("GMAIL_USER"),
-  gmailAppPassword: readEnv("GMAIL_APP_PASSWORD"),
-  resendApiKey: readEnv("RESEND_API_KEY"),
-  resendFromEmail: readEnv("RESEND_FROM_EMAIL"),
-  matthewNotificationEmail: readEnv("MATTHEW_NOTIFICATION_EMAIL"),
   isProduction: process.env.NODE_ENV === "production",
 };
 
