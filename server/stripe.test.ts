@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
-import { PLANS, getPlanById, formatPrice, calculateROI } from "./stripe/products";
+import {
+  PILOT_SETUP_OFFER,
+  PLANS,
+  calculateROI,
+  formatPrice,
+  getPlanById,
+  getPlanCheckoutAmount,
+} from "./stripe/products";
 
 // ─── Test helpers ──────────────────────────────────────────────────────────────
 
@@ -68,12 +75,14 @@ describe("Stripe Products & Plans (5-Tier Enterprise Value-Based)", () => {
     expect(solo!.priceYearly).toBe(143040);
   });
 
-  it("small_builder plan is $499/mo — replaces part-time estimator", () => {
+  it("small_builder plan is the $450/mo Pro tier", () => {
     const sb = getPlanById("small_builder");
     expect(sb).toBeDefined();
-    expect(sb!.priceMonthly).toBe(49900);
+    expect(sb!.name).toBe("Pro");
+    expect(sb!.priceMonthly).toBe(45000);
+    expect(sb!.priceYearly).toBe(432000);
     expect(sb!.popular).toBe(true);
-    expect(sb!.tagline).toContain("part-time estimator");
+    expect(sb!.tagline).toContain("growing trade teams");
   });
 
   it("mid_builder plan is $1,499/mo — replaces full-time estimator", () => {
@@ -83,10 +92,12 @@ describe("Stripe Products & Plans (5-Tier Enterprise Value-Based)", () => {
     expect(mb!.tagline).toContain("full-time estimator");
   });
 
-  it("enterprise plan is $3,999/mo — replaces estimating department", () => {
+  it("enterprise plan is custom pricing by contact", () => {
     const ent = getPlanById("enterprise");
     expect(ent).toBeDefined();
-    expect(ent!.priceMonthly).toBe(399900);
+    expect(ent!.name).toBe("Enterprise & Custom Solutions");
+    expect(ent!.priceMonthly).toBe(0);
+    expect(ent!.priceYearly).toBe(0);
     expect(ent!.contactSales).toBe(true);
   });
 
@@ -97,6 +108,20 @@ describe("Stripe Products & Plans (5-Tier Enterprise Value-Based)", () => {
     const discount = 1 - solo.priceYearly / monthlyAnnualised;
     expect(discount).toBeGreaterThanOrEqual(0.15);
     expect(discount).toBeLessThanOrEqual(0.25);
+  });
+
+  it("uses the annual total when creating yearly Stripe prices", () => {
+    const solo = getPlanById("sole_trader")!;
+    expect(getPlanCheckoutAmount(solo, "monthly")).toBe(14900);
+    expect(getPlanCheckoutAmount(solo, "yearly")).toBe(143040);
+  });
+
+  it("defines the one-time founding pilot setup offer", () => {
+    expect(PILOT_SETUP_OFFER.name).toContain("Founding Pilot Setup");
+    expect(PILOT_SETUP_OFFER.name).toContain("6 Months");
+    expect(PILOT_SETUP_OFFER.description).toContain("first 6 months");
+    expect(PILOT_SETUP_OFFER.amount).toBe(100000);
+    expect(PILOT_SETUP_OFFER.currency).toBe("aud");
   });
 
   it("all plans have features array", () => {
@@ -144,9 +169,8 @@ describe("Stripe Products & Plans (5-Tier Enterprise Value-Based)", () => {
   it("formatPrice returns correct AUD formatting", () => {
     expect(formatPrice(0)).toBe("Free");
     expect(formatPrice(14900)).toBe("$149");
-    expect(formatPrice(49900)).toBe("$499");
+    expect(formatPrice(45000)).toBe("$450");
     expect(formatPrice(149900)).toBe("$1.5K");
-    expect(formatPrice(399900)).toBe("$4.0K");
   });
 
   it("getPlanById returns undefined for invalid id", () => {
@@ -185,14 +209,13 @@ describe("ROI Calculator", () => {
     expect(roi!.annualSavings).toBeGreaterThan(100000);
   });
 
-  it("enterprise plan saves over $250K/yr", () => {
+  it("enterprise custom plan does not calculate fixed ROI", () => {
     const roi = calculateROI("enterprise");
-    expect(roi).not.toBeNull();
-    expect(roi!.annualSavings).toBeGreaterThan(250000);
+    expect(roi).toBeNull();
   });
 
   it("all paid plans include paybackDays", () => {
-    ["sole_trader", "small_builder", "mid_builder", "enterprise"].forEach((id) => {
+    ["sole_trader", "small_builder", "mid_builder"].forEach((id) => {
       const roi = calculateROI(id);
       expect(roi).not.toBeNull();
       expect(roi!.paybackDays).toBeGreaterThan(0);
@@ -300,9 +323,10 @@ describe("Plan Feature Gating", () => {
     const sb = getPlanById("small_builder")!;
     const mb = getPlanById("mid_builder")!;
     const ent = getPlanById("enterprise")!;
-    // Each tier should be more expensive than the previous
+    // Self-serve tiers should scale with value delivered. Enterprise is scoped directly.
     expect(sb.priceMonthly).toBeGreaterThan(solo.priceMonthly);
     expect(mb.priceMonthly).toBeGreaterThan(sb.priceMonthly);
-    expect(ent.priceMonthly).toBeGreaterThan(mb.priceMonthly);
+    expect(ent.priceMonthly).toBe(0);
+    expect(ent.contactSales).toBe(true);
   });
 });

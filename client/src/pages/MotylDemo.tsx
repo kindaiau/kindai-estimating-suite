@@ -619,6 +619,7 @@ export default function MotylDemo() {
                       <span className="font-black text-xl" style={{ color: MOTYL_YELLOW }}>{roiProjects}</span>
                     </div>
                     <input type="range" min={10} max={300} value={roiProjects} onChange={e => setRoiProjects(+e.target.value)}
+                      aria-label="Projects quoted per year"
                       className="w-full h-2 rounded-full appearance-none cursor-pointer"
                       style={{ accentColor: MOTYL_YELLOW }} />
                     <div className="flex justify-between text-xs text-white/30 mt-1"><span>10</span><span>300</span></div>
@@ -629,6 +630,7 @@ export default function MotylDemo() {
                       <span className="font-black text-xl" style={{ color: MOTYL_YELLOW }}>{roiHours}h</span>
                     </div>
                     <input type="range" min={1} max={12} value={roiHours} onChange={e => setRoiHours(+e.target.value)}
+                      aria-label="Hours per manual takeoff"
                       className="w-full h-2 rounded-full appearance-none cursor-pointer"
                       style={{ accentColor: MOTYL_YELLOW }} />
                     <div className="flex justify-between text-xs text-white/30 mt-1"><span>1h</span><span>12h</span></div>
@@ -639,6 +641,7 @@ export default function MotylDemo() {
                       <span className="font-black text-xl" style={{ color: MOTYL_YELLOW }}>${Math.round(hourlyRate)}/hr</span>
                     </div>
                     <input type="range" min={50000} max={120000} step={5000} value={roiSalary} onChange={e => setRoiSalary(+e.target.value)}
+                      aria-label="Estimator cost loaded hourly rate"
                       className="w-full h-2 rounded-full appearance-none cursor-pointer"
                       style={{ accentColor: MOTYL_YELLOW }} />
                     <div className="flex justify-between text-xs text-white/30 mt-1"><span>$50K/yr</span><span>$120K/yr</span></div>
@@ -652,6 +655,7 @@ export default function MotylDemo() {
                       <span className="font-black text-xl" style={{ color: MOTYL_YELLOW }}>{formatCurrency(roiSalary)}/yr</span>
                     </div>
                     <input type="range" min={50000} max={120000} step={5000} value={roiSalary} onChange={e => setRoiSalary(+e.target.value)}
+                      aria-label="Estimator or draughtsman salary"
                       className="w-full h-2 rounded-full appearance-none cursor-pointer"
                       style={{ accentColor: MOTYL_YELLOW }} />
                     <div className="flex justify-between text-xs text-white/30 mt-1"><span>$50K</span><span>$120K</span></div>

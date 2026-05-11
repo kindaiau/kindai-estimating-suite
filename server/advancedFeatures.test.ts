@@ -136,7 +136,7 @@ describe("AI Memory Integration", () => {
 
 // ── ENV Configuration ──
 describe("ENV Configuration", () => {
-  it("should have Xero env vars defined", async () => {
+  it("documents optional Xero OAuth app configuration", async () => {
     const fs = await import("fs");
     const content = fs.readFileSync("server/_core/env.ts", "utf-8");
     expect(content).toContain("xeroClientId");

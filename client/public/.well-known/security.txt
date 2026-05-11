@@ -1,0 +1,5 @@
+Contact: mailto:hello@kindaiestimator.com
+Preferred-Languages: en
+Canonical: https://kindaiestimator.com/.well-known/security.txt
+Policy: https://kindaiestimator.com/privacy-policy
+

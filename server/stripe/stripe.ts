@@ -77,6 +77,72 @@ export async function createCheckoutSession(opts: {
 }
 
 /**
+ * Create a one-time Checkout Session for the founding pilot setup sprint.
+ */
+export async function createPilotSetupCheckoutSession(opts: {
+  name: string;
+  email: string;
+  phone?: string;
+  tradeType?: string;
+  origin: string;
+  amount: number;
+  currency: string;
+  productName: string;
+  productDescription: string;
+}): Promise<string> {
+  const stripe = getStripe();
+  const successUrl = new URL("/beta", opts.origin);
+  successUrl.searchParams.set("paid_setup", "success");
+  successUrl.searchParams.set("session_id", "{CHECKOUT_SESSION_ID}");
+
+  const cancelUrl = new URL("/beta", opts.origin);
+  cancelUrl.searchParams.set("intent", "paid-setup");
+  cancelUrl.searchParams.set("checkout", "cancelled");
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    customer_email: opts.email,
+    line_items: [
+      {
+        quantity: 1,
+        price_data: {
+          currency: opts.currency,
+          unit_amount: opts.amount,
+          product_data: {
+            name: opts.productName,
+            description: opts.productDescription,
+          },
+        },
+      },
+    ],
+    phone_number_collection: { enabled: true },
+    client_reference_id: opts.email,
+    metadata: {
+      intent: "Paid Pilot Setup",
+      kindai_flow: "founding_pilot_setup",
+      customer_name: opts.name,
+      customer_email: opts.email,
+      customer_phone: opts.phone ?? "",
+      trade_type: opts.tradeType ?? "",
+    },
+    payment_intent_data: {
+      metadata: {
+        kindai_flow: "founding_pilot_setup",
+        customer_name: opts.name,
+        customer_email: opts.email,
+        customer_phone: opts.phone ?? "",
+        trade_type: opts.tradeType ?? "",
+      },
+    },
+    success_url: successUrl.toString(),
+    cancel_url: cancelUrl.toString(),
+  });
+
+  if (!session.url) throw new Error("Failed to create pilot setup checkout session URL");
+  return session.url;
+}
+
+/**
  * Create a Customer Portal session for managing billing
  */
 export async function createPortalSession(opts: {

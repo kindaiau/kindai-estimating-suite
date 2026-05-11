@@ -87,6 +87,7 @@ beforeEach(() => {
   (getDb as ReturnType<typeof vi.fn>).mockReset();
   delete process.env.WEBHOOK_SECRET;
   delete process.env.FB_WEBHOOK_VERIFY_TOKEN;
+  process.env.NODE_ENV = "test";
 });
 
 // ─── GET endpoint tests ───────────────────────────────────────────────────────
@@ -124,6 +125,23 @@ describe("GET /api/webhooks/fb-lead", () => {
         "hub.challenge": "test-challenge-123",
       });
     expect(res.text).not.toBe("test-challenge-123");
+  });
+
+  it("requires explicit verify token for Facebook challenge in production", async () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.FB_WEBHOOK_VERIFY_TOKEN;
+
+    const app = buildApp();
+    const res = await request(app)
+      .get("/api/webhooks/fb-lead")
+      .query({
+        "hub.mode": "subscribe",
+        "hub.verify_token": "kindai-fb-verify-2026",
+        "hub.challenge": "test-challenge-123",
+      });
+
+    expect(res.status).toBe(503);
+    expect(res.body.error).toContain("not configured");
   });
 });
 
@@ -163,6 +181,19 @@ describe("POST /api/webhooks/fb-lead — payload validation", () => {
 // ─── Secret validation tests ──────────────────────────────────────────────────
 
 describe("POST /api/webhooks/fb-lead — secret validation", () => {
+  it("requires WEBHOOK_SECRET in production", async () => {
+    process.env.NODE_ENV = "production";
+    delete process.env.WEBHOOK_SECRET;
+
+    const app = buildApp();
+    const res = await request(app)
+      .post("/api/webhooks/fb-lead")
+      .send({ name: "Dave", email: "dave@test.com" });
+
+    expect(res.status).toBe(503);
+    expect(res.body.error).toContain("not configured");
+  });
+
   it("returns 401 when secret is set but header is missing", async () => {
     process.env.WEBHOOK_SECRET = "super-secret-123";
     const app = buildApp();

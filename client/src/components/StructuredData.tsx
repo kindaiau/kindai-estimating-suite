@@ -23,7 +23,7 @@ export function SoftwareAppSchema() {
       },
       {
         "@type": "Offer",
-        "name": "Solo Tradie",
+        "name": "Sole Tradie",
         "price": "149",
         "priceCurrency": "AUD",
         "billingIncrement": "P1M",
@@ -31,19 +31,19 @@ export function SoftwareAppSchema() {
       },
       {
         "@type": "Offer",
-        "name": "Trade Business",
-        "price": "499",
+        "name": "Pro",
+        "price": "450",
         "priceCurrency": "AUD",
         "billingIncrement": "P1M",
-        "description": "Trade business plan — multi-user, supplier integration"
+        "description": "Pro plan — team workflows, Xero, accuracy dashboard"
       },
       {
         "@type": "Offer",
-        "name": "Commercial",
-        "price": "1499",
+        "name": "Enterprise & Custom Solutions",
+        "price": "0",
         "priceCurrency": "AUD",
         "billingIncrement": "P1M",
-        "description": "Commercial builder plan — enterprise features"
+        "description": "Custom pricing by contact for enterprise workflows"
       }
     ],
     "featureList": [
@@ -144,7 +144,7 @@ export function FAQSchema() {
         "name": "How much does Kindai cost?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Kindai offers a free beta for the first 25 founding members. After beta, plans start at $149/month for solo tradies, $499/month for trade businesses, $1,499/month for commercial builders, and $3,999/month for enterprise. All plans include a free trial."
+          "text": "Kindai pricing starts at $149/month for Sole Tradie, $450/month for Pro, and Enterprise & Custom Solutions are scoped directly with the Kindai team."
         }
       },
       {

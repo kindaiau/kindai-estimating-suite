@@ -158,11 +158,11 @@ export default function AIHelpAssistant({ trade, page, context }: AIHelpAssistan
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-4 py-3 rounded-full shadow-2xl transition-all duration-200 hover:scale-105"
+          className="fixed bottom-20 right-4 z-50 flex items-center gap-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-3 py-2.5 rounded-full shadow-2xl transition-all duration-200 hover:scale-105 sm:bottom-6 sm:right-6 sm:px-4 sm:py-3"
           aria-label="Open AI Help Assistant"
         >
           <Sparkles className="w-5 h-5" />
-          <span className="font-semibold text-sm">Ask Kindai AI</span>
+          <span className="font-semibold text-xs sm:text-sm">Ask Kindai AI</span>
           {messages.length > 1 && (
             <Badge className="bg-white text-orange-600 text-xs px-1.5 py-0 min-w-[18px] h-[18px] flex items-center justify-center">
               {messages.filter(m => m.role === "assistant").length - 1}

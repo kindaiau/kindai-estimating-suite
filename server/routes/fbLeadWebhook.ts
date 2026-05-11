@@ -37,6 +37,13 @@ interface FbLeadPayload {
   company_name?: string;
   trade?: string;
   state?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+  utm_term?: string;
+  landing_path?: string;
+  referrer_host?: string;
   // Facebook metadata
   lead_id?: string;
   form_id?: string;
@@ -68,6 +75,15 @@ function extractCompany(payload: FbLeadPayload): string | undefined {
   return payload.company ?? payload.company_name ?? undefined;
 }
 
+function trimMax(value: string | undefined, maxLength: number): string | undefined {
+  const cleaned = value?.trim();
+  return cleaned ? cleaned.slice(0, maxLength) : undefined;
+}
+
+function isProduction() {
+  return process.env.NODE_ENV === "production";
+}
+
 /**
  * POST /api/webhooks/fb-lead
  *
@@ -87,7 +103,13 @@ fbLeadWebhookRouter.post("/fb-lead", async (req: Request, res: Response) => {
       return;
     }
   } else {
-    console.warn("[FB Lead Webhook] WEBHOOK_SECRET not set — accepting all requests (set this in production!)");
+    if (isProduction()) {
+      console.error("[FB Lead Webhook] Rejected: WEBHOOK_SECRET is required in production");
+      res.status(503).json({ error: "Webhook is not configured" });
+      return;
+    }
+
+    console.warn("[FB Lead Webhook] WEBHOOK_SECRET not set — accepting all requests in development only");
   }
 
   // ── Parse payload ───────────────────────────────────────────────────────────
@@ -149,6 +171,13 @@ fbLeadWebhookRouter.post("/fb-lead", async (req: Request, res: Response) => {
       trade: trade ?? null,
       state: state ?? null,
       source: "fb_ad",
+      utmSource: trimMax(payload.utm_source, 128) ?? "facebook",
+      utmMedium: trimMax(payload.utm_medium, 128) ?? "paid_social",
+      utmCampaign: trimMax(payload.utm_campaign, 128),
+      utmContent: trimMax(payload.utm_content, 128),
+      utmTerm: trimMax(payload.utm_term, 128),
+      landingPath: trimMax(payload.landing_path, 255),
+      referrerHost: trimMax(payload.referrer_host, 255) ?? "facebook.com",
       status: "pending",
     });
 
@@ -265,7 +294,18 @@ fbLeadWebhookRouter.get("/fb-lead", (req: Request, res: Response) => {
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
 
-  const verifyToken = process.env.FB_WEBHOOK_VERIFY_TOKEN ?? "kindai-fb-verify-2026";
+  const verifyToken = process.env.FB_WEBHOOK_VERIFY_TOKEN;
+
+  if (!verifyToken) {
+    if (isProduction() && mode === "subscribe") {
+      console.error("[FB Lead Webhook] Verification rejected: FB_WEBHOOK_VERIFY_TOKEN is required in production");
+      res.status(503).json({ error: "Webhook verification is not configured" });
+      return;
+    }
+
+    res.status(200).json({ status: "ok", endpoint: "fb-lead-webhook" });
+    return;
+  }
 
   if (mode === "subscribe" && token === verifyToken) {
     console.log("[FB Lead Webhook] Facebook verification challenge passed");

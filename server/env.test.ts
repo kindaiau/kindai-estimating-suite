@@ -20,12 +20,8 @@ describe("environment validation", () => {
 
     const status = getEnvironmentStatus();
 
-    expect(status.auth.ready).toBe(false);
-    expect(status.auth.missingRequired).toEqual([
-      "VITE_APP_ID",
-      "JWT_SECRET",
-      "OAUTH_SERVER_URL",
-    ]);
+    expect(status.auth.ready).toBe(true);
+    expect(status.auth.missingRequired).toEqual([]);
     expect(status.database.ready).toBe(false);
     expect(status.database.missingRequired).toEqual(["DATABASE_URL"]);
   });
@@ -43,5 +39,15 @@ describe("environment validation", () => {
 
   it("returns a required env value when present", () => {
     expect(requireEnvValue("configured", "TEST_ENV")).toBe("configured");
+  });
+
+  it("reports billing as unavailable when Stripe webhook signing is missing", () => {
+    process.env.STRIPE_SECRET_KEY = "sk_test_configured";
+    delete process.env.STRIPE_WEBHOOK_SECRET;
+
+    const status = getEnvironmentStatus();
+
+    expect(status.billing.ready).toBe(false);
+    expect(status.billing.missingRequired).toEqual(["STRIPE_WEBHOOK_SECRET"]);
   });
 });

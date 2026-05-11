@@ -7,7 +7,9 @@ import superjson from "superjson";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App";
 import { getLoginUrl } from "./const";
+import { SupabaseAuthProvider } from "./contexts/SupabaseAuthContext";
 import { initPostHog } from "./lib/posthog";
+import { supabase } from "./lib/supabase";
 import "./index.css";
 
 // Initialise PostHog analytics (session replay, funnel analysis, feature usage)
@@ -47,9 +49,19 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
-      fetch(input, init) {
+      async fetch(input, init) {
+        const headers = new Headers(init?.headers);
+        const { data } = supabase
+          ? await supabase.auth.getSession()
+          : { data: { session: null } };
+
+        if (data.session?.access_token) {
+          headers.set("Authorization", `Bearer ${data.session.access_token}`);
+        }
+
         return globalThis.fetch(input, {
           ...(init ?? {}),
+          headers,
           credentials: "include",
         });
       },
@@ -61,7 +73,9 @@ createRoot(document.getElementById("root")!).render(
   <HelmetProvider>
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
-        <App />
+        <SupabaseAuthProvider>
+          <App />
+        </SupabaseAuthProvider>
       </QueryClientProvider>
     </trpc.Provider>
   </HelmetProvider>

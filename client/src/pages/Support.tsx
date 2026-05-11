@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { pixelViewContent, pixelContact } from "@/lib/metaPixel";
+import { getAnalyticsContext, trackEvent } from "@/lib/analytics";
 
 const FAQ_ITEMS = [
   {
@@ -28,9 +29,17 @@ export default function Support() {
   useEffect(() => {
     window.scrollTo(0, 0);
     pixelViewContent({ content_name: "Support Page", content_category: "Support" });
+    trackEvent("support_viewed", getAnalyticsContext());
   }, []);
 
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const handleContactClick = (type: string) => {
+    pixelContact();
+    trackEvent("contact_clicked", {
+      location: "support",
+      type,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-gray-200">
@@ -70,7 +79,7 @@ export default function Support() {
                   </div>
                   <h3 className="font-semibold text-white">Email Support</h3>
                 </div>
-                <a href="mailto:hello@kindaiestimator.com" className="text-orange-400 hover:underline text-sm">hello@kindaiestimator.com</a>
+                <a href="mailto:hello@kindaiestimator.com" onClick={() => handleContactClick("general_support")} className="text-orange-400 hover:underline text-sm">hello@kindaiestimator.com</a>
                 <p className="text-gray-500 text-xs mt-2">Standard response: within 24 business hours</p>
               </div>
 
@@ -83,7 +92,7 @@ export default function Support() {
                   </div>
                   <h3 className="font-semibold text-white">Enterprise Support</h3>
                 </div>
-                <a href="mailto:matt@kindaiestimator.com?subject=Enterprise%20Enquiry" className="text-orange-400 hover:underline text-sm">matt@kindaiestimator.com</a>
+                <a href="mailto:matt@kindaiestimator.com?subject=Enterprise%20Enquiry" onClick={() => handleContactClick("enterprise_support")} className="text-orange-400 hover:underline text-sm">matt@kindaiestimator.com</a>
                 <p className="text-orange-300/70 text-xs mt-2">Priority response: within 4 business hours</p>
               </div>
             </div>
@@ -113,7 +122,7 @@ export default function Support() {
               </ul>
               <div className="mt-5 pt-4 border-t border-white/10">
                 <p className="text-sm text-gray-400">To arrange enterprise onboarding, contact us at{" "}
-                  <a href="mailto:matt@kindaiestimator.com?subject=Enterprise%20Enquiry" className="text-orange-400 hover:underline">matt@kindaiestimator.com</a>
+                  <a href="mailto:matt@kindaiestimator.com?subject=Enterprise%20Enquiry" onClick={() => handleContactClick("enterprise_pricing")} className="text-orange-400 hover:underline">matt@kindaiestimator.com</a>
                 </p>
               </div>
             </div>
@@ -187,10 +196,10 @@ export default function Support() {
             <div className="bg-white/5 rounded-lg p-5 border border-white/10">
               <p className="font-semibold text-white mb-3">Kindai Pty Ltd</p>
               <div className="space-y-2 text-sm text-gray-400">
-                <p>General support: <a href="mailto:hello@kindaiestimator.com" className="text-orange-400 hover:underline">hello@kindaiestimator.com</a></p>
-                <p>Enterprise enquiries: <a href="mailto:matt@kindaiestimator.com?subject=Enterprise%20Enquiry" className="text-orange-400 hover:underline">matt@kindaiestimator.com</a></p>
-                <p>Privacy & data: <a href="mailto:hello@kindaiestimator.com?subject=Privacy%20%26%20Data" className="text-orange-400 hover:underline">hello@kindaiestimator.com</a></p>
-                <p>Legal: <a href="mailto:hello@kindaiestimator.com?subject=Legal" className="text-orange-400 hover:underline">hello@kindaiestimator.com</a></p>
+                <p>General support: <a href="mailto:hello@kindaiestimator.com" onClick={() => handleContactClick("general_support_footer")} className="text-orange-400 hover:underline">hello@kindaiestimator.com</a></p>
+                <p>Enterprise enquiries: <a href="mailto:matt@kindaiestimator.com?subject=Enterprise%20Enquiry" onClick={() => handleContactClick("enterprise_footer")} className="text-orange-400 hover:underline">matt@kindaiestimator.com</a></p>
+                <p>Privacy & data: <a href="mailto:hello@kindaiestimator.com?subject=Privacy%20%26%20Data" onClick={() => handleContactClick("privacy_footer")} className="text-orange-400 hover:underline">hello@kindaiestimator.com</a></p>
+                <p>Legal: <a href="mailto:hello@kindaiestimator.com?subject=Legal" onClick={() => handleContactClick("legal_footer")} className="text-orange-400 hover:underline">hello@kindaiestimator.com</a></p>
                 <p className="pt-2">Website: <a href="https://kindaiestimator.com" className="text-orange-400 hover:underline">kindaiestimator.com</a></p>
               </div>
             </div>

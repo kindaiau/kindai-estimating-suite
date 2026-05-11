@@ -6,6 +6,51 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
 
+const SPA_ROUTE_PATTERNS = [
+  /^\/$/,
+  /^\/dashboard$/,
+  /^\/projects$/,
+  /^\/projects\/[^/]+$/,
+  /^\/projects\/[^/]+\/variations$/,
+  /^\/estimates\/[^/]+$/,
+  /^\/materials$/,
+  /^\/labour$/,
+  /^\/profile$/,
+  /^\/ai-takeoff$/,
+  /^\/pricing$/,
+  /^\/billing$/,
+  /^\/trade-profiles$/,
+  /^\/demo$/,
+  /^\/login$/,
+  /^\/suppliers$/,
+  /^\/followups$/,
+  /^\/quote\/accept\/[^/]+$/,
+  /^\/beta$/,
+  /^\/privacy-policy$/,
+  /^\/privacy$/,
+  /^\/data-deletion$/,
+  /^\/terms$/,
+  /^\/terms-of-service$/,
+  /^\/support$/,
+  /^\/cabinet-joinery$/,
+  /^\/about$/,
+  /^\/help$/,
+  /^\/admin\/fb-leads$/,
+  /^\/settings$/,
+  /^\/accuracy$/,
+  /^\/motyl$/,
+  /^\/moytle$/,
+  /^\/getgas$/,
+  /^\/ad-engine$/,
+  /^\/ad-engine\/creative$/,
+  /^\/404$/,
+];
+
+function spaStatusFor(url: string) {
+  const pathname = url.split("?")[0].split("#")[0];
+  return SPA_ROUTE_PATTERNS.some((pattern) => pattern.test(pathname)) ? 200 : 404;
+}
+
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
@@ -39,7 +84,7 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx?v=${nanoid()}"`
       );
       const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      res.status(spaStatusFor(url)).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
@@ -61,7 +106,7 @@ export function serveStatic(app: Express) {
   app.use(express.static(distPath));
 
   // fall through to index.html if the file doesn't exist
-  app.use("/{*path}", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+  app.use("/{*path}", (req, res) => {
+    res.status(spaStatusFor(req.originalUrl)).sendFile(path.resolve(distPath, "index.html"));
   });
 }

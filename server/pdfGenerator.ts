@@ -1,5 +1,6 @@
 import puppeteer from "puppeteer-core";
 import { ENV } from "./_core/env";
+import type { QuoteAssuranceReport } from "./assurance";
 
 const LOGO_URL = ENV.appLogo ?? "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
 
@@ -49,6 +50,7 @@ export type PdfQuoteData = {
   // AI info
   aiConfidenceScore?: number;
   aiAssumptions?: string[];
+  assurance?: QuoteAssuranceReport;
 };
 
 const TRADE_COMPLIANCE: Record<string, { body: string; disclaimer: string }> = {
@@ -293,6 +295,21 @@ function buildHtml(data: PdfQuoteData): string {
   .assumptions-list li { font-size: 9px; color: #666; padding: 1.5px 0; }
   .assumptions-list li::before { content: "✓ "; color: #c2410c; font-weight: 700; }
 
+  /* Assurance */
+  .assurance-section {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  .assurance-title { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #047857; margin-bottom: 6px; }
+  .assurance-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px; }
+  .assurance-metric { background: #fff; border-radius: 6px; padding: 7px 8px; border: 1px solid #d1fae5; }
+  .assurance-label { font-size: 7px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: .8px; }
+  .assurance-value { font-size: 10px; color: #064e3b; font-weight: 900; margin-top: 1px; text-transform: capitalize; }
+  .assurance-text { font-size: 9px; color: #065f46; line-height: 1.5; }
+
   /* Acceptance */
   .acceptance-section {
     border: 2px dashed ${brandColor}40;
@@ -428,6 +445,32 @@ function buildHtml(data: PdfQuoteData): string {
     <ul class="assumptions-list">
       ${data.aiAssumptions.map(a => `<li>${a}</li>`).join("")}
     </ul>
+  </div>
+  ` : ""}
+
+  ${data.assurance ? `
+  <!-- Quote Assurance -->
+  <div class="assurance-section">
+    <div class="assurance-title">Kindai Quote Assurance</div>
+    <div class="assurance-grid">
+      <div class="assurance-metric">
+        <div class="assurance-label">Risk</div>
+        <div class="assurance-value">${data.assurance.overallRisk}</div>
+      </div>
+      <div class="assurance-metric">
+        <div class="assurance-label">Score</div>
+        <div class="assurance-value">${data.assurance.riskScore}/100</div>
+      </div>
+      <div class="assurance-metric">
+        <div class="assurance-label">Value Band</div>
+        <div class="assurance-value">${data.assurance.valueBand.replace("_", " ")}</div>
+      </div>
+      <div class="assurance-metric">
+        <div class="assurance-label">Approval</div>
+        <div class="assurance-value">${data.assurance.approvalLevel.replace("_", " ")}</div>
+      </div>
+    </div>
+    <div class="assurance-text">${data.assurance.summary}</div>
   </div>
   ` : ""}
 

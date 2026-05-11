@@ -1,0 +1,76 @@
+{
+  "marketBasis": "Australia",
+  "currency": "AUD",
+  "gstTreatment": "ex GST unless stated otherwise",
+  "items": [
+    {
+      "description": "Double GPO power points",
+      "category": "materials",
+      "unit": "each",
+      "quantity": 28,
+      "unitRate": 145,
+      "subtotal": 4060,
+      "confidence": 93,
+      "evidence": "Power layout symbols counted on tenancy plan."
+    },
+    {
+      "description": "LED panel light fittings",
+      "category": "materials",
+      "unit": "ea",
+      "quantity": 42,
+      "unitRate": 210,
+      "subtotal": 8820,
+      "confidence": 92,
+      "evidence": "Lighting layout symbols counted."
+    },
+    {
+      "description": "Emergency and exit light fittings",
+      "category": "materials",
+      "unit": "ea",
+      "quantity": 7,
+      "unitRate": 255,
+      "subtotal": 1785,
+      "confidence": 90,
+      "evidence": "Emergency lighting legend and symbols."
+    },
+    {
+      "description": "2.5mm TPS cable run",
+      "category": "materials",
+      "unit": "lm",
+      "quantity": 190,
+      "unitRate": 8,
+      "subtotal": 1520,
+      "confidence": 86,
+      "evidence": "Measured from circuit route with allowance."
+    },
+    {
+      "description": "Switchboard works allowance",
+      "category": "materials",
+      "unit": "lot",
+      "quantity": 1,
+      "unitRate": 5600,
+      "subtotal": 5600,
+      "confidence": 76,
+      "evidence": "Scope note calls for existing board modification."
+    },
+    {
+      "description": "Electrical installation labour",
+      "category": "labour",
+      "unit": "hours",
+      "quantity": 225,
+      "unitRate": 115,
+      "subtotal": 25875,
+      "confidence": 88,
+      "evidence": "Labour build-up from counted outlets, lights, cabling, and commissioning."
+    }
+  ],
+  "warnings": [
+    "Switchboard capacity is not visible on the supplied drawing and must be confirmed before issue.",
+    "Final fixture selections are not specified, so rates should be checked against the selected fittings."
+  ],
+  "assumptions": [
+    "Cable route includes a normal installation allowance because reflected ceiling detail is limited."
+  ],
+  "confidence": 88,
+  "total": 47660
+}

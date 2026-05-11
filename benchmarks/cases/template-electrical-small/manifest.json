@@ -1,0 +1,28 @@
+{
+  "caseId": "template-electrical-small",
+  "title": "Small Retail Electrical Fitout",
+  "trade": "electrical",
+  "projectValueBand": "managed",
+  "market": {
+    "country": "Australia",
+    "stateOrTerritory": "Australia-wide template; replace with the project state or territory before live investor runs",
+    "currency": "AUD",
+    "gstTreatment": "ex GST benchmark values unless stated otherwise",
+    "pricingBasis": "Australian electrical supplier pricing, subcontractor pricing, and estimator-reviewed local market allowances",
+    "labourBasis": "Licensed Australian electrical labour with state-specific access, travel, overtime, and award/EBA allowances reviewed by an estimator",
+    "standardsContext": [
+      "NCC/BCA obligations where relevant to the tenancy fitout.",
+      "AS/NZS electrical compliance requirements where visible in the documents.",
+      "State or territory WHS, licensing, access, shutdown, testing, commissioning, and certification requirements."
+    ]
+  },
+  "description": "A small retail tenancy fitout with lighting, general power, emergency lighting, switchboard works, and commissioning.",
+  "context": [
+    "Use this as a template for a clean, estimator-reviewed plan set.",
+    "Replace the document URL with a public or signed URL before live benchmark runs.",
+    "The expected quantities should be verified from the exact same plan revision used by the model."
+  ],
+  "documentUrls": [
+    "REPLACE_WITH_PUBLIC_OR_SIGNED_PLAN_URL"
+  ]
+}

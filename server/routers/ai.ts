@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, type MessageContent } from "../_core/llm";
+import { mediaContentFromUrl } from "../_core/mediaInputs";
 import { getDb } from "../db";
 import { estimates, lineItems, tradeProfiles, companyProfiles, priceBookItems, estimateCorrections } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
@@ -558,6 +559,18 @@ function buildTradePrompt(mode: "vision" | "text", trade: string, customRates?: 
 - RCD/RCBO 20A: $35-55 trade
 - 3-phase switchboard (12-way): $280-420 trade
 - Smoke alarm (interconnectable): $45-65 trade
+- EV charger — Tesla Gen 3 Wall Connector: $745 retail / $700-745 trade
+- EV charger — Evnex E2 Flex/Core/Plus: $799-$1,399 retail / $700-$1,250 trade
+- EV charger — Ocular IQ Home Solar 7kW: $1,195 retail / $1,050-$1,200 trade
+- EV charger — Ocular IQ Wallbox V2 7kW: $1,769 retail / $1,450-$1,650 trade
+- EV charger — Zappi/Wallbox/Premium solar unit allowance: $1,500-$2,200 retail / $1,200-$1,800 trade
+- EV charger — 22kW single/three-phase wall charger allowance: $1,500-$2,400 retail / $1,250-$2,000 trade
+- EV charger circuit protection, 40A Type A RCBO/RCD: $90-$220 trade depending on 1P/3P
+- Type B EV RCD allowance where no built-in 6mA DC fault detection: $350-$650 trade
+- 6mm² dedicated EV circuit cable: $6.50-$9.50/m trade; three-phase 6mm cable: $16-$24/m trade
+- Weatherproof EV isolator 40A-63A: $45-$95 trade where required/advisable
+- Standard residential EV charger installation labour and commissioning: $800-$1,400 excluding charger
+- EV switchboard upgrade/load-management provisional allowance: $450-$1,200 where board capacity or supply limits are uncertain
 - Licensed electrician labour: $${labourRate.min}-${labourRate.max}/hr
 - Apprentice labour: $38-55/hr`,
       criticalRules: `- Count every GPO, light point, switch, and circuit on the plan
@@ -566,6 +579,10 @@ function buildTradePrompt(mode: "vision" | "text", trade: string, customRates?: 
 - Include conduit where required (wet areas, external, underground)
 - Safety systems: smoke alarms required in every bedroom, hallway, and living area per AS3786
 - Data points: include Cat6 cable, wall plates, and patch panel
+- EV chargers: never price a smart residential wall charger below $700 unless the exact supplied model is known; use $1,200 as the default buyer allowance for Ocular/Zappi/Wallbox/Evnex-class chargers when brand is not specified
+- EV chargers: include the charger hardware, dedicated circuit cable, 40A RCD/RCBO protection, isolator where board is not adjacent/visible, testing, commissioning, and a switchboard/load-management provisional sum where capacity is unknown
+- EV chargers: 32A domestic installs need a dedicated circuit and minimum 6mm² cable; check state supply limits and main switch capacity
+- EV chargers: if the charger does not have built-in 6mA DC fault detection, include a Type B RCD allowance instead of cheap Type A-only protection
 - All labour as separate line items per section`,
     },
      plumbing: {
@@ -1209,19 +1226,28 @@ export const aiRouter = router({
     pages: z.array(z.object({
       fileName: z.string().max(255),
       fileBase64: z.string().max(44_000_000),
-      contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
+      contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf", "image/heic", "image/heif"]),
     })).min(1).max(50),
   })).mutation(async ({ ctx, input }) => {
     const MAX_FILE_SIZE = 32 * 1024 * 1024;
     const results: { url: string; key: string; fileName: string }[] = [];
     for (const page of input.pages) {
-      const buffer = Buffer.from(page.fileBase64, "base64");
-      if (buffer.length > MAX_FILE_SIZE) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: `File "${page.fileName}" is too large (${(buffer.length / 1024 / 1024).toFixed(1)}MB). Maximum is 32MB per file.` });
+      const rawBuffer = Buffer.from(page.fileBase64, "base64");
+      if (rawBuffer.length > MAX_FILE_SIZE) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `File "${page.fileName}" is too large (${(rawBuffer.length / 1024 / 1024).toFixed(1)}MB). Maximum is 32MB per file.` });
       }
-      const ext = page.fileName.split(".").pop() ?? "png";
+      let buffer: Buffer;
+      let contentType = page.contentType;
+      let ext = page.fileName.split(".").pop()?.toLowerCase() ?? "png";
+      if (contentType === "image/heic" || contentType === "image/heif") {
+        buffer = await convertHeicToJpegAi(rawBuffer);
+        contentType = "image/jpeg";
+        ext = "jpg";
+      } else {
+        buffer = rawBuffer;
+      }
       const key = `plans/${ctx.user.id}/${nanoid()}.${ext}`;
-      const { url } = await storagePut(key, buffer, page.contentType);
+      const { url } = await storagePut(key, buffer, contentType);
       results.push({ url, key, fileName: page.fileName });
     }
     return { pages: results, count: results.length };
@@ -1231,16 +1257,25 @@ export const aiRouter = router({
   uploadScopeDoc: protectedProcedure.input(z.object({
     fileName: z.string().max(255),
     fileBase64: z.string().max(44_000_000), // ~32MB base64 encoded
-    contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
+    contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf", "image/heic", "image/heif"]),
   })).mutation(async ({ ctx, input }) => {
     const rawBuffer = Buffer.from(input.fileBase64, "base64");
     const MAX_FILE_SIZE = 32 * 1024 * 1024;
     if (rawBuffer.length > MAX_FILE_SIZE) {
       throw new TRPCError({ code: "BAD_REQUEST", message: `File too large. Maximum size is 32MB. Your file is ${(rawBuffer.length / 1024 / 1024).toFixed(1)}MB.` });
     }
-    const ext = input.fileName.split(".").pop()?.toLowerCase() ?? "pdf";
+    let finalBuffer: Buffer;
+    let contentType = input.contentType;
+    let ext = input.fileName.split(".").pop()?.toLowerCase() ?? "pdf";
+    if (contentType === "image/heic" || contentType === "image/heif") {
+      finalBuffer = await convertHeicToJpegAi(rawBuffer);
+      contentType = "image/jpeg";
+      ext = "jpg";
+    } else {
+      finalBuffer = rawBuffer;
+    }
     const key = `scope-docs/${ctx.user.id}/${nanoid()}.${ext}`;
-    const { url } = await storagePut(key, rawBuffer, input.contentType);
+    const { url } = await storagePut(key, finalBuffer, contentType);
     return { url, key };
   }),
 
@@ -1264,12 +1299,7 @@ export const aiRouter = router({
     const customRates = await fetchCustomRates(db, ctx.user.id, input.trade);
     const memory = await fetchCompanyMemory(db, ctx.user.id, input.trade);
     const systemPrompt = buildVisionPrompt(input.trade, customRates, memory);
-    const userContent: Array<{ type: string; text?: string; image_url?: { url: string; detail?: string } }> = [
-      {
-        type: "image_url",
-        image_url: { url: input.imageUrl, detail: "high" },
-      },
-    ];
+    const userContent: MessageContent[] = [mediaContentFromUrl(input.imageUrl)];
     if (input.additionalContext) {
       userContent.push({ type: "text", text: `Additional context from the estimator: ${input.additionalContext}` });
     }
@@ -1331,11 +1361,11 @@ export const aiRouter = router({
     const batchResults: TakeoffResult[] = [];
     for (let batchIdx = 0; batchIdx < batches.length; batchIdx++) {
       const batch = batches[batchIdx];
-      const userContent: Array<{ type: string; text?: string; image_url?: { url: string; detail?: string } }> = [];
+      const userContent: MessageContent[] = [];
 
-      // Add all images in this batch
+      // Add all uploaded plan pages in this batch, preserving PDFs as file input.
       for (const url of batch) {
-        userContent.push({ type: "image_url", image_url: { url, detail: "high" } });
+        userContent.push(mediaContentFromUrl(url));
       }
 
       const batchLabel = `Pages ${batchIdx * BATCH_SIZE + 1}–${Math.min((batchIdx + 1) * BATCH_SIZE, input.imageUrls.length)} of ${input.imageUrls.length}`;

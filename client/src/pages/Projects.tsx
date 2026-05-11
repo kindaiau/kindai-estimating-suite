@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { ArrowRight, FolderOpen, Plus, Search, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
 
@@ -29,6 +30,7 @@ const AU_STATES = ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"];
 
 export default function Projects() {
   const [, navigate] = useLocation();
+  const { isAuthenticated } = useAuth();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -37,7 +39,9 @@ export default function Projects() {
   });
 
   const utils = trpc.useUtils();
-  const { data: projects, isLoading } = trpc.projects.list.useQuery();
+  const { data: projects, isLoading } = trpc.projects.list.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
   const createProject = trpc.projects.create.useMutation({
     onSuccess: (data) => {
       toast.success("Project created!");

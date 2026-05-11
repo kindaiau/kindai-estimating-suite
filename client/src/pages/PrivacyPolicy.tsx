@@ -52,7 +52,11 @@ export default function PrivacyPolicy() {
               </div>
               <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                 <h3 className="font-semibold text-white mb-1">Usage Data</h3>
-                <p className="text-sm text-gray-400">Information about how you use our platform, including pages visited, features used, estimates created, and time spent on the platform.</p>
+                <p className="text-sm text-gray-400">Information about how you use our platform, including pages visited, features used, estimates created, product events such as uploads or takeoffs completed, and time spent on the platform. We use this to improve Kindai and make product decisions.</p>
+              </div>
+              <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                <h3 className="font-semibold text-white mb-1">Product Analytics Data</h3>
+                <p className="text-sm text-gray-400">We track non-sensitive product events such as pricing clicks, demo starts, plan uploads, AI takeoff success or failure, quote export, assurance blocks, and quote acceptance status. We do not intentionally send names, emails, phone numbers, uploaded filenames, quote links, client details, or document contents in product analytics events.</p>
               </div>
               <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                 <h3 className="font-semibold text-white mb-1">Uploaded Content</h3>
@@ -83,6 +87,7 @@ export default function PrivacyPolicy() {
               <li>Process payments and manage your subscription</li>
               <li>Respond to your support requests</li>
               <li>Analyse usage patterns to improve our product</li>
+              <li>Measure product funnels, conversion points, and feature reliability using non-sensitive analytics events</li>
               <li>Comply with legal obligations</li>
               <li>Detect and prevent fraud or security incidents</li>
               <li>Run targeted advertising campaigns on Meta platforms (Facebook and Instagram)</li>
@@ -139,6 +144,9 @@ export default function PrivacyPolicy() {
             <h2 className="text-xl font-semibold text-white mb-3">8. Cookies</h2>
             <p>
               We use cookies and similar tracking technologies to improve your experience on our platform. These include essential cookies (required for the platform to function), analytics cookies (to understand how you use the platform), and advertising cookies (including the Meta Pixel).
+            </p>
+            <p className="mt-3">
+              Product analytics are intended to measure aggregate behaviour and feature performance, not to record raw user sessions or capture sensitive quote, client, or uploaded document content.
             </p>
             <p className="mt-3">
               You can control cookies through your browser settings. Disabling certain cookies may affect the functionality of the platform.

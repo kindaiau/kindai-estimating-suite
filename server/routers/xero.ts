@@ -15,7 +15,9 @@ const XERO_CONNECTIONS_URL = "https://api.xero.com/connections";
 async function refreshXeroToken(db: any, profileId: number, refreshToken: string): Promise<string> {
   const clientId = ENV.xeroClientId;
   const clientSecret = ENV.xeroClientSecret;
-  if (!clientId || !clientSecret) throw new Error("Xero credentials not configured");
+  if (!clientId || !clientSecret) {
+    throw new Error("Xero OAuth app is not configured. Customers connect their own Xero account after this platform connector is enabled.");
+  }
 
   const response = await fetch(XERO_TOKEN_URL, {
     method: "POST",
@@ -59,7 +61,7 @@ async function getValidXeroToken(db: any, userId: number): Promise<{ token: stri
     .limit(1);
 
   if (!profile?.xeroRefreshToken || !profile?.xeroTenantId) {
-    throw new Error("Xero not connected. Please connect your Xero account first.");
+    throw new Error("Xero is not connected for this customer. Ask the customer to connect their own Xero account first.");
   }
 
   // Check if token is expired (with 5 min buffer)
@@ -120,7 +122,9 @@ export const xeroRouter = router({
     origin: z.string(),
   })).mutation(async ({ ctx, input }) => {
     const clientId = ENV.xeroClientId;
-    if (!clientId) throw new Error("Xero Client ID not configured");
+    if (!clientId) {
+      throw new Error("Xero OAuth app is not configured. Enable the platform connector before customers connect their own Xero account.");
+    }
 
     const redirectUri = `${input.origin}/api/xero/callback`;
     const state = Buffer.from(JSON.stringify({ userId: ctx.user.id, origin: input.origin })).toString("base64url");

@@ -22,6 +22,11 @@ import { sendEmail, sendEmailWithAttachment, verifyResendConnection } from "./re
 import { buildHtmlEmail, sendBetaWelcomeEmail } from "./welcomeEmail";
 import { buildApologyHtml, sendApologyEmail } from "./apologyEmail";
 import { buildNurtureEmail, sendNurtureEmail } from "./betaNurture";
+import {
+  sendPilotLeadEmails,
+  sendPilotPaymentEmails,
+  sendResendEmail,
+} from "./resendEmail";
 
 describe("Resend Email Sender", () => {
   beforeEach(() => {
@@ -252,5 +257,77 @@ describe("Email Branding Consistency", () => {
 
     expect(welcome.toLowerCase()).toContain("unsubscribe");
     expect(apology.toLowerCase()).toContain("unsubscribe");
+  });
+});
+
+describe("Pilot funnel Resend emails", () => {
+  it("sendResendEmail skips cleanly when RESEND_API_KEY is missing", async () => {
+    delete process.env.RESEND_API_KEY;
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await expect(
+      sendResendEmail({
+        to: "lead@example.com",
+        subject: "Test",
+        text: "Body",
+      })
+    ).resolves.toBe(false);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("sendPilotLeadEmails sends lead confirmation and owner follow-up", async () => {
+    process.env.RESEND_API_KEY = "re_test";
+    process.env.MATTHEW_NOTIFICATION_EMAIL = "matt@kindaiestimator.com";
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+    } as Response);
+
+    const result = await sendPilotLeadEmails({
+      name: "Dave Builder",
+      email: "dave@example.com",
+      phone: "0400000000",
+      tradeType: "Carpentry",
+      intent: "Paid Pilot Setup",
+    });
+
+    expect(result).toEqual({ leadSent: true, ownerSent: true });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toMatchObject({
+      to: "dave@example.com",
+      subject: "Your Kindai pilot spot request",
+    });
+    expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toMatchObject({
+      to: "matt@kindaiestimator.com",
+      subject: "New Kindai pilot lead: Dave Builder",
+    });
+  });
+
+  it("sendPilotPaymentEmails sends paid pilot receipt and owner booking prompt", async () => {
+    process.env.RESEND_API_KEY = "re_test";
+    process.env.MATTHEW_NOTIFICATION_EMAIL = "matt@kindaiestimator.com";
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+    } as Response);
+
+    const result = await sendPilotPaymentEmails({
+      name: "Sarah Sparky",
+      email: "sarah@example.com",
+      phone: "0411111111",
+      tradeType: "Electrical",
+      amountPaid: 100000,
+      currency: "aud",
+      stripeSessionId: "cs_test_paid",
+    });
+
+    expect(result).toEqual({ customerSent: true, ownerSent: true });
+    const [customerCall, ownerCall] = fetchMock.mock.calls.slice(-2);
+    const customerBody = JSON.parse(String(customerCall[1]?.body));
+    const ownerBody = JSON.parse(String(ownerCall[1]?.body));
+
+    expect(customerBody.subject).toBe("Your Kindai founding pilot setup is secured");
+    expect(customerBody.text).toContain("$1,000.00");
+    expect(ownerBody.subject).toBe("Paid Kindai pilot setup: Sarah Sparky");
+    expect(ownerBody.text).toContain("book the setup sprint");
+    expect(ownerBody.text).toContain("cs_test_paid");
   });
 });

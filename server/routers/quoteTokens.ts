@@ -5,6 +5,7 @@ import { quoteTokens, estimates, lineItems, users } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import crypto from "crypto";
+import { buildQuoteAssuranceReport } from "../assurance";
 
 function generateToken(): string {
   return crypto.randomBytes(48).toString("hex");
@@ -15,7 +16,7 @@ export const quoteTokensRouter = router({
   sendQuote: protectedProcedure.input(z.object({
     estimateId: z.number().int().positive(),
     clientName: z.string().min(1).max(255),
-    clientEmail: z.string().email(),
+    clientEmail: z.string().email().optional().or(z.literal("")),
     message: z.string().max(2000).optional(),
     expiryDays: z.number().int().min(1).max(90).default(30),
     origin: z.string().url(), // frontend origin for building the URL
@@ -31,6 +32,18 @@ export const quoteTokensRouter = router({
 
     if (!estimate) {
       throw new TRPCError({ code: "NOT_FOUND", message: "Estimate not found" });
+    }
+
+    const items = await db
+      .select()
+      .from(lineItems)
+      .where(eq(lineItems.estimateId, input.estimateId));
+    const assurance = buildQuoteAssuranceReport(estimate, items);
+    if (!assurance.canIssue) {
+      throw new TRPCError({
+        code: "PRECONDITION_FAILED",
+        message: `Quote assurance blocked sending: ${assurance.issueBlocks[0]}`,
+      });
     }
 
     const token = generateToken();
@@ -52,12 +65,17 @@ export const quoteTokensRouter = router({
       userId: ctx.user.id,
       token,
       clientName: input.clientName,
-      clientEmail: input.clientEmail,
+      clientEmail: input.clientEmail || null,
       message: input.message,
       expiresAt,
       sentAt: new Date(),
       status: "pending",
     });
+
+    await db
+      .update(estimates)
+      .set({ status: "sent" })
+      .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)));
 
     const quoteUrl = `${input.origin}/quote/accept/${token}`;
 
@@ -65,7 +83,7 @@ export const quoteTokensRouter = router({
       token,
       quoteUrl,
       expiresAt,
-      clientEmail: input.clientEmail,
+      clientEmail: input.clientEmail || null,
     };
   }),
 
