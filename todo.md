@@ -1006,3 +1006,17 @@
 - [x] Form fields: name, email, what trade/business, why you want access
 - [x] Send confirmation email via Resend when someone joins waitlist
 - [x] Save checkpoint and publish
+
+## Auto-SWMS + Compliance Pack (13 May 2026)
+- [ ] Add swms and swms_signatures tables to drizzle schema
+- [ ] Generate and apply migration SQL
+- [ ] Create shared/compliance.ts with HRCW mapping by trade type and materials
+- [ ] Build server/routers/swms.ts with generate, get, update, finalize, shareLink, sign endpoints
+- [ ] Register swms router in server/routers.ts
+- [ ] Build client/src/pages/SwmsEditor.tsx — editable SWMS with AI suggestions
+- [ ] Add "Generate SWMS" button to EstimateBuilder Compliance tab
+- [ ] Build client/src/pages/SwmsSign.tsx — public share link for worker digital signatures
+- [ ] Add /swms/:swmsId and /swms/sign/:shareToken routes to App.tsx
+- [ ] Gate SWMS behind Business tier ($499/mo) with upgrade prompt for Pro/lower users
+- [ ] Write vitest tests for swms router
+- [ ] Save checkpoint and publish

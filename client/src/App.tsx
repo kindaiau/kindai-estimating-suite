@@ -41,6 +41,8 @@ import AIHelpAssistant from "./components/AIHelpAssistant";
 import PostHogPageTracker from "./components/PostHogPageTracker";
 import Login from "./pages/Login";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import SwmsEditor from "./pages/SwmsEditor";
+import SwmsSign from "./pages/SwmsSign";
 
 const FbLeadsDashboard = lazy(() => import("./pages/FbLeadsDashboard"));
 const LaunchEngineLandingPage = lazy(() => import("./launch-engine/LandingPage"));
@@ -99,6 +101,8 @@ function Router() {
         <Route path="/launch-engine" component={LaunchEngineLandingPage} />
         <Route path="/ad-engine/creative" component={protectedPage(AdEngineCreativePage)} />
         <Route path="/ad-engine" component={protectedPage(AdEngineOverviewPage)} />
+        <Route path="/swms/:id" component={protectedPage(SwmsEditor)} />
+        <Route path="/swms/sign/:token" component={SwmsSign} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

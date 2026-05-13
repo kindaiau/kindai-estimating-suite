@@ -29,6 +29,7 @@ import { estimateAgentRouter } from "./routers/estimateAgent";
 import { getgasSeedRouter } from "./routers/getgasSeed";
 import { ebookRouter } from "./routers/ebook";
 import { waitlistRouter } from "./routers/waitlist";
+import { swmsRouter } from "./routers/swms";
 
 export const appRouter = router({
   system: systemRouter,
@@ -67,6 +68,7 @@ export const appRouter = router({
   getgasSeed: getgasSeedRouter,
   ebook: ebookRouter,
   waitlist: waitlistRouter,
+  swms: swmsRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -737,3 +737,63 @@ export const waitlist = mysqlTable("waitlist", {
 
 export type WaitlistEntry = typeof waitlist.$inferSelect;
 export type InsertWaitlistEntry = typeof waitlist.$inferInsert;
+
+// ─── Auto-SWMS + Compliance Pack ──────────────────────────────────────────────
+
+export const swms = mysqlTable("swms", {
+  id: varchar("id", { length: 64 }).primaryKey(), // nanoid
+  estimateId: int("estimateId").notNull(),
+  userId: int("userId").notNull(),
+  version: int("version").notNull().default(1),
+  status: mysqlEnum("swmsStatus", ["draft", "pending_review", "approved", "finalized"]).default("draft").notNull(),
+  // SWMS Details (Section 5.1)
+  pcbuName: varchar("pcbuName", { length: 255 }),
+  pcbuAbn: varchar("pcbuAbn", { length: 20 }),
+  pcbuAddress: text("pcbuAddress"),
+  pcbuContact: varchar("pcbuContact", { length: 255 }),
+  principalContractorName: varchar("principalContractorName", { length: 255 }),
+  principalContractorAddress: text("principalContractorAddress"),
+  workLocation: text("workLocation"),
+  worksManager: varchar("worksManager", { length: 255 }),
+  responsibleForCompliance: varchar("responsibleForCompliance", { length: 255 }),
+  responsibleForReview: varchar("responsibleForReview", { length: 255 }),
+  workerConsultationConfirmed: boolean("workerConsultationConfirmed").default(false),
+  datePrepared: bigint("datePrepared", { mode: "number" }),
+  reviewDate: bigint("reviewDate", { mode: "number" }),
+  // AI-generated content stored as JSON
+  hrcwCategories: json("hrcwCategories").$type<string[]>(), // identified HRCW categories
+  workActivities: json("workActivities").$type<WorkActivity[]>(), // the main SWMS table
+  // PDF and sharing
+  pdfUrl: varchar("pdfUrl", { length: 2048 }),
+  shareToken: varchar("shareToken", { length: 128 }).unique(),
+  // Timestamps
+  finalizedAt: bigint("finalizedAt", { mode: "number" }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Swms = typeof swms.$inferSelect;
+export type InsertSwms = typeof swms.$inferInsert;
+
+export const swmsSignatures = mysqlTable("swms_signatures", {
+  id: int("id").autoincrement().primaryKey(),
+  swmsId: varchar("swmsId", { length: 64 }).notNull(),
+  workerName: varchar("workerName", { length: 255 }).notNull(),
+  workerSignature: text("workerSignature").notNull(), // base64 image data
+  signedAt: timestamp("signedAt").defaultNow().notNull(),
+});
+
+export type SwmsSignature = typeof swmsSignatures.$inferSelect;
+export type InsertSwmsSignature = typeof swmsSignatures.$inferInsert;
+
+// ─── SWMS Type Definitions ────────────────────────────────────────────────────
+
+export interface WorkActivity {
+  id: string;
+  task: string;           // Work Activity / Task
+  hazards: string[];      // Hazards and Risks
+  controls: string[];     // Control Measures (hierarchy: Elimination → PPE)
+  ppe: string[];          // Required PPE
+  responsible: string;    // Person responsible
+  isAiGenerated: boolean; // Flag AI-generated rows
+}

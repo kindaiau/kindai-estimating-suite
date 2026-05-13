@@ -217,6 +217,20 @@ export default function EstimateBuilder() {
     onError: (e) => toast.error(e.message),
   });
 
+  const generateSwms = trpc.swms.generate.useMutation({
+    onSuccess: (data) => {
+      toast.success("SWMS generated! Opening editor...");
+      navigate(`/swms/${data.id}`);
+    },
+    onError: (e: any) => {
+      if (e.message?.includes("Business") || e.message?.includes("tier")) {
+        toast.error("Auto-SWMS requires the Business plan. Upgrade in Billing.");
+      } else {
+        toast.error(e.message || "Failed to generate SWMS");
+      }
+    },
+  });
+
   const pushToXero = trpc.xero.createInvoice.useMutation({
     onSuccess: (data: any) => {
       toast.success(`Invoice pushed to Xero! ID: ${data.invoiceNumber}`);
@@ -866,6 +880,41 @@ export default function EstimateBuilder() {
                     Export PDF
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Auto-SWMS Card */}
+            <Card className="border-0 shadow-sm rounded-2xl overflow-hidden bg-gradient-to-br from-[#0a0a0f] to-[#1a0a1f]">
+              <CardHeader className="pb-3 pt-5 px-5">
+                <CardTitle className="text-sm font-black flex items-center gap-2 text-white">
+                  <div className="w-6 h-6 rounded-full bg-[#FF2D78] flex items-center justify-center">
+                    <Shield className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  Auto-SWMS Generator
+                  <Badge className="text-xs bg-[#FF2D78]/20 text-[#FF2D78] border-[#FF2D78]/30 ml-auto">Business</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-5 pb-5 space-y-3">
+                <p className="text-xs text-white/60 leading-relaxed">
+                  Generate a compliant Safe Work Method Statement (SWMS) from this estimate in seconds. AI identifies High-Risk Construction Work (HRCW), pre-fills hazards and control measures, and produces a PDF ready for worker signatures.
+                </p>
+                <div className="flex flex-wrap gap-2 text-xs">
+                  {["HRCW auto-detection", "Editable work activities", "Digital worker signatures", "PDF export", "WHS compliant"].map(f => (
+                    <span key={f} className="bg-white/10 text-white/70 px-2 py-0.5 rounded-full">{f}</span>
+                  ))}
+                </div>
+                <Button
+                  size="sm"
+                  className="bg-[#FF2D78] hover:bg-[#e02268] text-white rounded-full font-bold text-xs px-5"
+                  onClick={() => generateSwms.mutate({ estimateId })}
+                  disabled={generateSwms.isPending}
+                >
+                  {generateSwms.isPending ? (
+                    <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />Generating SWMS...</>
+                  ) : (
+                    <><Shield className="w-3.5 h-3.5 mr-1.5" />Generate SWMS</>  
+                  )}
+                </Button>
               </CardContent>
             </Card>
 
