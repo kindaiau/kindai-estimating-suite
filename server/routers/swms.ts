@@ -25,6 +25,10 @@ import {
   estimates,
   lineItems,
   users,
+  businessSafetyProfiles,
+  aiCorrections,
+  sitePhotos,
+  companyProcedures,
   type WorkActivity,
 } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
@@ -36,6 +40,12 @@ import {
   HAZARD_CONTROL_TEMPLATES,
   SWMS_REQUIRED_TIER,
 } from "../../shared/compliance";
+import {
+  generateSwmsContentV2,
+  analyseSitePhoto,
+  extractProceduresFromPdf,
+  detectAndStoreCorrections,
+} from "../swmsAI";
 
 // ─── Tier Gate ────────────────────────────────────────────────────────────────
 
@@ -331,7 +341,7 @@ Generate 4-8 work activity rows covering the main tasks for this job. Focus on t
 export const swmsRouter = router({
   /** Generate a draft SWMS from an estimate (Business tier required) */
   generate: protectedProcedure
-    .input(z.object({ estimateId: z.number() }))
+    .input(z.object({ estimateId: z.number(), sitePhotoUrls: z.array(z.string()).optional() }))
     .mutation(async ({ ctx, input }) => {
       const db = requireDatabase(await getDb());
 
@@ -384,8 +394,9 @@ export const swmsRouter = router({
         scope: scopeText,
       });
 
-      // Generate AI work activities
-      const workActivities = await generateSwmsContent({
+      // Generate AI work activities using V2 engine (all intelligence layers)
+      const result = await generateSwmsContentV2({
+        userId: ctx.user.id,
         trade: estimate.trade,
         title: estimate.title,
         scope: scopeText,
@@ -393,7 +404,9 @@ export const swmsRouter = router({
         location: locationText,
         state: stateText,
         hrcwCategories,
+        sitePhotoUrls: input.sitePhotoUrls,
       });
+      const workActivities = result.activities;
 
       // Create SWMS record
       const swmsId = nanoid(16);
@@ -594,4 +607,145 @@ export const swmsRouter = router({
 
       return db.select().from(swmsSignatures).where(eq(swmsSignatures.swmsId, input.id));
     }),
+
+  // ─── AI Intelligence Layer Endpoints ──────────────────────────────────────
+
+  /** Analyse a site photo for hazards (multimodal vision) */
+  analyseSitePhoto: protectedProcedure
+    .input(z.object({
+      photoUrl: z.string().url(),
+      swmsId: z.string().optional(),
+      estimateId: z.number().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (!hasSWMSAccess(ctx.user.subscriptionTier)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Site photo analysis requires the Business plan." });
+      }
+      const result = await analyseSitePhoto(input.photoUrl, ctx.user.id, input.swmsId, input.estimateId);
+      return result;
+    }),
+
+  /** Extract company procedures from an uploaded SWMS PDF */
+  extractFromPdf: protectedProcedure
+    .input(z.object({
+      pdfUrl: z.string().url(),
+      trade: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (!hasSWMSAccess(ctx.user.subscriptionTier)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "PDF extraction requires the Business plan." });
+      }
+      return extractProceduresFromPdf(input.pdfUrl, ctx.user.id, input.trade);
+    }),
+
+  /** Save SWMS with correction detection (feedback loop) */
+  saveWithCorrections: protectedProcedure
+    .input(z.object({
+      id: z.string(),
+      workActivities: z.array(z.any()),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = requireDatabase(await getDb());
+
+      const [existing] = await db
+        .select()
+        .from(swms)
+        .where(and(eq(swms.id, input.id), eq(swms.userId, ctx.user.id)))
+        .limit(1);
+
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "SWMS not found" });
+
+      // Detect corrections between AI-generated and user-edited content
+      const aiActivities = (existing.workActivities as WorkActivity[]) || [];
+      const userActivities = input.workActivities as WorkActivity[];
+
+      const correctionsStored = await detectAndStoreCorrections(
+        ctx.user.id,
+        (existing as any).trade || "general",
+        input.id,
+        aiActivities.filter(a => a.isAiGenerated),
+        userActivities.filter(a => a.isAiGenerated)
+      );
+
+      // Update the SWMS with user's edits
+      await db.update(swms).set({
+        workActivities: userActivities as any,
+      } as any).where(eq(swms.id, input.id));
+
+      return { success: true, correctionsDetected: correctionsStored };
+    }),
+
+  // ─── Business Safety Profile CRUD ─────────────────────────────────────────
+
+  /** List safety profile items */
+  listSafetyProfile: protectedProcedure
+    .input(z.object({ trade: z.string().optional() }))
+    .query(async ({ ctx, input }) => {
+      const db = requireDatabase(await getDb());
+      const conditions = [eq(businessSafetyProfiles.userId, ctx.user.id)];
+      if (input.trade) conditions.push(eq(businessSafetyProfiles.trade, input.trade));
+      return db.select().from(businessSafetyProfiles)
+        .where(and(...conditions))
+        .orderBy(desc(businessSafetyProfiles.createdAt));
+    }),
+
+  /** Add a safety profile item */
+  addSafetyProfileItem: protectedProcedure
+    .input(z.object({
+      trade: z.string().optional(),
+      category: z.enum(["ppe", "control", "procedure", "terminology", "emergency"]),
+      title: z.string().min(1),
+      description: z.string().min(1),
+      standardRef: z.string().optional(),
+      isDefault: z.boolean().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = requireDatabase(await getDb());
+      await db.insert(businessSafetyProfiles).values({
+        userId: ctx.user.id,
+        trade: input.trade || null,
+        category: input.category,
+        title: input.title,
+        description: input.description,
+        standardRef: input.standardRef || null,
+        isDefault: input.isDefault ?? true,
+        source: "manual_entry",
+      } as any);
+      return { success: true };
+    }),
+
+  /** Delete a safety profile item */
+  deleteSafetyProfileItem: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = requireDatabase(await getDb());
+      await db.delete(businessSafetyProfiles)
+        .where(and(eq(businessSafetyProfiles.id, input.id), eq(businessSafetyProfiles.userId, ctx.user.id)));
+      return { success: true };
+    }),
+
+  /** Get AI learning stats (how many corrections, profile items, procedures) */
+  getAIStats: protectedProcedure.query(async ({ ctx }) => {
+    const db = requireDatabase(await getDb());
+
+    const corrections = await db.select().from(aiCorrections)
+      .where(eq(aiCorrections.userId, ctx.user.id));
+    const profiles = await db.select().from(businessSafetyProfiles)
+      .where(eq(businessSafetyProfiles.userId, ctx.user.id));
+    const procedures = await db.select().from(companyProcedures)
+      .where(eq(companyProcedures.userId, ctx.user.id));
+    const photos = await db.select().from(sitePhotos)
+      .where(eq(sitePhotos.userId, ctx.user.id));
+
+    return {
+      totalCorrections: corrections.length,
+      totalProfileItems: profiles.length,
+      totalProcedures: procedures.length,
+      totalPhotosAnalysed: photos.length,
+      correctionsByCategory: corrections.reduce((acc, c) => {
+        acc[c.category] = (acc[c.category] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>),
+    };
+  }),
 });

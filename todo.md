@@ -1020,3 +1020,20 @@
 - [ ] Gate SWMS behind Business tier ($499/mo) with upgrade prompt for Pro/lower users
 - [ ] Write vitest tests for swms router
 - [ ] Save checkpoint and publish
+
+## SWMS AI Upgrade — Phenomenal Quality (13 May 2026)
+- [x] Business Profile Memory: DB table for company standard PPE, controls, procedures
+- [x] Business Profile Memory: Settings UI for users to configure their standards
+- [x] Business Profile Memory: Inject company profile into every SWMS generation prompt
+- [x] Feedback Loop: Track user edits/corrections to AI-generated SWMS content
+- [x] Feedback Loop: Store correction patterns (what AI said → what user changed it to)
+- [x] Feedback Loop: Inject top corrections into future prompts (few-shot learning)
+- [x] Multimodal Site Photos: Upload endpoint for site photos (S3 storage)
+- [x] Multimodal Site Photos: Vision AI identifies hazards from photos (overhead lines, uneven ground, etc.)
+- [x] Multimodal Site Photos: Merge photo-detected hazards into SWMS generation
+- [x] Past SWMS Learning: Upload old SWMS PDFs endpoint
+- [x] Past SWMS Learning: Extract company procedures/controls from uploaded PDFs via LLM
+- [x] Past SWMS Learning: Store extracted procedures as company baseline
+- [x] Integration: Unified SWMS generation pipeline combining all 4 intelligence sources
+- [x] Integration: Upgraded prompt engineering with chain-of-thought reasoning
+- [x] Tests: Vitest coverage for all new endpoints

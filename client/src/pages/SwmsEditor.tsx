@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import {
   AlertTriangle,
   ArrowLeft,
+  Brain,
+  Camera,
   CheckCircle,
   Download,
   ExternalLink,
@@ -19,7 +21,9 @@ import {
   Shield,
   Sparkles,
   Trash2,
+  Upload,
   Users,
+  Zap,
 } from "lucide-react";
 import type { WorkActivity } from "../../../drizzle/schema";
 import { HRCW_LABELS } from "../../../shared/compliance";
@@ -36,6 +40,23 @@ function HrcwBadge({ category }: { category: string }) {
   );
 }
 
+// ─── Risk Rating Badge ───────────────────────────────────────────────────────
+
+function RiskBadge({ rating }: { rating?: string }) {
+  if (!rating) return null;
+  const colors: Record<string, string> = {
+    critical: "bg-red-500/20 text-red-300 border-red-500/40",
+    high: "bg-orange-500/20 text-orange-300 border-orange-500/40",
+    medium: "bg-yellow-500/20 text-yellow-300 border-yellow-500/40",
+    low: "bg-green-500/20 text-green-300 border-green-500/40",
+  };
+  return (
+    <Badge variant="outline" className={`text-[10px] ${colors[rating] || colors.medium}`}>
+      {rating.toUpperCase()}
+    </Badge>
+  );
+}
+
 // ─── Work Activity Row ────────────────────────────────────────────────────────
 
 function ActivityRow({
@@ -43,21 +64,24 @@ function ActivityRow({
   index,
   onChange,
   onDelete,
+  disabled,
 }: {
   activity: WorkActivity;
   index: number;
   onChange: (updated: WorkActivity) => void;
   onDelete: () => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="border border-white/10 rounded-lg p-4 bg-white/5 space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-1">
           <span className="text-xs text-white/40 font-mono w-5">{index + 1}.</span>
           <Input
             value={activity.task}
             onChange={e => onChange({ ...activity, task: e.target.value })}
             placeholder="Work activity / task name"
+            disabled={disabled}
             className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-sm h-8"
           />
           {activity.isAiGenerated && (
@@ -65,10 +89,13 @@ function ActivityRow({
               <Sparkles className="w-2.5 h-2.5 mr-1" />AI
             </Badge>
           )}
+          <RiskBadge rating={(activity as any).riskRating} />
         </div>
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-white/30 hover:text-red-400" onClick={onDelete}>
-          <Trash2 className="w-3.5 h-3.5" />
-        </Button>
+        {!disabled && (
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-white/30 hover:text-red-400" onClick={onDelete}>
+            <Trash2 className="w-3.5 h-3.5" />
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -78,24 +105,27 @@ function ActivityRow({
             value={activity.hazards.join("\n")}
             onChange={e => onChange({ ...activity, hazards: e.target.value.split("\n").filter(Boolean) })}
             placeholder="One hazard per line"
+            disabled={disabled}
             className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-xs min-h-[80px] resize-none"
           />
         </div>
         <div>
-          <label className="text-xs text-white/40 mb-1 block">Control Measures</label>
+          <label className="text-xs text-white/40 mb-1 block">Control Measures (Hierarchy Order)</label>
           <Textarea
             value={activity.controls.join("\n")}
             onChange={e => onChange({ ...activity, controls: e.target.value.split("\n").filter(Boolean) })}
-            placeholder="One control per line (use hierarchy: Elimination → PPE)"
+            placeholder="[ELIMINATE] Remove hazard entirely&#10;[ENGINEER] Physical barrier&#10;[ADMIN] Toolbox talk&#10;[PPE] AS/NZS 1801 helmet"
+            disabled={disabled}
             className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-xs min-h-[80px] resize-none"
           />
         </div>
         <div>
-          <label className="text-xs text-white/40 mb-1 block">Required PPE</label>
+          <label className="text-xs text-white/40 mb-1 block">Required PPE (with Standards)</label>
           <Textarea
             value={activity.ppe.join("\n")}
             onChange={e => onChange({ ...activity, ppe: e.target.value.split("\n").filter(Boolean) })}
-            placeholder="One PPE item per line"
+            placeholder="AS/NZS 1801 safety helmet&#10;AS/NZS 1337.1 safety glasses&#10;AS/NZS 2210.3 safety boots"
+            disabled={disabled}
             className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-xs min-h-[80px] resize-none"
           />
           <div className="mt-2">
@@ -104,9 +134,274 @@ function ActivityRow({
               value={activity.responsible}
               onChange={e => onChange({ ...activity, responsible: e.target.value })}
               placeholder="PCBU / Supervisor"
+              disabled={disabled}
               className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-xs h-7"
             />
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Site Photo Hazard Card ──────────────────────────────────────────────────
+
+function SitePhotoHazardCard({ analysis }: { analysis: any }) {
+  if (!analysis || !analysis.hazards?.length) return null;
+
+  const riskColors: Record<string, string> = {
+    critical: "border-red-500/60 bg-red-950/30",
+    high: "border-orange-500/60 bg-orange-950/30",
+    medium: "border-yellow-500/60 bg-yellow-950/30",
+    low: "border-green-500/60 bg-green-950/30",
+  };
+
+  return (
+    <div className={`border rounded-xl p-5 ${riskColors[analysis.overallRiskLevel] || riskColors.medium}`}>
+      <div className="flex items-center gap-2 mb-3">
+        <Camera className="w-4 h-4 text-[#FF2D78]" />
+        <h3 className="font-semibold text-sm">Site Photo Analysis</h3>
+        <Badge variant="outline" className={`text-xs ${analysis.overallRiskLevel === "critical" ? "text-red-300 border-red-400/40" : "text-orange-300 border-orange-400/40"}`}>
+          {analysis.overallRiskLevel?.toUpperCase()} RISK
+        </Badge>
+        <span className="text-xs text-white/40 ml-auto">Confidence: {analysis.confidence}%</span>
+      </div>
+      <p className="text-xs text-white/60 mb-3">{analysis.siteDescription}</p>
+      <div className="space-y-2">
+        {analysis.hazards.map((h: any, i: number) => (
+          <div key={i} className="flex items-start gap-2 text-xs">
+            <AlertTriangle className={`w-3 h-3 mt-0.5 shrink-0 ${h.severity === "critical" ? "text-red-400" : h.severity === "high" ? "text-orange-400" : "text-yellow-400"}`} />
+            <div>
+              <span className="text-white/80 font-medium">[{h.category}]</span>{" "}
+              <span className="text-white/60">{h.description}</span>
+              <div className="text-white/40 mt-0.5">→ {h.immediateAction} ({h.standardReference})</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      {analysis.unableToAssess?.length > 0 && (
+        <div className="mt-3 text-xs text-white/30">
+          Unable to assess: {analysis.unableToAssess.join(", ")}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── AI Intelligence Panel ───────────────────────────────────────────────────
+
+function AIIntelligencePanel({ swmsId }: { swmsId: string }) {
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+  const [photoAnalysis, setPhotoAnalysis] = useState<any>(null);
+  const [pdfResult, setPdfResult] = useState<any>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
+
+  const analysePhotoMutation = trpc.swms.analyseSitePhoto.useMutation();
+  const extractPdfMutation = trpc.swms.extractFromPdf.useMutation();
+  const { data: aiStats } = trpc.swms.getAIStats.useQuery();
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file (JPG, PNG, HEIC)");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Photo must be under 10MB");
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    try {
+      // Upload to S3 first
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploadRes = await fetch("/api/trpc/upload.file", {
+        method: "POST",
+        body: formData,
+      });
+
+      // Fallback: convert to base64 data URL for analysis
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const dataUrl = reader.result as string;
+        try {
+          const result = await analysePhotoMutation.mutateAsync({
+            photoUrl: dataUrl,
+            swmsId,
+          });
+          setPhotoAnalysis(result);
+          toast.success(`Site photo analysed — ${result.hazards?.length || 0} hazards identified`);
+        } catch (err: any) {
+          toast.error(err.message || "Failed to analyse photo");
+        } finally {
+          setIsUploadingPhoto(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      toast.error("Please upload a PDF file");
+      return;
+    }
+
+    setIsUploadingPdf(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const dataUrl = reader.result as string;
+        try {
+          const result = await extractPdfMutation.mutateAsync({
+            pdfUrl: dataUrl,
+          });
+          setPdfResult(result);
+          toast.success(`Extracted ${result.extracted} company procedures from your SWMS`);
+        } catch (err: any) {
+          toast.error(err.message || "Failed to extract procedures");
+        } finally {
+          setIsUploadingPdf(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+      setIsUploadingPdf(false);
+    }
+  };
+
+  return (
+    <div className="bg-[#0d0d14] border border-white/10 rounded-xl p-5 space-y-4">
+      <div className="flex items-center gap-2 mb-2">
+        <Brain className="w-4 h-4 text-[#FF2D78]" />
+        <h3 className="font-semibold text-sm">AI Intelligence Engine</h3>
+        <Badge variant="outline" className="text-xs text-emerald-400 border-emerald-400/40 ml-auto">
+          <Zap className="w-2.5 h-2.5 mr-1" />
+          {aiStats ? `${(aiStats.totalCorrections || 0) + (aiStats.totalProcedures || 0) + (aiStats.totalProfileItems || 0)} learnings` : "Loading..."}
+        </Badge>
+      </div>
+
+      {/* AI Stats */}
+      {aiStats && (
+        <div className="grid grid-cols-4 gap-2">
+          <div className="bg-white/5 border border-white/10 rounded-lg p-2 text-center">
+            <div className="text-lg font-bold text-[#FF2D78]">{aiStats.totalCorrections}</div>
+            <div className="text-[10px] text-white/40">Corrections Learned</div>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-2 text-center">
+            <div className="text-lg font-bold text-emerald-400">{aiStats.totalProfileItems}</div>
+            <div className="text-[10px] text-white/40">Safety Standards</div>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-2 text-center">
+            <div className="text-lg font-bold text-blue-400">{aiStats.totalProcedures}</div>
+            <div className="text-[10px] text-white/40">Company Procedures</div>
+          </div>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-2 text-center">
+            <div className="text-lg font-bold text-purple-400">{aiStats.totalPhotosAnalysed}</div>
+            <div className="text-[10px] text-white/40">Photos Analysed</div>
+          </div>
+        </div>
+      )}
+
+      {/* Site Photo Upload */}
+      <div className="border border-dashed border-white/20 rounded-lg p-4 hover:border-[#FF2D78]/40 transition-colors">
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handlePhotoUpload}
+        />
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-[#FF2D78]/10 flex items-center justify-center shrink-0">
+            <Camera className="w-5 h-5 text-[#FF2D78]" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm font-medium">Upload Site Photo</div>
+            <div className="text-xs text-white/40">AI vision identifies hazards from your site photos — overhead lines, uneven ground, missing guardrails</div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-[#FF2D78]/40 text-[#FF2D78] hover:bg-[#FF2D78]/10"
+            onClick={() => photoInputRef.current?.click()}
+            disabled={isUploadingPhoto}
+          >
+            {isUploadingPhoto ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Upload className="w-3.5 h-3.5 mr-1" />}
+            {isUploadingPhoto ? "Analysing..." : "Upload Photo"}
+          </Button>
+        </div>
+      </div>
+
+      {/* Photo Analysis Result */}
+      {photoAnalysis && <SitePhotoHazardCard analysis={photoAnalysis} />}
+
+      {/* Past SWMS PDF Upload */}
+      <div className="border border-dashed border-white/20 rounded-lg p-4 hover:border-blue-400/40 transition-colors">
+        <input
+          ref={pdfInputRef}
+          type="file"
+          accept="application/pdf"
+          className="hidden"
+          onChange={handlePdfUpload}
+        />
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+            <FileText className="w-5 h-5 text-blue-400" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm font-medium">Learn from Your Past SWMS</div>
+            <div className="text-xs text-white/40">Upload an old SWMS PDF — AI extracts your company's standard procedures and applies them to all future documents</div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-blue-400/40 text-blue-400 hover:bg-blue-400/10"
+            onClick={() => pdfInputRef.current?.click()}
+            disabled={isUploadingPdf}
+          >
+            {isUploadingPdf ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <Upload className="w-3.5 h-3.5 mr-1" />}
+            {isUploadingPdf ? "Extracting..." : "Upload PDF"}
+          </Button>
+        </div>
+      </div>
+
+      {/* PDF Extraction Result */}
+      {pdfResult && pdfResult.extracted > 0 && (
+        <div className="bg-blue-950/30 border border-blue-700/40 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <CheckCircle className="w-4 h-4 text-blue-400" />
+            <span className="text-sm font-medium text-blue-300">Extracted {pdfResult.extracted} company procedures</span>
+          </div>
+          <div className="space-y-1">
+            {pdfResult.procedures.slice(0, 5).map((p: any, i: number) => (
+              <div key={i} className="text-xs text-white/50 flex items-start gap-1.5">
+                <span className="text-blue-400/60">•</span>
+                <span>[{p.category}] {p.description}</span>
+              </div>
+            ))}
+            {pdfResult.extracted > 5 && (
+              <div className="text-xs text-white/30 mt-1">+ {pdfResult.extracted - 5} more procedures stored</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Feedback Loop Info */}
+      <div className="flex items-start gap-2 p-3 bg-emerald-950/20 border border-emerald-700/30 rounded-lg text-xs text-emerald-300/80">
+        <Sparkles className="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-400" />
+        <div>
+          <strong>Adaptive AI:</strong> Every time you edit an AI-generated control measure, PPE item, or hazard — the system learns your preferences. After 5+ corrections for a trade, future SWMS will automatically use your preferred wording and standards.
         </div>
       </div>
     </div>
@@ -125,6 +420,7 @@ export default function SwmsEditor() {
   const { data: swmsData, refetch } = trpc.swms.get.useQuery({ id: id! }, { enabled: !!id });
   const { data: signatures } = trpc.swms.getSignatures.useQuery({ id: id! }, { enabled: !!id });
   const updateMutation = trpc.swms.update.useMutation();
+  const saveWithCorrectionsMutation = trpc.swms.saveWithCorrections.useMutation();
   const finalizeMutation = trpc.swms.finalize.useMutation();
   const shareMutation = trpc.swms.createShareLink.useMutation();
 
@@ -159,15 +455,30 @@ export default function SwmsEditor() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      // Use saveWithCorrections to detect AI learning opportunities
+      const corrResult = await saveWithCorrectionsMutation.mutateAsync({
+        id: id!,
+        workActivities: activities,
+      });
+
+      // Also update the details
       await updateMutation.mutateAsync({
         id: id!,
         workActivities: activities,
         ...details,
       });
+
       setLocalActivities(null);
       setLocalDetails(null);
       await refetch();
-      toast.success("SWMS saved successfully");
+
+      if (corrResult.correctionsDetected > 0) {
+        toast.success(`Saved! AI learned ${corrResult.correctionsDetected} new correction${corrResult.correctionsDetected > 1 ? "s" : ""} from your edits.`, {
+          icon: "🧠",
+        });
+      } else {
+        toast.success("SWMS saved successfully");
+      }
     } catch (e: any) {
       toast.error(e.message || "Failed to save");
     } finally {
@@ -314,11 +625,14 @@ export default function SwmsEditor() {
           </div>
         )}
 
+        {/* AI Intelligence Panel */}
+        <AIIntelligencePanel swmsId={id!} />
+
         {/* AI disclaimer */}
         <div className="flex items-start gap-3 p-3 bg-amber-950/30 border border-amber-700/40 rounded-lg text-xs text-amber-300">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
           <div>
-            <strong>Important:</strong> This SWMS was generated with AI assistance based on your estimate data. You are legally responsible as the PCBU for reviewing, verifying, and ensuring this document complies with all relevant WHS legislation before commencing any high-risk construction work. AI-generated rows are marked with an <span className="inline-block bg-emerald-950 text-emerald-400 px-1 rounded text-[10px]">AI</span> badge.
+            <strong>Important:</strong> This SWMS was generated with AI assistance based on your estimate data. You are legally responsible as the PCBU for reviewing, verifying, and ensuring this document complies with all relevant WHS legislation before commencing any high-risk construction work. AI-generated rows are marked with an <span className="inline-block bg-emerald-950 text-emerald-400 px-1 rounded text-[10px]">AI</span> badge. <strong>Every edit you make teaches the AI your preferences.</strong>
           </div>
         </div>
 
@@ -400,6 +714,7 @@ export default function SwmsEditor() {
                   index={i}
                   onChange={updated => updateActivity(i, updated)}
                   onDelete={() => deleteActivity(i)}
+                  disabled={isFinalized}
                 />
               ))}
             </div>

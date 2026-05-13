@@ -797,3 +797,73 @@ export interface WorkActivity {
   responsible: string;    // Person responsible
   isAiGenerated: boolean; // Flag AI-generated rows
 }
+
+
+// ─── Business Safety Profile (Company Standard PPE, Controls, Procedures) ────
+export const businessSafetyProfiles = mysqlTable("business_safety_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  trade: varchar("trade", { length: 64 }),
+  category: mysqlEnum("category", ["ppe", "control", "procedure", "terminology", "emergency"]).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  standardRef: varchar("standardRef", { length: 255 }),
+  isDefault: boolean("isDefault").default(true),
+  source: mysqlEnum("source", ["manual_entry", "uploaded_swms", "learned_from_edits"]).default("manual_entry").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BusinessSafetyProfile = typeof businessSafetyProfiles.$inferSelect;
+export type InsertBusinessSafetyProfile = typeof businessSafetyProfiles.$inferInsert;
+
+// ─── AI Corrections (Feedback Loop — tracks user edits to AI content) ────────
+export const aiCorrections = mysqlTable("ai_corrections", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  trade: varchar("trade", { length: 64 }).notNull(),
+  context: varchar("context", { length: 500 }).notNull(),
+  aiOriginal: text("aiOriginal").notNull(),
+  userCorrected: text("userCorrected").notNull(),
+  category: mysqlEnum("category", ["ppe", "control", "hazard", "procedure", "standard_ref", "other"]).notNull(),
+  swmsId: int("swmsId"),
+  useCount: int("useCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AiCorrection = typeof aiCorrections.$inferSelect;
+export type InsertAiCorrection = typeof aiCorrections.$inferInsert;
+
+// ─── Site Photos (Multimodal Hazard Detection) ───────────────────────────────
+export const sitePhotos = mysqlTable("site_photos", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  swmsId: int("swmsId"),
+  estimateId: int("estimateId"),
+  photoUrl: text("photoUrl").notNull(),
+  photoKey: varchar("photoKey", { length: 500 }).notNull(),
+  analysisResult: json("analysisResult"), // Vision AI hazard analysis JSON
+  overallRiskLevel: mysqlEnum("overallRiskLevel", ["critical", "high", "medium", "low"]),
+  hazardCount: int("hazardCount").default(0),
+  analysedAt: timestamp("analysedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SitePhoto = typeof sitePhotos.$inferSelect;
+export type InsertSitePhoto = typeof sitePhotos.$inferInsert;
+
+// ─── Company Procedures (Extracted from uploaded SWMS PDFs) ──────────────────
+export const companyProcedures = mysqlTable("company_procedures", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  trade: varchar("trade", { length: 64 }),
+  category: mysqlEnum("category", ["ppe", "control", "procedure", "terminology", "emergency", "signoff"]).notNull(),
+  description: text("description").notNull(),
+  confidence: int("confidence").default(70).notNull(), // 0-100
+  extractedFrom: varchar("extractedFrom", { length: 500 }),
+  sourceUrl: text("sourceUrl"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CompanyProcedure = typeof companyProcedures.$inferSelect;
+export type InsertCompanyProcedure = typeof companyProcedures.$inferInsert;
