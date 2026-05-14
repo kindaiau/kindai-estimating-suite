@@ -9,6 +9,7 @@ import { GST_RATE } from "../../shared/trades";
 import { generateQuotePdf } from "../pdfGenerator";
 import { storagePut } from "../storage";
 import { INDUSTRY_BENCHMARKS } from "./ai";
+import { buildQuoteAssuranceReport } from "../assurance";
 import {
   buildMetaUserData,
   extractMetaClickIdentifiers,
@@ -39,6 +40,34 @@ export const estimatesRouter = router({
     if (!estimate) return null;
     const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, input.id));
     return { ...estimate, lineItems: items };
+  }),
+
+  getAssurance: protectedProcedure.input(z.object({ estimateId: z.number() })).query(async ({ ctx, input }) => {
+    const db = requireDatabase(await getDb());
+    const [estimate] = await db.select().from(estimates)
+      .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
+      .limit(1);
+    if (!estimate) return null;
+
+    const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, input.estimateId));
+    const subtotalBeforeMargin = items.reduce((sum, item) => {
+      const qty = parseFloat(item.quantity as string) || 0;
+      const rate = parseFloat(item.unitRate as string) || 0;
+      const waste = parseFloat((item.wasteFactor as string) || "0") / 100;
+      return sum + qty * rate * (1 + waste);
+    }, 0);
+    const margin = parseFloat(estimate.margin ?? "0") || 0;
+    const subtotalWithMargin = subtotalBeforeMargin * (1 + margin / 100);
+    const gstAmount = subtotalWithMargin * GST_RATE;
+    const total = subtotalWithMargin + gstAmount;
+
+    return buildQuoteAssuranceReport({
+      ...estimate,
+      subtotal: subtotalWithMargin,
+      gstAmount,
+      total,
+      margin,
+    } as any, items);
   }),
 
   create: protectedProcedure.input(z.object({
