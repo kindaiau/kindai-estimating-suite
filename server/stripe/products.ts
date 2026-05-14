@@ -57,6 +57,16 @@ export interface SubscriptionPlan {
   stripePriceIdYearly?: string;
 }
 
+export const PRO_TRIAL_OFFER = {
+  id: "pro_trial_21_day",
+  name: "Kindai Pro — 21-Day Trial",
+  description:
+    "Full Pro access for 21 days. Unlimited Quick Quotes, Plan Reading (Vision AI), Company Memory, and Correction Learning. No lock-in — cancel anytime.",
+  amount: 900, // A$9 in cents
+  currency: "aud",
+  trialDays: 21,
+};
+
 export const PILOT_SETUP_OFFER = {
   id: "founding_pilot_setup_sprint",
   name: "Kindai Founding Pilot Setup + 6 Months",
