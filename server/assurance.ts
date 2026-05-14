@@ -105,13 +105,13 @@ export function deriveAssuranceEstimate(
     return sum + quantity * unitRate * (1 + waste);
   }, 0);
 
-  const subtotal = subtotalBeforeMargin * (1 + margin / 100);
-  const gstAmount = subtotal * GST_RATE;
-  const total = subtotal + gstAmount;
+  const subtotalWithMargin = subtotalBeforeMargin * (1 + margin / 100);
+  const gstAmount = subtotalWithMargin * GST_RATE;
+  const total = subtotalWithMargin + gstAmount;
 
   return {
     ...estimate,
-    subtotal,
+    subtotal: subtotalWithMargin,
     gstAmount,
     total,
     margin,
