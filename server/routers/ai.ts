@@ -6,7 +6,7 @@ import { mediaContentFromUrl } from "../_core/mediaInputs";
 import { getDb } from "../db";
 import { estimates, lineItems, tradeProfiles, companyProfiles, priceBookItems, estimateCorrections } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
-import { storagePut } from "../storage";
+import { storageGet, storagePut } from "../storage";
 import { nanoid } from "nanoid";
 import { buildProductivityPromptSection } from "../labourProductivity";
 import { insertAiLineItems } from "../routes/insertAiLineItems";
@@ -1163,7 +1163,12 @@ const supplierQuoteResponseSchema = {
         subtotalExGst: { type: "number" },
         gstAmount: { type: "number" },
         totalIncGst: { type: "number" },
-        confidence: { type: "number" },
+        confidence: {
+          type: "number",
+          description: "Overall extraction confidence as a percentage from 0 to 100.",
+          minimum: 0,
+          maximum: 100,
+        },
         lineItems: {
           type: "array",
           items: {
@@ -1175,7 +1180,12 @@ const supplierQuoteResponseSchema = {
               unitPrice: { type: "number" },
               total: { type: "number" },
               productCode: { type: "string" },
-              confidence: { type: "number" },
+              confidence: {
+                type: "number",
+                description: "Line-item extraction confidence as a percentage from 0 to 100.",
+                minimum: 0,
+                maximum: 100,
+              },
               sourceNote: { type: "string" },
             },
             required: ["description", "quantity", "unit", "unitPrice", "total", "productCode", "confidence", "sourceNote"],
@@ -1217,6 +1227,37 @@ type SupplierQuoteExtractionResult = {
   reviewFlags: string[];
   recommendedActions: string[];
 };
+
+function normalizeConfidencePercent(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 0;
+  const scaled = value > 0 && value <= 1 ? value * 100 : value;
+  return Math.min(100, Math.max(0, Math.round(scaled)));
+}
+
+function normalizeSupplierQuoteExtractionResult(
+  value: SupplierQuoteExtractionResult
+): SupplierQuoteExtractionResult {
+  return {
+    ...value,
+    confidence: normalizeConfidencePercent(value.confidence),
+    lineItems: value.lineItems.map((item) => ({
+      ...item,
+      confidence: normalizeConfidencePercent(item.confidence),
+    })),
+  };
+}
+
+function assertOwnedSupplierQuoteKey(userId: number, key: string): string {
+  const normalizedKey = key.replace(/^\/+/, "");
+  const expectedPrefix = `supplier-quotes/${userId}/`;
+  if (!normalizedKey.startsWith(expectedPrefix)) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Supplier quote must come from your uploaded files.",
+    });
+  }
+  return normalizedKey;
+}
 
 // ─── Merge multiple batch takeoff results into one combined result ───────────
 function mergeTakeoffResults(results: TakeoffResult[], totalPages: number): TakeoffResult {
@@ -1377,13 +1418,15 @@ export const aiRouter = router({
 
   // Supplier Quote Extractor — turn messy supplier/subbie PDFs into reviewable structured data
   extractSupplierQuote: protectedProcedure.input(z.object({
-    quoteUrl: z.string().url(),
+    quoteKey: z.string().min(1),
     trade: z.string().optional(),
     estimateId: z.number().optional(),
     projectScope: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new Error("Database not available");
+    const quoteKey = assertOwnedSupplierQuoteKey(ctx.user.id, input.quoteKey);
+    const { url: quoteUrl } = await storageGet(quoteKey);
 
     let estimateContext = "";
     if (input.estimateId) {
@@ -1399,15 +1442,15 @@ export const aiRouter = router({
       messages: [
         {
           role: "system",
-          content: `You are a senior Australian construction estimator and procurement reviewer. Extract supplier or subcontractor quote information into clean structured data. Do not invent missing prices or quantities. If something is unreadable, use 0 for numeric fields, low confidence, and add a review flag. Always identify inclusions, exclusions, GST treatment, totals, and margin-risk gaps.`,
+          content: `You are a senior Australian construction estimator and procurement reviewer. Extract supplier or subcontractor quote information into clean structured data. Do not invent missing prices or quantities. If something is unreadable, use 0 for numeric fields, low confidence, and add a review flag. Always identify inclusions, exclusions, GST treatment, totals, and margin-risk gaps. Confidence fields must be percentages from 0 to 100.`,
         },
         {
           role: "user",
           content: [
-            mediaContentFromUrl(input.quoteUrl),
+            mediaContentFromUrl(quoteUrl),
             {
               type: "text",
-              text: `Extract this supplier/subcontractor quote for Kindai.\nTrade: ${input.trade ?? "unknown"}\nProject scope/context: ${input.projectScope ?? "not supplied"}${estimateContext}\n\nReturn structured quote data only. Use AUD. Add review flags for exclusions, unclear GST, lump sums, missing product codes, missing quantities, and any mismatch against the current Kindai estimate context.`,
+              text: `Extract this supplier/subcontractor quote for Kindai.\nTrade: ${input.trade ?? "unknown"}\nProject scope/context: ${input.projectScope ?? "not supplied"}${estimateContext}\n\nReturn structured quote data only. Use AUD. Confidence values must be percentages from 0 to 100. Add review flags for exclusions, unclear GST, lump sums, missing product codes, missing quantities, and any mismatch against the current Kindai estimate context.`,
             },
           ] as any,
         },
@@ -1419,7 +1462,7 @@ export const aiRouter = router({
     const rawContent = response.choices[0]?.message?.content;
     const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
     if (!content) throw new Error("No response from AI");
-    return JSON.parse(content) as SupplierQuoteExtractionResult;
+    return normalizeSupplierQuoteExtractionResult(JSON.parse(content) as SupplierQuoteExtractionResult);
   }),
 
   // AI Vision Takeoff — analyse a single uploaded plan image
