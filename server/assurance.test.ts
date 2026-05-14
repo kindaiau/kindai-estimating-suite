@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildQuoteAssuranceReport } from "./assurance";
+import { buildQuoteAssuranceReport, deriveAssuranceEstimate } from "./assurance";
 
 const labour = {
   id: 2,
@@ -123,5 +123,30 @@ describe("quote assurance", () => {
 
     expect(report.canIssue).toBe(false);
     expect(report.issueBlocks[0]).toContain("No line items");
+  });
+
+  it("derives consistent totals from line items and margin", () => {
+    const derived = deriveAssuranceEstimate(
+      {
+        margin: "20",
+        status: "review",
+      },
+      [
+        {
+          category: "Materials",
+          description: "Cable",
+          quantity: "10",
+          unitRate: "15",
+          wasteFactor: "10",
+          subtotal: "165",
+        },
+        labour,
+      ]
+    );
+
+    expect(derived.margin).toBe(20);
+    expect(derived.subtotal).toBeCloseTo(16038);
+    expect(derived.gstAmount).toBeCloseTo(1603.8);
+    expect(derived.total).toBeCloseTo(17641.8);
   });
 });

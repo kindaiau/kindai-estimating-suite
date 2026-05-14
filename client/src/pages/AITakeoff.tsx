@@ -171,7 +171,15 @@ export default function AITakeoff() {
   const createProject = trpc.projects.create.useMutation();
   const createEstimate = trpc.estimates.create.useMutation();
   const assuranceQuery = trpc.estimates.getAssurance.useQuery(
-    { estimateId: tempEstimateId ?? 0 },
+    {
+      estimateId: tempEstimateId ?? 0,
+      pricingContext: result ? {
+        marginPercent: markupPercent,
+        labourRate,
+        useTradePrice,
+      } : undefined,
+      takeoffItems: result?.items ?? undefined,
+    },
     { enabled: Boolean(result && tempEstimateId), refetchOnWindowFocus: false }
   );
 
@@ -328,7 +336,7 @@ export default function AITakeoff() {
       const base64 = await fileToBase64(file);
       const uploaded = await uploadSupplierQuote.mutateAsync({ fileName: file.name, fileBase64: base64, contentType });
       const extracted = await extractSupplierQuote.mutateAsync({
-        quoteUrl: uploaded.url,
+        quoteKey: uploaded.key,
         trade: selectedTrade,
         estimateId: tempEstimateId ?? undefined,
         projectScope: additionalContext || textDescription || undefined,
@@ -1127,7 +1135,7 @@ export default function AITakeoff() {
                             <div className="p-3 border-b border-orange-100 flex flex-wrap items-center justify-between gap-2">
                               <div>
                                 <p className="text-xs font-black text-gray-900">{supplierQuoteResult.supplierName || "Supplier quote"}</p>
-                                <p className="text-[11px] text-gray-500">Ref {supplierQuoteResult.quoteReference || "N/A"} · Confidence {supplierQuoteResult.confidence}%</p>
+                                <p className="text-[11px] text-gray-500">Ref {supplierQuoteResult.quoteReference || "N/A"} · Confidence {Math.round(supplierQuoteResult.confidence)}%</p>
                               </div>
                               <div className="text-right">
                                 <p className="text-[10px] font-bold text-gray-500 uppercase">Total inc GST</p>

@@ -9,7 +9,8 @@ import { GST_RATE } from "../../shared/trades";
 import { generateQuotePdf } from "../pdfGenerator";
 import { storagePut } from "../storage";
 import { INDUSTRY_BENCHMARKS } from "./ai";
-import { buildQuoteAssuranceReport } from "../assurance";
+import { buildQuoteAssuranceReport, deriveAssuranceEstimate } from "../assurance";
+import { buildAiLineItemRows } from "../routes/insertAiLineItems";
 import {
   buildMetaUserData,
   extractMetaClickIdentifiers,
@@ -42,32 +43,47 @@ export const estimatesRouter = router({
     return { ...estimate, lineItems: items };
   }),
 
-  getAssurance: protectedProcedure.input(z.object({ estimateId: z.number() })).query(async ({ ctx, input }) => {
+  getAssurance: protectedProcedure.input(z.object({
+    estimateId: z.number(),
+    pricingContext: z.object({
+      marginPercent: z.number().min(0).max(1000),
+      labourRate: z.number().min(0).max(10000),
+      useTradePrice: z.boolean(),
+    }).optional(),
+    takeoffItems: z.array(z.object({
+      section: z.string().optional(),
+      description: z.string(),
+      unit: z.string(),
+      quantity: z.number().min(0),
+      retailPrice: z.number().min(0),
+      tradePrice: z.number().min(0),
+      category: z.string(),
+      labourMinutes: z.number().min(0),
+      wasteFactor: z.number().min(0).max(100),
+    })).optional(),
+  })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     const [estimate] = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
       .limit(1);
     if (!estimate) return null;
 
-    const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, input.estimateId));
-    const subtotalBeforeMargin = items.reduce((sum, item) => {
-      const qty = parseFloat(item.quantity as string) || 0;
-      const rate = parseFloat(item.unitRate as string) || 0;
-      const waste = parseFloat((item.wasteFactor as string) || "0") / 100;
-      return sum + qty * rate * (1 + waste);
-    }, 0);
-    const margin = parseFloat(estimate.margin ?? "0") || 0;
-    const subtotalWithMargin = subtotalBeforeMargin * (1 + margin / 100);
-    const gstAmount = subtotalWithMargin * GST_RATE;
-    const total = subtotalWithMargin + gstAmount;
+    const items =
+      input.pricingContext && input.takeoffItems
+        ? buildAiLineItemRows(input.estimateId, input.takeoffItems, {
+            labourRate: input.pricingContext.labourRate,
+            useTradePrice: input.pricingContext.useTradePrice,
+          })
+        : await db.select().from(lineItems).where(eq(lineItems.estimateId, input.estimateId));
 
-    return buildQuoteAssuranceReport({
-      ...estimate,
-      subtotal: subtotalWithMargin,
-      gstAmount,
-      total,
-      margin,
-    } as any, items);
+    return buildQuoteAssuranceReport(
+      deriveAssuranceEstimate(
+        estimate,
+        items,
+        input.pricingContext?.marginPercent
+      ),
+      items
+    );
   }),
 
   create: protectedProcedure.input(z.object({
