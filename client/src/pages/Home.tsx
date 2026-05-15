@@ -622,6 +622,103 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Auto-SWMS Feature Highlight ── */}
+      <section className="py-20 sm:py-24 px-4 bg-white relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute bottom-0 right-0 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-green-100/40 to-emerald-100/20 blur-3xl" />
+        </div>
+        <div className="max-w-6xl mx-auto relative">
+          <FadeUp className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold mb-4">
+              <Shield className="w-3.5 h-3.5" /> Auto-SWMS + Compliance Pack
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">
+              AI-generated safety docs that <span className="kindai-gradient-text">learn how your business works.</span>
+            </h2>
+            <p className="text-gray-500 text-base max-w-2xl mx-auto">
+              One click after your estimate is approved — Kindai generates a compliant SWMS with hazards, controls, and PPE pre-filled for your trade. Workers sign digitally on their phone.
+            </p>
+          </FadeUp>
+
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
+            {/* Left: SWMS mockup */}
+            <FadeUp delay={0.1}>
+              <div className="bg-gray-950 rounded-2xl p-6 shadow-2xl border border-gray-800">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-3 h-3 rounded-full bg-red-500" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                  <div className="w-3 h-3 rounded-full bg-green-500" />
+                  <span className="ml-3 text-xs text-gray-500 font-mono">kindaiestimator.com/swms</span>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-white">SWMS — Kitchen Renovation</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">AI Generated</span>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                    <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-2">High Risk Work Detected</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {["Electrical (live work)", "Work at Heights", "Confined Spaces"].map(tag => (
+                        <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 font-medium">{tag}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-3 border border-white/10">
+                    <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-2">Work Activity</div>
+                    <div className="text-xs text-white font-semibold mb-1">Demolition of existing cabinetry</div>
+                    <div className="grid grid-cols-2 gap-2 text-[10px]">
+                      <div><span className="text-gray-500">Hazard:</span> <span className="text-orange-300">Falling debris, dust inhalation</span></div>
+                      <div><span className="text-gray-500">Control:</span> <span className="text-emerald-300">Exclusion zone, P2 masks</span></div>
+                      <div><span className="text-gray-500">PPE:</span> <span className="text-blue-300">Hard hat, safety glasses, gloves</span></div>
+                      <div><span className="text-gray-500">Responsible:</span> <span className="text-white">Site supervisor</span></div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-white/10">
+                    <span className="text-[10px] text-gray-500">3 workers pending signature</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold">Share Link →</span>
+                  </div>
+                </div>
+              </div>
+            </FadeUp>
+
+            {/* Right: Feature bullets */}
+            <FadeUp delay={0.2}>
+              <div className="space-y-5">
+                {[
+                  { icon: "🧠", title: "Learns your company standards", desc: "Upload one old SWMS or set your standard PPE — the AI calibrates to how your business actually operates. Every SWMS after that reflects your procedures, not generic templates." },
+                  { icon: "📸", title: "Site photo hazard detection", desc: "Upload a photo of the job site — vision AI identifies overhead power lines, uneven ground, confined entries, and more. Hazards get added to your SWMS automatically." },
+                  { icon: "✍️", title: "Digital worker sign-off", desc: "Share a link with your crew. Workers review hazards and sign on their phone before starting work. No paper, no chasing signatures." },
+                  { icon: "🔄", title: "Gets smarter with every edit", desc: "When you correct an AI suggestion, Kindai remembers. After a few corrections, it pre-adjusts future SWMS based on your patterns — like having a safety officer who learns on the job." },
+                ].map((item, i) => (
+                  <motion.div
+                    key={i}
+                    className="flex gap-4 items-start"
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true, margin: "-30px" }}
+                    transition={{ duration: 0.4, delay: i * 0.08 }}
+                  >
+                    <span className="text-2xl mt-0.5">{item.icon}</span>
+                    <div>
+                      <h3 className="font-black text-gray-900 text-sm mb-1">{item.title}</h3>
+                      <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </motion.div>
+                ))}
+                <div className="pt-4">
+                  <button
+                    onClick={() => navigate("/pricing")}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-sm font-bold shadow-lg hover:shadow-emerald-500/30 transition-all duration-300"
+                  >
+                    <HardHat className="w-4 h-4" /> Included in Business Plan
+                  </button>
+                </div>
+              </div>
+            </FadeUp>
+          </div>
+        </div>
+      </section>
+
       {/* ── Cabinet Making Proof ── */}
       <section className="py-20 px-4 bg-white">
         <div className="max-w-5xl mx-auto">
