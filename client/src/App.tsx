@@ -23,7 +23,7 @@ import DemoMode from "./pages/DemoMode";
 import SupplierManager from "./pages/SupplierManager";
 import QuoteFollowups from "./pages/QuoteFollowups";
 import VariationsRegister from "./pages/VariationsRegister";
-import BetaLanding from "./pages/BetaLanding";
+// BetaLanding removed — product is live
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import DataDeletion from "./pages/DataDeletion";
 import TermsOfService from "./pages/TermsOfService";
@@ -79,7 +79,7 @@ function Router() {
         <Route path="/followups" component={protectedPage(QuoteFollowups)} />
         <Route path="/projects/:projectId/variations" component={protectedPage(VariationsRegister)} />
         <Route path="/quote/accept/:token" component={QuoteAcceptance} />
-        <Route path="/beta" component={BetaLanding} />
+        <Route path="/beta">{() => { window.location.href = "/pricing"; return null; }}</Route>
         <Route path="/privacy-policy" component={PrivacyPolicy} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/data-deletion" component={DataDeletion} />

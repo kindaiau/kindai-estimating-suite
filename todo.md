@@ -1037,3 +1037,26 @@
 - [x] Integration: Unified SWMS generation pipeline combining all 4 intelligence sources
 - [x] Integration: Upgraded prompt engineering with chain-of-thought reasoning
 - [x] Tests: Vitest coverage for all new endpoints
+
+## Kill All Beta — Homepage Rebuild (15 May 2026)
+- [ ] Remove waitlist form from homepage hero
+- [ ] Remove "ALL 25 BETA SPOTS FILLED" badge
+- [ ] Remove all "Join Waitlist" CTAs — replace with "Get Started" / "Start Free Trial"
+- [ ] Rebuild homepage hero to match pricing page energy (value-driven, product-focused)
+- [ ] Remove /beta page entirely
+- [ ] Remove WaitlistFormInline component
+- [ ] Clean up any remaining beta/waitlist references across codebase
+
+## Kill All Beta — Homepage Rebuild (15 May 2026)
+- [ ] Remove ALL waitlist/beta content (form, badge, messaging)
+- [ ] Rebuild homepage: Benefits first → What it does → How it works → Social proof → Pricing (way down) → Final CTA
+- [ ] Lead with value: what Kindai does for tradies (save time, accurate quotes, win more jobs)
+- [ ] Remove /beta page and WaitlistFormInline component
+- [ ] Match pricing page energy but pricing section sits much lower on homepage
+
+## Remove All Waitlist/Beta Messaging (15 May 2026)
+- [ ] Remove waitlist form from homepage hero
+- [ ] Remove "ALL 25 BETA SPOTS FILLED" badge
+- [ ] Replace all "Join Waitlist" CTAs with proper product CTAs (Get Started / Start Free Trial)
+- [ ] Remove /beta page or redirect to main signup
+- [ ] Clean up any other beta/waitlist references across the site
