@@ -50,7 +50,7 @@ const FEATURE_REQUIREMENTS: Record<FeatureKey, FeatureRequirement> = {
   },
   email: {
     label: "Email & CRM",
-    required: ["RESEND_API_KEY"],
+    required: [],
     optional: [
       "BREVO_API_KEY",
       "HUBSPOT_API_KEY",
@@ -143,8 +143,8 @@ function getAuthFeatureStatus() {
     missingRequired: ready
       ? []
       : [
-          "SUPABASE_URL|VITE_SUPABASE_URL + SUPABASE_ANON_KEY|VITE_SUPABASE_ANON_KEY",
-          "or VITE_APP_ID + JWT_SECRET + OAUTH_SERVER_URL",
+          "(SUPABASE_URL|VITE_SUPABASE_URL) + (SUPABASE_ANON_KEY|VITE_SUPABASE_ANON_KEY)",
+          "or (VITE_APP_ID + JWT_SECRET + OAUTH_SERVER_URL)",
         ],
     configuredOptional: (FEATURE_REQUIREMENTS.auth.optional ?? []).filter((name) =>
       Boolean(readEnv(name))

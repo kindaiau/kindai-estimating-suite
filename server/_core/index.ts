@@ -67,7 +67,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
-  const environmentStatus = validateServerEnv();
+  const validatedEnv = validateServerEnv();
   const app = express();
   app.set('trust proxy', 1); // Trust first proxy (Manus/CDN) for correct IP in rate limiting
   const server = createServer(app);
@@ -153,7 +153,7 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
-    const degradedFeatures = Object.entries(environmentStatus).filter(
+    const degradedFeatures = Object.entries(validatedEnv).filter(
       ([key, feature]) =>
         !feature.ready && key !== "auth" && key !== "database"
     );
@@ -166,7 +166,7 @@ async function startServer() {
       );
     }
 
-    if (!environmentStatus.email.ready) {
+    if (!validatedEnv.email.ready) {
       console.warn(
         "[Email] RESEND_API_KEY is missing, so transactional user emails will be skipped."
       );
