@@ -29,6 +29,7 @@ AI-assisted estimating and quoting software for Australian trades and joinery te
 
 - Team management API is mounted, but there is no dedicated frontend workflow yet
 - Tender management and audit log schema exist, but there is no user-facing UI in this repo
+- Some enterprise capabilities are backend-first and not exposed in primary navigation yet
 
 ## Local development
 
@@ -100,6 +101,7 @@ pnpm test:integrations
 - Startup now validates required auth and database environment variables
 - Readiness is exposed at `GET /healthz`
 - Optional features report as not ready when their env vars are missing
+- Set `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `OWNER_NOTIFICATION_EMAIL` to avoid silent email skips
 - Stripe webhooks must be registered at `/api/stripe/webhook`
 - Storage currently depends on Forge proxy credentials configured via environment variables
 

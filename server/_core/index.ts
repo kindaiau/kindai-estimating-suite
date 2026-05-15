@@ -18,6 +18,8 @@ import { processDueNurtureEmails } from "../routers/betaNurture";
 import { processEbookNurtureEmails } from "../ebookNurtureCron";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import { getHealthSnapshot } from "./health";
+import { validateServerEnv } from "./env";
 
 // Rate limiter for public LLM endpoints — prevents API cost abuse
 const publicLLMRateLimit = rateLimit({
@@ -65,6 +67,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  const environmentStatus = validateServerEnv();
   const app = express();
   app.set('trust proxy', 1); // Trust first proxy (Manus/CDN) for correct IP in rate limiting
   const server = createServer(app);
@@ -107,6 +110,11 @@ async function startServer() {
       ].join("\n"));
   });
 
+  app.get("/healthz", async (_req, res) => {
+    const health = await getHealthSnapshot();
+    res.status(health.ok ? 200 : 503).json(health);
+  });
+
   // Xero OAuth callback
   app.use(xeroCallbackRouter);
 
@@ -145,6 +153,25 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    const degradedFeatures = Object.entries(environmentStatus).filter(
+      ([key, feature]) =>
+        !feature.ready && key !== "auth" && key !== "database"
+    );
+
+    if (degradedFeatures.length > 0) {
+      console.warn(
+        `[Env] Optional features not ready: ${degradedFeatures
+          .map(([key, feature]) => `${key} (missing: ${feature.missingRequired.join(", ")})`)
+          .join("; ")}`
+      );
+    }
+
+    if (!environmentStatus.email.ready) {
+      console.warn(
+        "[Email] RESEND_API_KEY is missing, so transactional user emails will be skipped."
+      );
+    }
+
     // Seed default materials library on startup (idempotent)
     seedMaterials().catch(err => console.warn("[Seed] Materials seed failed:", err.message));
 
