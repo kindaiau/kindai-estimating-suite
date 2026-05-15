@@ -10,6 +10,7 @@ import { storageGet, storagePut } from "../storage";
 import { nanoid } from "nanoid";
 import { buildProductivityPromptSection } from "../labourProductivity";
 import { insertAiLineItems } from "../routes/insertAiLineItems";
+import { normalizeTakeoffItem, normalizeTakeoffItems } from "../_core/takeoffPricing";
 
 // Convert HEIC/HEIF buffer to JPEG — lazy dynamic import to avoid ESM crash
 let _heicConvertAi: ((opts: { buffer: Buffer; format: string; quality: number }) => Promise<Uint8Array>) | null = null;
@@ -1268,10 +1269,28 @@ function mergeTakeoffResults(results: TakeoffResult[], totalPages: number): Take
       const key = `${item.description.toLowerCase().trim()}|${item.unit.toLowerCase().trim()}|${item.category.toLowerCase().trim()}`;
       const existing = itemMap.get(key);
       if (existing) {
-        // Sum quantities for duplicate items across pages
+        // Sum quantities and quantity-weight prices/labour for duplicate items across pages
+        const existingQty = Math.max(existing.quantity, 0);
+        const incomingQty = Math.max(item.quantity, 0);
+        const totalQty = existingQty + incomingQty;
+
+        if (totalQty > 0) {
+          existing.retailPrice = Math.round(
+            ((existing.retailPrice * existingQty + item.retailPrice * incomingQty) / totalQty) * 100
+          ) / 100;
+          existing.tradePrice = Math.round(
+            ((existing.tradePrice * existingQty + item.tradePrice * incomingQty) / totalQty) * 100
+          ) / 100;
+          existing.labourMinutes = Math.round(
+            ((existing.labourMinutes * existingQty + item.labourMinutes * incomingQty) / totalQty) * 100
+          ) / 100;
+          existing.wasteFactor = Math.round(
+            ((existing.wasteFactor * existingQty + item.wasteFactor * incomingQty) / totalQty) * 100
+          ) / 100;
+        }
         existing.quantity += item.quantity;
       } else {
-        itemMap.set(key, { ...item });
+        itemMap.set(key, normalizeTakeoffItem(item) as TakeoffItem);
       }
     }
   }
@@ -1295,7 +1314,7 @@ function mergeTakeoffResults(results: TakeoffResult[], totalPages: number): Take
   const planNotesParts = results.map((r, i) => r.planNotes ? `Pages ${i * 5 + 1}–${Math.min((i + 1) * 5, totalPages)}: ${r.planNotes}` : null).filter(Boolean);
 
   return {
-    items: Array.from(itemMap.values()),
+    items: Array.from(itemMap.values()).map((item) => normalizeTakeoffItem(item) as TakeoffItem),
     confidence: Math.round(weightedConfidence * 10) / 10,
     assumptions: allAssumptions,
     roomBreakdown: Array.from(roomMap.entries()).map(([room, items]) => ({ room, items })),
@@ -1502,7 +1521,12 @@ export const aiRouter = router({
     const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
     if (!content) throw new Error("No response from AI");
 
-    const result = JSON.parse(content) as TakeoffResult;
+    const parsed = JSON.parse(content) as TakeoffResult;
+    const result: TakeoffResult = {
+      ...parsed,
+      confidence: normalizeConfidencePercent(parsed.confidence),
+      items: normalizeTakeoffItems(parsed.items ?? [], input.trade) as TakeoffItem[],
+    };
 
     // Save AI data to estimate
     await db.update(estimates).set({
@@ -1582,7 +1606,12 @@ export const aiRouter = router({
     if (batchResults.length === 0) throw new Error("AI analysis returned no results");
 
     // Merge all batch results into a single combined takeoff
-    const merged = mergeTakeoffResults(batchResults, input.imageUrls.length);
+    const mergedBase = mergeTakeoffResults(batchResults, input.imageUrls.length);
+    const merged: TakeoffResult = {
+      ...mergedBase,
+      confidence: normalizeConfidencePercent(mergedBase.confidence),
+      items: normalizeTakeoffItems(mergedBase.items ?? [], input.trade) as TakeoffItem[],
+    };
     // Save merged AI data to estimate
     await db.update(estimates).set({
       aiConfidenceScore: merged.confidence,
@@ -1634,7 +1663,12 @@ Generate a complete, section-by-section takeoff with accurate 2024-25 Australian
     const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
     if (!content) throw new Error("No response from AI");
 
-    const result = JSON.parse(content) as TakeoffResult;
+    const parsed = JSON.parse(content) as TakeoffResult;
+    const result: TakeoffResult = {
+      ...parsed,
+      confidence: normalizeConfidencePercent(parsed.confidence),
+      items: normalizeTakeoffItems(parsed.items ?? [], input.trade) as TakeoffItem[],
+    };
 
     await db.update(estimates).set({
       aiConfidenceScore: result.confidence,
