@@ -56,7 +56,7 @@ export default function BetaExpired() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
 
-  const checkoutMutation = trpc.billing.createProTrialCheckout.useMutation({
+  const checkoutMutation = trpc.billing.createCheckout.useMutation({
     onSuccess: (data) => {
       if (data.url) {
         window.open(data.url, "_blank");
@@ -69,7 +69,11 @@ export default function BetaExpired() {
   });
 
   const handleUpgrade = () => {
-    checkoutMutation.mutate({ origin: window.location.origin });
+    checkoutMutation.mutate({
+      planId: "sole_trader",
+      interval: "monthly",
+      origin: window.location.origin,
+    });
   };
 
   const firstName = user?.name?.split(" ")[0] ?? "mate";
