@@ -1068,3 +1068,34 @@
 - [ ] Show clear "Your beta has ended — upgrade to Pro for A$9" message for expired users
 - [ ] Ensure expired users can still access the upgrade/pricing page
 - [ ] Save checkpoint
+
+## Task 1: Video Demo Above the Fold (16 May 2026)
+- [x] Move/add video embed into hero section (above the fold)
+- [x] Add play button overlay with "Watch 30-sec demo" label
+- [x] Keep existing video section below as secondary placement
+- [x] Ensure mobile-responsive video container
+
+## Task 2: Email Nurture Sequence Update (16 May 2026)
+- [x] Remove all beta/pilot/founding member language from Day 4, Day 7, Day 10 emails
+- [x] Update CTAs to "Start A$9 Pro Trial" pointing to kindaiestimator.com/pricing
+- [x] Fix BETA_URL constant to point to /pricing instead of /beta
+- [x] Fix footer "signed up for the Kindai beta" language in emailBrand.ts
+- [x] Verify firstName template variable works correctly
+
+## Task 3: Safety Profile Setup Wizard (16 May 2026)
+- [x] Build onboarding wizard component for first-time SWMS users
+- [x] Step 1: Upload one old SWMS PDF (calls trpc.swms.extractFromPdf)
+- [x] Step 2: Set standard PPE list (calls trpc.swms.saveSafetyProfile)
+- [x] Step 3: Confirmation — "Your AI is now calibrated"
+- [x] Show wizard only if businessSafetyProfiles has no entry for user's business
+- [x] Add tRPC endpoint to check if profile exists (hasSafetyProfile + saveSafetyProfile)
+
+## Task 4: Demolition & Earthmoving Trade (16 May 2026)
+- [x] Add "Demolition & Earthmoving" to TRADES array in Home.tsx and footer
+- [x] Add earthmoving HRCW mappings in shared/compliance.ts (excavation, cranes, roads/traffic)
+- [x] Add trade-specific labour productivity (24 tasks: demo, earthworks, waste, asbestos)
+- [x] Add demolition suppliers (Kennards, Coates, Bingo, SUEZ, DBYD, Conplant, Boral, Hanson)
+- [x] Add material trigger keywords for earthmoving (earthworks, piling, skip bins, ACM)
+- [x] Add 3 hazard/control templates (structural demo, earthmoving, asbestos Class B)
+- [x] Expand scoping questions (10 fields: ground conditions, machinery access, services, tip fees)
+- [x] Expand industry benchmark sections (13 sections for demo + earthmoving)

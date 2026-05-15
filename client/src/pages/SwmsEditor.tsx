@@ -3,6 +3,7 @@ import { useParams, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import SafetyProfileWizardInline from "@/components/SafetyProfileWizard";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -416,6 +417,15 @@ export default function SwmsEditor() {
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [wizardDismissed, setWizardDismissed] = useState(false);
+
+  // Check if user has set up safety profile
+  const { data: profileStatus } = trpc.swms.hasSafetyProfile.useQuery();
+
+  // Show wizard if no profile exists and not dismissed
+  if (profileStatus && !profileStatus.hasProfile && !wizardDismissed) {
+    return <SafetyProfileWizardInline onComplete={() => setWizardDismissed(true)} />;
+  }
 
   const { data: swmsData, refetch } = trpc.swms.get.useQuery({ id: id! }, { enabled: !!id });
   const { data: signatures } = trpc.swms.getSignatures.useQuery({ id: id! }, { enabled: !!id });

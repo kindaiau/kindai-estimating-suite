@@ -182,6 +182,7 @@ const TRADES = [
   { id: "cabinet", name: "Cabinet Making", emoji: "🪵", colour: "from-teal-500 to-teal-700" },
   { id: "roofing", name: "Roofing", emoji: "🏠", colour: "from-red-400 to-red-600" },
   { id: "landscaping", name: "Landscaping", emoji: "🌿", colour: "from-green-400 to-green-600" },
+  { id: "demolition", name: "Demolition & Earthmoving", emoji: "🏗️", colour: "from-amber-700 to-yellow-900" },
 ];
 
 const FEATURES = [
@@ -435,40 +436,43 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Video Explainer ── */}
-      <section ref={videoSectionRef} className="py-16 px-4 bg-gray-950 relative overflow-hidden">
+      {/* ── Video Demo — Above the Fold ── */}
+      <section ref={videoSectionRef} className="py-12 sm:py-16 px-4 bg-gray-950 relative overflow-hidden">
         <div className="absolute inset-0 opacity-30" style={{ background: "radial-gradient(ellipse at center, oklch(0.35 0.18 0) 0%, transparent 70%)" }} />
-        <div className="max-w-5xl mx-auto relative z-10">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/70 text-xs font-semibold mb-4">
+        <div className="max-w-4xl mx-auto relative z-10">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/70 text-xs font-semibold mb-3">
               <Play className="w-3.5 h-3.5 text-pink-400" />
-              See it in action
+              30-second demo
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">
-              See how Kindai <span className="kindai-gradient-text">catches missed items in 60 seconds.</span>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white mb-2">
+              Watch: <span className="kindai-gradient-text">Plan upload → AI quote in 60 seconds</span>
             </h2>
-            <p className="text-white/60 text-base max-w-xl mx-auto">
-              Real plans. Real AI. Real Australian pricing. The speed matters because underquoting costs real money.
+            <p className="text-white/50 text-sm max-w-lg mx-auto">
+              Real plans. Real AI. Real Australian pricing.
             </p>
           </div>
-          <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-black aspect-video">
+          <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black aspect-video group cursor-pointer">
             {videoInView ? (
               <video
                 controls
                 preload="metadata"
                 className="w-full h-full object-cover"
                 style={{ display: 'block' }}
+                poster=""
               >
                 <source src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663471157879/KKHxJHBmmkobbTMa.mp4" type="video/mp4" />
                 Your browser does not support the video tag.
               </video>
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="text-white/30 text-sm">Loading video...</div>
+              <div className="w-full h-full flex items-center justify-center bg-gray-900">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center shadow-xl">
+                  <Play className="w-7 h-7 text-white ml-1" />
+                </div>
               </div>
             )}
           </div>
-          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-6 mt-6 px-4 sm:px-0">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-5 mt-6">
             <Button
               onClick={() => navigate("/pricing")}
               size="lg"
@@ -482,7 +486,7 @@ export default function Home() {
               variant="outline"
               className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-full text-sm sm:text-base font-black h-auto border-white/30 text-white hover:bg-white/10"
             >
-              <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" /> Watch Demo
+              <Play className="w-4 h-4 sm:w-5 sm:h-5 mr-2" /> Try Live Demo
             </Button>
           </div>
         </div>
@@ -1005,7 +1009,7 @@ export default function Home() {
                   { label: "Plumbing", href: "/ai-takeoff" },
                   { label: "Concrete", href: "/ai-takeoff" },
                   { label: "Painting", href: "/ai-takeoff" },
-                  { label: "Carpentry", href: "/ai-takeoff" },
+                  { label: "Demolition", href: "/ai-takeoff" },
                   { label: "All Trades", href: "/ai-takeoff" },
                 ].map(link => (
                   <li key={link.label}>

@@ -317,6 +317,39 @@ export const EV_CHARGING_PRODUCTIVITY: ProductivityRate[] = [
   { task: "Annual preventive maintenance service (commercial, per charger)", unit: "ea", minutesMin: 60, minutesAvg: 90, minutesMax: 120 },
 ];
 
+// ─── DEMOLITION & EARTHMOVING ─────────────────────────────────────────────────
+// Sources: Rawlinsons Australian Construction Handbook 2024 (adjusted +8% for 2025),
+//          Civil Contractors Federation (CCF) productivity benchmarks, EPA Victoria waste levy data
+export const DEMOLITION_PRODUCTIVITY: ProductivityRate[] = [
+  // Structural demolition
+  { task: "Internal strip-out (non-structural walls, ceilings, fixtures)", unit: "m²", minutesMin: 8, minutesAvg: 12, minutesMax: 18, notes: "Per m² floor area. Includes stacking/sorting waste." },
+  { task: "Brick wall demolition (single skin)", unit: "m²", minutesMin: 15, minutesAvg: 22, minutesMax: 30, notes: "Hand demolition. Machine is 3-5x faster." },
+  { task: "Brick wall demolition (double brick)", unit: "m²", minutesMin: 25, minutesAvg: 35, minutesMax: 50, notes: "Hand demolition. Machine is 3-5x faster." },
+  { task: "Concrete slab breaking (100mm slab)", unit: "m²", minutesMin: 10, minutesAvg: 15, minutesMax: 25, notes: "With hydraulic breaker on 5T excavator" },
+  { task: "Concrete slab breaking (200mm+ slab)", unit: "m²", minutesMin: 18, minutesAvg: 28, minutesMax: 40, notes: "With hydraulic breaker on 8T+ excavator" },
+  { task: "Timber frame house demolition (complete)", unit: "m²", minutesMin: 3, minutesAvg: 5, minutesMax: 8, notes: "Per m² floor area using 14T excavator. Includes loading." },
+  { task: "Brick veneer house demolition (complete)", unit: "m²", minutesMin: 5, minutesAvg: 7, minutesMax: 10, notes: "Per m² floor area using 20T excavator." },
+  { task: "Shed / garage removal (steel frame)", unit: "ea", minutesMin: 120, minutesAvg: 180, minutesMax: 300, notes: "Typical single garage. 2-5 hrs." },
+  { task: "Pool demolition (concrete, backfill)", unit: "ea", minutesMin: 480, minutesAvg: 720, minutesMax: 960, notes: "Full day to 1.5 days. Includes breaking, removal, fill." },
+  // Earthmoving
+  { task: "Topsoil strip (150mm depth)", unit: "m²", minutesMin: 0.3, minutesAvg: 0.5, minutesMax: 0.8, notes: "Using 8T excavator or bobcat. ~100m²/hr." },
+  { task: "Bulk excavation (soft soil)", unit: "m³", minutesMin: 1.5, minutesAvg: 2.5, minutesMax: 4, notes: "8T excavator in open access. ~25m³/hr." },
+  { task: "Bulk excavation (clay)", unit: "m³", minutesMin: 2.5, minutesAvg: 4, minutesMax: 6, notes: "8T excavator. Clay is heavier and stickier." },
+  { task: "Rock excavation (hydraulic hammer)", unit: "m³", minutesMin: 8, minutesAvg: 15, minutesMax: 25, notes: "Highly variable. Depends on rock hardness." },
+  { task: "Trench excavation (600mm wide x 600mm deep)", unit: "lm", minutesMin: 3, minutesAvg: 5, minutesMax: 8, notes: "Using 5T excavator. ~12lm/hr." },
+  { task: "Trench excavation (900mm wide x 1200mm deep)", unit: "lm", minutesMin: 6, minutesAvg: 10, minutesMax: 15, notes: "Using 8T excavator." },
+  { task: "Cut and fill (site levelling)", unit: "m³", minutesMin: 2, minutesAvg: 3.5, minutesMax: 5, notes: "Includes cut, cart, spread, and compact." },
+  { task: "Compaction (roller or plate compactor)", unit: "m²", minutesMin: 0.5, minutesAvg: 1, minutesMax: 1.5, notes: "Per 150mm lift. Multiple passes." },
+  // Waste & disposal
+  { task: "Load truck (demolition waste)", unit: "m³", minutesMin: 2, minutesAvg: 3, minutesMax: 5, notes: "Using excavator. ~20m³/hr." },
+  { task: "Cart to tip (10km round trip)", unit: "m³", minutesMin: 4, minutesAvg: 6, minutesMax: 10, notes: "Per m³ including load, travel, unload, return." },
+  { task: "Skip bin placement and collection", unit: "ea", minutesMin: 15, minutesAvg: 20, minutesMax: 30, notes: "Hook-lift or marrell bin. Per delivery/pickup." },
+  // Asbestos
+  { task: "Bonded asbestos removal (eaves, flat sheet)", unit: "m²", minutesMin: 15, minutesAvg: 25, minutesMax: 40, notes: "Class B licensed removalist. Wet removal method." },
+  { task: "Bonded asbestos removal (fencing)", unit: "lm", minutesMin: 8, minutesAvg: 12, minutesMax: 18, notes: "Per lineal metre of fence. Includes wrap and bag." },
+  { task: "Asbestos soil remediation", unit: "m³", minutesMin: 30, minutesAvg: 45, minutesMax: 60, notes: "Dig, bag, dispose at licensed facility." },
+];
+
 // ─── HELPER: Get productivity data for a trade ─────────────────────────────────
 export function getProductivityForTrade(trade: string): ProductivityRate[] {
   const tradeMap: Record<string, ProductivityRate[]> = {
@@ -336,6 +369,9 @@ export function getProductivityForTrade(trade: string): ProductivityRate[] {
     "ev-charging": EV_CHARGING_PRODUCTIVITY,
     "ev charging": EV_CHARGING_PRODUCTIVITY,
     evcharging: EV_CHARGING_PRODUCTIVITY,
+    demolition: DEMOLITION_PRODUCTIVITY,
+    earthmoving: DEMOLITION_PRODUCTIVITY,
+    "demolition earthmoving": DEMOLITION_PRODUCTIVITY,
   };
   const key = trade.toLowerCase().replace(/[^a-z ]/g, "");
   return tradeMap[key] ?? [];

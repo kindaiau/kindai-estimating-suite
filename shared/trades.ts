@@ -141,11 +141,11 @@ export const TRADES = [
   },
   {
     id: "demolition",
-    name: "Demolition & Excavation",
+    name: "Demolition & Earthmoving",
     icon: "Shovel",
     color: "#78350F",
-    description: "Demolition, earthworks, piling & site preparation",
-    unit: "m³",
+    description: "Demolition, earthworks, excavation, asbestos removal & site preparation",
+    unit: "m\u00b3",
   },
   {
     id: "swimming-pool",

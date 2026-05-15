@@ -116,6 +116,16 @@ export const AUSTRALIAN_SUPPLIERS: Record<string, Array<{
     { name: "Dulux AcraTex", type: "trade", website: "https://www.dulux.com.au", trades: ["rendering"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Specialist texture and render coatings." },
     { name: "Bunnings Warehouse", type: "retail", website: "https://www.bunnings.com.au", trades: ["rendering"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Retail render and plaster products." },
   ],
+  demolition: [
+    { name: "Kennards Hire", type: "trade", website: "https://www.kennards.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Demolition and earthmoving equipment hire — excavators, rock breakers, bobcats, compactors. National network." },
+    { name: "Coates Hire", type: "trade", website: "https://www.coateshire.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Heavy plant hire — excavators 1.5T-30T, trucks, rollers, compactors. Dry hire or operated." },
+    { name: "Bingo Industries", type: "trade", website: "https://www.bfrgroup.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD"], notes: "Skip bins 2m\u00b3-30m\u00b3, waste collection, C&D recycling. Trade accounts with volume pricing." },
+    { name: "SUEZ Recycling", type: "trade", website: "https://www.suez.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Waste management, skip bins, demolition waste recycling, asbestos disposal. National coverage." },
+    { name: "Dial Before You Dig", type: "trade", website: "https://www.1100.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Free underground service locating. Mandatory before ANY excavation. Call 1100 or use online portal." },
+    { name: "Conplant", type: "trade", website: "https://www.conplant.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Earthmoving equipment sales and hire — excavators, loaders, graders, rollers. Cat, Komatsu, Volvo." },
+    { name: "Boral Quarries", type: "trade", website: "https://www.boral.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Crushed rock, road base, fill material, sand, gravel. Delivery or pickup. Trade pricing for volume." },
+    { name: "Hanson Australia", type: "trade", website: "https://www.hanson.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Quarry products, aggregates, sand, road base, recycled materials. Trade accounts." },
+  ],
 };
 
 // ─── Industry Benchmark Data (2024-25 Australian market) ─────────────────────
@@ -269,7 +279,7 @@ export const INDUSTRY_BENCHMARKS: Record<string, {
     costPerM2: { residential: { min: 45, max: 120 }, commercial: { min: 65, max: 180 } },
     winRateBenchmark: 60,
     avgQuoteValue: { small: 4500, medium: 28000, large: 220000 },
-    sections: ["Preliminaries", "Asbestos Testing & Removal", "Selective Demolition", "Full Demolition", "Excavation & Earthworks", "Piling & Anchors", "Site Remediation", "Waste Disposal & Recycling"],
+    sections: ["Preliminaries & Site Establishment", "Asbestos Survey & Removal", "Selective / Internal Demolition", "Structural Demolition", "Earthworks & Bulk Excavation", "Trenching & Service Excavation", "Rock Breaking & Hammering", "Cut & Fill / Site Levelling", "Compaction & Stabilisation", "Piling & Anchors", "Site Remediation", "Waste Disposal, Tip Fees & Recycling", "Traffic Management & Road Permits"],
   },
   "swimming-pool": {
     labourRateRange: { min: 75, max: 120, median: 95 },

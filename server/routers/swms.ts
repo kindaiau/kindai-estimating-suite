@@ -724,6 +724,44 @@ export const swmsRouter = router({
       return { success: true };
     }),
 
+  /** Check if user has set up their safety profile (for onboarding wizard gate) */
+  hasSafetyProfile: protectedProcedure.query(async ({ ctx }) => {
+    const db = requireDatabase(await getDb());
+    const profiles = await db.select().from(businessSafetyProfiles)
+      .where(eq(businessSafetyProfiles.userId, ctx.user.id));
+    return { hasProfile: profiles.length > 0, itemCount: profiles.length };
+  }),
+
+  /** Save standard PPE items from onboarding wizard */
+  saveSafetyProfile: protectedProcedure
+    .input(z.object({
+      items: z.array(z.object({
+        category: z.enum(["ppe", "control", "procedure", "terminology", "emergency"]),
+        title: z.string().min(1),
+        description: z.string().min(1),
+        standardRef: z.string().optional(),
+      })),
+      trade: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = requireDatabase(await getDb());
+      const inserted = [];
+      for (const item of input.items) {
+        const [result] = await db.insert(businessSafetyProfiles).values({
+          userId: ctx.user.id,
+          trade: input.trade || null,
+          category: item.category,
+          title: item.title,
+          description: item.description,
+          standardRef: item.standardRef || null,
+          isDefault: true,
+          source: "manual_entry",
+        });
+        inserted.push(result.insertId);
+      }
+      return { saved: inserted.length };
+    }),
+
   /** Get AI learning stats (how many corrections, profile items, procedures) */
   getAIStats: protectedProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
