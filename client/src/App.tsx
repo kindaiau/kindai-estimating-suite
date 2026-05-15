@@ -43,6 +43,7 @@ import Login from "./pages/Login";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import SwmsEditor from "./pages/SwmsEditor";
 import SwmsSign from "./pages/SwmsSign";
+import BetaExpired from "./pages/BetaExpired";
 
 const FbLeadsDashboard = lazy(() => import("./pages/FbLeadsDashboard"));
 const LaunchEngineLandingPage = lazy(() => import("./launch-engine/LandingPage"));
@@ -75,6 +76,7 @@ function Router() {
         <Route path="/trade-profiles" component={protectedPage(TradeProfile)} />
         <Route path="/demo" component={DemoMode} />
         <Route path="/login" component={Login} />
+        <Route path="/beta-expired" component={BetaExpired} />
         <Route path="/suppliers" component={protectedPage(SupplierManager)} />
         <Route path="/followups" component={protectedPage(QuoteFollowups)} />
         <Route path="/projects/:projectId/variations" component={protectedPage(VariationsRegister)} />

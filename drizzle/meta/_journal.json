@@ -134,6 +134,13 @@
       "when": 1778668390412,
       "tag": "0018_robust_stone_men",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1778832617068,
+      "tag": "0019_friendly_thunderbolt_ross",
+      "breakpoints": true
     }
   ]
 }

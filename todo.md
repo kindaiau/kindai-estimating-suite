@@ -1060,3 +1060,11 @@
 - [ ] Replace all "Join Waitlist" CTAs with proper product CTAs (Get Started / Start Free Trial)
 - [ ] Remove /beta page or redirect to main signup
 - [ ] Clean up any other beta/waitlist references across the site
+
+## Login Issue Investigation & Beta-Expired UX (15 May 2026)
+- [ ] Check database for John Rutland's account and login status
+- [ ] Investigate auth flow for potential login blockers affecting beta users
+- [ ] Build beta-expired detection (check subscription status on login)
+- [ ] Show clear "Your beta has ended — upgrade to Pro for A$9" message for expired users
+- [ ] Ensure expired users can still access the upgrade/pricing page
+- [ ] Save checkpoint
