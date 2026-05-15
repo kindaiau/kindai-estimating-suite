@@ -19,6 +19,7 @@ import { getLoginUrl } from "@/const";
 import { Camera, Upload, Zap, Loader2, FileImage, DollarSign,
   TrendingUp, Clock, Package, Users, ExternalLink, ChevronRight,
   Sparkles, ShieldCheck, ArrowRight, BarChart3, Truck, FileText, X as XIcon,
+  AlertTriangle,
 } from "lucide-react";
 import { OrchestrationProgress } from "@/components/OrchestrationProgress";
 import { TRADES } from "../../../shared/trades";
@@ -47,10 +48,63 @@ type TakeoffResult = {
   planNotes: string;
 };
 
+type AssuranceReport = {
+  quoteValue: number;
+  valueBand: "routine" | "managed" | "high_value" | "enterprise";
+  riskScore: number;
+  overallRisk: "low" | "medium" | "high" | "critical";
+  approvalLevel: "standard" | "estimator_review" | "senior_estimator" | "director_signoff";
+  canIssue: boolean;
+  issueBlocks: string[];
+  warnings: string[];
+  checks: Array<{
+    id: string;
+    title: string;
+    status: "pass" | "warning" | "fail";
+    severity: "info" | "low" | "medium" | "high" | "critical";
+    message: string;
+    recommendedAction: string;
+  }>;
+  lineItemRisks: Array<{
+    lineItemId?: number;
+    description: string;
+    riskLevel: "low" | "medium" | "high" | "critical";
+    reasons: string[];
+    recommendedAction: string;
+  }>;
+  summary: string;
+};
+
+type SupplierQuoteExtractionResult = {
+  supplierName: string;
+  quoteReference: string;
+  quoteDate: string;
+  currency: string;
+  subtotalExGst: number;
+  gstAmount: number;
+  totalIncGst: number;
+  confidence: number;
+  lineItems: Array<{
+    description: string;
+    quantity: number;
+    unit: string;
+    unitPrice: number;
+    total: number;
+    productCode: string;
+    confidence: number;
+    sourceNote: string;
+  }>;
+  inclusions: string[];
+  exclusions: string[];
+  reviewFlags: string[];
+  recommendedActions: string[];
+};
+
 export default function AITakeoff() {
   const { user, isAuthenticated } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const supplierQuoteInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedTrade, setSelectedTrade] = useState("");
   const [selectedState, setSelectedState] = useState("");
@@ -72,13 +126,15 @@ export default function AITakeoff() {
   const [useTradePrice, setUseTradePrice] = useState(true);
   const [tempEstimateId, setTempEstimateId] = useState<number | null>(null);
   const [scopingAnswers, setScopingAnswers] = useState<Record<string, string | string[] | number>>({});
-  const [activeTab, setActiveTab] = useState<"materials" | "labour" | "suppliers" | "summary">("materials");
+  const [activeTab, setActiveTab] = useState<"confidence" | "materials" | "labour" | "suppliers" | "summary">("materials");
   const [showOrchestration, setShowOrchestration] = useState(false);
   // Scope of Works document (optional second upload)
   const [scopeDocUrl, setScopeDocUrl] = useState<string | null>(null);
   const [scopeDocName, setScopeDocName] = useState<string | null>(null);
   const [isUploadingScopeDoc, setIsUploadingScopeDoc] = useState(false);
   const scopeDocInputRef = useRef<HTMLInputElement>(null);
+  const [supplierQuoteFileName, setSupplierQuoteFileName] = useState<string | null>(null);
+  const [supplierQuoteResult, setSupplierQuoteResult] = useState<SupplierQuoteExtractionResult | null>(null);
 
   useEffect(() => {
     trackEvent("ai_takeoff_viewed", getAnalyticsContext());
@@ -101,6 +157,8 @@ export default function AITakeoff() {
 
   const uploadPlan = trpc.ai.uploadPlan.useMutation();
   const uploadScopeDoc = trpc.ai.uploadScopeDoc.useMutation();
+  const uploadSupplierQuote = trpc.ai.uploadSupplierQuote.useMutation();
+  const extractSupplierQuote = trpc.ai.extractSupplierQuote.useMutation();
   const visionTakeoff = trpc.ai.visionTakeoff.useMutation();
   const textTakeoff = trpc.ai.analyzePlan.useMutation();
   const calcPricing = trpc.ai.calculatePricing.useMutation();
@@ -112,6 +170,18 @@ export default function AITakeoff() {
   // Create a temp estimate for the AI to save data to
   const createProject = trpc.projects.create.useMutation();
   const createEstimate = trpc.estimates.create.useMutation();
+  const assuranceQuery = trpc.estimates.getAssurance.useQuery(
+    {
+      estimateId: tempEstimateId ?? 0,
+      pricingContext: result ? {
+        marginPercent: markupPercent,
+        labourRate,
+        useTradePrice,
+      } : undefined,
+      takeoffItems: result?.items ?? undefined,
+    },
+    { enabled: Boolean(result && tempEstimateId), refetchOnWindowFocus: false }
+  );
 
   const pricing = useMemo(() => {
     if (!result) return null;
@@ -251,6 +321,36 @@ export default function AITakeoff() {
     if (cameraInputRef.current) cameraInputRef.current.value = "";
   }
 
+  async function handleSupplierQuoteSelect(file: File) {
+    if (!isAuthenticated) { window.location.href = getLoginUrl(); return; }
+    if (!selectedTrade) { toast.error("Select your trade first so Kindai can compare the quote properly."); return; }
+    const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf", "image/heic", "image/heif"];
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    const isHeic = file.type === "image/heic" || file.type === "image/heif" || ext === "heic" || ext === "heif";
+    const contentType = (isHeic ? "image/heic" : file.type) as "image/jpeg" | "image/png" | "image/webp" | "application/pdf" | "image/heic" | "image/heif";
+    if (!allowed.includes(contentType)) { toast.error("Upload a PDF or image quote."); return; }
+    if (file.size > 32 * 1024 * 1024) { toast.error("Supplier quote is too large. Max 32MB."); return; }
+    setSupplierQuoteFileName(file.name);
+    setSupplierQuoteResult(null);
+    try {
+      const base64 = await fileToBase64(file);
+      const uploaded = await uploadSupplierQuote.mutateAsync({ fileName: file.name, fileBase64: base64, contentType });
+      const extracted = await extractSupplierQuote.mutateAsync({
+        quoteKey: uploaded.key,
+        trade: selectedTrade,
+        estimateId: tempEstimateId ?? undefined,
+        projectScope: additionalContext || textDescription || undefined,
+      });
+      setSupplierQuoteResult(extracted as SupplierQuoteExtractionResult);
+      toast.success(`Supplier quote extracted — ${extracted.lineItems.length} line items found.`);
+      setActiveTab("suppliers");
+    } catch (err: any) {
+      toast.error(err.message ?? "Supplier quote extraction failed. Please try another PDF or image.");
+    } finally {
+      if (supplierQuoteInputRef.current) supplierQuoteInputRef.current.value = "";
+    }
+  }
+
   async function handleAnalyse() {
     if (!selectedTrade) {
       toast.error("Select your trade first");
@@ -328,6 +428,7 @@ export default function AITakeoff() {
     setShowOrchestration(false);
     setIsAnalysing(false);
     toast.success(`Takeoff complete! ${takeoffResult.items.length} items found. Confidence: ${takeoffResult.confidence}%`);
+    setActiveTab("confidence");
     pixelRunTakeoff({ trade: selectedTrade, job_type: mode });
     trackEvent("ai_takeoff_succeeded", {
       trade: selectedTrade,
@@ -482,8 +583,15 @@ export default function AITakeoff() {
                     className={`flex-1 rounded-xl text-xs font-bold ${mode === "text" ? "bg-gradient-to-r from-blue-500 to-cyan-500 border-0 text-white" : ""}`}
                     onClick={() => setMode("text")}
                   >
-                    <Package className="w-3.5 h-3.5 mr-1" /> Describe Job
+                    <Package className="w-3.5 h-3.5 mr-1" /> Speak Job
                   </Button>
+                </div>
+
+                <div className="rounded-xl bg-gradient-to-r from-pink-50 via-orange-50 to-yellow-50 border border-orange-100 p-3">
+                  <p className="text-xs font-black text-gray-800">Voice-first workflow</p>
+                  <p className="text-[11px] text-gray-600 mt-1">
+                    Upload the plan first, then talk like you would to a mate: scope, exclusions, tricky access, preferred brands, and anything the AI should double-check.
+                  </p>
                 </div>
 
                 {mode === "vision" ? (
@@ -586,7 +694,7 @@ export default function AITakeoff() {
                     )}
                     <div className="relative">
                       <Textarea
-                        placeholder="Optional: Add extra context (e.g. '3-bed house, 180m², standard residential')"
+                        placeholder="Optional voice notes: scope, exclusions, access, preferred supplier, or anything the plan might not show."
                         value={additionalContext}
                         onChange={(e) => setAdditionalContext(e.target.value)}
                         className="rounded-xl border-gray-200 text-sm min-h-[60px] pr-12"
@@ -679,15 +787,15 @@ export default function AITakeoff() {
                     )}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500 font-medium">Job Description</span>
-                        <VoiceRecorder
-                          trade={selectedTrade}
-                          label="Speak Description"
+                          <span className="text-xs text-gray-500 font-medium">Voice Job Description</span>
+                          <VoiceRecorder
+                            trade={selectedTrade}
+                            label="Speak Job"
                           onTranscript={(text) => setTextDescription((prev) => prev ? `${prev} ${text}` : text)}
                         />
                       </div>
                       <Textarea
-                        placeholder="Describe the job in detail. E.g.: '3-bedroom house, 180m². Need 20 power points, 15 light points, 1 switchboard upgrade, smoke alarms to all bedrooms and hallway. Standard residential wiring.'"
+                        placeholder="Speak or type the job in normal trade language. E.g. '3-bed house, 180 square metres, 20 power points, 15 light points, board upgrade, smoke alarms to bedrooms and hallway, standard residential wiring, client wants a clean quote with exclusions called out.'"
                         value={textDescription}
                         onChange={(e) => setTextDescription(e.target.value)}
                         className="rounded-xl border-gray-200 text-sm min-h-[140px]"
@@ -872,7 +980,7 @@ export default function AITakeoff() {
 
                 {/* Tab Navigation */}
                 <div className="flex gap-1 bg-white rounded-2xl p-1 shadow-md">
-                  {(["materials", "labour", "suppliers", "summary"] as const).map(tab => (
+                  {(["confidence", "materials", "labour", "suppliers", "summary"] as const).map(tab => (
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
@@ -886,6 +994,11 @@ export default function AITakeoff() {
                     </button>
                   ))}
                 </div>
+
+                {/* Confidence Reviewer Tab */}
+                {activeTab === "confidence" && (
+                  <ConfidenceReviewerCard assurance={assuranceQuery.data as AssuranceReport | null | undefined} isLoading={assuranceQuery.isLoading} />
+                )}
 
                 {/* Materials Tab */}
                 {activeTab === "materials" && (
@@ -990,6 +1103,80 @@ export default function AITakeoff() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="px-4 pb-4 space-y-3">
+                      <div className="rounded-xl border border-dashed border-orange-200 bg-orange-50/60 p-3 space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-xs font-black text-orange-900">Supplier Quote Extractor</p>
+                            <p className="text-[11px] text-orange-700 mt-1">Upload a supplier or subbie quote. Kindai pulls out line items, GST, exclusions, and review flags so you stop retyping and protect your margin.</p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="rounded-lg text-xs bg-white border-orange-200"
+                            disabled={uploadSupplierQuote.isPending || extractSupplierQuote.isPending || !selectedTrade}
+                            onClick={() => supplierQuoteInputRef.current?.click()}
+                          >
+                            {(uploadSupplierQuote.isPending || extractSupplierQuote.isPending) ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Upload className="w-3 h-3 mr-1" />}
+                            Extract
+                          </Button>
+                          <input
+                            ref={supplierQuoteInputRef}
+                            type="file"
+                            accept="image/*,.pdf,.heic,.heif,application/pdf"
+                            className="hidden"
+                            onChange={(e) => e.target.files?.[0] && handleSupplierQuoteSelect(e.target.files[0])}
+                          />
+                        </div>
+                        {supplierQuoteFileName && (
+                          <p className="text-[11px] text-orange-700"><strong>Last file:</strong> {supplierQuoteFileName}</p>
+                        )}
+                        {supplierQuoteResult && (
+                          <div className="rounded-xl bg-white border border-orange-100 overflow-hidden">
+                            <div className="p-3 border-b border-orange-100 flex flex-wrap items-center justify-between gap-2">
+                              <div>
+                                <p className="text-xs font-black text-gray-900">{supplierQuoteResult.supplierName || "Supplier quote"}</p>
+                                <p className="text-[11px] text-gray-500">Ref {supplierQuoteResult.quoteReference || "N/A"} · Confidence {Math.round(supplierQuoteResult.confidence)}%</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-[10px] font-bold text-gray-500 uppercase">Total inc GST</p>
+                                <p className="text-sm font-black text-gray-900">{fmt(supplierQuoteResult.totalIncGst)}</p>
+                              </div>
+                            </div>
+                            <div className="max-h-64 overflow-auto">
+                              <table className="w-full text-xs min-w-[560px]">
+                                <thead className="bg-gray-50 sticky top-0">
+                                  <tr>
+                                    <th className="text-left py-2 px-3 font-bold text-gray-500">Item</th>
+                                    <th className="text-center py-2 px-2 font-bold text-gray-500">Qty</th>
+                                    <th className="text-right py-2 px-2 font-bold text-gray-500">Unit $</th>
+                                    <th className="text-right py-2 px-3 font-bold text-gray-500">Total</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {supplierQuoteResult.lineItems.map((item, idx) => (
+                                    <tr key={`${item.description}-${idx}`} className="border-t border-gray-50">
+                                      <td className="py-2 px-3">
+                                        <p className="font-bold text-gray-800">{item.description}</p>
+                                        <p className="text-[10px] text-gray-400">{item.productCode || "No code"} · {item.sourceNote}</p>
+                                      </td>
+                                      <td className="text-center py-2 px-2">{item.quantity} {item.unit}</td>
+                                      <td className="text-right py-2 px-2">{fmt(item.unitPrice)}</td>
+                                      <td className="text-right py-2 px-3 font-black">{fmt(item.total)}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                            {(supplierQuoteResult.reviewFlags.length > 0 || supplierQuoteResult.exclusions.length > 0) && (
+                              <div className="p-3 bg-yellow-50 border-t border-yellow-100 space-y-2">
+                                {supplierQuoteResult.reviewFlags.slice(0, 4).map((flag, idx) => <p key={`flag-${idx}`} className="text-[11px] text-yellow-800">• {flag}</p>)}
+                                {supplierQuoteResult.exclusions.slice(0, 3).map((exclusion, idx) => <p key={`exclusion-${idx}`} className="text-[11px] text-yellow-800">• Exclusion: {exclusion}</p>)}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
                       {suppliersQuery.data?.map((supplier, i) => (
                         <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all">
                           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${supplier.type === "trade" ? "bg-green-100" : "bg-gray-200"}`}>
@@ -1098,6 +1285,130 @@ export default function AITakeoff() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function riskBadgeClasses(risk: AssuranceReport["overallRisk"] | AssuranceReport["checks"][number]["status"]) {
+  if (risk === "critical" || risk === "fail") return "bg-red-100 text-red-700 border-red-200";
+  if (risk === "high") return "bg-orange-100 text-orange-700 border-orange-200";
+  if (risk === "medium" || risk === "warning") return "bg-yellow-100 text-yellow-800 border-yellow-200";
+  return "bg-green-100 text-green-700 border-green-200";
+}
+
+function labelize(value: string) {
+  return value.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function ConfidenceReviewerCard({ assurance, isLoading }: { assurance?: AssuranceReport | null; isLoading: boolean }) {
+  if (isLoading) {
+    return (
+      <Card className="border-0 shadow-md rounded-2xl overflow-hidden">
+        <CardContent className="p-8 text-center">
+          <Loader2 className="w-8 h-8 text-pink-500 mx-auto mb-3 animate-spin" />
+          <p className="text-sm font-bold text-gray-700">Running quote confidence checks...</p>
+          <p className="text-xs text-gray-500 mt-1">Kindai is checking missing scope, AI confidence, margin, labour, and risky line items.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!assurance) {
+    return (
+      <Card className="border-0 shadow-md rounded-2xl overflow-hidden">
+        <CardContent className="p-8 text-center">
+          <ShieldCheck className="w-8 h-8 text-gray-400 mx-auto mb-3" />
+          <p className="text-sm font-bold text-gray-700">Quote confidence will appear after takeoff.</p>
+          <p className="text-xs text-gray-500 mt-1">AI drafts. You approve. Nothing gets treated as final until you review it.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const topRisks = assurance.lineItemRisks.slice(0, 5);
+  const failedOrWarningChecks = assurance.checks.filter((check) => check.status !== "pass");
+
+  return (
+    <div className="space-y-4">
+      <Card className={`border shadow-md rounded-2xl overflow-hidden ${assurance.canIssue ? "border-green-200" : "border-red-200"}`}>
+        <CardHeader className="pb-2 pt-4 px-4">
+          <CardTitle className="text-sm font-black flex items-center gap-2">
+            <span className={`w-7 h-7 rounded-xl flex items-center justify-center ${assurance.canIssue ? "bg-green-100" : "bg-red-100"}`}>
+              {assurance.canIssue ? <ShieldCheck className="w-4 h-4 text-green-600" /> : <AlertTriangle className="w-4 h-4 text-red-600" />}
+            </span>
+            Quote Confidence Reviewer
+            <Badge variant="outline" className={`text-[10px] ${riskBadgeClasses(assurance.overallRisk)}`}>{labelize(assurance.overallRisk)} Risk</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-4 pb-4 space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="rounded-xl bg-gray-50 p-3 text-center">
+              <p className="text-[10px] font-bold text-gray-500 uppercase">Risk Score</p>
+              <p className="text-xl font-black text-gray-900">{assurance.riskScore}/100</p>
+            </div>
+            <div className="rounded-xl bg-gray-50 p-3 text-center">
+              <p className="text-[10px] font-bold text-gray-500 uppercase">Value Band</p>
+              <p className="text-sm font-black text-gray-900">{labelize(assurance.valueBand)}</p>
+            </div>
+            <div className="rounded-xl bg-gray-50 p-3 text-center">
+              <p className="text-[10px] font-bold text-gray-500 uppercase">Approval</p>
+              <p className="text-sm font-black text-gray-900">{labelize(assurance.approvalLevel)}</p>
+            </div>
+            <div className="rounded-xl bg-gray-50 p-3 text-center">
+              <p className="text-[10px] font-bold text-gray-500 uppercase">Issue Status</p>
+              <p className={`text-sm font-black ${assurance.canIssue ? "text-green-700" : "text-red-700"}`}>{assurance.canIssue ? "Clear" : "Blocked"}</p>
+            </div>
+          </div>
+
+          <div className={`rounded-xl p-3 text-sm ${assurance.canIssue ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>
+            <p className="font-black mb-1">Mate-friendly summary</p>
+            <p>{assurance.summary}</p>
+          </div>
+
+          {assurance.issueBlocks.length > 0 && (
+            <div className="rounded-xl bg-red-50 border border-red-100 p-3">
+              <p className="text-xs font-black text-red-800 mb-2">Must fix before sending</p>
+              <div className="space-y-1.5">
+                {assurance.issueBlocks.map((block, i) => <p key={i} className="text-xs text-red-700">• {block}</p>)}
+              </div>
+            </div>
+          )}
+
+          {failedOrWarningChecks.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-black text-gray-700">Review checklist</p>
+              {failedOrWarningChecks.slice(0, 6).map((check) => (
+                <div key={check.id} className="rounded-xl border border-gray-100 bg-white p-3">
+                  <div className="flex items-center justify-between gap-3 mb-1">
+                    <p className="text-xs font-black text-gray-900">{check.title}</p>
+                    <Badge variant="outline" className={`text-[10px] ${riskBadgeClasses(check.status)}`}>{check.status}</Badge>
+                  </div>
+                  <p className="text-xs text-gray-600">{check.message}</p>
+                  <p className="text-[11px] text-gray-500 mt-1"><strong>Action:</strong> {check.recommendedAction}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {topRisks.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-black text-gray-700">Line items needing a quick human look</p>
+              {topRisks.map((risk, i) => (
+                <div key={`${risk.description}-${i}`} className="rounded-xl bg-yellow-50 border border-yellow-100 p-3">
+                  <div className="flex items-center justify-between gap-3 mb-1">
+                    <p className="text-xs font-black text-yellow-900 truncate">{risk.description}</p>
+                    <Badge variant="outline" className={`text-[10px] ${riskBadgeClasses(risk.riskLevel)}`}>{labelize(risk.riskLevel)}</Badge>
+                  </div>
+                  <div className="space-y-1">
+                    {risk.reasons.slice(0, 3).map((reason, idx) => <p key={idx} className="text-xs text-yellow-800">• {reason}</p>)}
+                  </div>
+                  <p className="text-[11px] text-yellow-700 mt-1"><strong>Action:</strong> {risk.recommendedAction}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

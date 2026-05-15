@@ -6,7 +6,7 @@ import { mediaContentFromUrl } from "../_core/mediaInputs";
 import { getDb } from "../db";
 import { estimates, lineItems, tradeProfiles, companyProfiles, priceBookItems, estimateCorrections } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
-import { storagePut } from "../storage";
+import { storageGet, storagePut } from "../storage";
 import { nanoid } from "nanoid";
 import { buildProductivityPromptSection } from "../labourProductivity";
 import { insertAiLineItems } from "../routes/insertAiLineItems";
@@ -1148,6 +1148,117 @@ type TakeoffResult = {
   planNotes: string;
 };
 
+const supplierQuoteResponseSchema = {
+  type: "json_schema" as const,
+  json_schema: {
+    name: "supplier_quote_extraction_result",
+    strict: true,
+    schema: {
+      type: "object",
+      properties: {
+        supplierName: { type: "string" },
+        quoteReference: { type: "string" },
+        quoteDate: { type: "string" },
+        currency: { type: "string" },
+        subtotalExGst: { type: "number" },
+        gstAmount: { type: "number" },
+        totalIncGst: { type: "number" },
+        confidence: {
+          type: "number",
+          description: "Overall extraction confidence as a percentage from 0 to 100.",
+          minimum: 0,
+          maximum: 100,
+        },
+        lineItems: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              description: { type: "string" },
+              quantity: { type: "number" },
+              unit: { type: "string" },
+              unitPrice: { type: "number" },
+              total: { type: "number" },
+              productCode: { type: "string" },
+              confidence: {
+                type: "number",
+                description: "Line-item extraction confidence as a percentage from 0 to 100.",
+                minimum: 0,
+                maximum: 100,
+              },
+              sourceNote: { type: "string" },
+            },
+            required: ["description", "quantity", "unit", "unitPrice", "total", "productCode", "confidence", "sourceNote"],
+            additionalProperties: false,
+          },
+        },
+        inclusions: { type: "array", items: { type: "string" } },
+        exclusions: { type: "array", items: { type: "string" } },
+        reviewFlags: { type: "array", items: { type: "string" } },
+        recommendedActions: { type: "array", items: { type: "string" } },
+      },
+      required: ["supplierName", "quoteReference", "quoteDate", "currency", "subtotalExGst", "gstAmount", "totalIncGst", "confidence", "lineItems", "inclusions", "exclusions", "reviewFlags", "recommendedActions"],
+      additionalProperties: false,
+    },
+  },
+};
+
+type SupplierQuoteExtractionResult = {
+  supplierName: string;
+  quoteReference: string;
+  quoteDate: string;
+  currency: string;
+  subtotalExGst: number;
+  gstAmount: number;
+  totalIncGst: number;
+  confidence: number;
+  lineItems: Array<{
+    description: string;
+    quantity: number;
+    unit: string;
+    unitPrice: number;
+    total: number;
+    productCode: string;
+    confidence: number;
+    sourceNote: string;
+  }>;
+  inclusions: string[];
+  exclusions: string[];
+  reviewFlags: string[];
+  recommendedActions: string[];
+};
+
+function normalizeConfidencePercent(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 0;
+  const scaled = value > 0 && value <= 1 ? value * 100 : value;
+  return Math.min(100, Math.max(0, Math.round(scaled)));
+}
+
+function normalizeSupplierQuoteExtractionResult(
+  value: SupplierQuoteExtractionResult
+): SupplierQuoteExtractionResult {
+  return {
+    ...value,
+    confidence: normalizeConfidencePercent(value.confidence),
+    lineItems: value.lineItems.map((item) => ({
+      ...item,
+      confidence: normalizeConfidencePercent(item.confidence),
+    })),
+  };
+}
+
+function assertOwnedSupplierQuoteKey(userId: number, key: string): string {
+  const normalizedKey = key.replace(/^\/+/, "");
+  const expectedPrefix = `supplier-quotes/${userId}/`;
+  if (!normalizedKey.startsWith(expectedPrefix)) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Supplier quote must come from your uploaded files.",
+    });
+  }
+  return normalizedKey;
+}
+
 // ─── Merge multiple batch takeoff results into one combined result ───────────
 function mergeTakeoffResults(results: TakeoffResult[], totalPages: number): TakeoffResult {
   // Combine all items — use description+unit as dedup key, sum quantities
@@ -1277,6 +1388,81 @@ export const aiRouter = router({
     const key = `scope-docs/${ctx.user.id}/${nanoid()}.${ext}`;
     const { url } = await storagePut(key, finalBuffer, contentType);
     return { url, key };
+  }),
+
+  // Upload supplier/subcontractor quote documents for AI extraction
+  uploadSupplierQuote: protectedProcedure.input(z.object({
+    fileName: z.string().max(255),
+    fileBase64: z.string().max(44_000_000),
+    contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf", "image/heic", "image/heif"]),
+  })).mutation(async ({ ctx, input }) => {
+    const rawBuffer = Buffer.from(input.fileBase64, "base64");
+    const MAX_FILE_SIZE = 32 * 1024 * 1024;
+    if (rawBuffer.length > MAX_FILE_SIZE) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: `File too large. Maximum size is 32MB. Your file is ${(rawBuffer.length / 1024 / 1024).toFixed(1)}MB.` });
+    }
+    let finalBuffer: Buffer;
+    let contentType = input.contentType;
+    let ext = input.fileName.split(".").pop()?.toLowerCase() ?? "pdf";
+    if (contentType === "image/heic" || contentType === "image/heif") {
+      finalBuffer = await convertHeicToJpegAi(rawBuffer);
+      contentType = "image/jpeg";
+      ext = "jpg";
+    } else {
+      finalBuffer = rawBuffer;
+    }
+    const key = `supplier-quotes/${ctx.user.id}/${nanoid()}.${ext}`;
+    const { url } = await storagePut(key, finalBuffer, contentType);
+    return { url, key };
+  }),
+
+  // Supplier Quote Extractor — turn messy supplier/subbie PDFs into reviewable structured data
+  extractSupplierQuote: protectedProcedure.input(z.object({
+    quoteKey: z.string().min(1),
+    trade: z.string().optional(),
+    estimateId: z.number().optional(),
+    projectScope: z.string().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+    const quoteKey = assertOwnedSupplierQuoteKey(ctx.user.id, input.quoteKey);
+    const { url: quoteUrl } = await storageGet(quoteKey);
+
+    let estimateContext = "";
+    if (input.estimateId) {
+      const [est] = await db.select().from(estimates)
+        .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
+        .limit(1);
+      if (!est) throw new Error("Estimate not found");
+      const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, input.estimateId));
+      estimateContext = `\nCurrent Kindai estimate context:\nTrade: ${est.trade}\nTitle: ${est.title}\nExisting items:\n${items.slice(0, 30).map((item) => `- ${item.description} | ${item.quantity} ${item.unit} @ $${item.unitRate}`).join("\n")}`;
+    }
+
+    const response = await invokeLLM({
+      messages: [
+        {
+          role: "system",
+          content: `You are a senior Australian construction estimator and procurement reviewer. Extract supplier or subcontractor quote information into clean structured data. Do not invent missing prices or quantities. If something is unreadable, use 0 for numeric fields, low confidence, and add a review flag. Always identify inclusions, exclusions, GST treatment, totals, and margin-risk gaps. Confidence fields must be percentages from 0 to 100.`,
+        },
+        {
+          role: "user",
+          content: [
+            mediaContentFromUrl(quoteUrl),
+            {
+              type: "text",
+              text: `Extract this supplier/subcontractor quote for Kindai.\nTrade: ${input.trade ?? "unknown"}\nProject scope/context: ${input.projectScope ?? "not supplied"}${estimateContext}\n\nReturn structured quote data only. Use AUD. Confidence values must be percentages from 0 to 100. Add review flags for exclusions, unclear GST, lump sums, missing product codes, missing quantities, and any mismatch against the current Kindai estimate context.`,
+            },
+          ] as any,
+        },
+      ],
+      response_format: supplierQuoteResponseSchema,
+      thinkingBudget: 1024,
+    });
+
+    const rawContent = response.choices[0]?.message?.content;
+    const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
+    if (!content) throw new Error("No response from AI");
+    return normalizeSupplierQuoteExtractionResult(JSON.parse(content) as SupplierQuoteExtractionResult);
   }),
 
   // AI Vision Takeoff — analyse a single uploaded plan image

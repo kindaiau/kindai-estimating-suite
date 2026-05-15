@@ -5,7 +5,7 @@ import { quoteTokens, estimates, lineItems, users } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import crypto from "crypto";
-import { buildQuoteAssuranceReport } from "../assurance";
+import { buildQuoteAssuranceReport, deriveAssuranceEstimate } from "../assurance";
 
 function generateToken(): string {
   return crypto.randomBytes(48).toString("hex");
@@ -38,7 +38,7 @@ export const quoteTokensRouter = router({
       .select()
       .from(lineItems)
       .where(eq(lineItems.estimateId, input.estimateId));
-    const assurance = buildQuoteAssuranceReport(estimate, items);
+    const assurance = buildQuoteAssuranceReport(deriveAssuranceEstimate(estimate, items), items);
     if (!assurance.canIssue) {
       throw new TRPCError({
         code: "PRECONDITION_FAILED",
