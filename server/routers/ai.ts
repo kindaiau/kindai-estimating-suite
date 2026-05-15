@@ -1270,8 +1270,8 @@ function mergeTakeoffResults(results: TakeoffResult[], totalPages: number): Take
       const existing = itemMap.get(key);
       if (existing) {
         // Sum quantities and quantity-weight prices/labour for duplicate items across pages
-        const existingQty = Math.max(existing.quantity, 0);
-        const incomingQty = Math.max(item.quantity, 0);
+        const existingQty = existing.quantity;
+        const incomingQty = item.quantity;
         const totalQty = existingQty + incomingQty;
 
         if (totalQty > 0) {
@@ -1289,6 +1289,16 @@ function mergeTakeoffResults(results: TakeoffResult[], totalPages: number): Take
           ) / 100;
         }
         existing.quantity += item.quantity;
+        const normalizedExisting = normalizeTakeoffItem(existing);
+        existing.section = normalizedExisting.section;
+        existing.description = normalizedExisting.description;
+        existing.unit = normalizedExisting.unit;
+        existing.quantity = normalizedExisting.quantity;
+        existing.retailPrice = normalizedExisting.retailPrice;
+        existing.tradePrice = normalizedExisting.tradePrice;
+        existing.category = normalizedExisting.category;
+        existing.labourMinutes = normalizedExisting.labourMinutes;
+        existing.wasteFactor = normalizedExisting.wasteFactor;
       } else {
         itemMap.set(key, normalizeTakeoffItem(item) as TakeoffItem);
       }

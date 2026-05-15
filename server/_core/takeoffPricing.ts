@@ -71,10 +71,6 @@ function normalizePricePair(
     trade = retail * (1 - tradeDiscount);
   }
 
-  if (trade > retail && retail > 0) {
-    trade = retail;
-  }
-
   return {
     retailPrice: roundCurrency(Math.max(0, retail)),
     tradePrice: roundCurrency(Math.max(0, trade)),
@@ -105,6 +101,7 @@ export function normalizeTakeoffItem(
     tradePrice: prices.tradePrice,
     category: normalizeText(item.category, "Materials"),
     labourMinutes: Math.max(0, safeNumber(item.labourMinutes)),
+    // Waste factor is represented as a percentage (0-100).
     wasteFactor: Math.min(100, Math.max(0, safeNumber(item.wasteFactor))),
   };
 }
