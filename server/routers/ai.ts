@@ -126,6 +126,26 @@ export const AUSTRALIAN_SUPPLIERS: Record<string, Array<{
     { name: "Boral Quarries", type: "trade", website: "https://www.boral.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Crushed rock, road base, fill material, sand, gravel. Delivery or pickup. Trade pricing for volume." },
     { name: "Hanson Australia", type: "trade", website: "https://www.hanson.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Quarry products, aggregates, sand, road base, recycled materials. Trade accounts." },
   ],
+  "solar-power": [
+    { name: "Solar Choice", type: "trade", website: "https://www.solarchoice.net.au", trades: ["solar-power"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Australia's largest solar installer network. 400+ installers, price comparison, CEC accredited." },
+    { name: "Fronius", type: "trade", website: "https://www.fronius.com/en-au", trades: ["solar-power"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Premium inverters, monitoring systems, hybrid systems. Dealer network across Australia." },
+    { name: "SMA", type: "trade", website: "https://www.sma.de/en/products/solarinverters", trades: ["solar-power"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Commercial-grade inverters, string inverters, 3-phase systems. Authorized distributors nationwide." },
+    { name: "Schneider Electric", type: "trade", website: "https://www.schneider-electric.com.au", trades: ["solar-power"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Switchboards, circuit breakers, monitoring, energy management. Electrical wholesalers stock." },
+    { name: "Clipsal", type: "trade", website: "https://www.clipsal.com/au", trades: ["solar-power"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Electrical components, isolators, switches, wiring. Available at all major wholesalers." },
+    { name: "Huawei", type: "trade", website: "https://www.huawei.com/au/solar", trades: ["solar-power"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Hybrid inverters, battery-ready systems, WiFi monitoring. Growing Australian presence." },
+    { name: "Tesla Powerwall", type: "trade", website: "https://www.tesla.com/en_AU/powerwall", trades: ["solar-power"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Battery storage, 13.5kWh capacity, 10-year warranty. Premium pricing, high demand." },
+    { name: "LG Chem", type: "trade", website: "https://www.lgenergy.com.au", trades: ["solar-power"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Battery storage systems, RESU series, 5-15kWh options. Authorized installers nationwide." },
+  ],
+  "swimming-pool": [
+    { name: "Compass Pools", type: "trade", website: "https://www.compasspools.com.au", trades: ["swimming-pool"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Fibreglass ceramic composite pools, Bi-luminite technology, lifetime warranty. Premium pricing." },
+    { name: "Narellan Pools", type: "trade", website: "https://www.narellanpools.com.au", trades: ["swimming-pool"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Traditional fibreglass pools, wide range of sizes/shapes, competitive pricing, established brand." },
+    { name: "Barrier Reef Pools", type: "trade", website: "https://www.barrierreefpools.com", trades: ["swimming-pool"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Custom fibreglass pools, premium finishes, high-end market, specialist shapes available." },
+    { name: "Leisure Pools", type: "trade", website: "https://www.leisurepools.com.au", trades: ["swimming-pool"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Modular fibreglass pools, quick installation (3-5 days), entry-level to mid-range pricing." },
+    { name: "Integrity Swimming Pools", type: "trade", website: "https://integrityswimmingpools.com.au", trades: ["swimming-pool"], regions: ["NSW", "QLD"], notes: "Fibreglass pools and shells, DIY kits available, competitive NSW/QLD pricing." },
+    { name: "Pentair", type: "trade", website: "https://www.pentair.com.au", trades: ["swimming-pool"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Pool equipment: pumps, filters (Sta-Rite), automated cleaners (Kreepy Krauly), heating systems." },
+    { name: "Zodiac", type: "trade", website: "https://www.zodiacpoolcare.com.au", trades: ["swimming-pool"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Heat pumps (most popular in Australia), salt chlorinators, WiFi automation (AquaLink), equipment packages." },
+    { name: "Hayward", type: "trade", website: "https://www.hayward.com.au", trades: ["swimming-pool"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Commercial-grade pumps, filters, automation systems (OmniHub), robotic cleaners." },
+  ],
 };
 
 // ─── Industry Benchmark Data (2024-25 Australian market) ─────────────────────
@@ -288,6 +308,14 @@ export const INDUSTRY_BENCHMARKS: Record<string, {
     winRateBenchmark: 58,
     avgQuoteValue: { small: 28000, medium: 65000, large: 180000 },
     sections: ["Preliminaries", "Excavation", "Shell Construction (Concrete/Fibreglass)", "Waterproofing & Tiling", "Equipment (Pump, Filter, Heater)", "Fencing & Safety Barriers", "Paving & Surrounds", "Commissioning & Compliance"],
+  },
+  "solar-power": {
+    labourRateRange: { min: 80, max: 125, median: 100 },
+    marginRange: { min: 20, max: 38, median: 28 },
+    costPerM2: { residential: { min: 750, max: 1200 } },
+    winRateBenchmark: 62,
+    avgQuoteValue: { small: 5500, medium: 12000, large: 45000 },
+    sections: ["Site Assessment & Design", "Roof Preparation & Mounting", "Panel Installation", "DC Wiring & Conduit", "Switchboard Upgrade", "Inverter Installation", "AC Wiring & Connections", "Battery System (if applicable)", "Electrical Testing & Certification", "Grid Connection & CEC Registration", "Monitoring System Setup"],
   },
   "steel-fabrication": {
     labourRateRange: { min: 85, max: 135, median: 108 },

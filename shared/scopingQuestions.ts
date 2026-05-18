@@ -783,18 +783,71 @@ const swimmingPoolQuestions: ScopingQuestion[] = [
     required: true,
   },
   {
+    id: "ground_conditions",
+    label: "Ground conditions (for new pool)",
+    type: "select",
+    options: ["Flat, stable soil", "Sloped / uneven", "Rock present (requires breaking)", "High water table / drainage issues", "Not sure"],
+    helpText: "Rock excavation can add 50-100% to project cost.",
+  },
+  {
+    id: "pool_interior",
+    label: "Pool interior finish (concrete pools)",
+    type: "select",
+    options: ["Pebblecrete (standard)", "Glass bead pebblecrete (premium)", "Fully tiled", "Not applicable (fibreglass)"],
+  },
+  {
+    id: "surrounds_paving",
+    label: "Surrounds / paving required?",
+    type: "select",
+    options: ["Yes — concrete paving", "Yes — pavers", "Yes — timber/composite decking", "No — minimal surrounds", "Not sure"],
+  },
+  {
     id: "heating",
     label: "Pool heating required?",
     type: "select",
     options: ["No heating", "Solar heating", "Heat pump", "Gas heater", "Not sure"],
   },
   {
+    id: "automation",
+    label: "Smart automation / WiFi control?",
+    type: "select",
+    options: ["Yes — full automation", "No — manual operation", "Not sure"],
+  },
+  {
     id: "fencing_required",
     label: "Does pool fencing need to be included?",
     type: "select",
-    options: ["Yes — new fence required", "No — existing compliant fence", "Not sure"],
-    helpText: "Pool fencing is mandatory in all Australian states.",
+    options: ["Yes — new fence required", "Yes — glass fencing (premium)", "No — existing compliant fence", "Not sure"],
+    helpText: "Pool fencing is mandatory in all Australian states. Glass fencing is more expensive but aesthetically superior.",
   },
+  {
+    id: "equipment_scope",
+    label: "Pool equipment scope",
+    type: "multiselect",
+    options: ["Pump & filter", "Heat pump", "Salt chlorinator", "UV system", "Robotic cleaner", "Monitoring system"],
+    helpText: "Select all equipment to be included in the estimate.",
+  },
+  {
+    id: "site_access",
+    label: "Site access for machinery",
+    type: "select",
+    options: ["Full access (wide street, easy entry)", "Restricted access (narrow street or rear only)", "Very tight (small machinery only)", "Difficult access (crane required for fibreglass)"],
+    required: true,
+  },
+];
+
+// ─── Solar Power Installation Scoping Questions ───────────────────────────────────
+const solarPowerQuestions: ScopingQuestion[] = [
+  { id: "system_type", label: "Solar system type", type: "select", options: ["Grid-tied (no battery)", "Hybrid (grid + battery backup)", "Off-grid (standalone)", "Not sure"], required: true, helpText: "Grid-tied is most common and cheapest. Hybrid adds battery storage. Off-grid requires larger system." },
+  { id: "system_size", label: "Desired system size", type: "select", options: ["3kW (small residential)", "6.6kW (standard residential)", "10kW (large residential / small commercial)", "15kW+ (commercial)", "Not sure"], required: true },
+  { id: "roof_type", label: "Roof type", type: "select", options: ["Tile (clay or concrete)", "Metal / Colorbond", "Flat roof", "Not sure"], required: true, helpText: "Different roof types affect mounting complexity and cost." },
+  { id: "roof_condition", label: "Roof condition", type: "select", options: ["Good (less than 10 years old)", "Fair (10-20 years old)", "Poor (needs replacement soon)", "Not sure"], helpText: "Poor roof condition may require replacement before solar installation." },
+  { id: "shading", label: "Roof shading", type: "select", options: ["Minimal shading (north-facing, clear)", "Some shading (trees or buildings)", "Significant shading (not ideal)", "Not sure"], helpText: "Shading reduces system output. Microinverters or optimizers can help." },
+  { id: "electrical_supply", label: "Electrical supply type", type: "select", options: ["Single-phase (standard residential)", "3-phase (commercial or large residential)", "Not sure"], required: true },
+  { id: "switchboard_age", label: "Switchboard age / condition", type: "select", options: ["Modern (less than 10 years)", "Older (10-20 years, may need upgrade)", "Very old (likely needs replacement)", "Not sure"], helpText: "Older switchboards may need upgrading to accommodate solar inverter." },
+  { id: "battery_storage", label: "Battery storage required?", type: "select", options: ["No battery (grid-tied only)", "Yes — Powerwall (Tesla)", "Yes — LG Chem / other", "Not sure"] },
+  { id: "hot_water", label: "Solar hot water integration?", type: "select", options: ["No — keep existing hot water", "Yes — add solar hot water", "Not sure"] },
+  { id: "monitoring", label: "Monitoring & app control", type: "select", options: ["Yes — full WiFi monitoring", "No — basic monitoring only", "Not sure"] },
 ];
 
 // ─── Steel Fabrication Scoping Questions ─────────────────────────────────────
@@ -875,6 +928,8 @@ export const SCOPING_QUESTIONS: Record<string, ScopingQuestion[]> = {
   demolition: demolitionQuestions,
   "swimming-pool": swimmingPoolQuestions,
   "steel-fabrication": steelFabricationQuestions,
+  "solar-power": solarPowerQuestions,
+  solar: solarPowerQuestions,
 };
 
 export function getScopingQuestions(tradeId: string): ScopingQuestion[] {

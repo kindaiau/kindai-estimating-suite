@@ -125,6 +125,36 @@ export const TRADE_HRCW_MAP: Record<string, HrcwCategory[]> = {
     "work_at_heights",
     "excavation",
   ],
+  solar_power: [
+    "work_at_heights",
+    "electrical_live_work",
+    "hot_works",
+    "scaffolding",
+    "cranes_hoisting",
+  ],
+  "solar-power": [
+    "work_at_heights",
+    "electrical_live_work",
+    "hot_works",
+    "scaffolding",
+    "cranes_hoisting",
+  ],
+  swimming_pool: [
+    "excavation",
+    "work_at_heights",
+    "cranes_hoisting",
+    "chemical_hazardous",
+    "adjacent_to_water",
+    "roads_traffic",
+  ],
+  "swimming-pool": [
+    "excavation",
+    "work_at_heights",
+    "cranes_hoisting",
+    "chemical_hazardous",
+    "adjacent_to_water",
+    "roads_traffic",
+  ],
 };
 
 // ─── Material → HRCW Trigger Keywords ────────────────────────────────────────
@@ -152,6 +182,10 @@ export const MATERIAL_HRCW_TRIGGERS: Array<{
   { keywords: ["gas pipe", "LPG", "natural gas", "pressurised"], hrcw: "pressurised_pipework" },
   { keywords: ["road", "traffic", "footpath", "kerb", "driveway crossing"], hrcw: "roads_traffic" },
   { keywords: ["roof", "roofing", "gutter", "fascia", "eave"], hrcw: "work_at_heights" },
+  { keywords: ["solar", "panel", "inverter", "battery", "PV", "photovoltaic"], hrcw: "electrical_live_work" },
+  { keywords: ["pool", "swimming", "fibreglass", "concrete pool", "pool shell"], hrcw: "adjacent_to_water" },
+  { keywords: ["pool equipment", "pump", "filter", "heater", "chlorinator"], hrcw: "chemical_hazardous" },
+  { keywords: ["pool fencing", "pool barrier", "safety gate"], hrcw: "work_at_heights" },
 ];
 
 // ─── HRCW Human-Readable Labels ──────────────────────────────────────────────

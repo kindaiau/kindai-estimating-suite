@@ -1099,3 +1099,59 @@
 - [x] Add 3 hazard/control templates (structural demo, earthmoving, asbestos Class B)
 - [x] Expand scoping questions (10 fields: ground conditions, machinery access, services, tip fees)
 - [x] Expand industry benchmark sections (13 sections for demo + earthmoving)
+
+
+## Task 1: Video Demo Above the Fold (16 May 2026)
+- [x] Move/add video embed into hero section (above the fold)
+- [x] Add play button overlay with "Watch 30-sec demo" label
+- [x] Keep existing video section below as secondary placement
+- [x] Ensure mobile-responsive video container
+
+## Task 2: Email Nurture Sequence Update (16 May 2026)
+- [x] Remove all beta/pilot/founding member language from Day 4, Day 7, Day 10 emails
+- [x] Update CTAs to "Start A$9 Pro Trial" pointing to kindaiestimator.com/pricing
+- [x] Fix BETA_URL constant to point to /pricing instead of /beta
+- [x] Fix footer "signed up for the Kindai beta" language in emailBrand.ts
+- [x] Verify firstName template variable works correctly
+
+## Task 3: Safety Profile Setup Wizard (16 May 2026)
+- [x] Build onboarding wizard component for first-time SWMS users
+- [x] Step 1: Upload one old SWMS PDF (calls trpc.swms.extractFromPdf)
+- [x] Step 2: Set standard PPE list (calls trpc.swms.saveSafetyProfile)
+- [x] Step 3: Confirmation — "Your AI is now calibrated"
+- [x] Show wizard only if businessSafetyProfiles has no entry for user's business
+- [x] Add tRPC endpoint to check if profile exists (hasSafetyProfile + saveSafetyProfile)
+
+## Task 4: Demolition & Earthmoving Trade (16 May 2026)
+- [x] Add "Demolition & Earthmoving" to TRADES array in Home.tsx and footer
+- [x] Add earthmoving HRCW mappings in shared/compliance.ts (excavation, cranes, roads/traffic)
+- [x] Add trade-specific labour productivity (24 tasks: demo, earthworks, waste, asbestos)
+- [x] Add demolition suppliers (Kennards, Coates, Bingo, SUEZ, DBYD, Conplant, Boral, Hanson)
+- [x] Add material trigger keywords for earthmoving (earthworks, piling, skip bins, ACM)
+- [x] Add 3 hazard/control templates (structural demo, earthmoving, asbestos Class B)
+- [x] Expand scoping questions (10 fields: ground conditions, machinery access, services, tip fees)
+- [x] Expand industry benchmark sections (13 sections for demo + earthmoving)
+
+## Task 5: Solar Power Installation Trade (18 May 2026)
+- [x] Add "Solar Power" to TRADES array in Home.tsx (☀️ emoji)
+- [x] Add solar HRCW mappings (electrical, heights, hot works, scaffolding, cranes)
+- [x] Add solar material keywords (solar, panel, inverter, battery, PV, photovoltaic)
+- [x] Add 10 scoping questions (system type, size, roof type, shading, switchboard, battery, hot water, monitoring)
+- [x] Add 8 Australian solar suppliers (Solar Choice, Fronius, SMA, Schneider, Clipsal, Huawei, Tesla, LG Chem)
+- [x] Add solar industry benchmarks (11 sections: assessment, roof prep, panels, wiring, switchboard, inverter, AC, battery, testing, grid, monitoring)
+- [x] Add 18 labour productivity tasks (design, mounting, installation, wiring, testing, commissioning)
+
+## Task 6: Swimming Pool Installation Trade (18 May 2026)
+- [x] Add "Swimming Pools" to TRADES array in Home.tsx (🏊 emoji)
+- [x] Add pool HRCW mappings (excavation, heights, cranes, chemicals, water hazards, traffic)
+- [x] Add pool material keywords (pool, swimming, fibreglass, concrete, equipment, fencing)
+- [x] Expand 10 scoping questions (job type, size, ground conditions, interior finish, paving, heating, automation, fencing, equipment, site access)
+- [x] Add 8 Australian pool suppliers (Compass, Narellan, Barrier Reef, Leisure, Integrity, Pentair, Zodiac, Hayward)
+- [x] Add pool industry benchmarks (8 sections: preliminaries, excavation, shell, waterproofing, equipment, fencing, paving, commissioning)
+- [x] Add 24 labour productivity tasks (excavation, concrete, fibreglass, equipment, fencing, paving, finishing)
+
+## Summary
+- ✅ All 6 tasks complete (4 from previous session + 2 new trades)
+- ✅ 352 tests passing (3 pre-existing ad-engine timeouts)
+- ✅ TypeScript compilation clean
+- ✅ Ready for checkpoint

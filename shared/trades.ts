@@ -148,11 +148,19 @@ export const TRADES = [
     unit: "m\u00b3",
   },
   {
+    id: "solar-power",
+    name: "Solar Power Installation",
+    icon: "Sun",
+    color: "#FBBF24",
+    description: "Grid-tied, hybrid & off-grid solar systems, batteries, monitoring",
+    unit: "kW",
+  },
+  {
     id: "swimming-pool",
-    name: "Swimming Pool Construction",
+    name: "Pool Installation",
     icon: "Waves",
     color: "#0EA5E9",
-    description: "Pool shell, equipment, fencing, heating & compliance",
+    description: "Concrete & fibreglass pools, equipment, paving, fencing, heating",
     unit: "ea",
   },
   {

@@ -183,6 +183,8 @@ const TRADES = [
   { id: "roofing", name: "Roofing", emoji: "🏠", colour: "from-red-400 to-red-600" },
   { id: "landscaping", name: "Landscaping", emoji: "🌿", colour: "from-green-400 to-green-600" },
   { id: "demolition", name: "Demolition & Earthmoving", emoji: "🏗️", colour: "from-amber-700 to-yellow-900" },
+  { id: "solar-power", name: "Solar Power", emoji: "☀️", colour: "from-yellow-400 to-orange-500" },
+  { id: "swimming-pool", name: "Swimming Pools", emoji: "🏊", colour: "from-blue-400 to-cyan-500" },
 ];
 
 const FEATURES = [
