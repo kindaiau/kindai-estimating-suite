@@ -737,3 +737,180 @@ export const waitlist = mysqlTable("waitlist", {
 
 export type WaitlistEntry = typeof waitlist.$inferSelect;
 export type InsertWaitlistEntry = typeof waitlist.$inferInsert;
+
+// ─── Vertical SaaS Organizations ─────────────────────────────────────────────
+export const organizations = mysqlTable("organizations", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerUserId: int("ownerUserId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  industryKey: varchar("industryKey", { length: 64 }).notNull(),
+  tradeId: varchar("tradeId", { length: 64 }).notNull(),
+  plan: mysqlEnum("orgPlan", ["starter", "pro", "scale", "enterprise"]).default("starter").notNull(),
+  status: mysqlEnum("orgStatus", ["onboarding", "active", "paused", "cancelled"]).default("onboarding").notNull(),
+  website: varchar("website", { length: 255 }),
+  phone: varchar("phone", { length: 30 }),
+  abn: varchar("abn", { length: 20 }),
+  state: mysqlEnum("orgState", ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"]),
+  settings: json("settings"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  ownerIdx: index("organizations_owner_idx").on(table.ownerUserId),
+  industryIdx: index("organizations_industry_idx").on(table.industryKey),
+}));
+
+export type Organization = typeof organizations.$inferSelect;
+export type InsertOrganization = typeof organizations.$inferInsert;
+
+// ─── CRM Leads ───────────────────────────────────────────────────────────────
+export const crmLeads = mysqlTable("crm_leads", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organizationId").notNull(),
+  userId: int("userId").notNull(),
+  industryKey: varchar("industryKey", { length: 64 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }),
+  phone: varchar("phone", { length: 30 }),
+  company: varchar("company", { length: 255 }),
+  jobType: varchar("jobType", { length: 128 }),
+  source: varchar("source", { length: 128 }).default("manual"),
+  utmSource: varchar("utmSource", { length: 128 }),
+  utmCampaign: varchar("utmCampaign", { length: 128 }),
+  score: int("score").default(50).notNull(),
+  pipelineStage: mysqlEnum("crmLeadStage", ["new_lead", "qualified", "quote_sent", "follow_up", "won", "lost"]).default("new_lead").notNull(),
+  status: mysqlEnum("crmLeadStatus", ["open", "won", "lost", "archived"]).default("open").notNull(),
+  tags: json("tags"),
+  notes: text("notes"),
+  nextAction: varchar("nextAction", { length: 255 }),
+  nextActionAt: bigint("nextActionAt", { mode: "number" }),
+  lastContactedAt: bigint("lastContactedAt", { mode: "number" }),
+  qualification: json("qualification"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  orgStageIdx: index("crm_leads_org_stage_idx").on(table.organizationId, table.pipelineStage),
+  userIdx: index("crm_leads_user_idx").on(table.userId),
+}));
+
+export type CrmLead = typeof crmLeads.$inferSelect;
+export type InsertCrmLead = typeof crmLeads.$inferInsert;
+
+export const crmActivities = mysqlTable("crm_activities", {
+  id: int("id").autoincrement().primaryKey(),
+  leadId: int("leadId").notNull(),
+  organizationId: int("organizationId").notNull(),
+  userId: int("userId").notNull(),
+  type: mysqlEnum("crmActivityType", ["note", "email", "call", "sms", "task", "status_change", "quote", "automation"]).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body"),
+  metadata: json("metadata"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  leadIdx: index("crm_activities_lead_idx").on(table.leadId),
+  orgIdx: index("crm_activities_org_idx").on(table.organizationId),
+}));
+
+export type CrmActivity = typeof crmActivities.$inferSelect;
+export type InsertCrmActivity = typeof crmActivities.$inferInsert;
+
+// ─── SaaS Tasks, Projects, and Workflows ─────────────────────────────────────
+export const businessTasks = mysqlTable("business_tasks", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organizationId").notNull(),
+  userId: int("userId").notNull(),
+  leadId: int("leadId"),
+  projectId: int("projectId"),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  status: mysqlEnum("businessTaskStatus", ["todo", "in_progress", "blocked", "done", "cancelled"]).default("todo").notNull(),
+  priority: mysqlEnum("businessTaskPriority", ["low", "normal", "high", "urgent"]).default("normal").notNull(),
+  dueAt: bigint("dueAt", { mode: "number" }),
+  assignedToUserId: int("assignedToUserId"),
+  automationKey: varchar("automationKey", { length: 128 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  orgStatusIdx: index("business_tasks_org_status_idx").on(table.organizationId, table.status),
+}));
+
+export type BusinessTask = typeof businessTasks.$inferSelect;
+export type InsertBusinessTask = typeof businessTasks.$inferInsert;
+
+export const deliveryProjects = mysqlTable("delivery_projects", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organizationId").notNull(),
+  userId: int("userId").notNull(),
+  leadId: int("leadId"),
+  estimateId: int("estimateId"),
+  industryKey: varchar("industryKey", { length: 64 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  clientName: varchar("clientName", { length: 255 }),
+  status: mysqlEnum("deliveryProjectStatus", ["onboarding", "planning", "in_progress", "waiting", "complete", "cancelled"]).default("onboarding").notNull(),
+  currentStep: varchar("currentStep", { length: 128 }),
+  startDate: date("startDate"),
+  targetCompletionDate: date("targetCompletionDate"),
+  budget: decimal("budget", { precision: 14, scale: 2 }),
+  notes: text("notes"),
+  workflowState: json("workflowState"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  orgStatusIdx: index("delivery_projects_org_status_idx").on(table.organizationId, table.status),
+}));
+
+export type DeliveryProject = typeof deliveryProjects.$inferSelect;
+export type InsertDeliveryProject = typeof deliveryProjects.$inferInsert;
+
+export const automationLogs = mysqlTable("automation_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organizationId").notNull(),
+  userId: int("userId"),
+  agent: mysqlEnum("automationAgent", ["acquisition", "conversion", "delivery", "system"]).default("system").notNull(),
+  eventType: varchar("eventType", { length: 128 }).notNull(),
+  status: mysqlEnum("automationLogStatus", ["queued", "drafted", "sent", "skipped", "failed"]).default("queued").notNull(),
+  targetType: varchar("targetType", { length: 64 }),
+  targetId: int("targetId"),
+  payload: json("payload"),
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  orgCreatedIdx: index("automation_logs_org_created_idx").on(table.organizationId, table.createdAt),
+}));
+
+export type AutomationLog = typeof automationLogs.$inferSelect;
+export type InsertAutomationLog = typeof automationLogs.$inferInsert;
+
+export const analyticsEvents = mysqlTable("analytics_events", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organizationId"),
+  userId: int("userId"),
+  industryKey: varchar("industryKey", { length: 64 }),
+  eventName: varchar("eventName", { length: 128 }).notNull(),
+  source: varchar("source", { length: 128 }),
+  properties: json("properties"),
+  occurredAt: bigint("occurredAt", { mode: "number" }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  orgEventIdx: index("analytics_events_org_event_idx").on(table.organizationId, table.eventName),
+}));
+
+export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
+export type InsertAnalyticsEvent = typeof analyticsEvents.$inferInsert;
+
+export const promptTemplates = mysqlTable("prompt_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organizationId"),
+  industryKey: varchar("industryKey", { length: 64 }).notNull(),
+  agent: mysqlEnum("promptTemplateAgent", ["acquisition", "conversion", "delivery", "estimator"]).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  systemPrompt: text("systemPrompt").notNull(),
+  version: int("version").default(1).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  orgIndustryIdx: index("prompt_templates_org_industry_idx").on(table.organizationId, table.industryKey),
+}));
+
+export type PromptTemplate = typeof promptTemplates.$inferSelect;
+export type InsertPromptTemplate = typeof promptTemplates.$inferInsert;

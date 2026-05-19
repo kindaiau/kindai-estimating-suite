@@ -4,7 +4,8 @@ import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import {
   BarChart3, BookOpen, Camera, ChevronRight, CreditCard, FolderOpen,
-  LogOut, Menu, Settings, Sparkles, Users, X, Palette,
+  LogOut, Menu, Settings, Sparkles, Users, X, Palette, KanbanSquare,
+  Workflow, LineChart, ClipboardList,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -20,6 +21,11 @@ const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDt
 const NAV_ITEMS = [
   { href: "/ai-takeoff", label: "AI Vision Takeoff", icon: Sparkles, highlight: true },
   { href: "/dashboard",  label: "Dashboard",         icon: BarChart3 },
+  { href: "/crm", label: "CRM Pipeline", icon: KanbanSquare },
+  { href: "/estimator", label: "Estimator", icon: ClipboardList },
+  { href: "/automations", label: "Automations", icon: Workflow },
+  { href: "/analytics", label: "Analytics", icon: LineChart },
+  { href: "/project-dashboard", label: "Delivery", icon: FolderOpen },
   { href: "/projects",   label: "Projects",           icon: FolderOpen },
   { href: "/materials",  label: "Materials Library",  icon: BookOpen },
   { href: "/labour",     label: "Labour Rates",       icon: Users },

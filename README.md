@@ -17,6 +17,8 @@ AI-assisted estimating and quoting software for Australian trades and joinery te
 - Quote PDF generation and quote acceptance links
 - Billing plans and Stripe checkout / customer portal wiring
 - Trade profiles, suppliers, quote follow-ups, variations
+- Vertical SaaS foundation for cabinet makers and electricians
+- Industry-aware onboarding, CRM pipeline, estimator workspace, automation logs, and analytics summary
 
 ### Beta / operationally dependent
 
@@ -102,6 +104,34 @@ pnpm test:integrations
 - Optional features report as not ready when their env vars are missing
 - Stripe webhooks must be registered at `/api/stripe/webhook`
 - Storage currently depends on Forge proxy credentials configured via environment variables
+- Resend handles transactional email templates through `server/email/templates.ts`
+- Vertical industry configuration lives in `config/industries/`
+
+## Vertical SaaS routes
+
+Public landing pages:
+
+- `/cabinet-makers`
+- `/electricians`
+
+Protected SaaS workspace:
+
+- `/onboarding`
+- `/crm`
+- `/estimator`
+- `/automations`
+- `/analytics`
+- `/project-dashboard`
+
+## Supabase / Postgres migration guide
+
+The current app uses Supabase Auth plus the existing Drizzle/MySQL-compatible database. The target Supabase PostgreSQL schema for the new SaaS layer is documented in `docs/supabase/schema.sql`.
+
+Important Supabase notes checked against the May 2026 changelog:
+
+- New public tables may not be automatically exposed to the Data API.
+- RLS must be enabled on exposed tables.
+- Do not use user-editable metadata for authorization decisions.
 
 ## Investor / diligence notes
 

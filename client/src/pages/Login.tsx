@@ -14,6 +14,7 @@ import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { Loader2 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useLocation, useSearch } from "wouter";
+import { industryList, type IndustryKey } from "@config/industries";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -22,6 +23,7 @@ export default function Login() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [industryKey, setIndustryKey] = useState<IndustryKey>("cabinet-makers");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -48,8 +50,11 @@ export default function Login() {
         await signInWithPassword(email, password);
         setLocation(nextPath, { replace: true });
       } else {
-        await signUpWithPassword(email, password);
-        setMessage("Account created. Check your email if confirmation is enabled.");
+        await signUpWithPassword(email, password, {
+          industry_key: industryKey,
+          default_trade: industryList.find((industry) => industry.key === industryKey)?.tradeId ?? "cabinetry",
+        });
+        setMessage("Account created. Check your email if confirmation is enabled, then finish industry setup.");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");
@@ -100,6 +105,25 @@ export default function Login() {
                   required
                 />
               </div>
+              {mode === "signup" ? (
+                <div className="space-y-2">
+                  <Label>Industry type</Label>
+                  <div className="grid gap-2">
+                    {industryList.map((industry) => (
+                      <button
+                        key={industry.key}
+                        type="button"
+                        onClick={() => setIndustryKey(industry.key as IndustryKey)}
+                        className={`rounded-[8px] border px-3 py-2 text-left text-sm font-semibold transition ${
+                          industryKey === industry.key ? "border-pink-300 bg-pink-50 text-pink-700" : "border-border hover:bg-muted"
+                        }`}
+                      >
+                        {industry.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               {error ? (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>
