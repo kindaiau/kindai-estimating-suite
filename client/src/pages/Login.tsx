@@ -9,6 +9,7 @@ import { getLoginUrl } from "@/const";
 import { Loader2, Zap, ArrowRight } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useLocation, useSearch } from "wouter";
+import { industryList, type IndustryKey } from "@config/industries";
 
 const LOGO_URL =
   "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
@@ -21,6 +22,7 @@ export default function Login() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [industryKey, setIndustryKey] = useState<IndustryKey>("cabinet-makers");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -48,10 +50,11 @@ export default function Login() {
         await signInWithPassword(email, password);
         setLocation(nextPath, { replace: true });
       } else {
-        await signUpWithPassword(email, password);
-        setMessage(
-          "Account created! Check your email if confirmation is enabled."
-        );
+        await signUpWithPassword(email, password, {
+          industry_key: industryKey,
+          default_trade: industryList.find((industry) => industry.key === industryKey)?.tradeId ?? "cabinetry",
+        });
+        setMessage("Account created. Check your email if confirmation is enabled, then finish industry setup.");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");
@@ -147,6 +150,27 @@ export default function Login() {
                     placeholder="••••••••"
                   />
                 </div>
+                {mode === "signup" ? (
+                  <div className="space-y-2">
+                    <Label className="text-white/70 text-sm">Industry type</Label>
+                    <div className="grid gap-2">
+                      {industryList.map((industry) => (
+                        <button
+                          key={industry.key}
+                          type="button"
+                          onClick={() => setIndustryKey(industry.key as IndustryKey)}
+                          className={`rounded-xl border px-3 py-2 text-left text-sm font-semibold transition ${
+                            industryKey === industry.key
+                              ? "border-pink-400/50 bg-pink-500/15 text-pink-100"
+                              : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+                          }`}
+                        >
+                          {industry.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
 
                 {error && (
                   <Alert variant="destructive" className="rounded-xl">

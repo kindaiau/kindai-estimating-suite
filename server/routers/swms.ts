@@ -253,7 +253,7 @@ async function generateSwmsContent(opts: {
     messages: [
       {
         role: "system",
-        content: `You are an expert in Australian Work Health and Safety (WHS) regulations for construction. Generate a Safe Work Method Statement (SWMS) for high-risk construction work. 
+        content: `You are an expert in Australian Work Health and Safety (WHS) regulations for construction. Generate a Safe Work Method Statement (SWMS) for high-risk construction work.
 
 Rules:
 - Follow the hierarchy of controls: Elimination → Substitution → Isolation → Engineering → Administrative → PPE

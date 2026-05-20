@@ -15,7 +15,7 @@ type SupabaseAuthContextValue = {
   loading: boolean;
   accessToken: string | null;
   signInWithPassword: (email: string, password: string) => Promise<void>;
-  signUpWithPassword: (email: string, password: string) => Promise<void>;
+  signUpWithPassword: (email: string, password: string, metadata?: Record<string, string>) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -67,14 +67,15 @@ export function SupabaseAuthProvider({
     if (error) throw error;
   }, []);
 
-  const signUpWithPassword = useCallback(async (email: string, password: string) => {
+  const signUpWithPassword = useCallback(async (email: string, password: string, metadata?: Record<string, string>) => {
     if (!supabase) throw new Error("Supabase is not configured");
 
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${window.location.origin}/onboarding`,
+        data: metadata,
       },
     });
 

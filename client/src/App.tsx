@@ -41,6 +41,13 @@ import AIHelpAssistant from "./components/AIHelpAssistant";
 import PostHogPageTracker from "./components/PostHogPageTracker";
 import Login from "./pages/Login";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import IndustryLandingPage from "./pages/saas/IndustryLandingPage";
+import Onboarding from "./pages/saas/Onboarding";
+import CrmPipeline from "./pages/saas/CrmPipeline";
+import EstimatorWorkspace from "./pages/saas/EstimatorWorkspace";
+import AutomationCenter from "./pages/saas/AutomationCenter";
+import AnalyticsDashboard from "./pages/saas/AnalyticsDashboard";
+import ProjectDashboard from "./pages/saas/ProjectDashboard";
 import SwmsEditor from "./pages/SwmsEditor";
 import SwmsSign from "./pages/SwmsSign";
 import BetaExpired from "./pages/BetaExpired";
@@ -89,8 +96,16 @@ function Router() {
         <Route path="/terms-of-service" component={TermsOfService} />
         <Route path="/support" component={Support} />
         <Route path="/cabinet-joinery" component={CabinetJoinery} />
+        <Route path="/cabinet-makers">{() => <IndustryLandingPage industryKey="cabinet-makers" />}</Route>
+        <Route path="/electricians">{() => <IndustryLandingPage industryKey="electricians" />}</Route>
         <Route path="/about" component={About} />
         <Route path="/help" component={Help} />
+        <Route path="/onboarding" component={protectedPage(Onboarding)} />
+        <Route path="/crm" component={protectedPage(CrmPipeline)} />
+        <Route path="/estimator" component={protectedPage(EstimatorWorkspace)} />
+        <Route path="/automations" component={protectedPage(AutomationCenter)} />
+        <Route path="/analytics" component={protectedPage(AnalyticsDashboard)} />
+        <Route path="/project-dashboard" component={protectedPage(ProjectDashboard)} />
         <Route path="/admin/fb-leads" component={protectedPage(FbLeadsDashboard)} />
         <Route path="/settings" component={protectedPage(CompanySettings)} />
         <Route path="/accuracy" component={protectedPage(AccuracyDashboard)} />

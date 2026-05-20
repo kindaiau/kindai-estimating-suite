@@ -29,6 +29,7 @@ import { estimateAgentRouter } from "./routers/estimateAgent";
 import { getgasSeedRouter } from "./routers/getgasSeed";
 import { ebookRouter } from "./routers/ebook";
 import { waitlistRouter } from "./routers/waitlist";
+import { saasRouter } from "./routers/saas";
 import { swmsRouter } from "./routers/swms";
 
 export const appRouter = router({
@@ -68,6 +69,7 @@ export const appRouter = router({
   getgasSeed: getgasSeedRouter,
   ebook: ebookRouter,
   waitlist: waitlistRouter,
+  saas: saasRouter,
   swms: swmsRouter,
 });
 

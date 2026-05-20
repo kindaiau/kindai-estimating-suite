@@ -292,6 +292,14 @@ class SDKServer {
         : typeof supabaseUser.user_metadata.full_name === "string"
           ? supabaseUser.user_metadata.full_name
           : email;
+    const defaultTrade =
+      typeof supabaseUser.user_metadata.default_trade === "string"
+        ? supabaseUser.user_metadata.default_trade
+        : typeof supabaseUser.user_metadata.industry_key === "string" && supabaseUser.user_metadata.industry_key === "electricians"
+          ? "electrical"
+          : typeof supabaseUser.user_metadata.industry_key === "string" && supabaseUser.user_metadata.industry_key === "cabinet-makers"
+            ? "cabinetry"
+            : undefined;
     const openId = `supabase:${supabaseUser.id}`;
     const signedInAt = new Date();
 
@@ -300,6 +308,7 @@ class SDKServer {
       name: displayName,
       email,
       loginMethod: "supabase",
+      defaultTrade,
       lastSignedIn: signedInAt,
     });
 

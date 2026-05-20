@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ArrowRight, Building2, Camera, CheckCircle2, Clock, DollarSign,
-  FolderOpen, Plus, Send, Sparkles, Target,
+  FolderOpen, Plus, Send, Sparkles, Target, KanbanSquare, Workflow,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -32,6 +32,7 @@ export default function Dashboard() {
   const { data: projectStats } = trpc.projects.stats.useQuery(undefined, queryOptions);
   const { data: estimateStats } = trpc.estimates.stats.useQuery(undefined, queryOptions);
   const { data: recentProjects } = trpc.projects.list.useQuery(undefined, queryOptions);
+  const { data: workspace } = trpc.saas.getWorkspace.useQuery(undefined, queryOptions);
 
   const firstName = user?.name?.split(" ")[0] ?? "Tradie";
 
@@ -63,7 +64,7 @@ export default function Dashboard() {
                   G'day, {firstName} 👋
                 </h1>
                 <p className="text-white/60 text-sm mt-0.5">
-                  Here's your estimating overview — let's win some jobs today.
+                  {workspace?.industry.shortName ? `${workspace.industry.shortName} workspace` : "Here's your estimating overview"} — let's win some jobs today.
                 </p>
               </div>
             </div>
@@ -100,6 +101,34 @@ export default function Dashboard() {
             </Card>
           ))}
         </div>
+
+        {/* ── Quick Start Trade Selector ── */}
+        {workspace?.industry.dashboardWidgets ? (
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-2 pt-5 px-5 sm:px-6">
+              <CardTitle className="text-lg font-black flex items-center gap-2">
+                <KanbanSquare className="w-5 h-5 text-pink-500" />
+                {workspace.industry.name} operating system
+              </CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">Your industry config controls prompts, CRM labels, estimate templates and workflow steps.</p>
+            </CardHeader>
+            <CardContent className="px-5 sm:px-6 pb-5">
+              <div className="grid gap-3 md:grid-cols-3">
+                {workspace.industry.dashboardWidgets.map((widget) => (
+                  <button
+                    key={widget.id}
+                    onClick={() => navigate("/crm")}
+                    className="rounded-[8px] border border-gray-100 bg-white p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <div className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">{widget.metric}</div>
+                    <div className="mt-2 text-lg font-black">{widget.title}</div>
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">{widget.helpText}</p>
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
 
         {/* ── Quick Start Trade Selector ── */}
         <Card className="border-0 shadow-sm overflow-hidden">
@@ -221,6 +250,30 @@ export default function Dashboard() {
                 <div>
                   <div className="text-sm font-bold text-foreground">Accuracy Dashboard</div>
                   <div className="text-[11px] text-muted-foreground">Corrections, job outcomes, learning</div>
+                </div>
+              </button>
+              <button
+                onClick={() => navigate("/crm")}
+                className="group flex items-center gap-3 p-4 rounded-2xl border border-gray-100 bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-left"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-950 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                  <KanbanSquare className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-foreground">CRM Pipeline</div>
+                  <div className="text-[11px] text-muted-foreground">Leads, stages, notes, tasks</div>
+                </div>
+              </button>
+              <button
+                onClick={() => navigate("/automations")}
+                className="group flex items-center gap-3 p-4 rounded-2xl border border-gray-100 bg-white hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-left"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                  <Workflow className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-foreground">Automation Center</div>
+                  <div className="text-[11px] text-muted-foreground">Follow-ups, logs, webhooks</div>
                 </div>
               </button>
               <button

@@ -912,7 +912,7 @@ export default function EstimateBuilder() {
                   {generateSwms.isPending ? (
                     <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />Generating SWMS...</>
                   ) : (
-                    <><Shield className="w-3.5 h-3.5 mr-1.5" />Generate SWMS</>  
+                    <><Shield className="w-3.5 h-3.5 mr-1.5" />Generate SWMS</>
                   )}
                 </Button>
               </CardContent>
