@@ -1006,3 +1006,152 @@
 - [x] Form fields: name, email, what trade/business, why you want access
 - [x] Send confirmation email via Resend when someone joins waitlist
 - [x] Save checkpoint and publish
+
+## Auto-SWMS + Compliance Pack (13 May 2026)
+- [ ] Add swms and swms_signatures tables to drizzle schema
+- [ ] Generate and apply migration SQL
+- [ ] Create shared/compliance.ts with HRCW mapping by trade type and materials
+- [ ] Build server/routers/swms.ts with generate, get, update, finalize, shareLink, sign endpoints
+- [ ] Register swms router in server/routers.ts
+- [ ] Build client/src/pages/SwmsEditor.tsx — editable SWMS with AI suggestions
+- [ ] Add "Generate SWMS" button to EstimateBuilder Compliance tab
+- [ ] Build client/src/pages/SwmsSign.tsx — public share link for worker digital signatures
+- [ ] Add /swms/:swmsId and /swms/sign/:shareToken routes to App.tsx
+- [ ] Gate SWMS behind Business tier ($499/mo) with upgrade prompt for Pro/lower users
+- [ ] Write vitest tests for swms router
+- [ ] Save checkpoint and publish
+
+## SWMS AI Upgrade — Phenomenal Quality (13 May 2026)
+- [x] Business Profile Memory: DB table for company standard PPE, controls, procedures
+- [x] Business Profile Memory: Settings UI for users to configure their standards
+- [x] Business Profile Memory: Inject company profile into every SWMS generation prompt
+- [x] Feedback Loop: Track user edits/corrections to AI-generated SWMS content
+- [x] Feedback Loop: Store correction patterns (what AI said → what user changed it to)
+- [x] Feedback Loop: Inject top corrections into future prompts (few-shot learning)
+- [x] Multimodal Site Photos: Upload endpoint for site photos (S3 storage)
+- [x] Multimodal Site Photos: Vision AI identifies hazards from photos (overhead lines, uneven ground, etc.)
+- [x] Multimodal Site Photos: Merge photo-detected hazards into SWMS generation
+- [x] Past SWMS Learning: Upload old SWMS PDFs endpoint
+- [x] Past SWMS Learning: Extract company procedures/controls from uploaded PDFs via LLM
+- [x] Past SWMS Learning: Store extracted procedures as company baseline
+- [x] Integration: Unified SWMS generation pipeline combining all 4 intelligence sources
+- [x] Integration: Upgraded prompt engineering with chain-of-thought reasoning
+- [x] Tests: Vitest coverage for all new endpoints
+
+## Kill All Beta — Homepage Rebuild (15 May 2026)
+- [ ] Remove waitlist form from homepage hero
+- [ ] Remove "ALL 25 BETA SPOTS FILLED" badge
+- [ ] Remove all "Join Waitlist" CTAs — replace with "Get Started" / "Start Free Trial"
+- [ ] Rebuild homepage hero to match pricing page energy (value-driven, product-focused)
+- [ ] Remove /beta page entirely
+- [ ] Remove WaitlistFormInline component
+- [ ] Clean up any remaining beta/waitlist references across codebase
+
+## Kill All Beta — Homepage Rebuild (15 May 2026)
+- [ ] Remove ALL waitlist/beta content (form, badge, messaging)
+- [ ] Rebuild homepage: Benefits first → What it does → How it works → Social proof → Pricing (way down) → Final CTA
+- [ ] Lead with value: what Kindai does for tradies (save time, accurate quotes, win more jobs)
+- [ ] Remove /beta page and WaitlistFormInline component
+- [ ] Match pricing page energy but pricing section sits much lower on homepage
+
+## Remove All Waitlist/Beta Messaging (15 May 2026)
+- [ ] Remove waitlist form from homepage hero
+- [ ] Remove "ALL 25 BETA SPOTS FILLED" badge
+- [ ] Replace all "Join Waitlist" CTAs with proper product CTAs (Get Started / Start Free Trial)
+- [ ] Remove /beta page or redirect to main signup
+- [ ] Clean up any other beta/waitlist references across the site
+
+## Login Issue Investigation & Beta-Expired UX (15 May 2026)
+- [ ] Check database for John Rutland's account and login status
+- [ ] Investigate auth flow for potential login blockers affecting beta users
+- [ ] Build beta-expired detection (check subscription status on login)
+- [ ] Show clear "Your beta has ended — upgrade to Pro for A$9" message for expired users
+- [ ] Ensure expired users can still access the upgrade/pricing page
+- [ ] Save checkpoint
+
+## Task 1: Video Demo Above the Fold (16 May 2026)
+- [x] Move/add video embed into hero section (above the fold)
+- [x] Add play button overlay with "Watch 30-sec demo" label
+- [x] Keep existing video section below as secondary placement
+- [x] Ensure mobile-responsive video container
+
+## Task 2: Email Nurture Sequence Update (16 May 2026)
+- [x] Remove all beta/pilot/founding member language from Day 4, Day 7, Day 10 emails
+- [x] Update CTAs to "Start A$9 Pro Trial" pointing to kindaiestimator.com/pricing
+- [x] Fix BETA_URL constant to point to /pricing instead of /beta
+- [x] Fix footer "signed up for the Kindai beta" language in emailBrand.ts
+- [x] Verify firstName template variable works correctly
+
+## Task 3: Safety Profile Setup Wizard (16 May 2026)
+- [x] Build onboarding wizard component for first-time SWMS users
+- [x] Step 1: Upload one old SWMS PDF (calls trpc.swms.extractFromPdf)
+- [x] Step 2: Set standard PPE list (calls trpc.swms.saveSafetyProfile)
+- [x] Step 3: Confirmation — "Your AI is now calibrated"
+- [x] Show wizard only if businessSafetyProfiles has no entry for user's business
+- [x] Add tRPC endpoint to check if profile exists (hasSafetyProfile + saveSafetyProfile)
+
+## Task 4: Demolition & Earthmoving Trade (16 May 2026)
+- [x] Add "Demolition & Earthmoving" to TRADES array in Home.tsx and footer
+- [x] Add earthmoving HRCW mappings in shared/compliance.ts (excavation, cranes, roads/traffic)
+- [x] Add trade-specific labour productivity (24 tasks: demo, earthworks, waste, asbestos)
+- [x] Add demolition suppliers (Kennards, Coates, Bingo, SUEZ, DBYD, Conplant, Boral, Hanson)
+- [x] Add material trigger keywords for earthmoving (earthworks, piling, skip bins, ACM)
+- [x] Add 3 hazard/control templates (structural demo, earthmoving, asbestos Class B)
+- [x] Expand scoping questions (10 fields: ground conditions, machinery access, services, tip fees)
+- [x] Expand industry benchmark sections (13 sections for demo + earthmoving)
+
+
+## Task 1: Video Demo Above the Fold (16 May 2026)
+- [x] Move/add video embed into hero section (above the fold)
+- [x] Add play button overlay with "Watch 30-sec demo" label
+- [x] Keep existing video section below as secondary placement
+- [x] Ensure mobile-responsive video container
+
+## Task 2: Email Nurture Sequence Update (16 May 2026)
+- [x] Remove all beta/pilot/founding member language from Day 4, Day 7, Day 10 emails
+- [x] Update CTAs to "Start A$9 Pro Trial" pointing to kindaiestimator.com/pricing
+- [x] Fix BETA_URL constant to point to /pricing instead of /beta
+- [x] Fix footer "signed up for the Kindai beta" language in emailBrand.ts
+- [x] Verify firstName template variable works correctly
+
+## Task 3: Safety Profile Setup Wizard (16 May 2026)
+- [x] Build onboarding wizard component for first-time SWMS users
+- [x] Step 1: Upload one old SWMS PDF (calls trpc.swms.extractFromPdf)
+- [x] Step 2: Set standard PPE list (calls trpc.swms.saveSafetyProfile)
+- [x] Step 3: Confirmation — "Your AI is now calibrated"
+- [x] Show wizard only if businessSafetyProfiles has no entry for user's business
+- [x] Add tRPC endpoint to check if profile exists (hasSafetyProfile + saveSafetyProfile)
+
+## Task 4: Demolition & Earthmoving Trade (16 May 2026)
+- [x] Add "Demolition & Earthmoving" to TRADES array in Home.tsx and footer
+- [x] Add earthmoving HRCW mappings in shared/compliance.ts (excavation, cranes, roads/traffic)
+- [x] Add trade-specific labour productivity (24 tasks: demo, earthworks, waste, asbestos)
+- [x] Add demolition suppliers (Kennards, Coates, Bingo, SUEZ, DBYD, Conplant, Boral, Hanson)
+- [x] Add material trigger keywords for earthmoving (earthworks, piling, skip bins, ACM)
+- [x] Add 3 hazard/control templates (structural demo, earthmoving, asbestos Class B)
+- [x] Expand scoping questions (10 fields: ground conditions, machinery access, services, tip fees)
+- [x] Expand industry benchmark sections (13 sections for demo + earthmoving)
+
+## Task 5: Solar Power Installation Trade (18 May 2026)
+- [x] Add "Solar Power" to TRADES array in Home.tsx (☀️ emoji)
+- [x] Add solar HRCW mappings (electrical, heights, hot works, scaffolding, cranes)
+- [x] Add solar material keywords (solar, panel, inverter, battery, PV, photovoltaic)
+- [x] Add 10 scoping questions (system type, size, roof type, shading, switchboard, battery, hot water, monitoring)
+- [x] Add 8 Australian solar suppliers (Solar Choice, Fronius, SMA, Schneider, Clipsal, Huawei, Tesla, LG Chem)
+- [x] Add solar industry benchmarks (11 sections: assessment, roof prep, panels, wiring, switchboard, inverter, AC, battery, testing, grid, monitoring)
+- [x] Add 18 labour productivity tasks (design, mounting, installation, wiring, testing, commissioning)
+
+## Task 6: Swimming Pool Installation Trade (18 May 2026)
+- [x] Add "Swimming Pools" to TRADES array in Home.tsx (🏊 emoji)
+- [x] Add pool HRCW mappings (excavation, heights, cranes, chemicals, water hazards, traffic)
+- [x] Add pool material keywords (pool, swimming, fibreglass, concrete, equipment, fencing)
+- [x] Expand 10 scoping questions (job type, size, ground conditions, interior finish, paving, heating, automation, fencing, equipment, site access)
+- [x] Add 8 Australian pool suppliers (Compass, Narellan, Barrier Reef, Leisure, Integrity, Pentair, Zodiac, Hayward)
+- [x] Add pool industry benchmarks (8 sections: preliminaries, excavation, shell, waterproofing, equipment, fencing, paving, commissioning)
+- [x] Add 24 labour productivity tasks (excavation, concrete, fibreglass, equipment, fencing, paving, finishing)
+
+## Summary
+- ✅ All 6 tasks complete (4 from previous session + 2 new trades)
+- ✅ 352 tests passing (3 pre-existing ad-engine timeouts)
+- ✅ TypeScript compilation clean
+- ✅ Ready for checkpoint

@@ -5,12 +5,57 @@ import { getDb } from "../db";
 import { users } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { sendPilotPaymentEmails } from "../resendEmail";
+import { buildPurchaseOrTrialEvent, sendMetaConversionEventSafely } from "../metaCapi";
 
 function isPaidPilotSetupSession(session: any) {
   return (
     session.mode === "payment" &&
     session.payment_status === "paid" &&
     session.metadata?.kindai_flow === "founding_pilot_setup"
+  );
+}
+
+function shouldSendCheckoutConversion(session: any) {
+  return session.payment_status === "paid" && Boolean(session.id);
+}
+
+function getCheckoutCustomerDetails(session: any) {
+  const customerDetails = session.customer_details ?? {};
+  return {
+    name: session.metadata?.customer_name || customerDetails.name || undefined,
+    email: session.metadata?.customer_email || customerDetails.email || session.customer_email || undefined,
+    phone: session.metadata?.customer_phone || customerDetails.phone || undefined,
+  };
+}
+
+function getCheckoutEventSourceUrl(session: any) {
+  if (session.metadata?.event_source_url) return session.metadata.event_source_url;
+  if (session.metadata?.kindai_flow === "founding_pilot_setup") return "https://kindaibook-55hbndtb.manus.space";
+  return "https://kindaiestimator.com/pricing";
+}
+
+async function sendCheckoutConversionToMeta(session: any) {
+  if (!shouldSendCheckoutConversion(session)) return;
+
+  const customer = getCheckoutCustomerDetails(session);
+  const eventName = session.mode === "subscription" ? "StartTrial" : "Purchase";
+
+  await sendMetaConversionEventSafely(
+    buildPurchaseOrTrialEvent({
+      eventName,
+      eventId: `stripe_checkout_${session.id}`,
+      eventSourceUrl: getCheckoutEventSourceUrl(session),
+      email: customer.email,
+      name: customer.name,
+      phone: customer.phone,
+      amountTotal: session.amount_total,
+      currency: session.currency,
+      stripeSessionId: session.id,
+      stripeCustomerId: typeof session.customer === "string" ? session.customer : undefined,
+      planId: session.metadata?.plan_id || session.metadata?.planId,
+      flow: session.metadata?.kindai_flow || session.mode,
+    }),
+    `Stripe checkout ${session.id}`
   );
 }
 
@@ -50,6 +95,8 @@ export function registerStripeWebhook(app: Router) {
         switch (event.type) {
           case "checkout.session.completed": {
             const session = event.data.object as any;
+            await sendCheckoutConversionToMeta(session);
+
             if (isPaidPilotSetupSession(session)) {
               const customerDetails = session.customer_details ?? {};
               await sendPilotPaymentEmails({

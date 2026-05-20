@@ -36,6 +36,9 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  // Beta tracking
+  isBetaUser: boolean("isBetaUser").default(false).notNull(),
+  betaExpiresAt: timestamp("betaExpiresAt"),
 });
 
 export type User = typeof users.$inferSelect;
@@ -914,3 +917,133 @@ export const promptTemplates = mysqlTable("prompt_templates", {
 
 export type PromptTemplate = typeof promptTemplates.$inferSelect;
 export type InsertPromptTemplate = typeof promptTemplates.$inferInsert;
+
+// ─── Auto-SWMS + Compliance Pack ──────────────────────────────────────────────
+
+export const swms = mysqlTable("swms", {
+  id: varchar("id", { length: 64 }).primaryKey(), // nanoid
+  estimateId: int("estimateId").notNull(),
+  userId: int("userId").notNull(),
+  version: int("version").notNull().default(1),
+  status: mysqlEnum("swmsStatus", ["draft", "pending_review", "approved", "finalized"]).default("draft").notNull(),
+  // SWMS Details (Section 5.1)
+  pcbuName: varchar("pcbuName", { length: 255 }),
+  pcbuAbn: varchar("pcbuAbn", { length: 20 }),
+  pcbuAddress: text("pcbuAddress"),
+  pcbuContact: varchar("pcbuContact", { length: 255 }),
+  principalContractorName: varchar("principalContractorName", { length: 255 }),
+  principalContractorAddress: text("principalContractorAddress"),
+  workLocation: text("workLocation"),
+  worksManager: varchar("worksManager", { length: 255 }),
+  responsibleForCompliance: varchar("responsibleForCompliance", { length: 255 }),
+  responsibleForReview: varchar("responsibleForReview", { length: 255 }),
+  workerConsultationConfirmed: boolean("workerConsultationConfirmed").default(false),
+  datePrepared: bigint("datePrepared", { mode: "number" }),
+  reviewDate: bigint("reviewDate", { mode: "number" }),
+  // AI-generated content stored as JSON
+  hrcwCategories: json("hrcwCategories").$type<string[]>(), // identified HRCW categories
+  workActivities: json("workActivities").$type<WorkActivity[]>(), // the main SWMS table
+  // PDF and sharing
+  pdfUrl: varchar("pdfUrl", { length: 2048 }),
+  shareToken: varchar("shareToken", { length: 128 }).unique(),
+  // Timestamps
+  finalizedAt: bigint("finalizedAt", { mode: "number" }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Swms = typeof swms.$inferSelect;
+export type InsertSwms = typeof swms.$inferInsert;
+
+export const swmsSignatures = mysqlTable("swms_signatures", {
+  id: int("id").autoincrement().primaryKey(),
+  swmsId: varchar("swmsId", { length: 64 }).notNull(),
+  workerName: varchar("workerName", { length: 255 }).notNull(),
+  workerSignature: text("workerSignature").notNull(), // base64 image data
+  signedAt: timestamp("signedAt").defaultNow().notNull(),
+});
+
+export type SwmsSignature = typeof swmsSignatures.$inferSelect;
+export type InsertSwmsSignature = typeof swmsSignatures.$inferInsert;
+
+// ─── SWMS Type Definitions ────────────────────────────────────────────────────
+
+export interface WorkActivity {
+  id: string;
+  task: string;           // Work Activity / Task
+  hazards: string[];      // Hazards and Risks
+  controls: string[];     // Control Measures (hierarchy: Elimination → PPE)
+  ppe: string[];          // Required PPE
+  responsible: string;    // Person responsible
+  isAiGenerated: boolean; // Flag AI-generated rows
+}
+
+
+// ─── Business Safety Profile (Company Standard PPE, Controls, Procedures) ────
+export const businessSafetyProfiles = mysqlTable("business_safety_profiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  trade: varchar("trade", { length: 64 }),
+  category: mysqlEnum("category", ["ppe", "control", "procedure", "terminology", "emergency"]).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  standardRef: varchar("standardRef", { length: 255 }),
+  isDefault: boolean("isDefault").default(true),
+  source: mysqlEnum("source", ["manual_entry", "uploaded_swms", "learned_from_edits"]).default("manual_entry").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BusinessSafetyProfile = typeof businessSafetyProfiles.$inferSelect;
+export type InsertBusinessSafetyProfile = typeof businessSafetyProfiles.$inferInsert;
+
+// ─── AI Corrections (Feedback Loop — tracks user edits to AI content) ────────
+export const aiCorrections = mysqlTable("ai_corrections", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  trade: varchar("trade", { length: 64 }).notNull(),
+  context: varchar("context", { length: 500 }).notNull(),
+  aiOriginal: text("aiOriginal").notNull(),
+  userCorrected: text("userCorrected").notNull(),
+  category: mysqlEnum("category", ["ppe", "control", "hazard", "procedure", "standard_ref", "other"]).notNull(),
+  swmsId: int("swmsId"),
+  useCount: int("useCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AiCorrection = typeof aiCorrections.$inferSelect;
+export type InsertAiCorrection = typeof aiCorrections.$inferInsert;
+
+// ─── Site Photos (Multimodal Hazard Detection) ───────────────────────────────
+export const sitePhotos = mysqlTable("site_photos", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  swmsId: int("swmsId"),
+  estimateId: int("estimateId"),
+  photoUrl: text("photoUrl").notNull(),
+  photoKey: varchar("photoKey", { length: 500 }).notNull(),
+  analysisResult: json("analysisResult"), // Vision AI hazard analysis JSON
+  overallRiskLevel: mysqlEnum("overallRiskLevel", ["critical", "high", "medium", "low"]),
+  hazardCount: int("hazardCount").default(0),
+  analysedAt: timestamp("analysedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SitePhoto = typeof sitePhotos.$inferSelect;
+export type InsertSitePhoto = typeof sitePhotos.$inferInsert;
+
+// ─── Company Procedures (Extracted from uploaded SWMS PDFs) ──────────────────
+export const companyProcedures = mysqlTable("company_procedures", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  trade: varchar("trade", { length: 64 }),
+  category: mysqlEnum("category", ["ppe", "control", "procedure", "terminology", "emergency", "signoff"]).notNull(),
+  description: text("description").notNull(),
+  confidence: int("confidence").default(70).notNull(), // 0-100
+  extractedFrom: varchar("extractedFrom", { length: 500 }),
+  sourceUrl: text("sourceUrl"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CompanyProcedure = typeof companyProcedures.$inferSelect;
+export type InsertCompanyProcedure = typeof companyProcedures.$inferInsert;

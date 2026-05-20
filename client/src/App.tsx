@@ -23,7 +23,7 @@ import DemoMode from "./pages/DemoMode";
 import SupplierManager from "./pages/SupplierManager";
 import QuoteFollowups from "./pages/QuoteFollowups";
 import VariationsRegister from "./pages/VariationsRegister";
-import BetaLanding from "./pages/BetaLanding";
+// BetaLanding removed — product is live
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import DataDeletion from "./pages/DataDeletion";
 import TermsOfService from "./pages/TermsOfService";
@@ -48,6 +48,9 @@ import EstimatorWorkspace from "./pages/saas/EstimatorWorkspace";
 import AutomationCenter from "./pages/saas/AutomationCenter";
 import AnalyticsDashboard from "./pages/saas/AnalyticsDashboard";
 import ProjectDashboard from "./pages/saas/ProjectDashboard";
+import SwmsEditor from "./pages/SwmsEditor";
+import SwmsSign from "./pages/SwmsSign";
+import BetaExpired from "./pages/BetaExpired";
 
 const FbLeadsDashboard = lazy(() => import("./pages/FbLeadsDashboard"));
 const LaunchEngineLandingPage = lazy(() => import("./launch-engine/LandingPage"));
@@ -80,11 +83,12 @@ function Router() {
         <Route path="/trade-profiles" component={protectedPage(TradeProfile)} />
         <Route path="/demo" component={DemoMode} />
         <Route path="/login" component={Login} />
+        <Route path="/beta-expired" component={BetaExpired} />
         <Route path="/suppliers" component={protectedPage(SupplierManager)} />
         <Route path="/followups" component={protectedPage(QuoteFollowups)} />
         <Route path="/projects/:projectId/variations" component={protectedPage(VariationsRegister)} />
         <Route path="/quote/accept/:token" component={QuoteAcceptance} />
-        <Route path="/beta" component={BetaLanding} />
+        <Route path="/beta">{() => { window.location.href = "/pricing"; return null; }}</Route>
         <Route path="/privacy-policy" component={PrivacyPolicy} />
         <Route path="/privacy" component={PrivacyPolicy} />
         <Route path="/data-deletion" component={DataDeletion} />
@@ -114,6 +118,8 @@ function Router() {
         <Route path="/launch-engine" component={LaunchEngineLandingPage} />
         <Route path="/ad-engine/creative" component={protectedPage(AdEngineCreativePage)} />
         <Route path="/ad-engine" component={protectedPage(AdEngineOverviewPage)} />
+        <Route path="/swms/:id" component={protectedPage(SwmsEditor)} />
+        <Route path="/swms/sign/:token" component={SwmsSign} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

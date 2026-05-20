@@ -6,7 +6,7 @@ import { mediaContentFromUrl } from "../_core/mediaInputs";
 import { getDb } from "../db";
 import { estimates, lineItems, tradeProfiles, companyProfiles, priceBookItems, estimateCorrections } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
-import { storagePut } from "../storage";
+import { storageGet, storagePut } from "../storage";
 import { nanoid } from "nanoid";
 import { buildProductivityPromptSection } from "../labourProductivity";
 import { insertAiLineItems } from "../routes/insertAiLineItems";
@@ -115,6 +115,36 @@ export const AUSTRALIAN_SUPPLIERS: Record<string, Array<{
     { name: "CSR Gyprock", type: "trade", website: "https://www.csr.com.au", trades: ["rendering"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Australia's leading plasterboard and render supplier." },
     { name: "Dulux AcraTex", type: "trade", website: "https://www.dulux.com.au", trades: ["rendering"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Specialist texture and render coatings." },
     { name: "Bunnings Warehouse", type: "retail", website: "https://www.bunnings.com.au", trades: ["rendering"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Retail render and plaster products." },
+  ],
+  demolition: [
+    { name: "Kennards Hire", type: "trade", website: "https://www.kennards.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Demolition and earthmoving equipment hire — excavators, rock breakers, bobcats, compactors. National network." },
+    { name: "Coates Hire", type: "trade", website: "https://www.coateshire.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Heavy plant hire — excavators 1.5T-30T, trucks, rollers, compactors. Dry hire or operated." },
+    { name: "Bingo Industries", type: "trade", website: "https://www.bfrgroup.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD"], notes: "Skip bins 2m\u00b3-30m\u00b3, waste collection, C&D recycling. Trade accounts with volume pricing." },
+    { name: "SUEZ Recycling", type: "trade", website: "https://www.suez.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Waste management, skip bins, demolition waste recycling, asbestos disposal. National coverage." },
+    { name: "Dial Before You Dig", type: "trade", website: "https://www.1100.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Free underground service locating. Mandatory before ANY excavation. Call 1100 or use online portal." },
+    { name: "Conplant", type: "trade", website: "https://www.conplant.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Earthmoving equipment sales and hire — excavators, loaders, graders, rollers. Cat, Komatsu, Volvo." },
+    { name: "Boral Quarries", type: "trade", website: "https://www.boral.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Crushed rock, road base, fill material, sand, gravel. Delivery or pickup. Trade pricing for volume." },
+    { name: "Hanson Australia", type: "trade", website: "https://www.hanson.com.au", trades: ["demolition"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Quarry products, aggregates, sand, road base, recycled materials. Trade accounts." },
+  ],
+  "solar-power": [
+    { name: "Solar Choice", type: "trade", website: "https://www.solarchoice.net.au", trades: ["solar-power"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Australia's largest solar installer network. 400+ installers, price comparison, CEC accredited." },
+    { name: "Fronius", type: "trade", website: "https://www.fronius.com/en-au", trades: ["solar-power"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Premium inverters, monitoring systems, hybrid systems. Dealer network across Australia." },
+    { name: "SMA", type: "trade", website: "https://www.sma.de/en/products/solarinverters", trades: ["solar-power"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Commercial-grade inverters, string inverters, 3-phase systems. Authorized distributors nationwide." },
+    { name: "Schneider Electric", type: "trade", website: "https://www.schneider-electric.com.au", trades: ["solar-power"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Switchboards, circuit breakers, monitoring, energy management. Electrical wholesalers stock." },
+    { name: "Clipsal", type: "trade", website: "https://www.clipsal.com/au", trades: ["solar-power"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"], notes: "Electrical components, isolators, switches, wiring. Available at all major wholesalers." },
+    { name: "Huawei", type: "trade", website: "https://www.huawei.com/au/solar", trades: ["solar-power"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Hybrid inverters, battery-ready systems, WiFi monitoring. Growing Australian presence." },
+    { name: "Tesla Powerwall", type: "trade", website: "https://www.tesla.com/en_AU/powerwall", trades: ["solar-power"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Battery storage, 13.5kWh capacity, 10-year warranty. Premium pricing, high demand." },
+    { name: "LG Chem", type: "trade", website: "https://www.lgenergy.com.au", trades: ["solar-power"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Battery storage systems, RESU series, 5-15kWh options. Authorized installers nationwide." },
+  ],
+  "swimming-pool": [
+    { name: "Compass Pools", type: "trade", website: "https://www.compasspools.com.au", trades: ["swimming-pool"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Fibreglass ceramic composite pools, Bi-luminite technology, lifetime warranty. Premium pricing." },
+    { name: "Narellan Pools", type: "trade", website: "https://www.narellanpools.com.au", trades: ["swimming-pool"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Traditional fibreglass pools, wide range of sizes/shapes, competitive pricing, established brand." },
+    { name: "Barrier Reef Pools", type: "trade", website: "https://www.barrierreefpools.com", trades: ["swimming-pool"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Custom fibreglass pools, premium finishes, high-end market, specialist shapes available." },
+    { name: "Leisure Pools", type: "trade", website: "https://www.leisurepools.com.au", trades: ["swimming-pool"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Modular fibreglass pools, quick installation (3-5 days), entry-level to mid-range pricing." },
+    { name: "Integrity Swimming Pools", type: "trade", website: "https://integrityswimmingpools.com.au", trades: ["swimming-pool"], regions: ["NSW", "QLD"], notes: "Fibreglass pools and shells, DIY kits available, competitive NSW/QLD pricing." },
+    { name: "Pentair", type: "trade", website: "https://www.pentair.com.au", trades: ["swimming-pool"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Pool equipment: pumps, filters (Sta-Rite), automated cleaners (Kreepy Krauly), heating systems." },
+    { name: "Zodiac", type: "trade", website: "https://www.zodiacpoolcare.com.au", trades: ["swimming-pool"], regions: ["NSW", "VIC", "QLD", "SA", "WA", "TAS"], notes: "Heat pumps (most popular in Australia), salt chlorinators, WiFi automation (AquaLink), equipment packages." },
+    { name: "Hayward", type: "trade", website: "https://www.hayward.com.au", trades: ["swimming-pool"], regions: ["NSW", "VIC", "QLD", "SA", "WA"], notes: "Commercial-grade pumps, filters, automation systems (OmniHub), robotic cleaners." },
   ],
 };
 
@@ -269,7 +299,7 @@ export const INDUSTRY_BENCHMARKS: Record<string, {
     costPerM2: { residential: { min: 45, max: 120 }, commercial: { min: 65, max: 180 } },
     winRateBenchmark: 60,
     avgQuoteValue: { small: 4500, medium: 28000, large: 220000 },
-    sections: ["Preliminaries", "Asbestos Testing & Removal", "Selective Demolition", "Full Demolition", "Excavation & Earthworks", "Piling & Anchors", "Site Remediation", "Waste Disposal & Recycling"],
+    sections: ["Preliminaries & Site Establishment", "Asbestos Survey & Removal", "Selective / Internal Demolition", "Structural Demolition", "Earthworks & Bulk Excavation", "Trenching & Service Excavation", "Rock Breaking & Hammering", "Cut & Fill / Site Levelling", "Compaction & Stabilisation", "Piling & Anchors", "Site Remediation", "Waste Disposal, Tip Fees & Recycling", "Traffic Management & Road Permits"],
   },
   "swimming-pool": {
     labourRateRange: { min: 75, max: 120, median: 95 },
@@ -278,6 +308,14 @@ export const INDUSTRY_BENCHMARKS: Record<string, {
     winRateBenchmark: 58,
     avgQuoteValue: { small: 28000, medium: 65000, large: 180000 },
     sections: ["Preliminaries", "Excavation", "Shell Construction (Concrete/Fibreglass)", "Waterproofing & Tiling", "Equipment (Pump, Filter, Heater)", "Fencing & Safety Barriers", "Paving & Surrounds", "Commissioning & Compliance"],
+  },
+  "solar-power": {
+    labourRateRange: { min: 80, max: 125, median: 100 },
+    marginRange: { min: 20, max: 38, median: 28 },
+    costPerM2: { residential: { min: 750, max: 1200 } },
+    winRateBenchmark: 62,
+    avgQuoteValue: { small: 5500, medium: 12000, large: 45000 },
+    sections: ["Site Assessment & Design", "Roof Preparation & Mounting", "Panel Installation", "DC Wiring & Conduit", "Switchboard Upgrade", "Inverter Installation", "AC Wiring & Connections", "Battery System (if applicable)", "Electrical Testing & Certification", "Grid Connection & CEC Registration", "Monitoring System Setup"],
   },
   "steel-fabrication": {
     labourRateRange: { min: 85, max: 135, median: 108 },
@@ -1148,6 +1186,117 @@ type TakeoffResult = {
   planNotes: string;
 };
 
+const supplierQuoteResponseSchema = {
+  type: "json_schema" as const,
+  json_schema: {
+    name: "supplier_quote_extraction_result",
+    strict: true,
+    schema: {
+      type: "object",
+      properties: {
+        supplierName: { type: "string" },
+        quoteReference: { type: "string" },
+        quoteDate: { type: "string" },
+        currency: { type: "string" },
+        subtotalExGst: { type: "number" },
+        gstAmount: { type: "number" },
+        totalIncGst: { type: "number" },
+        confidence: {
+          type: "number",
+          description: "Overall extraction confidence as a percentage from 0 to 100.",
+          minimum: 0,
+          maximum: 100,
+        },
+        lineItems: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              description: { type: "string" },
+              quantity: { type: "number" },
+              unit: { type: "string" },
+              unitPrice: { type: "number" },
+              total: { type: "number" },
+              productCode: { type: "string" },
+              confidence: {
+                type: "number",
+                description: "Line-item extraction confidence as a percentage from 0 to 100.",
+                minimum: 0,
+                maximum: 100,
+              },
+              sourceNote: { type: "string" },
+            },
+            required: ["description", "quantity", "unit", "unitPrice", "total", "productCode", "confidence", "sourceNote"],
+            additionalProperties: false,
+          },
+        },
+        inclusions: { type: "array", items: { type: "string" } },
+        exclusions: { type: "array", items: { type: "string" } },
+        reviewFlags: { type: "array", items: { type: "string" } },
+        recommendedActions: { type: "array", items: { type: "string" } },
+      },
+      required: ["supplierName", "quoteReference", "quoteDate", "currency", "subtotalExGst", "gstAmount", "totalIncGst", "confidence", "lineItems", "inclusions", "exclusions", "reviewFlags", "recommendedActions"],
+      additionalProperties: false,
+    },
+  },
+};
+
+type SupplierQuoteExtractionResult = {
+  supplierName: string;
+  quoteReference: string;
+  quoteDate: string;
+  currency: string;
+  subtotalExGst: number;
+  gstAmount: number;
+  totalIncGst: number;
+  confidence: number;
+  lineItems: Array<{
+    description: string;
+    quantity: number;
+    unit: string;
+    unitPrice: number;
+    total: number;
+    productCode: string;
+    confidence: number;
+    sourceNote: string;
+  }>;
+  inclusions: string[];
+  exclusions: string[];
+  reviewFlags: string[];
+  recommendedActions: string[];
+};
+
+function normalizeConfidencePercent(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 0;
+  const scaled = value > 0 && value <= 1 ? value * 100 : value;
+  return Math.min(100, Math.max(0, Math.round(scaled)));
+}
+
+function normalizeSupplierQuoteExtractionResult(
+  value: SupplierQuoteExtractionResult
+): SupplierQuoteExtractionResult {
+  return {
+    ...value,
+    confidence: normalizeConfidencePercent(value.confidence),
+    lineItems: value.lineItems.map((item) => ({
+      ...item,
+      confidence: normalizeConfidencePercent(item.confidence),
+    })),
+  };
+}
+
+function assertOwnedSupplierQuoteKey(userId: number, key: string): string {
+  const normalizedKey = key.replace(/^\/+/, "");
+  const expectedPrefix = `supplier-quotes/${userId}/`;
+  if (!normalizedKey.startsWith(expectedPrefix)) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Supplier quote must come from your uploaded files.",
+    });
+  }
+  return normalizedKey;
+}
+
 // ─── Merge multiple batch takeoff results into one combined result ───────────
 function mergeTakeoffResults(results: TakeoffResult[], totalPages: number): TakeoffResult {
   // Combine all items — use description+unit as dedup key, sum quantities
@@ -1277,6 +1426,81 @@ export const aiRouter = router({
     const key = `scope-docs/${ctx.user.id}/${nanoid()}.${ext}`;
     const { url } = await storagePut(key, finalBuffer, contentType);
     return { url, key };
+  }),
+
+  // Upload supplier/subcontractor quote documents for AI extraction
+  uploadSupplierQuote: protectedProcedure.input(z.object({
+    fileName: z.string().max(255),
+    fileBase64: z.string().max(44_000_000),
+    contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf", "image/heic", "image/heif"]),
+  })).mutation(async ({ ctx, input }) => {
+    const rawBuffer = Buffer.from(input.fileBase64, "base64");
+    const MAX_FILE_SIZE = 32 * 1024 * 1024;
+    if (rawBuffer.length > MAX_FILE_SIZE) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: `File too large. Maximum size is 32MB. Your file is ${(rawBuffer.length / 1024 / 1024).toFixed(1)}MB.` });
+    }
+    let finalBuffer: Buffer;
+    let contentType = input.contentType;
+    let ext = input.fileName.split(".").pop()?.toLowerCase() ?? "pdf";
+    if (contentType === "image/heic" || contentType === "image/heif") {
+      finalBuffer = await convertHeicToJpegAi(rawBuffer);
+      contentType = "image/jpeg";
+      ext = "jpg";
+    } else {
+      finalBuffer = rawBuffer;
+    }
+    const key = `supplier-quotes/${ctx.user.id}/${nanoid()}.${ext}`;
+    const { url } = await storagePut(key, finalBuffer, contentType);
+    return { url, key };
+  }),
+
+  // Supplier Quote Extractor — turn messy supplier/subbie PDFs into reviewable structured data
+  extractSupplierQuote: protectedProcedure.input(z.object({
+    quoteKey: z.string().min(1),
+    trade: z.string().optional(),
+    estimateId: z.number().optional(),
+    projectScope: z.string().optional(),
+  })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new Error("Database not available");
+    const quoteKey = assertOwnedSupplierQuoteKey(ctx.user.id, input.quoteKey);
+    const { url: quoteUrl } = await storageGet(quoteKey);
+
+    let estimateContext = "";
+    if (input.estimateId) {
+      const [est] = await db.select().from(estimates)
+        .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
+        .limit(1);
+      if (!est) throw new Error("Estimate not found");
+      const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, input.estimateId));
+      estimateContext = `\nCurrent Kindai estimate context:\nTrade: ${est.trade}\nTitle: ${est.title}\nExisting items:\n${items.slice(0, 30).map((item) => `- ${item.description} | ${item.quantity} ${item.unit} @ $${item.unitRate}`).join("\n")}`;
+    }
+
+    const response = await invokeLLM({
+      messages: [
+        {
+          role: "system",
+          content: `You are a senior Australian construction estimator and procurement reviewer. Extract supplier or subcontractor quote information into clean structured data. Do not invent missing prices or quantities. If something is unreadable, use 0 for numeric fields, low confidence, and add a review flag. Always identify inclusions, exclusions, GST treatment, totals, and margin-risk gaps. Confidence fields must be percentages from 0 to 100.`,
+        },
+        {
+          role: "user",
+          content: [
+            mediaContentFromUrl(quoteUrl),
+            {
+              type: "text",
+              text: `Extract this supplier/subcontractor quote for Kindai.\nTrade: ${input.trade ?? "unknown"}\nProject scope/context: ${input.projectScope ?? "not supplied"}${estimateContext}\n\nReturn structured quote data only. Use AUD. Confidence values must be percentages from 0 to 100. Add review flags for exclusions, unclear GST, lump sums, missing product codes, missing quantities, and any mismatch against the current Kindai estimate context.`,
+            },
+          ] as any,
+        },
+      ],
+      response_format: supplierQuoteResponseSchema,
+      thinkingBudget: 1024,
+    });
+
+    const rawContent = response.choices[0]?.message?.content;
+    const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
+    if (!content) throw new Error("No response from AI");
+    return normalizeSupplierQuoteExtractionResult(JSON.parse(content) as SupplierQuoteExtractionResult);
   }),
 
   // AI Vision Takeoff — analyse a single uploaded plan image

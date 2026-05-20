@@ -42,13 +42,32 @@ Configure Meta ads tracking with:
 VITE_META_PIXEL_ID=your-pixel-id
 META_PIXEL_ID=your-pixel-id
 META_CONVERSIONS_API_ACCESS_TOKEN=your-capi-token
+# Optional aliases supported by the server-side CAPI service:
+FB_PIXEL_ID=your-pixel-id
+FB_ACCESS_TOKEN=your-capi-token
+META_TEST_EVENT_CODE=your-test-event-code
 META_MARKETING_ACCESS_TOKEN=your-marketing-api-token
 META_AD_ACCOUNT_ID=act_your-ad-account-id
+LEAD_CAPTURE_ALLOWED_ORIGINS=https://kindaibook-55hbndtb.manus.space,https://kindaiestimator.com,https://www.kindaiestimator.com
 WEBHOOK_SECRET=your-zapier-webhook-secret
 FB_WEBHOOK_VERIFY_TOKEN=your-facebook-webhook-verify-token
 ```
 
-The FB lead webhook requires `WEBHOOK_SECRET` in production. Direct Facebook webhook verification requires `FB_WEBHOOK_VERIFY_TOKEN` in production.
+The FB lead webhook requires `WEBHOOK_SECRET` in production. Direct Facebook webhook verification requires `FB_WEBHOOK_VERIFY_TOKEN` in production. The public landing-page lead capture API is available at `POST /api/leads` and `POST /api/leads/ebook`; it stores the lead in `ebook_leads`, delivers the guide email when possible, and sends a server-side Meta `Lead` event.
+
+## Meta Conversions API Events
+
+Server-side CAPI events are posted to `https://graph.facebook.com/v19.0/{pixel_id}/events`. The service accepts either `META_PIXEL_ID` plus `META_CONVERSIONS_API_ACCESS_TOKEN` or the deployment aliases `FB_PIXEL_ID` plus `FB_ACCESS_TOKEN`. User identifiers are normalized and SHA256-hashed before leaving the server.
+
+| Event | Trigger | Deduplication key | Source URL |
+| --- | --- | --- | --- |
+| `Lead` | Landing-page ebook form submission via `POST /api/leads` or `POST /api/leads/ebook` | Browser-provided `eventId` when available, otherwise generated from lead id | Submitted `eventSourceUrl`, referer, or `https://kindaibook-55hbndtb.manus.space` |
+| `Lead` | Existing beta, ebook, waitlist, and Facebook lead webhook flows | Flow-specific `eventId` values passed to the CAPI module | Flow-specific landing page |
+| `Purchase` | Paid one-time Stripe checkout completion such as the founding pilot setup | `stripe_checkout_{checkout.session.id}` | Founding pilot landing page or configured metadata URL |
+| `StartTrial` | Paid subscription checkout completion | `stripe_checkout_{checkout.session.id}` | Pricing page or configured metadata URL |
+| `CompleteRegistration` | OAuth/app signup completion and beta approval flows | Flow-specific registration/approval event id | App or beta page |
+
+To deduplicate with the browser Pixel, the landing page should generate one event id before firing `fbq('track', 'Lead', ..., { eventID })`, then submit that same value to the API as `eventId`. Stripe webhook events use the Checkout Session id, which makes webhook retries idempotent from Meta's perspective.
 
 ## Privacy Rules
 

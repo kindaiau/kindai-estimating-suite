@@ -64,7 +64,7 @@ export default function EbookGuide() {
             />
           </a>
           <a
-            href="/beta"
+            href="/pricing"
             style={{
               background: "linear-gradient(135deg, #FF2D78, #FF6B35)",
               color: "#fff",
@@ -75,7 +75,7 @@ export default function EbookGuide() {
               fontWeight: 700,
             }}
           >
-            Claim Pilot Spot
+            Get Started
           </a>
         </nav>
 
@@ -349,7 +349,7 @@ export default function EbookGuide() {
               "I uploaded the plans and had a first-pass quote in about 40 minutes instead of half a day. The AI got most of it right — I just adjusted a couple of line items. Sent it that afternoon."
             </p>
             <p style={{ margin: 0, color: "#8b949e", fontSize: 14 }}>
-              — Cabinet maker, Adelaide SA · Kindai Beta User
+              — Cabinet maker, Adelaide SA · Kindai User
             </p>
           </div>
         </div>

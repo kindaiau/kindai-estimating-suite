@@ -9,6 +9,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerStripeWebhook } from "../stripe/webhook";
 import { fbLeadWebhookRouter } from "../routes/fbLeadWebhook";
+import { leadCaptureRouter } from "../routes/leadCapture";
 import { xeroCallbackRouter } from "../routes/xeroCallback";
 import { orchestratedTakeoffRouter } from "../routes/orchestratedTakeoff";
 import { adEngineRouter } from "../ad-engine/routes";
@@ -84,6 +85,9 @@ async function startServer() {
   // Mobile phone photos (iPhone 15 Pro: 15-25MB HEIC/JPEG) and multi-page PDFs need this headroom
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // Public landing-page lead capture — registered after body parser
+  app.use("/api/leads", leadCaptureRouter);
 
   // Facebook Lead Ads webhook (from Zapier) — registered after body parser
   app.use("/api/webhooks", fbLeadWebhookRouter);

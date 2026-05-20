@@ -2,13 +2,14 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import SEO from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Check, X, ArrowRight, Shield, Users, Zap, Crown, Sparkles, Brain, Database, GitBranch, BarChart3, FileText } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Check, X, ArrowRight, Shield, Users, Zap, Crown, Sparkles, Brain, Database, GitBranch, BarChart3, FileText, Star, Clock } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { pixelViewPricingPage, pixelInitiateCheckout } from "@/lib/metaPixel";
+import { pixelViewPricingPage, pixelInitiateCheckout, pixelStartTrial } from "@/lib/metaPixel";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { getLoginUrl } from "@/const";
-import { motion, useInView, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
 
@@ -303,9 +304,54 @@ export default function Pricing() {
     onError: (err) => toast.error(err.message),
   });
 
-  useEffect(() => { pixelViewPricingPage(); }, []);
+  const proTrialMutation = trpc.billing.createProTrialCheckout.useMutation({
+    onSuccess: (data) => {
+      window.location.assign(data.url);
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  // Trial mini-form state
+  const [trialForm, setTrialForm] = useState({ name: "", email: "" });
+  const [showTrialForm, setShowTrialForm] = useState(false);
+
+  useEffect(() => {
+    pixelViewPricingPage();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("trial") === "success") {
+      toast.success("Payment received! Check your email — your 21-day Pro Trial is now active.");
+      // Clean URL
+      window.history.replaceState({}, "", "/pricing");
+    }
+    if (params.get("trial") === "cancelled") {
+      toast.info("Checkout was cancelled. Your $9 trial offer is still waiting for you.");
+      window.history.replaceState({}, "", "/pricing");
+    }
+  }, []);
+
+  const handleStartProTrial = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!trialForm.name.trim() || !trialForm.email.trim()) {
+      toast.error("Please enter your name and email to start the trial.");
+      return;
+    }
+    pixelInitiateCheckout({ content_name: "Kindai Pro Trial $9", value: 9 });
+    proTrialMutation.mutate({
+      name: trialForm.name.trim(),
+      email: trialForm.email.trim(),
+      origin: window.location.origin,
+    });
+  };
 
   const handleSubscribe = (tierId: string, price: number) => {
+    if (tierId === "pro" && !isAuthenticated) {
+      // Show inline trial form instead of login wall
+      setShowTrialForm(true);
+      setTimeout(() => {
+        document.getElementById("pro-trial-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
+      return;
+    }
     if (!isAuthenticated) {
       window.location.href = getLoginUrl();
       return;
@@ -476,12 +522,32 @@ export default function Pricing() {
                       </div>
                     </div>
 
-                    {/* Price */}
+                    {/* Price — Pro card shows $9 trial offer prominently */}
                     <div className="mb-3">
                       {isCustom ? (
                         <div>
                           <span className={`text-2xl font-black ${isBestValue ? "text-white" : "text-gray-900"}`}>Custom</span>
                           <div className="text-[10px] text-gray-400 mt-0.5">Tailored to your business</div>
+                        </div>
+                      ) : tier.id === "pro" ? (
+                        <div>
+                          {/* $9 trial badge */}
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span className="inline-flex items-center gap-1 bg-gradient-to-r from-pink-500 to-orange-500 text-white text-[11px] font-black px-2.5 py-1 rounded-full shadow-sm">
+                              <Star className="w-3 h-3" /> A$9 for 21 days
+                            </span>
+                          </div>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-2xl font-black text-gray-900">A${price}</span>
+                            <span className="text-xs text-gray-400">/mo after trial</span>
+                          </div>
+                          {yearly && price !== null && price > 0 && (
+                            <div className="text-[10px] text-green-500 font-bold mt-0.5">A${price * 12}/yr</div>
+                          )}
+                          <div className="flex items-center gap-1 mt-1">
+                            <Clock className="w-3 h-3 text-orange-500" />
+                            <span className="text-[10px] text-orange-600 font-bold">21-day full Pro access. Cancel anytime.</span>
+                          </div>
                         </div>
                       ) : (
                         <div>
@@ -500,6 +566,68 @@ export default function Pricing() {
                       {tier.description}
                     </p>
 
+                    {/* Pro CTA: show trial form for unauthenticated, normal checkout for authenticated */}
+                    {tier.id === "pro" ? (
+                      <div id="pro-trial-form">
+                        {!isAuthenticated ? (
+                          <AnimatePresence mode="wait">
+                            {!showTrialForm ? (
+                              <motion.div key="cta-btn" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                                <Button
+                                  onClick={() => handleSubscribe(tier.id, tier.monthlyPrice ?? 0)}
+                                  className="w-full py-2.5 rounded-full font-black text-sm h-auto mb-2 kindai-btn-primary"
+                                >
+                                  Start A$9 Pro Trial
+                                </Button>
+                                <p className="text-center text-[10px] text-gray-400">No account needed. Pay A$9, get 21 days of full Pro access.</p>
+                              </motion.div>
+                            ) : (
+                              <motion.form
+                                key="trial-form"
+                                initial={{ opacity: 0, y: -8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0 }}
+                                onSubmit={handleStartProTrial}
+                                className="space-y-2 mb-2"
+                              >
+                                <Input
+                                  type="text"
+                                  placeholder="Your name"
+                                  value={trialForm.name}
+                                  onChange={(e) => setTrialForm((f) => ({ ...f, name: e.target.value }))}
+                                  className="h-8 text-xs rounded-lg border-gray-200"
+                                  required
+                                />
+                                <Input
+                                  type="email"
+                                  placeholder="Email address"
+                                  value={trialForm.email}
+                                  onChange={(e) => setTrialForm((f) => ({ ...f, email: e.target.value }))}
+                                  className="h-8 text-xs rounded-lg border-gray-200"
+                                  required
+                                />
+                                <Button
+                                  type="submit"
+                                  disabled={proTrialMutation.isPending}
+                                  className="w-full py-2.5 rounded-full font-black text-sm h-auto kindai-btn-primary"
+                                >
+                                  {proTrialMutation.isPending ? "Opening Stripe..." : "Pay A$9 → Start Trial"}
+                                </Button>
+                                <p className="text-center text-[10px] text-gray-400">Secure checkout via Stripe. Cancel anytime.</p>
+                              </motion.form>
+                            )}
+                          </AnimatePresence>
+                        ) : (
+                          <Button
+                            onClick={() => handleSubscribe(tier.id, tier.monthlyPrice ?? 0)}
+                            disabled={checkoutMutation.isPending}
+                            className="w-full py-2.5 rounded-full font-black text-sm h-auto mb-4 kindai-btn-primary"
+                          >
+                            {checkoutMutation.isPending ? "Loading..." : "Start Pro"}
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
                     <Button
                       onClick={() => handleSubscribe(tier.id, tier.monthlyPrice ?? 0)}
                       disabled={checkoutMutation.isPending}
@@ -514,6 +642,7 @@ export default function Pricing() {
                     >
                       {checkoutMutation.isPending ? "Loading..." : tier.cta}
                     </Button>
+                    )}
 
                     {/* Features */}
                     <div className="space-y-2">
@@ -762,27 +891,74 @@ export default function Pricing() {
           />
         </div>
         <div className="max-w-3xl mx-auto text-center relative">
-          <h2 className="text-3xl font-black text-white mb-4">
-            Start free. Upgrade when you're ready.
+          {/* $9 trial offer hero */}
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500/20 to-orange-500/20 border border-orange-500/40 rounded-full px-4 py-1.5 text-sm font-black text-orange-400 mb-5">
+            <Star className="w-4 h-4" /> Limited offer: A$9 for 21 days of full Pro access
+          </div>
+          <h2 className="text-3xl font-black text-white mb-3">
+            Try Pro for A$9. No lock-in.
           </h2>
-          <p className="text-gray-400 mb-8">
-            No credit card required for the free plan. The AI gets smarter every job you do.
+          <p className="text-gray-400 mb-2">
+            Get 21 days of full Pro access — Plan Reading, Company Memory, Correction Learning — for just A$9.
           </p>
+          <p className="text-gray-500 text-sm mb-8">
+            After 21 days, continue at A$149/mo or cancel. No questions asked.
+          </p>
+
+          {/* Inline trial form in final CTA */}
+          {!isAuthenticated ? (
+            <div className="max-w-sm mx-auto mb-6">
+              <form
+                onSubmit={handleStartProTrial}
+                className="flex flex-col gap-3"
+              >
+                <Input
+                  type="text"
+                  placeholder="Your name"
+                  value={trialForm.name}
+                  onChange={(e) => setTrialForm((f) => ({ ...f, name: e.target.value }))}
+                  className="h-10 text-sm rounded-xl border-white/10 bg-white/5 text-white placeholder:text-gray-500 focus:border-orange-500"
+                  required
+                />
+                <Input
+                  type="email"
+                  placeholder="Email address"
+                  value={trialForm.email}
+                  onChange={(e) => setTrialForm((f) => ({ ...f, email: e.target.value }))}
+                  className="h-10 text-sm rounded-xl border-white/10 bg-white/5 text-white placeholder:text-gray-500 focus:border-orange-500"
+                  required
+                />
+                <Button
+                  type="submit"
+                  disabled={proTrialMutation.isPending}
+                  size="lg"
+                  className="kindai-btn-primary px-10 py-4 rounded-full text-base font-black h-auto shadow-xl w-full"
+                >
+                  {proTrialMutation.isPending ? "Opening Stripe..." : "Start A$9 Pro Trial →"}
+                </Button>
+              </form>
+              <p className="text-xs text-gray-600 mt-3">Secure checkout via Stripe. Cancel anytime. No account needed before payment.</p>
+            </div>
+          ) : (
+            <div className="flex flex-wrap justify-center gap-4 mb-6">
+              <Button
+                onClick={() => handleSubscribe("pro", 149)}
+                size="lg"
+                className="kindai-btn-primary px-10 py-4 rounded-full text-base font-black h-auto shadow-xl"
+              >
+                Start Pro <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </div>
+          )}
+
           <div className="flex flex-wrap justify-center gap-4">
             <Button
               onClick={() => handleSubscribe("free", 0)}
               size="lg"
               variant="outline"
-              className="px-10 py-4 rounded-full text-base font-black h-auto border-white/20 text-white hover:bg-white/10 bg-transparent"
+              className="px-8 py-3 rounded-full text-sm font-black h-auto border-white/20 text-white hover:bg-white/10 bg-transparent"
             >
-              Start Free
-            </Button>
-            <Button
-              onClick={() => handleSubscribe("pro", 149)}
-              size="lg"
-              className="kindai-btn-primary px-10 py-4 rounded-full text-base font-black h-auto shadow-xl"
-            >
-              Start Pro — A$149/mo <ArrowRight className="w-5 h-5 ml-2" />
+              Or start free (no card needed)
             </Button>
           </div>
         </div>

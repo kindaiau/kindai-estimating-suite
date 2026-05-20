@@ -10,6 +10,7 @@ import {
   findOrCreateCustomer,
   createCheckoutSession,
   createPilotSetupCheckoutSession,
+  createProTrialCheckoutSession,
   createPortalSession,
   getStripe,
 } from "../stripe/stripe";
@@ -47,6 +48,8 @@ export const billingRouter = router({
         status: users.subscriptionStatus,
         stripeCustomerId: users.stripeCustomerId,
         stripeSubscriptionId: users.stripeSubscriptionId,
+        isBetaUser: users.isBetaUser,
+        betaExpiresAt: users.betaExpiresAt,
       })
       .from(users)
       .where(eq(users.id, ctx.user.id))
@@ -73,6 +76,11 @@ export const billingRouter = router({
 
     const plan = getPlanById(user.tier ?? "free");
 
+    // Beta expiry detection
+    const isBetaExpired = user.isBetaUser && user.betaExpiresAt
+      ? new Date(user.betaExpiresAt) < new Date()
+      : false;
+
     return {
       tier: user.tier ?? "free",
       status: user.status ?? "none",
@@ -80,6 +88,9 @@ export const billingRouter = router({
       limits: plan?.limits,
       currentPeriodEnd,
       cancelAtPeriodEnd,
+      isBetaUser: user.isBetaUser ?? false,
+      betaExpiresAt: user.betaExpiresAt ? new Date(user.betaExpiresAt).getTime() : null,
+      isBetaExpired,
     };
   }),
 
@@ -206,6 +217,28 @@ export const billingRouter = router({
         productDescription: PILOT_SETUP_OFFER.description,
       });
 
+      return { url: checkoutUrl };
+    }),
+
+  /** Create a public $9 / 21-day Pro Trial Checkout Session — no login required */
+  createProTrialCheckout: publicProcedure
+    .input(
+      z.object({
+        name: z.string().min(1, "Name is required"),
+        email: z.string().email("Valid email required"),
+        phone: z.string().optional(),
+        tradeType: z.string().optional(),
+        origin: z.string().url(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const checkoutUrl = await createProTrialCheckoutSession({
+        name: input.name,
+        email: input.email,
+        phone: input.phone,
+        tradeType: input.tradeType,
+        origin: input.origin,
+      });
       return { url: checkoutUrl };
     }),
 

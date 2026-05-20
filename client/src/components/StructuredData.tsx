@@ -19,7 +19,7 @@ export function SoftwareAppSchema() {
         "name": "Free Trial",
         "price": "0",
         "priceCurrency": "AUD",
-        "description": "Free beta access for founding members"
+        "description": "Free plan — 3 AI quotes per month, 5 projects"
       },
       {
         "@type": "Offer",
@@ -66,7 +66,7 @@ export function SoftwareAppSchema() {
     },
     "screenshot": "https://kindaiestimator.com/og-image.png",
     "softwareVersion": "1.0",
-    "releaseNotes": "Beta launch — 25 founding member spots available free",
+    "releaseNotes": "AI estimating suite for Australian trades — plan reading, company memory, auto-SWMS",
     "inLanguage": "en-AU",
     "availableOnDevice": "Desktop, Mobile, Tablet",
     "countriesSupported": "AU"

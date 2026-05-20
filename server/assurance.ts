@@ -1,3 +1,5 @@
+import { GST_RATE } from "../shared/trades";
+
 export type AssuranceSeverity = "info" | "low" | "medium" | "high" | "critical";
 export type AssuranceCheckStatus = "pass" | "warning" | "fail";
 export type AssuranceRiskLevel = "low" | "medium" | "high" | "critical";
@@ -59,6 +61,13 @@ export type AssuranceLineItemInput = {
   section?: string | null;
 };
 
+export type DerivedAssuranceEstimate = AssuranceEstimateInput & {
+  subtotal: number;
+  gstAmount: number;
+  total: number;
+  margin: number;
+};
+
 function numberFrom(value: unknown): number {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
   if (typeof value === "string") {
@@ -75,6 +84,38 @@ function clamp(value: number, min: number, max: number): number {
 function assumptionsFrom(value: unknown): string[] {
   if (Array.isArray(value)) return value.map(String).filter(Boolean);
   return [];
+}
+
+export function deriveAssuranceEstimate(
+  estimate: AssuranceEstimateInput,
+  lineItems: AssuranceLineItemInput[],
+  marginOverride?: number
+): DerivedAssuranceEstimate {
+  const margin =
+    typeof marginOverride === "number" && Number.isFinite(marginOverride)
+      ? marginOverride
+      : numberFrom(estimate.margin);
+
+  const subtotalBeforeMargin = lineItems.reduce((sum, item) => {
+    const itemSubtotal = numberFrom(item.subtotal);
+    if (itemSubtotal > 0) return sum + itemSubtotal;
+    const quantity = numberFrom(item.quantity);
+    const unitRate = numberFrom(item.unitRate);
+    const waste = numberFrom(item.wasteFactor) / 100;
+    return sum + quantity * unitRate * (1 + waste);
+  }, 0);
+
+  const subtotalWithMargin = subtotalBeforeMargin * (1 + margin / 100);
+  const gstAmount = subtotalWithMargin * GST_RATE;
+  const total = subtotalWithMargin + gstAmount;
+
+  return {
+    ...estimate,
+    subtotal: subtotalWithMargin,
+    gstAmount,
+    total,
+    margin,
+  };
 }
 
 function quoteValueBand(value: number): QuoteAssuranceReport["valueBand"] {

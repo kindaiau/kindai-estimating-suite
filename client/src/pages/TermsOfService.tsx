@@ -114,7 +114,7 @@ export default function TermsOfService() {
               <li>You may cancel your subscription at any time; access continues until the end of the paid period</li>
               <li>Refunds are not provided for partial subscription periods, except where required by Australian Consumer Law</li>
               <li>We reserve the right to change pricing with 30 days' notice to existing subscribers</li>
-              <li>Design Partner and founding member pricing is locked in as agreed at the time of enrolment</li>
+              <li>Early adopter pricing is locked in as agreed at the time of enrolment</li>
             </ul>
             <p className="mt-3">
               Payments are processed by Stripe. By providing payment details, you agree to Stripe's terms of service. We do not store your full card details.

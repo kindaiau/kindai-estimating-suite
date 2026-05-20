@@ -126,7 +126,6 @@ function fullFooterHtml(customText?: string): string {
       ${customText || "Kindai Estimating Suite &middot; AI estimating software for Australian tradies"}
     </p>
     <p style="margin:0;color:#30363d;font-size:11px;">
-      You received this because you signed up for the Kindai beta.
       To stop these emails, reply &ldquo;unsubscribe&rdquo; to <a href="mailto:matt@kindaiestimator.com" style="color:#30363d;text-decoration:none;">matt@kindaiestimator.com</a>.
       Kindai Pty Ltd &middot; Australia
     </p>`;

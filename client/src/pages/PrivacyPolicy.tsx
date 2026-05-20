@@ -48,7 +48,7 @@ export default function PrivacyPolicy() {
             <div className="space-y-4">
               <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                 <h3 className="font-semibold text-white mb-1">Account Information</h3>
-                <p className="text-sm text-gray-400">Name, email address, and profile information you provide when creating an account or signing up for our beta program.</p>
+                <p className="text-sm text-gray-400">Name, email address, and profile information you provide when creating an account or signing up for our service.</p>
               </div>
               <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                 <h3 className="font-semibold text-white mb-1">Usage Data</h3>
@@ -182,7 +182,7 @@ export default function PrivacyPolicy() {
         {/* Footer nav */}
         <div className="mt-16 pt-8 border-t border-white/10 flex flex-wrap gap-4 text-sm text-white/40">
           <a href="/" className="hover:text-orange-400 transition-colors">Home</a>
-          <a href="/beta" className="hover:text-orange-400 transition-colors">Beta Sign-up</a>
+          <a href="/pricing" className="hover:text-orange-400 transition-colors">Pricing</a>
           <a href="/data-deletion" className="hover:text-orange-400 transition-colors">Data Deletion</a>
           <a href="mailto:hello@kindaiestimator.com?subject=Privacy%20%26%20Data" className="hover:text-orange-400 transition-colors">Contact</a>
         </div>

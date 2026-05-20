@@ -317,6 +317,106 @@ export const EV_CHARGING_PRODUCTIVITY: ProductivityRate[] = [
   { task: "Annual preventive maintenance service (commercial, per charger)", unit: "ea", minutesMin: 60, minutesAvg: 90, minutesMax: 120 },
 ];
 
+// ─── DEMOLITION & EARTHMOVING ─────────────────────────────────────────────────
+// Sources: Rawlinsons Australian Construction Handbook 2024 (adjusted +8% for 2025),
+//          Civil Contractors Federation (CCF) productivity benchmarks, EPA Victoria waste levy data
+export const DEMOLITION_PRODUCTIVITY: ProductivityRate[] = [
+  // Structural demolition
+  { task: "Internal strip-out (non-structural walls, ceilings, fixtures)", unit: "m²", minutesMin: 8, minutesAvg: 12, minutesMax: 18, notes: "Per m² floor area. Includes stacking/sorting waste." },
+  { task: "Brick wall demolition (single skin)", unit: "m²", minutesMin: 15, minutesAvg: 22, minutesMax: 30, notes: "Hand demolition. Machine is 3-5x faster." },
+  { task: "Brick wall demolition (double brick)", unit: "m²", minutesMin: 25, minutesAvg: 35, minutesMax: 50, notes: "Hand demolition. Machine is 3-5x faster." },
+  { task: "Concrete slab breaking (100mm slab)", unit: "m²", minutesMin: 10, minutesAvg: 15, minutesMax: 25, notes: "With hydraulic breaker on 5T excavator" },
+  { task: "Concrete slab breaking (200mm+ slab)", unit: "m²", minutesMin: 18, minutesAvg: 28, minutesMax: 40, notes: "With hydraulic breaker on 8T+ excavator" },
+  { task: "Timber frame house demolition (complete)", unit: "m²", minutesMin: 3, minutesAvg: 5, minutesMax: 8, notes: "Per m² floor area using 14T excavator. Includes loading." },
+  { task: "Brick veneer house demolition (complete)", unit: "m²", minutesMin: 5, minutesAvg: 7, minutesMax: 10, notes: "Per m² floor area using 20T excavator." },
+  { task: "Shed / garage removal (steel frame)", unit: "ea", minutesMin: 120, minutesAvg: 180, minutesMax: 300, notes: "Typical single garage. 2-5 hrs." },
+  { task: "Pool demolition (concrete, backfill)", unit: "ea", minutesMin: 480, minutesAvg: 720, minutesMax: 960, notes: "Full day to 1.5 days. Includes breaking, removal, fill." },
+  // Earthmoving
+  { task: "Topsoil strip (150mm depth)", unit: "m²", minutesMin: 0.3, minutesAvg: 0.5, minutesMax: 0.8, notes: "Using 8T excavator or bobcat. ~100m²/hr." },
+  { task: "Bulk excavation (soft soil)", unit: "m³", minutesMin: 1.5, minutesAvg: 2.5, minutesMax: 4, notes: "8T excavator in open access. ~25m³/hr." },
+  { task: "Bulk excavation (clay)", unit: "m³", minutesMin: 2.5, minutesAvg: 4, minutesMax: 6, notes: "8T excavator. Clay is heavier and stickier." },
+  { task: "Rock excavation (hydraulic hammer)", unit: "m³", minutesMin: 8, minutesAvg: 15, minutesMax: 25, notes: "Highly variable. Depends on rock hardness." },
+  { task: "Trench excavation (600mm wide x 600mm deep)", unit: "lm", minutesMin: 3, minutesAvg: 5, minutesMax: 8, notes: "Using 5T excavator. ~12lm/hr." },
+  { task: "Trench excavation (900mm wide x 1200mm deep)", unit: "lm", minutesMin: 6, minutesAvg: 10, minutesMax: 15, notes: "Using 8T excavator." },
+  { task: "Cut and fill (site levelling)", unit: "m³", minutesMin: 2, minutesAvg: 3.5, minutesMax: 5, notes: "Includes cut, cart, spread, and compact." },
+  { task: "Compaction (roller or plate compactor)", unit: "m²", minutesMin: 0.5, minutesAvg: 1, minutesMax: 1.5, notes: "Per 150mm lift. Multiple passes." },
+  // Waste & disposal
+  { task: "Load truck (demolition waste)", unit: "m³", minutesMin: 2, minutesAvg: 3, minutesMax: 5, notes: "Using excavator. ~20m³/hr." },
+  { task: "Cart to tip (10km round trip)", unit: "m³", minutesMin: 4, minutesAvg: 6, minutesMax: 10, notes: "Per m³ including load, travel, unload, return." },
+  { task: "Skip bin placement and collection", unit: "ea", minutesMin: 15, minutesAvg: 20, minutesMax: 30, notes: "Hook-lift or marrell bin. Per delivery/pickup." },
+  // Asbestos
+  { task: "Bonded asbestos removal (eaves, flat sheet)", unit: "m²", minutesMin: 15, minutesAvg: 25, minutesMax: 40, notes: "Class B licensed removalist. Wet removal method." },
+  { task: "Bonded asbestos removal (fencing)", unit: "lm", minutesMin: 8, minutesAvg: 12, minutesMax: 18, notes: "Per lineal metre of fence. Includes wrap and bag." },
+  { task: "Asbestos soil remediation", unit: "m³", minutesMin: 30, minutesAvg: 45, minutesMax: 60, notes: "Dig, bag, dispose at licensed facility." },
+];
+
+// ─── SOLAR POWER INSTALLATION ─────────────────────────────────────────────────────
+// Sources: Solar Choice installer data, CEC accreditation guidelines, Clean Energy Council
+//          industry benchmarks, electrical contractor rates (Fair Work 2024-25)
+export const SOLAR_POWER_PRODUCTIVITY: ProductivityRate[] = [
+  // Design & assessment
+  { task: "Site assessment & design (6.6kW system)", unit: "ea", minutesMin: 60, minutesAvg: 120, minutesMax: 180, notes: "Roof inspection, shading analysis, electrical assessment" },
+  { task: "System design & documentation", unit: "ea", minutesMin: 30, minutesAvg: 60, minutesMax: 90, notes: "Engineering drawings, compliance documentation" },
+  // Roof work
+  { task: "Mounting system installation (per panel)", unit: "ea", minutesMin: 10, minutesAvg: 15, minutesMax: 20, notes: "Racking, flashing, waterproofing" },
+  { task: "Panel installation & wiring (per panel)", unit: "ea", minutesMin: 8, minutesAvg: 12, minutesMax: 15, notes: "Electrical connections, MC4 connectors" },
+  { task: "Roof penetrations & weatherproofing", unit: "ea", minutesMin: 20, minutesAvg: 30, minutesMax: 45, notes: "Per penetration (conduit, cable entry)" },
+  // Electrical
+  { task: "DC wiring & conduit (per 10m)", unit: "lm", minutesMin: 15, minutesAvg: 25, minutesMax: 35, notes: "6mm² solar cable, UV-resistant conduit" },
+  { task: "AC wiring & conduit (per 10m)", unit: "lm", minutesMin: 12, minutesAvg: 20, minutesMax: 30, notes: "Standard electrical cable, indoor/outdoor" },
+  { task: "Switchboard upgrade (RCBO installation)", unit: "ea", minutesMin: 60, minutesAvg: 90, minutesMax: 120, notes: "Per circuit breaker, includes testing" },
+  { task: "Isolator installation (DC + AC)", unit: "ea", minutesMin: 15, minutesAvg: 25, minutesMax: 35, notes: "Safety switches, disconnect switches" },
+  // Inverter
+  { task: "Inverter installation & mounting", unit: "ea", minutesMin: 30, minutesAvg: 45, minutesMax: 60, notes: "Wall/pole mounting, cable connections" },
+  { task: "Inverter commissioning & testing", unit: "ea", minutesMin: 45, minutesAvg: 60, minutesMax: 90, notes: "Firmware, monitoring setup, grid connection" },
+  // Battery (if applicable)
+  { task: "Battery system installation (Powerwall/LG Chem)", unit: "ea", minutesMin: 120, minutesAvg: 180, minutesMax: 240, notes: "Mounting, wiring, integration with inverter" },
+  { task: "Battery commissioning & monitoring", unit: "ea", minutesMin: 60, minutesAvg: 90, minutesMax: 120, notes: "App setup, charge/discharge testing" },
+  // Testing & compliance
+  { task: "Electrical testing & certification", unit: "ea", minutesMin: 60, minutesAvg: 90, minutesMax: 120, notes: "Continuity, insulation, earth resistance, RCD testing" },
+  { task: "Grid connection & CEC registration", unit: "ea", minutesMin: 30, minutesAvg: 60, minutesMax: 90, notes: "Paperwork, STC registration, CEC accreditation" },
+  { task: "Monitoring system setup (WiFi/app)", unit: "ea", minutesMin: 20, minutesAvg: 30, minutesMax: 45, notes: "Portal registration, app configuration" },
+  // Removal/replacement
+  { task: "Existing solar removal (per panel)", unit: "ea", minutesMin: 5, minutesAvg: 8, minutesMax: 12, notes: "Disconnection, unbolting, safe disposal" },
+  { task: "Switchboard removal/replacement", unit: "ea", minutesMin: 120, minutesAvg: 180, minutesMax: 240, notes: "Disconnect, removal, new installation, reconnection" },
+];
+
+// ─── POOL INSTALLATION ─────────────────────────────────────────────────────────────
+// Sources: Compass Pools, Narellan Pools, Barrier Reef Pools, Estate Pools, JKO Pool Construction,
+//          Rawlinsons Australian Construction Handbook 2024, pool builder associations
+export const POOL_PRODUCTIVITY: ProductivityRate[] = [
+  // Fibreglass pool
+  { task: "Excavation (fibreglass pool, per m³)", unit: "m³", minutesMin: 30, minutesAvg: 60, minutesMax: 90, notes: "Using 8T excavator, soft soil" },
+  { task: "Excavation (rock, per m³)", unit: "m³", minutesMin: 120, minutesAvg: 180, minutesMax: 240, notes: "Hydraulic hammer, difficult conditions" },
+  { task: "Levelling & compaction (per m²)", unit: "m²", minutesMin: 2, minutesAvg: 3, minutesMax: 5, notes: "Sand base preparation, 100mm depth" },
+  { task: "Fibreglass pool placement & positioning", unit: "ea", minutesMin: 240, minutesAvg: 360, minutesMax: 480, notes: "Crane placement, alignment, 4–8 hours" },
+  { task: "Backfill & compaction (per m³)", unit: "m³", minutesMin: 30, minutesAvg: 45, minutesMax: 60, notes: "Sand/soil backfill around shell" },
+  { task: "Pool coping installation (per lm)", unit: "lm", minutesMin: 15, minutesAvg: 25, minutesMax: 35, notes: "Concrete or stone coping, mortar bed" },
+  // Concrete pool
+  { task: "Excavation (concrete pool, per m³)", unit: "m³", minutesMin: 45, minutesAvg: 75, minutesMax: 120, notes: "Custom depth, formwork prep" },
+  { task: "Formwork setup (per m²)", unit: "m²", minutesMin: 20, minutesAvg: 30, minutesMax: 45, notes: "Timber/steel formwork, bracing" },
+  { task: "Steel reinforcement (per tonne)", unit: "t", minutesMin: 120, minutesAvg: 180, minutesMax: 240, notes: "Rebar placement, tying, spacing" },
+  { task: "Concrete pour (shotcrete, per m³)", unit: "m³", minutesMin: 60, minutesAvg: 90, minutesMax: 120, notes: "Spray application, finish trowel" },
+  { task: "Concrete curing & stripping (per m²)", unit: "m²", minutesMin: 5, minutesAvg: 8, minutesMax: 12, notes: "7–14 days curing (non-labour), formwork removal" },
+  { task: "Pool interior finish (pebblecrete, per m²)", unit: "m²", minutesMin: 30, minutesAvg: 45, minutesMax: 60, notes: "Coating application, trowel finish" },
+  { task: "Pool interior finish (tiling, per m²)", unit: "m²", minutesMin: 45, minutesAvg: 60, minutesMax: 90, notes: "Tile setting, grouting, sealing" },
+  // Equipment
+  { task: "Pump & filter installation", unit: "ea", minutesMin: 120, minutesAvg: 180, minutesMax: 240, notes: "Plumbing connections, electrical, priming" },
+  { task: "Heat pump installation", unit: "ea", minutesMin: 180, minutesAvg: 240, minutesMax: 300, notes: "Mounting, refrigerant lines, electrical, commissioning" },
+  { task: "Chlorinator/salt system installation", unit: "ea", minutesMin: 60, minutesAvg: 90, minutesMax: 120, notes: "Cell installation, wiring, calibration" },
+  { task: "Smart automation system setup", unit: "ea", minutesMin: 60, minutesAvg: 90, minutesMax: 120, notes: "WiFi setup, app configuration, sensor installation" },
+  // Surrounds
+  { task: "Concrete paving (per m²)", unit: "m²", minutesMin: 20, minutesAvg: 30, minutesMax: 45, notes: "Formwork, concrete pour, finish" },
+  { task: "Paver installation (per m²)", unit: "m²", minutesMin: 30, minutesAvg: 45, minutesMax: 60, notes: "Sand bed, laying, jointing" },
+  { task: "Decking installation (per m²)", unit: "m²", minutesMin: 40, minutesAvg: 60, minutesMax: 90, notes: "Timber/composite, fastening, finishing" },
+  // Fencing
+  { task: "Pool fencing installation (per lm)", unit: "lm", minutesMin: 30, minutesAvg: 45, minutesMax: 60, notes: "Posts, panels, gates, compliance" },
+  { task: "Glass fencing installation (per lm)", unit: "lm", minutesMin: 45, minutesAvg: 60, minutesMax: 90, notes: "Frameless glass, hinges, latches" },
+  // Testing & commissioning
+  { task: "Pool fill & water testing", unit: "ea", minutesMin: 60, minutesAvg: 90, minutesMax: 120, notes: "Fill time varies; chemical balance, pH, chlorine" },
+  { task: "Equipment commissioning & training", unit: "ea", minutesMin: 60, minutesAvg: 90, minutesMax: 120, notes: "Pump operation, heater, automation, maintenance" },
+];
+
 // ─── HELPER: Get productivity data for a trade ─────────────────────────────────
 export function getProductivityForTrade(trade: string): ProductivityRate[] {
   const tradeMap: Record<string, ProductivityRate[]> = {
@@ -336,6 +436,18 @@ export function getProductivityForTrade(trade: string): ProductivityRate[] {
     "ev-charging": EV_CHARGING_PRODUCTIVITY,
     "ev charging": EV_CHARGING_PRODUCTIVITY,
     evcharging: EV_CHARGING_PRODUCTIVITY,
+    demolition: DEMOLITION_PRODUCTIVITY,
+    earthmoving: DEMOLITION_PRODUCTIVITY,
+    "demolition earthmoving": DEMOLITION_PRODUCTIVITY,
+    "solar power": SOLAR_POWER_PRODUCTIVITY,
+    "solar-power": SOLAR_POWER_PRODUCTIVITY,
+    solarpower: SOLAR_POWER_PRODUCTIVITY,
+    solar: SOLAR_POWER_PRODUCTIVITY,
+    "swimming pool": POOL_PRODUCTIVITY,
+    "swimming-pool": POOL_PRODUCTIVITY,
+    swimmingpool: POOL_PRODUCTIVITY,
+    pool: POOL_PRODUCTIVITY,
+    "pool installation": POOL_PRODUCTIVITY,
   };
   const key = trade.toLowerCase().replace(/[^a-z ]/g, "");
   return tradeMap[key] ?? [];

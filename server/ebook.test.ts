@@ -112,11 +112,11 @@ describe("Ebook Email Sequence", () => {
       expect(result).toBe("test-message-id-ebook");
     });
 
-    it("includes beta signup link", async () => {
+    it("includes signup link", async () => {
       await sendEbookNurtureDay4({ to: "test@test.com", name: "Test User" });
 
       const call = mockSendEmail.mock.calls[0][0];
-      expect(call.html).toContain("kindaiestimator.com/beta");
+      expect(call.html).toContain("kindaiestimator.com");
     });
 
     it("includes social proof quote from beta user", async () => {
@@ -145,11 +145,11 @@ describe("Ebook Email Sequence", () => {
       expect(call.html).toContain("$41,400");
     });
 
-    it("includes beta signup CTA", async () => {
+    it("includes signup CTA", async () => {
       await sendEbookNurtureDay7({ to: "test@test.com", name: "Test User" });
 
       const call = mockSendEmail.mock.calls[0][0];
-      expect(call.html).toContain("kindaiestimator.com/beta");
+      expect(call.html).toContain("kindaiestimator.com");
     });
   });
 
@@ -171,18 +171,18 @@ describe("Ebook Email Sequence", () => {
       expect(call.subject).toContain("Dave");
     });
 
-    it("mentions pilot spot", async () => {
+    it("mentions limited availability", async () => {
       await sendEbookNurtureDay10({ to: "test@test.com", name: "Test User" });
 
       const call = mockSendEmail.mock.calls[0][0];
-      expect(call.html).toContain("pilot");
+      expect(call.html).toContain("kindaiestimator.com");
     });
 
-    it("includes beta signup CTA", async () => {
+    it("includes signup CTA", async () => {
       await sendEbookNurtureDay10({ to: "test@test.com", name: "Test User" });
 
       const call = mockSendEmail.mock.calls[0][0];
-      expect(call.html).toContain("kindaiestimator.com/beta");
+      expect(call.html).toContain("Pro Trial");
     });
   });
 

@@ -685,32 +685,84 @@ const quantitySurveyingQuestions: ScopingQuestion[] = [
 const demolitionQuestions: ScopingQuestion[] = [
   {
     id: "job_type",
-    label: "Type of demolition work",
+    label: "Type of work",
     type: "select",
-    options: ["Full house demolition", "Partial demolition (internal strip)", "Shed / Garage removal", "Pool removal", "Excavation / Earthworks", "Asbestos removal", "Other"],
+    options: [
+      "Full house demolition",
+      "Partial demolition (internal strip)",
+      "Shed / Garage removal",
+      "Pool removal",
+      "Bulk earthworks (cut & fill)",
+      "Site scrape / topsoil strip",
+      "Trenching / service excavation",
+      "Rock breaking / hammering",
+      "Asbestos removal",
+      "Other",
+    ],
     required: true,
   },
   {
     id: "building_type",
-    label: "Structure type",
+    label: "Structure type (if demolition)",
     type: "select",
-    options: ["Timber frame house", "Brick veneer house", "Double brick house", "Commercial building", "Shed / Outbuilding", "Concrete structure"],
+    options: ["Timber frame house", "Brick veneer house", "Double brick house", "Commercial building", "Shed / Outbuilding", "Concrete structure", "N/A \u2014 earthworks only"],
     required: true,
   },
   {
     id: "floor_area",
-    label: "Approximate floor area",
+    label: "Approximate floor area or site area",
     type: "number",
     placeholder: "e.g. 150",
-    unit: "m²",
+    unit: "m\u00b2",
+  },
+  {
+    id: "excavation_volume",
+    label: "Estimated excavation volume (if earthworks)",
+    type: "number",
+    placeholder: "e.g. 500",
+    unit: "m\u00b3",
+    helpText: "Approximate cubic metres of material to be moved. Leave blank if unsure.",
+  },
+  {
+    id: "ground_conditions",
+    label: "Ground conditions",
+    type: "select",
+    options: ["Sandy / soft soil", "Clay", "Rock (requires hammering)", "Mixed soil & rock", "Fill material", "Not sure"],
+    helpText: "Rock excavation typically costs 3-5x more than soft soil.",
+  },
+  {
+    id: "machinery_access",
+    label: "Site access for machinery",
+    type: "select",
+    options: ["Full access (wide street, no restrictions)", "Restricted access (narrow street or rear access only)", "Very tight (bobcat only)", "No machine access (hand demolition)"],
+    required: true,
+  },
+  {
+    id: "waste_disposal",
+    label: "Waste disposal method",
+    type: "select",
+    options: ["Skip bins (contractor arranges)", "Truck & cart to tip", "Stockpile on site for reuse", "Client arranges disposal"],
   },
   {
     id: "asbestos",
     label: "Is asbestos present?",
     type: "select",
-    options: ["Yes — confirmed", "Suspected (pre-1990 building)", "No — tested clear", "Not sure"],
+    options: ["Yes \u2014 confirmed", "Suspected (pre-1990 building)", "No \u2014 tested clear", "Not sure"],
     required: true,
     helpText: "Buildings built before 1990 may contain asbestos. Testing is required before demolition.",
+  },
+  {
+    id: "services_present",
+    label: "Underground services present?",
+    type: "multiselect",
+    options: ["Electrical", "Gas", "Water", "Sewer", "Stormwater", "Telecommunications", "None / Unknown"],
+    helpText: "Dial Before You Dig (1100) locates are mandatory before any excavation.",
+  },
+  {
+    id: "tip_fees_included",
+    label: "Include tip fees in estimate?",
+    type: "select",
+    options: ["Yes \u2014 include all disposal costs", "No \u2014 client pays tip fees separately"],
   },
 ];
 
@@ -731,18 +783,71 @@ const swimmingPoolQuestions: ScopingQuestion[] = [
     required: true,
   },
   {
+    id: "ground_conditions",
+    label: "Ground conditions (for new pool)",
+    type: "select",
+    options: ["Flat, stable soil", "Sloped / uneven", "Rock present (requires breaking)", "High water table / drainage issues", "Not sure"],
+    helpText: "Rock excavation can add 50-100% to project cost.",
+  },
+  {
+    id: "pool_interior",
+    label: "Pool interior finish (concrete pools)",
+    type: "select",
+    options: ["Pebblecrete (standard)", "Glass bead pebblecrete (premium)", "Fully tiled", "Not applicable (fibreglass)"],
+  },
+  {
+    id: "surrounds_paving",
+    label: "Surrounds / paving required?",
+    type: "select",
+    options: ["Yes — concrete paving", "Yes — pavers", "Yes — timber/composite decking", "No — minimal surrounds", "Not sure"],
+  },
+  {
     id: "heating",
     label: "Pool heating required?",
     type: "select",
     options: ["No heating", "Solar heating", "Heat pump", "Gas heater", "Not sure"],
   },
   {
+    id: "automation",
+    label: "Smart automation / WiFi control?",
+    type: "select",
+    options: ["Yes — full automation", "No — manual operation", "Not sure"],
+  },
+  {
     id: "fencing_required",
     label: "Does pool fencing need to be included?",
     type: "select",
-    options: ["Yes — new fence required", "No — existing compliant fence", "Not sure"],
-    helpText: "Pool fencing is mandatory in all Australian states.",
+    options: ["Yes — new fence required", "Yes — glass fencing (premium)", "No — existing compliant fence", "Not sure"],
+    helpText: "Pool fencing is mandatory in all Australian states. Glass fencing is more expensive but aesthetically superior.",
   },
+  {
+    id: "equipment_scope",
+    label: "Pool equipment scope",
+    type: "multiselect",
+    options: ["Pump & filter", "Heat pump", "Salt chlorinator", "UV system", "Robotic cleaner", "Monitoring system"],
+    helpText: "Select all equipment to be included in the estimate.",
+  },
+  {
+    id: "site_access",
+    label: "Site access for machinery",
+    type: "select",
+    options: ["Full access (wide street, easy entry)", "Restricted access (narrow street or rear only)", "Very tight (small machinery only)", "Difficult access (crane required for fibreglass)"],
+    required: true,
+  },
+];
+
+// ─── Solar Power Installation Scoping Questions ───────────────────────────────────
+const solarPowerQuestions: ScopingQuestion[] = [
+  { id: "system_type", label: "Solar system type", type: "select", options: ["Grid-tied (no battery)", "Hybrid (grid + battery backup)", "Off-grid (standalone)", "Not sure"], required: true, helpText: "Grid-tied is most common and cheapest. Hybrid adds battery storage. Off-grid requires larger system." },
+  { id: "system_size", label: "Desired system size", type: "select", options: ["3kW (small residential)", "6.6kW (standard residential)", "10kW (large residential / small commercial)", "15kW+ (commercial)", "Not sure"], required: true },
+  { id: "roof_type", label: "Roof type", type: "select", options: ["Tile (clay or concrete)", "Metal / Colorbond", "Flat roof", "Not sure"], required: true, helpText: "Different roof types affect mounting complexity and cost." },
+  { id: "roof_condition", label: "Roof condition", type: "select", options: ["Good (less than 10 years old)", "Fair (10-20 years old)", "Poor (needs replacement soon)", "Not sure"], helpText: "Poor roof condition may require replacement before solar installation." },
+  { id: "shading", label: "Roof shading", type: "select", options: ["Minimal shading (north-facing, clear)", "Some shading (trees or buildings)", "Significant shading (not ideal)", "Not sure"], helpText: "Shading reduces system output. Microinverters or optimizers can help." },
+  { id: "electrical_supply", label: "Electrical supply type", type: "select", options: ["Single-phase (standard residential)", "3-phase (commercial or large residential)", "Not sure"], required: true },
+  { id: "switchboard_age", label: "Switchboard age / condition", type: "select", options: ["Modern (less than 10 years)", "Older (10-20 years, may need upgrade)", "Very old (likely needs replacement)", "Not sure"], helpText: "Older switchboards may need upgrading to accommodate solar inverter." },
+  { id: "battery_storage", label: "Battery storage required?", type: "select", options: ["No battery (grid-tied only)", "Yes — Powerwall (Tesla)", "Yes — LG Chem / other", "Not sure"] },
+  { id: "hot_water", label: "Solar hot water integration?", type: "select", options: ["No — keep existing hot water", "Yes — add solar hot water", "Not sure"] },
+  { id: "monitoring", label: "Monitoring & app control", type: "select", options: ["Yes — full WiFi monitoring", "No — basic monitoring only", "Not sure"] },
 ];
 
 // ─── Steel Fabrication Scoping Questions ─────────────────────────────────────
@@ -823,6 +928,8 @@ export const SCOPING_QUESTIONS: Record<string, ScopingQuestion[]> = {
   demolition: demolitionQuestions,
   "swimming-pool": swimmingPoolQuestions,
   "steel-fabrication": steelFabricationQuestions,
+  "solar-power": solarPowerQuestions,
+  solar: solarPowerQuestions,
 };
 
 export function getScopingQuestions(tradeId: string): ScopingQuestion[] {
