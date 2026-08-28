@@ -88,7 +88,7 @@ describe("Meta Conversions API", () => {
 
   it("posts events to the Graph API v19 endpoint using requested FB env aliases", async () => {
     process.env.FB_PIXEL_ID = "1223641749636127";
-    process.env.FB_ACCESS_TOKEN = "test_access_token";
+    process.env.FB_ACCESS_TOKEN = "test_placeholder_access_token";
     process.env.META_TEST_EVENT_CODE = "TEST123";
 
     const fetchMock = vi.fn().mockResolvedValue({
@@ -109,7 +109,7 @@ describe("Meta Conversions API", () => {
 
     const [url, init] = fetchMock.mock.calls[0];
     expect(String(url)).toContain("https://graph.facebook.com/v19.0/1223641749636127/events");
-    expect(String(url)).toContain("access_token=test_access_token");
+    expect(String(url)).toContain("access_token=test_placeholder_access_token");
     expect(init.method).toBe("POST");
 
     const body = JSON.parse(init.body);

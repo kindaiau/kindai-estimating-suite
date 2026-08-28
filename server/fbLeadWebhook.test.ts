@@ -101,13 +101,13 @@ describe("GET /api/webhooks/fb-lead", () => {
   });
 
   it("handles Facebook webhook verification challenge", async () => {
-    process.env.FB_WEBHOOK_VERIFY_TOKEN = "kindai-fb-verify-2026";
+    process.env.FB_WEBHOOK_VERIFY_TOKEN = "<fb-verify-test-placeholder>";
     const app = buildApp();
     const res = await request(app)
       .get("/api/webhooks/fb-lead")
       .query({
         "hub.mode": "subscribe",
-        "hub.verify_token": "kindai-fb-verify-2026",
+        "hub.verify_token": "<fb-verify-test-placeholder>",
         "hub.challenge": "test-challenge-123",
       });
     expect(res.status).toBe(200);
@@ -115,7 +115,7 @@ describe("GET /api/webhooks/fb-lead", () => {
   });
 
   it("does not return challenge for wrong verify token", async () => {
-    process.env.FB_WEBHOOK_VERIFY_TOKEN = "kindai-fb-verify-2026";
+    process.env.FB_WEBHOOK_VERIFY_TOKEN = "<fb-verify-test-placeholder>";
     const app = buildApp();
     const res = await request(app)
       .get("/api/webhooks/fb-lead")
@@ -136,7 +136,7 @@ describe("GET /api/webhooks/fb-lead", () => {
       .get("/api/webhooks/fb-lead")
       .query({
         "hub.mode": "subscribe",
-        "hub.verify_token": "kindai-fb-verify-2026",
+        "hub.verify_token": "<fb-verify-test-placeholder>",
         "hub.challenge": "test-challenge-123",
       });
 
@@ -195,7 +195,7 @@ describe("POST /api/webhooks/fb-lead — secret validation", () => {
   });
 
   it("returns 401 when secret is set but header is missing", async () => {
-    process.env.WEBHOOK_SECRET = "super-secret-123";
+    process.env.WEBHOOK_SECRET = "<webhook-test-placeholder>";
     const app = buildApp();
     const res = await request(app)
       .post("/api/webhooks/fb-lead")
@@ -205,7 +205,7 @@ describe("POST /api/webhooks/fb-lead — secret validation", () => {
   });
 
   it("returns 401 when secret header is wrong", async () => {
-    process.env.WEBHOOK_SECRET = "super-secret-123";
+    process.env.WEBHOOK_SECRET = "<webhook-test-placeholder>";
     const app = buildApp();
     const res = await request(app)
       .post("/api/webhooks/fb-lead")
@@ -215,7 +215,7 @@ describe("POST /api/webhooks/fb-lead — secret validation", () => {
   });
 
   it("proceeds when correct secret header is provided", async () => {
-    process.env.WEBHOOK_SECRET = "super-secret-123";
+    process.env.WEBHOOK_SECRET = "<webhook-test-placeholder>";
     (getDb as ReturnType<typeof vi.fn>).mockResolvedValue(buildMockDb());
     (createBetaSignupInHubSpot as ReturnType<typeof vi.fn>).mockResolvedValue(null);
     (sendBetaWelcomeEmail as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
@@ -224,7 +224,7 @@ describe("POST /api/webhooks/fb-lead — secret validation", () => {
     const app = buildApp();
     const res = await request(app)
       .post("/api/webhooks/fb-lead")
-      .set("x-webhook-secret", "super-secret-123")
+      .set("x-webhook-secret", "<webhook-test-placeholder>")
       .send({ name: "Dave", email: "dave@test.com" });
     expect(res.status).toBe(200);
     expect(res.body.ok).toBe(true);

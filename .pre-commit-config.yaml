@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: kindai-secret-scan
+        name: Kindai secret scan
+        entry: python3 scripts/check-secrets.py
+        language: system
+        pass_filenames: false
+        always_run: true

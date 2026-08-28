@@ -1,0 +1,20 @@
+{
+  "build_command": "pnpm run build",
+  "capabilities": [
+    "server",
+    "db",
+    "user"
+  ],
+  "dev_command": "pnpm run dev",
+  "env_vars": {},
+  "experiments": [
+    "no_db_push"
+  ],
+  "name": "kindai-estimating-suite",
+  "path": "/home/ubuntu/kindai-estimating-suite",
+  "port": 3000,
+  "secrets": {},
+  "template_id": "web-db-user",
+  "test_command": "pnpm test",
+  "security_note": "Inject environment variables and secrets through the approved deployment secret store. Never commit credential values or generated project configuration files."
+}
