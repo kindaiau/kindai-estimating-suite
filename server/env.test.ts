@@ -42,7 +42,7 @@ describe("environment validation", () => {
   });
 
   it("reports billing as unavailable when Stripe webhook signing is missing", () => {
-    process.env.STRIPE_SECRET_KEY = "sk_test_configured";
+    process.env.STRIPE_SECRET_KEY = "<test-placeholder>";
     delete process.env.STRIPE_WEBHOOK_SECRET;
 
     const status = getEnvironmentStatus();
