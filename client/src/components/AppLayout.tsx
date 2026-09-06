@@ -23,6 +23,7 @@ const NAV_ITEMS = [
   { href: "/dashboard",  label: "Dashboard",         icon: BarChart3 },
   { href: "/crm", label: "CRM Pipeline", icon: KanbanSquare },
   { href: "/estimator", label: "Estimator", icon: ClipboardList },
+  { href: "/fencing", label: "Fencing & goats", icon: Camera },
   { href: "/automations", label: "Automations", icon: Workflow },
   { href: "/analytics", label: "Analytics", icon: LineChart },
   { href: "/project-dashboard", label: "Delivery", icon: FolderOpen },
