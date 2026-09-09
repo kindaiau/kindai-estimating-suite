@@ -26,7 +26,9 @@ type PilotPaymentInput = {
 function getResendConfig() {
   return {
     apiKey: process.env.RESEND_API_KEY?.trim(),
-    from: process.env.RESEND_FROM_EMAIL?.trim() || "Matt from Kindai <matt@kindaiestimator.com>",
+    from:
+      process.env.RESEND_FROM_EMAIL?.trim() ||
+      "Kindai Team <noreply@kindaiestimator.com>",
   };
 }
 
@@ -63,9 +65,10 @@ export async function sendResendEmail(email: ResendEmail): Promise<boolean> {
 
 function getOwnerNotificationEmail() {
   return (
+    process.env.OWNER_NOTIFICATION_EMAIL?.trim() ||
     process.env.MATTHEW_NOTIFICATION_EMAIL?.trim() ||
     process.env.GMAIL_USER?.trim() ||
-    "matt@kindaiestimator.com"
+    "support@kindaiestimator.com"
   );
 }
 
