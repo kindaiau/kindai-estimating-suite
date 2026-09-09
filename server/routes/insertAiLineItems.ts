@@ -6,6 +6,7 @@
 import { getDb } from "../db";
 import { lineItems } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
+import { normalizeTakeoffItem } from "../_core/takeoffPricing";
 
 interface AiItem {
   section?: string;
@@ -31,20 +32,21 @@ export function buildAiLineItemRows(
 ) {
   const labourRate = options.labourRate ?? 110;
   const useTradePrice = options.useTradePrice ?? true;
+  const normalizedItems = items.map((item) => normalizeTakeoffItem(item));
 
-  const materialRows = items.map((item, idx) => {
-    const qty = Number(item.quantity) || 0;
-    const unitRate = Number(useTradePrice ? item.tradePrice : item.retailPrice) || 0;
-    const waste = Number(item.wasteFactor) || 0;
+  const materialRows = normalizedItems.map((normalized, idx) => {
+    const qty = Number(normalized.quantity) || 0;
+    const unitRate = Number(useTradePrice ? normalized.tradePrice : normalized.retailPrice) || 0;
+    const waste = Number(normalized.wasteFactor) || 0;
     const effectiveQty = qty * (1 + waste / 100);
     const subtotal = effectiveQty * unitRate;
 
     return {
       estimateId,
-      section: item.section || "General",
-      category: item.category || "Materials",
-      description: item.description || "AI-generated item",
-      unit: item.unit || "ea",
+      section: normalized.section,
+      category: normalized.category,
+      description: normalized.description,
+      unit: normalized.unit,
       quantity: String(qty),
       unitRate: String(unitRate),
       wasteFactor: String(waste),
@@ -55,17 +57,17 @@ export function buildAiLineItemRows(
     };
   });
 
-  const labourRows = items
+  const labourRows = normalizedItems
     .filter((item) => (Number(item.labourMinutes) || 0) > 0)
-    .map((item, idx) => {
-      const qty = Number(item.quantity) || 0;
-      const hours = (qty * (Number(item.labourMinutes) || 0)) / 60;
+    .map((normalized, idx) => {
+      const qty = Number(normalized.quantity) || 0;
+      const hours = (qty * (Number(normalized.labourMinutes) || 0)) / 60;
       const subtotal = hours * labourRate;
       return {
         estimateId,
-        section: item.section || "General",
+        section: normalized.section,
         category: "Labour",
-        description: `Labour: ${item.description || "AI-generated"}`,
+        description: `Labour: ${normalized.description}`,
         unit: "hr",
         quantity: String(Math.round(hours * 100) / 100),
         unitRate: String(labourRate),
