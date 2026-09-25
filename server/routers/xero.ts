@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
-import { protectedProcedure, router } from "../_core/trpc";
+import { paidProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { companyProfiles, estimates, lineItems, projects } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
@@ -100,7 +100,7 @@ async function xeroRequest(token: string, tenantId: string, path: string, option
 // ─── Router ──────────────────────────────────────────────────────────────────
 export const xeroRouter = router({
   // ── Get connection status ────────────────────────────────────────────────
-  getStatus: protectedProcedure.query(async ({ ctx }) => {
+  getStatus: paidProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
     const [profile] = await db.select({
       xeroTenantId: companyProfiles.xeroTenantId,
@@ -118,7 +118,7 @@ export const xeroRouter = router({
   }),
 
   // ── Get OAuth URL ────────────────────────────────────────────────────────
-  getAuthUrl: protectedProcedure.input(z.object({
+  getAuthUrl: paidProcedure.input(z.object({
     origin: z.string(),
   })).mutation(async ({ ctx, input }) => {
     const clientId = ENV.xeroClientId;
@@ -136,7 +136,7 @@ export const xeroRouter = router({
   }),
 
   // ── Disconnect Xero ──────────────────────────────────────────────────────
-  disconnect: protectedProcedure.mutation(async ({ ctx }) => {
+  disconnect: paidProcedure.mutation(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
     await db.update(companyProfiles).set({
       xeroAccessToken: null,
@@ -149,7 +149,7 @@ export const xeroRouter = router({
   }),
 
   // ── Create or find a Xero contact from project client info ───────────────
-  syncContact: protectedProcedure.input(z.object({
+  syncContact: paidProcedure.input(z.object({
     projectId: z.number(),
   })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
@@ -198,7 +198,7 @@ export const xeroRouter = router({
   }),
 
   // ── Push estimate as Xero invoice ────────────────────────────────────────
-  createInvoice: protectedProcedure.input(z.object({
+  createInvoice: paidProcedure.input(z.object({
     estimateId: z.number(),
     contactId: z.string().optional(), // If not provided, will try to sync from project
     dueDate: z.string().optional(), // ISO date string
@@ -297,7 +297,7 @@ export const xeroRouter = router({
   }),
 
   // ── List recent invoices ─────────────────────────────────────────────────
-  listInvoices: protectedProcedure.input(z.object({
+  listInvoices: paidProcedure.input(z.object({
     limit: z.number().optional().default(10),
   })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
-import { protectedProcedure, router } from "../_core/trpc";
+import { paidProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { estimates, lineItems, users, estimateCorrections, tradeProfiles } from "../../drizzle/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -11,21 +11,16 @@ import { storagePut } from "../storage";
 import { INDUSTRY_BENCHMARKS } from "./ai";
 import { buildQuoteAssuranceReport, deriveAssuranceEstimate } from "../assurance";
 import { buildAiLineItemRows } from "../routes/insertAiLineItems";
-import {
-  buildMetaUserData,
-  extractMetaClickIdentifiers,
-  sendMetaConversionEvent,
-} from "../metaCapi";
 
 export const estimatesRouter = router({
-  list: protectedProcedure.input(z.object({ projectId: z.number().optional() })).query(async ({ ctx, input }) => {
+  list: paidProcedure.input(z.object({ projectId: z.number().optional() })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     const conditions = [eq(estimates.userId, ctx.user.id)];
     if (input.projectId) conditions.push(eq(estimates.projectId, input.projectId));
     return db.select().from(estimates).where(and(...conditions)).orderBy(desc(estimates.createdAt)).limit(500);
   }),
 
-  get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+  get: paidProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     const result = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)))
@@ -33,7 +28,7 @@ export const estimatesRouter = router({
     return result[0] ?? null;
   }),
 
-  getWithLineItems: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+  getWithLineItems: paidProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     const [estimate] = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)))
@@ -43,7 +38,7 @@ export const estimatesRouter = router({
     return { ...estimate, lineItems: items };
   }),
 
-  getAssurance: protectedProcedure.input(z.object({
+  getAssurance: paidProcedure.input(z.object({
     estimateId: z.number(),
     pricingContext: z.object({
       marginPercent: z.number().min(0).max(1000),
@@ -86,7 +81,7 @@ export const estimatesRouter = router({
     );
   }),
 
-  create: protectedProcedure.input(z.object({
+  create: paidProcedure.input(z.object({
     projectId: z.number(),
     trade: z.string(),
     title: z.string().min(1),
@@ -111,45 +106,10 @@ export const estimatesRouter = router({
     } as any);
     const newEstimateId = Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0);
 
-    // ─── Meta CAPI: ViewContent (new estimate created = viewing estimator) ──
-    const { fbp, fbc } = extractMetaClickIdentifiers(ctx.req.headers.cookie);
-    const clientIpAddress =
-      (ctx.req.headers["x-forwarded-for"] as string | undefined)
-        ?.split(",")
-        .map((v) => v.trim())
-        .find(Boolean) ?? ctx.req.socket.remoteAddress ?? undefined;
-    const clientUserAgent = ctx.req.headers["user-agent"] ?? undefined;
-
-    sendMetaConversionEvent({
-      eventName: "ViewContent",
-      eventId: `estimate_create_${newEstimateId}_${Date.now()}`,
-      actionSource: "website",
-      eventSourceUrl: "https://kindaiestimator.com/ai-takeoff",
-      customData: {
-        currency: "AUD",
-        value: 0,
-        content_name: `New Estimate: ${input.title}`,
-        content_category: input.trade,
-        content_ids: [String(newEstimateId)],
-      },
-      userData: buildMetaUserData({
-        email: ctx.user.email ?? undefined,
-        clientIpAddress,
-        clientUserAgent,
-        fbp,
-        fbc,
-      }),
-    }).catch((err: unknown) => {
-      console.error(
-        "[Meta CAPI] Failed to send ViewContent event:",
-        err instanceof Error ? err.message : String(err)
-      );
-    });
-
     return { id: newEstimateId, quoteNumber };
   }),
 
-  update: protectedProcedure.input(z.object({
+  update: paidProcedure.input(z.object({
     id: z.number(),
     title: z.string().optional(),
     status: z.enum(["draft", "review", "sent", "accepted", "declined"]).optional(),
@@ -169,7 +129,7 @@ export const estimatesRouter = router({
     return { success: true };
   }),
 
-  recalculate: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+  recalculate: paidProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     const [estimate] = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)))
@@ -199,7 +159,7 @@ export const estimatesRouter = router({
   }),
 
   // Line Items
-  addLineItem: protectedProcedure.input(z.object({
+  addLineItem: paidProcedure.input(z.object({
     estimateId: z.number(),
     category: z.string(),
     description: z.string().min(1),
@@ -232,7 +192,7 @@ export const estimatesRouter = router({
     return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
   }),
 
-  updateLineItem: protectedProcedure.input(z.object({
+  updateLineItem: paidProcedure.input(z.object({
     id: z.number(),
     estimateId: z.number(),
     category: z.string().optional(),
@@ -324,7 +284,7 @@ export const estimatesRouter = router({
     return { success: true };
   }),
 
-  deleteLineItem: protectedProcedure.input(z.object({ id: z.number(), estimateId: z.number() })).mutation(async ({ ctx, input }) => {
+  deleteLineItem: paidProcedure.input(z.object({ id: z.number(), estimateId: z.number() })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     const [est] = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
@@ -334,7 +294,7 @@ export const estimatesRouter = router({
     return { success: true };
   }),
 
-  getLineItems: protectedProcedure.input(z.object({ estimateId: z.number() })).query(async ({ ctx, input }) => {
+  getLineItems: paidProcedure.input(z.object({ estimateId: z.number() })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     const [est] = await db.select().from(estimates)
       .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
@@ -343,7 +303,7 @@ export const estimatesRouter = router({
     return db.select().from(lineItems).where(eq(lineItems.estimateId, input.estimateId));
   }),
 
-  delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+  delete: paidProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     // Verify ownership before deleting associated line items
     const [est] = await db.select({ id: estimates.id }).from(estimates)
@@ -355,7 +315,7 @@ export const estimatesRouter = router({
     return { success: true };
   }),
 
-  stats: protectedProcedure.query(async ({ ctx }) => {
+  stats: paidProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
     // Use SQL aggregation instead of fetching all rows into memory
     const countRows = await db
@@ -385,7 +345,7 @@ export const estimatesRouter = router({
   }),
 
   // Industry benchmarking — compare user's estimate vs market rates
-  getBenchmark: protectedProcedure.input(z.object({
+  getBenchmark: paidProcedure.input(z.object({
     id: z.number(),
   })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
@@ -457,7 +417,7 @@ export const estimatesRouter = router({
     };
   }),
 
-  generatePdf: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+  generatePdf: paidProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
 
     // Load estimate
@@ -541,41 +501,6 @@ export const estimatesRouter = router({
       quotePdfUrl: url,
       quotePdfKey: fileKey,
     } as any).where(eq(estimates.id, input.id));
-
-    // ─── Meta CAPI: Purchase (quote PDF generated = quote sent to client) ──
-    const pdfFbIds = extractMetaClickIdentifiers(ctx.req.headers.cookie);
-    const pdfClientIp =
-      (ctx.req.headers["x-forwarded-for"] as string | undefined)
-        ?.split(",")
-        .map((v) => v.trim())
-        .find(Boolean) ?? ctx.req.socket.remoteAddress ?? undefined;
-
-    sendMetaConversionEvent({
-      eventName: "Purchase",
-      eventId: `quote_pdf_${input.id}_${Date.now()}`,
-      actionSource: "website",
-      eventSourceUrl: "https://kindaiestimator.com/dashboard",
-      customData: {
-        currency: "AUD",
-        value: totalNum,
-        content_name: `Quote: ${estimate.quoteNumber}`,
-        content_category: estimate.trade,
-        content_ids: [String(input.id)],
-        num_items: items.length,
-      },
-      userData: buildMetaUserData({
-        email: ctx.user.email ?? undefined,
-        clientIpAddress: pdfClientIp,
-        clientUserAgent: ctx.req.headers["user-agent"] ?? undefined,
-        fbp: pdfFbIds.fbp,
-        fbc: pdfFbIds.fbc,
-      }),
-    }).catch((err: unknown) => {
-      console.error(
-        "[Meta CAPI] Failed to send Purchase event:",
-        err instanceof Error ? err.message : String(err)
-      );
-    });
 
     return { url, fileKey };
   }),

@@ -57,22 +57,15 @@ export interface SubscriptionPlan {
   stripePriceIdYearly?: string;
 }
 
-export const PRO_TRIAL_OFFER = {
-  id: "pro_trial_21_day",
-  name: "Kindai Pro — 21-Day Trial",
-  description:
-    "Full Pro access for 21 days. Unlimited Quick Quotes, Plan Reading (Vision AI), Company Memory, and Correction Learning. No lock-in — cancel anytime.",
-  amount: 900, // A$9 in cents
-  currency: "aud",
-  trialDays: 21,
-};
-
 export const PILOT_SETUP_OFFER = {
   id: "founding_pilot_setup_sprint",
-  name: "Kindai Founding Pilot Setup + 6 Months",
+  version: "1.0",
+  name: "KindAI Cabinet & Joinery Founding Workflow Setup + 6 Months",
   description:
-    "Founder-led setup for one quoting workflow, GST-aware estimate structure, supplier pricing structure, margin checks, 7 days of support, and the first 6 months of Kindai included.",
-  amount: 100000,
+    "One founder-led cabinet or joinery workflow setup, up to 150 price-book rows, up to 20 written rules, two reviewed real jobs, 30 days of email support, and the first 6 months of Sole Tradie for one user.",
+  priceExGst: 250000,
+  gstAmount: 25000,
+  amount: 275000,
   currency: "aud",
 };
 
@@ -84,21 +77,21 @@ export function getPlanCheckoutAmount(
 }
 
 export const PLANS: SubscriptionPlan[] = [
-  // ─── TIER 1: FREE TRIAL ──────────────────────────────────────────────────────
+  // ─── TIER 1: EVALUATION ──────────────────────────────────────────────────────
   {
     id: "free",
-    name: "Free Trial",
-    tagline: "See it before you commit",
-    description: "Run 3 real AI takeoffs. No credit card. No catch. See exactly what Kindai can do for your business.",
+    name: "Evaluation",
+    tagline: "Explore the workflow before you commit",
+    description: "Explore a representative sample, then apply for the paid cabinet and joinery Founding Workflow Setup.",
     targetAudience: "Any construction business evaluating AI estimating",
     annualSavings: "N/A",
-    roiStatement: "Try before you buy — zero risk",
+    roiStatement: "No open-ended free AI access",
     priceMonthly: 0,
     priceYearly: 0,
     features: [
-      { text: "3 estimates per month", included: true },
-      { text: "3 AI Vision Takeoffs", included: true },
-      { text: "5 active projects", included: true },
+      { text: "Interactive estimating sample", included: true },
+      { text: "A$2,500 + GST Founding Workflow Setup by application", included: true },
+      { text: "Private projects", included: false },
       { text: "Basic materials library", included: true },
       { text: "GST calculation", included: true },
       { text: "Retail pricing only", included: true },
@@ -110,9 +103,9 @@ export const PLANS: SubscriptionPlan[] = [
       { text: "Team members", included: false },
     ],
     limits: {
-      estimatesPerMonth: 3,
-      aiTakeoffsPerMonth: 3,
-      projectsTotal: 5,
+      estimatesPerMonth: 0,
+      aiTakeoffsPerMonth: 0,
+      projectsTotal: 0,
       teamMembers: 1,
     },
   },
@@ -122,10 +115,10 @@ export const PLANS: SubscriptionPlan[] = [
     id: "sole_trader",
     name: "Sole Tradie",
     tagline: "Quote faster. Win more jobs.",
-    description: "For the one-person operation. Replaces hours of manual quoting with 60-second AI takeoffs. Pays for itself on the first job.",
+    description: "For an owner-operator who wants a repeatable estimating workflow using their own rates and business rules.",
     targetAudience: "Sole traders and owner-operators (1–2 people)",
-    annualSavings: "Saves 8–12 hrs/week in quoting time",
-    roiStatement: "At $85/hr, that's $35,000+ of your time back every year",
+    annualSavings: "Depends on estimating volume and review time",
+    roiStatement: "Validate the value on your own jobs before committing",
     priceMonthly: 14900, // $149/mo
     priceYearly: 143040, // $119/mo billed annually ($1,428/yr — saves $360)
     features: [
@@ -158,8 +151,8 @@ export const PLANS: SubscriptionPlan[] = [
     tagline: "For growing trade teams.",
     description: "For trade businesses with a small team. Adds unlimited AI volume, client-owned accounting integrations, accuracy reporting, and team workflows.",
     targetAudience: "Trade businesses with 3–15 staff",
-    annualSavings: "Replaces a $55,000–$75,000/yr part-time estimator",
-    roiStatement: "You pay $5,400/yr. You save $55,000+. That's a 10x return.",
+    annualSavings: "Depends on team usage, estimating volume and existing workflow",
+    roiStatement: "Designed to standardise estimating across a small team",
     priceMonthly: 45000, // $450/mo
     priceYearly: 432000, // $360/mo billed annually ($4,320/yr — saves $1,080)
     popular: true,
@@ -191,11 +184,11 @@ export const PLANS: SubscriptionPlan[] = [
   {
     id: "mid_builder",
     name: "Mid-Tier Builder",
-    tagline: "Replace your full-time estimator.",
-    description: "For construction companies turning over $2M–$20M/yr. Replaces a full-time estimator ($130K–$180K loaded cost) and eliminates underquoting risk.",
+    tagline: "Support a high-volume estimating team.",
+    description: "For construction companies that need higher-volume, multi-trade estimating with onboarding, controls and dedicated support.",
     targetAudience: "Construction companies with 15–100 staff, $2M–$20M turnover",
-    annualSavings: "Replaces a $130,000–$180,000/yr full-time estimator",
-    roiStatement: "You pay $17,988/yr. You save $130,000+. That's a 7x return — plus zero underquoting risk.",
+    annualSavings: "Depends on estimating volume, staffing and review workflow",
+    roiStatement: "Commercial value is validated during onboarding and review",
     priceMonthly: 149900, // $1,499/mo
     priceYearly: 1438800, // $1,199/mo billed annually ($14,388/yr — saves $3,600)
     features: [
@@ -227,8 +220,8 @@ export const PLANS: SubscriptionPlan[] = [
     tagline: "Built around your workflow.",
     description: "For builders and major trade teams that need custom onboarding, integrations, supplier price books, and commercial support around their existing or recommended systems.",
     targetAudience: "Tier 1–3 builders, $20M+ turnover, multi-state operations",
-    annualSavings: "Replaces $250,000–$450,000/yr estimating team",
-    roiStatement: "Custom pricing. Typically 8–15x ROI in year one.",
+    annualSavings: "Defined against the customer's current workflow and delivery cost",
+    roiStatement: "Custom scope and commercial case required",
     priceMonthly: 0, // Custom pricing by contact
     priceYearly: 0, // Custom pricing by contact
     contactSales: true,

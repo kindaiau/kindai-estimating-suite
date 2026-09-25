@@ -9,13 +9,9 @@ import { sendBetaWelcomeEmail } from "../welcomeEmail";
 import { sendApologyEmail } from "../apologyEmail";
 import { sendPilotLeadEmails } from "../resendEmail";
 import { scheduleNurtureForSignup } from "./betaNurture";
-import {
-  buildMetaUserData,
-  extractMetaClickIdentifiers,
-  sendMetaConversionEvent,
-} from "../metaCapi";
 
 const BETA_SPOTS_TOTAL = 25;
+const FOUNDING_SETUP_SPOTS_TOTAL = 5;
 
 export const betaRouter = router({
   // Public: get current beta stats (spots claimed, spots remaining)
@@ -58,31 +54,38 @@ export const betaRouter = router({
         fbc: z.string().max(255).optional(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const db = (await getDb())!;
+      const isFoundingSetupApplication =
+        input.intent === "Paid Pilot Setup" && input.source === "live_plan_evaluation";
 
-      // Check if already signed up
+      if (!isFoundingSetupApplication) {
+        return { success: false, isFull: false, retired: true };
+      }
+
+      const normalizedEmail = input.email.trim().toLowerCase();
+
+      // Reuse a legacy lead record instead of letting the unique email constraint block a paid application.
       const existing = await db
-        .select({ id: betaSignups.id })
+        .select({ id: betaSignups.id, status: betaSignups.status, paymentStatus: betaSignups.paymentStatus })
         .from(betaSignups)
-        .where(eq(betaSignups.email, input.email))
+        .where(eq(betaSignups.email, normalizedEmail))
         .limit(1);
 
-      if (existing.length > 0) {
+      if (existing[0]?.status === "active" && existing[0]?.paymentStatus === "paid") {
         return { success: true, alreadyRegistered: true };
       }
 
       // Check if spots available
       const [countResult] = await db.select({ total: count() }).from(betaSignups);
       const claimed = countResult?.total ?? 0;
-      if (claimed >= BETA_SPOTS_TOTAL) {
+      if (!isFoundingSetupApplication && claimed >= BETA_SPOTS_TOTAL) {
         return { success: false, isFull: true };
       }
 
-      // Insert signup
-      const insertResult = await db.insert(betaSignups).values({
+      const applicationValues = {
         name: input.name,
-        email: input.email,
+        email: normalizedEmail,
         phone: input.phone,
         company: input.company,
         trade: input.trade,
@@ -98,57 +101,24 @@ export const betaRouter = router({
         utmTerm: input.utmTerm,
         landingPath: input.landingPath,
         referrerHost: input.referrerHost,
-        status: "pending",
-      });
-      const signupId = Number((insertResult as any)[0]?.insertId ?? (insertResult as any).insertId ?? claimed + 1);
+        status: "pending" as const,
+      };
 
-      const requestIdentifiers = extractMetaClickIdentifiers(ctx.req.headers.cookie);
-      const clientIpAddress = (ctx.req.headers["x-forwarded-for"] as string | undefined)
-        ?.split(",")
-        .map((value) => value.trim())
-        .find(Boolean) ?? ctx.req.socket.remoteAddress ?? undefined;
-      const clientUserAgent = ctx.req.headers["user-agent"] ?? undefined;
-      const eventSourceUrl = input.sourceUrl ?? ctx.req.headers.referer ?? "https://kindaiestimator.com/beta";
-
-      sendMetaConversionEvent({
-        eventName: "Lead",
-        eventId: input.leadEventId,
-        actionSource: "website",
-        eventSourceUrl,
-        customData: {
-          currency: "AUD",
-          value: 0,
-          content_name: "Beta Sign-up",
-          content_category: "Kindai Estimating Suite",
-          source: input.source ?? "website",
-          intent: input.intent ?? "Pilot Spot Request",
-          trade: input.trade,
-          state: input.state,
-          project_size: input.projectSize,
-          utm_source: input.utmSource,
-          utm_medium: input.utmMedium,
-          utm_campaign: input.utmCampaign,
-          utm_content: input.utmContent,
-          utm_term: input.utmTerm,
-          landing_path: input.landingPath,
-          spot_number: claimed + 1,
-        },
-        userData: buildMetaUserData({
-          email: input.email,
-          name: input.name,
-          clientIpAddress,
-          clientUserAgent,
-          fbp: input.fbp ?? requestIdentifiers.fbp,
-          fbc: input.fbc ?? requestIdentifiers.fbc,
-        }),
-      }).catch((err: unknown) => {
-        console.error("[Meta CAPI] Failed to send beta lead event:", err instanceof Error ? err.message : String(err));
-      });
+      let signupId: number;
+      if (existing[0]) {
+        await db.update(betaSignups).set(applicationValues).where(eq(betaSignups.id, existing[0].id));
+        signupId = existing[0].id;
+      } else {
+        const insertResult = await db.insert(betaSignups).values(applicationValues);
+        signupId = Number((insertResult as any)[0]?.insertId ?? (insertResult as any).insertId ?? claimed + 1);
+      }
 
       // Notify owner
       await notifyOwner({
-        title: "🎉 New Beta Signup!",
-        content: `${input.name} (${input.email}) requested a Kindai pilot. Phone: ${input.phone ?? "not provided"}. Trade: ${input.trade ?? "not specified"}. Intent: ${input.intent ?? "Pilot Spot Request"}. Spot #${claimed + 1} of ${BETA_SPOTS_TOTAL}.`,
+        title: isFoundingSetupApplication ? "New KindAI Founding Workflow Setup Application" : "New KindAI Pilot Request",
+        content: isFoundingSetupApplication
+          ? `${input.name} (${input.email}) applied for the A$2,500 plus GST Founding Workflow Setup. No payment has been taken. Phone: ${input.phone ?? "not provided"}. Company: ${input.company ?? "not provided"}. Trade: ${input.trade ?? "not specified"}. Notes: ${input.feedback ?? "none"}.`
+          : `${input.name} (${input.email}) requested a KindAI pilot. Phone: ${input.phone ?? "not provided"}. Trade: ${input.trade ?? "not specified"}. Intent: ${input.intent ?? "Pilot Spot Request"}. Spot #${claimed + 1} of ${BETA_SPOTS_TOTAL}.`,
       });
 
       const spotNumber = claimed + 1;
@@ -159,6 +129,7 @@ export const betaRouter = router({
         phone: input.phone,
         tradeType: input.trade,
         intent: input.intent ?? "Pilot Spot Request",
+        source: input.source,
       })
         .then((result) => {
           if (result.leadSent) return;
@@ -171,14 +142,17 @@ export const betaRouter = router({
         })
         .catch((err: unknown) => console.error("[Resend] Failed to send pilot lead emails:", err));
 
-      // Schedule nurture email sequence (fire-and-forget)
-      scheduleNurtureForSignup({
-        id: signupId,
-        name: input.name,
-        email: input.email,
-        spotNumber,
-        trade: input.trade,
-      }).catch((err: unknown) => console.error("[Nurture] Failed to schedule nurture sequence:", err));
+      // Founding Workflow Setup applications receive a direct acknowledgement only. They do not
+      // enter the legacy beta urgency/social-proof nurture sequence.
+      if (!isFoundingSetupApplication) {
+        scheduleNurtureForSignup({
+          id: signupId,
+          name: input.name,
+          email: input.email,
+          spotNumber,
+          trade: input.trade,
+        }).catch((err: unknown) => console.error("[Nurture] Failed to schedule nurture sequence:", err));
+      }
 
       // Push to HubSpot CRM — save IDs back to DB row so admin dashboard shows them
       createBetaSignupInHubSpot({
@@ -234,37 +208,22 @@ export const betaRouter = router({
         .where(eq(betaSignups.id, input.id))
         .limit(1);
 
+      if (!signup) throw new Error("Application not found");
+
+      if (signup.intent === "Paid Pilot Setup" && signup.status === "pending") {
+        const [cohort] = await db
+          .select({ total: count() })
+          .from(betaSignups)
+          .where(sql`${betaSignups.intent} = 'Paid Pilot Setup' AND ${betaSignups.status} IN ('approved', 'active')`);
+        if ((cohort?.total ?? 0) >= FOUNDING_SETUP_SPOTS_TOTAL) {
+          throw new Error("The five-place Founding Workflow Setup cohort is already full");
+        }
+      }
+
       await db
         .update(betaSignups)
         .set({ status: "approved", approvedAt: new Date() })
         .where(eq(betaSignups.id, input.id));
-
-      if (signup?.email) {
-        sendMetaConversionEvent({
-          eventName: "CompleteRegistration",
-          eventId: `beta_approval_${signup.id}_${Date.now()}`,
-          actionSource: "system_generated",
-          eventSourceUrl: "https://kindaiestimator.com/beta",
-          customData: {
-            currency: "AUD",
-            value: 0,
-            content_name: "Beta Founding Member Approved",
-            status: "approved",
-            source: signup.source ?? "website",
-            trade: signup.trade,
-            state: signup.state,
-            project_size: signup.projectSize,
-            hubspot_contact_id: signup.hubspotContactId,
-            hubspot_deal_id: signup.hubspotDealId,
-          },
-          userData: buildMetaUserData({
-            email: signup.email,
-            name: signup.name,
-          }),
-        }).catch((err: unknown) => {
-          console.error("[Meta CAPI] Failed to send beta approval event:", err instanceof Error ? err.message : String(err));
-        });
-      }
 
       return { success: true };
     }),

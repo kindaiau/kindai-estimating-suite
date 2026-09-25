@@ -17,7 +17,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { nanoid } from "nanoid";
 import { requireDatabase } from "../_core/errors";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { paidProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
   swms,
@@ -340,7 +340,7 @@ Generate 4-8 work activity rows covering the main tasks for this job. Focus on t
 
 export const swmsRouter = router({
   /** Generate a draft SWMS from an estimate (Business tier required) */
-  generate: protectedProcedure
+  generate: paidProcedure
     .input(z.object({ estimateId: z.number(), sitePhotoUrls: z.array(z.string()).optional() }))
     .mutation(async ({ ctx, input }) => {
       const db = requireDatabase(await getDb());
@@ -432,7 +432,7 @@ export const swmsRouter = router({
     }),
 
   /** Get a SWMS by ID (owner only) */
-  get: protectedProcedure
+  get: paidProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const db = requireDatabase(await getDb());
@@ -445,7 +445,7 @@ export const swmsRouter = router({
     }),
 
   /** List all SWMS for the current user */
-  list: protectedProcedure
+  list: paidProcedure
     .input(z.object({ estimateId: z.number().optional() }))
     .query(async ({ ctx, input }) => {
       const db = requireDatabase(await getDb());
@@ -455,7 +455,7 @@ export const swmsRouter = router({
     }),
 
   /** Update SWMS content (owner only) */
-  update: protectedProcedure
+  update: paidProcedure
     .input(z.object({
       id: z.string(),
       pcbuName: z.string().optional(),
@@ -491,7 +491,7 @@ export const swmsRouter = router({
     }),
 
   /** Finalize SWMS — generate PDF, store in S3, mark as finalized */
-  finalize: protectedProcedure
+  finalize: paidProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const db = requireDatabase(await getDb());
@@ -522,7 +522,7 @@ export const swmsRouter = router({
     }),
 
   /** Generate a unique share token for worker signing */
-  createShareLink: protectedProcedure
+  createShareLink: paidProcedure
     .input(z.object({ id: z.string(), origin: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const db = requireDatabase(await getDb());
@@ -592,7 +592,7 @@ export const swmsRouter = router({
     }),
 
   /** Get all signatures for a SWMS (owner only) */
-  getSignatures: protectedProcedure
+  getSignatures: paidProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const db = requireDatabase(await getDb());
@@ -611,7 +611,7 @@ export const swmsRouter = router({
   // ─── AI Intelligence Layer Endpoints ──────────────────────────────────────
 
   /** Analyse a site photo for hazards (multimodal vision) */
-  analyseSitePhoto: protectedProcedure
+  analyseSitePhoto: paidProcedure
     .input(z.object({
       photoUrl: z.string().url(),
       swmsId: z.string().optional(),
@@ -626,7 +626,7 @@ export const swmsRouter = router({
     }),
 
   /** Extract company procedures from an uploaded SWMS PDF */
-  extractFromPdf: protectedProcedure
+  extractFromPdf: paidProcedure
     .input(z.object({
       pdfUrl: z.string().url(),
       trade: z.string().optional(),
@@ -639,7 +639,7 @@ export const swmsRouter = router({
     }),
 
   /** Save SWMS with correction detection (feedback loop) */
-  saveWithCorrections: protectedProcedure
+  saveWithCorrections: paidProcedure
     .input(z.object({
       id: z.string(),
       workActivities: z.array(z.any()),
@@ -678,7 +678,7 @@ export const swmsRouter = router({
   // ─── Business Safety Profile CRUD ─────────────────────────────────────────
 
   /** List safety profile items */
-  listSafetyProfile: protectedProcedure
+  listSafetyProfile: paidProcedure
     .input(z.object({ trade: z.string().optional() }))
     .query(async ({ ctx, input }) => {
       const db = requireDatabase(await getDb());
@@ -690,7 +690,7 @@ export const swmsRouter = router({
     }),
 
   /** Add a safety profile item */
-  addSafetyProfileItem: protectedProcedure
+  addSafetyProfileItem: paidProcedure
     .input(z.object({
       trade: z.string().optional(),
       category: z.enum(["ppe", "control", "procedure", "terminology", "emergency"]),
@@ -715,7 +715,7 @@ export const swmsRouter = router({
     }),
 
   /** Delete a safety profile item */
-  deleteSafetyProfileItem: protectedProcedure
+  deleteSafetyProfileItem: paidProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const db = requireDatabase(await getDb());
@@ -725,7 +725,7 @@ export const swmsRouter = router({
     }),
 
   /** Check if user has set up their safety profile (for onboarding wizard gate) */
-  hasSafetyProfile: protectedProcedure.query(async ({ ctx }) => {
+  hasSafetyProfile: paidProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
     const profiles = await db.select().from(businessSafetyProfiles)
       .where(eq(businessSafetyProfiles.userId, ctx.user.id));
@@ -733,7 +733,7 @@ export const swmsRouter = router({
   }),
 
   /** Save standard PPE items from onboarding wizard */
-  saveSafetyProfile: protectedProcedure
+  saveSafetyProfile: paidProcedure
     .input(z.object({
       items: z.array(z.object({
         category: z.enum(["ppe", "control", "procedure", "terminology", "emergency"]),
@@ -763,7 +763,7 @@ export const swmsRouter = router({
     }),
 
   /** Get AI learning stats (how many corrections, profile items, procedures) */
-  getAIStats: protectedProcedure.query(async ({ ctx }) => {
+  getAIStats: paidProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
 
     const corrections = await db.select().from(aiCorrections)

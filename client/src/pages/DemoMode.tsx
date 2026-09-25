@@ -1,57 +1,29 @@
-import { useState, useRef, useEffect } from "react";
-import { pixelViewDemoPage, pixelStartTrial, pixelRunTakeoff } from "@/lib/metaPixel";
+import { useState, useEffect } from "react";
+import { pixelViewDemoPage, pixelRunTakeoff } from "@/lib/metaPixel";
 import { getAnalyticsContext, trackEvent } from "@/lib/analytics";
-import { useAuth } from "@/_core/hooks/useAuth";
 import SEO from "@/components/SEO";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
-import { getLoginUrl } from "@/const";
 import {
-  Camera, Sparkles, Loader2, CheckCircle2, DollarSign,
+  Sparkles, Loader2, CheckCircle2, DollarSign,
   Clock, Shield, ChevronRight, ArrowRight, Package,
-  Users, TrendingUp, Zap, Star, Lock, BarChart3,
-  Upload, FileImage, X, ScanLine, AlertTriangle
+  TrendingUp, Zap, Star, Lock, BarChart3
 } from "lucide-react";
-import ScopingQuestionsPanel from "@/components/ScopingQuestions";
-import { VoiceRecorder } from "@/components/VoiceRecorder";
-import { formatScopingAnswers, getScopingQuestions } from "../../../shared/scopingQuestions";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
 
 const TRADES = [
-  { id: "electrical",        name: "Electrical",          emoji: "⚡",  colour: "from-yellow-400 to-orange-500" },
-  { id: "plumbing",          name: "Plumbing & Drainage",  emoji: "🔧",  colour: "from-blue-400 to-cyan-500" },
-  { id: "carpentry",         name: "Carpentry & Joinery",  emoji: "🪚",  colour: "from-amber-600 to-yellow-500" },
-  { id: "concreting",        name: "Concreting",           emoji: "🏗️",  colour: "from-slate-500 to-slate-700" },
-  { id: "hvac",              name: "HVAC",                 emoji: "❄️",  colour: "from-sky-400 to-blue-600" },
-  { id: "flooring",          name: "Flooring",             emoji: "🟫",  colour: "from-purple-500 to-violet-600" },
-  { id: "landscaping",       name: "Landscaping",          emoji: "🌿",  colour: "from-green-400 to-emerald-600" },
   { id: "cabinetry",         name: "Cabinet Making & Joinery",  emoji: "🪵",  colour: "from-teal-400 to-green-600" },
-  { id: "rendering",         name: "Rendering & Plastering",emoji: "🧱",  colour: "from-rose-400 to-pink-600" },
-  { id: "painting",          name: "Painting & Decorating",emoji: "🎨",  colour: "from-purple-400 to-pink-500" },
-  { id: "bricklaying",       name: "Bricklaying",          emoji: "🧱",  colour: "from-red-400 to-orange-500" },
-  { id: "roofing",           name: "Roofing",              emoji: "🏠",  colour: "from-slate-500 to-gray-600" },
-  { id: "tiling",            name: "Tiling",               emoji: "⬜",  colour: "from-teal-400 to-cyan-500" },
-  { id: "waterproofing",     name: "Waterproofing",        emoji: "💧",  colour: "from-blue-500 to-indigo-600" },
-  { id: "fire-protection",   name: "Fire Protection",      emoji: "🔥",  colour: "from-red-500 to-rose-600" },
-  { id: "glazing",           name: "Glazing & Aluminium",  emoji: "🪟",  colour: "from-sky-400 to-blue-500" },
-  { id: "quantity-surveying",name: "Quantity Surveying",   emoji: "📐",  colour: "from-indigo-400 to-violet-500" },
-  { id: "demolition",        name: "Demolition & Excavation",emoji: "⛏️", colour: "from-stone-400 to-gray-500" },
-  { id: "swimming-pool",     name: "Swimming Pool",        emoji: "🏊",  colour: "from-cyan-400 to-teal-500" },
-  { id: "steel-fabrication", name: "Steel Fabrication",    emoji: "🔩",  colour: "from-zinc-500 to-slate-600" },
-  { id: "gas-install",       name: "Gas Installation",     emoji: "🔥",  colour: "from-orange-400 to-red-500" },
-  { id: "gas-maintenance",   name: "Gas Maintenance",      emoji: "🛠️",  colour: "from-amber-400 to-orange-500" },
 ] as const;
 
 type TradeId = typeof TRADES[number]["id"];
 
-const DEMO_PROMPTS: Record<string, string> = {
+const SAMPLE_SCOPES: Record<string, string> = {
   electrical: "3-bedroom residential house, 180m². Full electrical fit-out including power points, downlights, switchboard, smoke alarms.",
   plumbing: "3-bedroom house, 2 bathrooms. Full plumbing rough-in and fit-off including hot water unit, toilets, basins, shower.",
   carpentry: "New residential build, 200m². Frame and fit-out including wall frames, roof trusses, flooring, internal doors.",
@@ -76,7 +48,6 @@ type DemoResult = {
     labourMinutes: number;
     wasteFactor: number;
   }>;
-  confidence: number;
   assumptions: string[];
   planNotes: string;
   pricing: {
@@ -91,139 +62,36 @@ type DemoResult = {
     total: number;
   };
   demoMode: boolean;
-  aiFallback?: boolean;
 };
 
 export default function DemoMode() {
   const [, navigate] = useLocation();
-  const [selectedTrade, setSelectedTrade] = useState<TradeId>("electrical");
-  const [jobDescription, setJobDescription] = useState(DEMO_PROMPTS["electrical"]);
+  const [selectedTrade, setSelectedTrade] = useState<TradeId>("cabinetry");
   const [markupPercent, setMarkupPercent] = useState(20);
   const [labourRate, setLabourRate] = useState(95);
   const [useTradePrice, setUseTradePrice] = useState(true);
   const [result, setResult] = useState<DemoResult | null>(null);
   const [activeTab, setActiveTab] = useState<"materials" | "summary">("materials");
-  const [planFiles, setPlanFiles] = useState<File[]>([]);
-  const [planPreviewUrls, setPlanPreviewUrls] = useState<string[]>([]);
-  const [uploadedPlanUrls, setUploadedPlanUrls] = useState<string[]>([]);
-  const [uploadingCount, setUploadingCount] = useState(0);
-  const [isDragOver, setIsDragOver] = useState(false);
-  // Legacy single-file aliases for backward compat
-  const planFile = planFiles[0] ?? null;
-  const planPreviewUrl = planPreviewUrls[0] ?? null;
-  const uploadedPlanUrl = uploadedPlanUrls[0] ?? null;
-  const [scopingAnswers, setScopingAnswers] = useState<Record<string, string | string[] | number>>({});
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fire ViewDemoPage + StartTrial pixel events on mount
+  // Track sample exploration without treating it as a product trial.
   useEffect(() => {
     pixelViewDemoPage();
-    pixelStartTrial();
     trackEvent("demo_viewed", {
       ...getAnalyticsContext(),
       defaultTrade: selectedTrade,
     });
   }, []);
 
-  const uploadPlan = trpc.demo.uploadDemoPlan.useMutation();
-
-  const addFiles = (newFiles: File[]) => {
-    const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf", "image/heic", "image/heif"];
-    const MAX_SIZE = 32 * 1024 * 1024;
-    const MAX_PAGES = 50;
-    const valid = newFiles.filter(f => {
-      // iOS sometimes reports HEIC files with empty type — check extension as fallback
-      const ext = f.name.split(".").pop()?.toLowerCase() ?? "";
-      const isHeic = f.type === "image/heic" || f.type === "image/heif" || ext === "heic" || ext === "heif";
-      const effectiveType = isHeic ? "image/heic" : f.type;
-      if (!allowed.includes(effectiveType)) { toast.error(`${f.name}: unsupported format. Use JPG, PNG, WebP, PDF, or HEIC.`); return false; }
-      if (f.size > MAX_SIZE) { toast.error(`${f.name}: too large. Max 32MB per file.`); return false; }
-      return true;
-    });
-    if (planFiles.length + valid.length > MAX_PAGES) {
-      toast.error(`Maximum ${MAX_PAGES} pages per job. You already have ${planFiles.length} pages.`);
-      return;
-    }
-    if (valid.length === 0) return;
-
-    // Add previews
-    const newPreviews = valid.map(f => f.type !== "application/pdf" ? URL.createObjectURL(f) : "");
-    setPlanFiles(prev => [...prev, ...valid]);
-    setPlanPreviewUrls(prev => [...prev, ...newPreviews]);
-    setUploadingCount(prev => prev + valid.length);
-
-    // Upload each file
-    valid.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64 = (e.target?.result as string).split(",")[1];
-        const ext2 = file.name.split(".").pop()?.toLowerCase() ?? "";
-        const isHeic2 = file.type === "image/heic" || file.type === "image/heif" || ext2 === "heic" || ext2 === "heif";
-        const ct = isHeic2 ? "image/heic" : (file.type as "image/jpeg" | "image/png" | "image/webp" | "application/pdf");
-        uploadPlan.mutateAsync({
-          fileBase64: base64,
-          fileName: file.name,
-          contentType: ct as "image/jpeg" | "image/png" | "image/webp" | "application/pdf" | "image/heic" | "image/heif",
-        }).then((data) => {
-          setUploadedPlanUrls(prev => [...prev, data.url]);
-          setUploadingCount(prev => Math.max(0, prev - 1));
-          trackEvent("demo_plan_uploaded", {
-            trade: selectedTrade,
-            fileType: ct,
-            pageCount: planFiles.length + valid.length,
-          });
-        }).catch((err) => {
-          toast.error(`Upload failed for ${file.name}: ${err.message}`);
-          setUploadingCount(prev => Math.max(0, prev - 1));
-          trackEvent("demo_takeoff_failed", {
-            trade: selectedTrade,
-            reason: "plan_upload_failed",
-          });
-        });
-      };
-      reader.readAsDataURL(file);
-    });
-
-    if (valid.length > 0) toast.success(`${valid.length} page${valid.length > 1 ? 's' : ''} added. Uploading...`);
-  };
-
-  const handleFileSelect = (file: File) => addFiles([file]);
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) addFiles(files);
-  };
-
-  const removePage = (index: number) => {
-    setPlanFiles(prev => prev.filter((_, i) => i !== index));
-    setPlanPreviewUrls(prev => prev.filter((_, i) => i !== index));
-    setUploadedPlanUrls(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const clearPlan = () => {
-    setPlanFiles([]);
-    setPlanPreviewUrls([]);
-    setUploadedPlanUrls([]);
-    setUploadingCount(0);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
   const runDemo = trpc.demo.runDemo.useMutation({
     onSuccess: (data) => {
       setResult(data as DemoResult);
       setActiveTab("materials");
-      toast.success("AI takeoff complete! Scroll down to see your quote.");
-      // Fire RunTakeoff custom event
+      toast.success("Sample recalculated. Scroll down to review it.");
       pixelRunTakeoff({ trade: selectedTrade, job_type: "demo" });
       trackEvent("demo_takeoff_succeeded", {
         trade: selectedTrade,
         itemCount: data.items?.length ?? 0,
-        confidence: data.confidence ?? 0,
         total: data.pricing?.total ?? 0,
-        aiFallback: Boolean(data.aiFallback),
-        pageCount: uploadedPlanUrls.length,
       });
     },
     onError: (err) => {
@@ -237,8 +105,6 @@ export default function DemoMode() {
 
   const handleTradeSelect = (tradeId: TradeId) => {
     setSelectedTrade(tradeId);
-    setJobDescription(DEMO_PROMPTS[tradeId] ?? "");
-    setScopingAnswers({});
     setResult(null);
     trackEvent("demo_trade_selected", {
       trade: tradeId,
@@ -251,48 +117,17 @@ export default function DemoMode() {
       trackEvent("demo_takeoff_failed", { reason: "validation_missing_trade" });
       return;
     }
-    const missingRequired = getScopingQuestions(selectedTrade).filter((q) => {
-      if (!q.required) return false;
-      const value = scopingAnswers[q.id];
-      return value === undefined || value === "" || (Array.isArray(value) && value.length === 0);
-    });
-    if (missingRequired.length > 0) {
-      toast.error(`Please answer ${missingRequired.length} required scope question${missingRequired.length > 1 ? "s" : ""} before generating.`);
-      trackEvent("demo_takeoff_failed", {
-        trade: selectedTrade,
-        reason: "validation_missing_scope",
-        missingRequiredCount: missingRequired.length,
-      });
-      return;
-    }
-    if (planFile && !uploadedPlanUrl) {
-      toast.error("Plan is still uploading, please wait a moment.");
-      trackEvent("demo_takeoff_failed", {
-        trade: selectedTrade,
-        reason: "validation_plan_uploading",
-      });
-      return;
-    }
-    // Inject scoping answers into the job description for the AI
-    const scopingContext = formatScopingAnswers(getScopingQuestions(selectedTrade), scopingAnswers);
-    const enrichedDescription = (jobDescription || "") + scopingContext;
     trackEvent("demo_takeoff_started", {
       trade: selectedTrade,
-      hasPlan: uploadedPlanUrls.length > 0,
-      pageCount: uploadedPlanUrls.length,
-      scopingAnswerCount: Object.keys(scopingAnswers).length,
       markupPercent,
       labourRate,
       useTradePrice,
     });
     runDemo.mutate({
       trade: selectedTrade,
-      jobDescription: enrichedDescription || undefined,
       markupPercent,
       labourRate,
       useTradePrice,
-      planImageUrl: uploadedPlanUrls[0] || undefined,
-      planImageUrls: uploadedPlanUrls.length > 0 ? uploadedPlanUrls : undefined,
     });
   };
 
@@ -302,10 +137,10 @@ export default function DemoMode() {
   return (
     <div className="min-h-screen bg-gray-50">
       <SEO
-        title="Free AI Estimating Demo | Try Without Signing Up"
-        description="Try Kindai's AI construction estimating software free — no account needed. Upload your plans, pick your trade, and watch AI generate a full quote with materials, labour, and GST."
+        title="Interactive Estimating Sample | KindAI"
+        description="Explore a representative KindAI estimating sample. Choose a trade and adjust labour, markup, and pricing assumptions without uploading private plans."
         canonical="/demo"
-        keywords="free estimating software demo Australia, AI takeoff demo, try construction quoting software, builder software free trial, tradie quoting demo"
+        keywords="AI estimating sample Australia, construction estimating demonstration, tradie quoting software, builder estimating software"
       />
       {/* ── Nav ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
@@ -319,13 +154,13 @@ export default function DemoMode() {
           </button>
           <div className="flex items-center gap-2">
             <Badge className="bg-green-100 text-green-700 border-green-200 text-xs font-bold px-2.5 py-1 hidden sm:inline-flex">
-              <Sparkles className="w-3 h-3 mr-1" /> Live AI Demo
+              <Sparkles className="w-3 h-3 mr-1" /> Interactive Sample
             </Badge>
             <Button
-              onClick={() => window.location.href = getLoginUrl()}
+              onClick={() => navigate("/evaluation")}
               className="kindai-btn-primary px-4 py-2 rounded-full text-xs font-bold h-auto"
             >
-              Sign Up Free <ChevronRight className="w-3.5 h-3.5 ml-1" />
+              Apply for Setup <ChevronRight className="w-3.5 h-3.5 ml-1" />
             </Button>
           </div>
         </div>
@@ -337,13 +172,13 @@ export default function DemoMode() {
           {/* ── Header ── */}
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pink-50 border border-pink-200 text-pink-700 text-xs font-bold mb-4">
-              <Zap className="w-3.5 h-3.5" /> No sign-up required — try the real AI
+              <Zap className="w-3.5 h-3.5" /> Representative sample. No upload required.
             </div>
             <h1 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3">
-              See Kindai AI in <span className="kindai-gradient-text">60 seconds</span>
+              Explore how KindAI <span className="kindai-gradient-text">structures an estimate</span>
             </h1>
             <p className="text-gray-500 text-base max-w-xl mx-auto">
-              Pick your trade, upload your plans, and hit Generate. Our AI builds a complete materials takeoff with real Australian pricing — no login, no credit card.
+              Choose a trade, review a sample scope, then adjust labour, markup and pricing assumptions. Your plans stay off the public demo.
             </p>
           </div>
 
@@ -373,134 +208,23 @@ export default function DemoMode() {
                 </CardContent>
               </Card>
 
-              {/* Plan Upload */}
+              {/* Representative sample scope */}
               <Card className="border-gray-200 shadow-sm">
                 <CardContent className="p-4">
-                  <h3 className="text-sm font-black text-gray-900 mb-1 flex items-center gap-2">
-                    <ScanLine className="w-4 h-4 text-pink-500" />
-                    2. Upload your plans <span className="text-xs font-normal text-gray-400">(optional)</span>
-                  </h3>
-                  <p className="text-xs text-gray-400 mb-3">JPG, PNG, WebP or PDF — up to 50 pages, 32MB each. AI reads all pages together.</p>
-
-                  {/* Drop zone — always visible so more pages can be added */}
-                  <div
-                    className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all mb-3 ${
-                      isDragOver ? "border-pink-400 bg-pink-50" : "border-gray-200 hover:border-pink-300 hover:bg-pink-50/30"
-                    }`}
-                    onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-                    onDragLeave={() => setIsDragOver(false)}
-                    onDrop={handleDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="w-7 h-7 text-gray-300 mx-auto mb-1.5" />
-                    {planFiles.length === 0 ? (
-                      <p className="text-xs font-semibold text-gray-500">Drop plans here or <span className="text-pink-500">browse</span></p>
-                    ) : (
-                      <p className="text-xs font-semibold text-gray-500"><span className="text-pink-500">Add more pages</span> ({planFiles.length}/50)</p>
-                    )}
-                    <p className="text-[10px] text-gray-400 mt-1">JPG, PNG, PDF, HEIC — up to 32MB each</p>
-                    {/* Main file input — use wildcard accept for maximum mobile compatibility */}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*,.pdf,.heic,.heif,application/pdf"
-                      className="hidden"
-                      multiple
-                      onChange={(e) => { const files = Array.from(e.target.files ?? []); if (files.length) addFiles(files); e.target.value = ""; }}
-                    />
-                  </div>
-                  {/* Mobile camera button — separate input with capture for direct photo */}
-                  <button
-                    type="button"
-                    className="w-full border border-gray-200 rounded-lg py-2.5 px-3 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-all mb-3 flex items-center justify-center gap-2 md:hidden"
-                    onClick={() => {
-                      const cameraInput = document.createElement('input');
-                      cameraInput.type = 'file';
-                      cameraInput.accept = 'image/*';
-                      cameraInput.capture = 'environment';
-                      cameraInput.onchange = (ev) => {
-                        const files = Array.from((ev.target as HTMLInputElement).files ?? []);
-                        if (files.length) addFiles(files);
-                      };
-                      cameraInput.click();
-                    }}
-                  >
-                    📷 Take Photo of Plans
-                  </button>
-
-                  {/* Upload status */}
-                  {uploadingCount > 0 && (
-                    <div className="flex items-center gap-1.5 mb-2 px-1">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-pink-500" />
-                      <span className="text-xs text-gray-500">Uploading {uploadingCount} file{uploadingCount > 1 ? 's' : ''}...</span>
-                    </div>
-                  )}
-                  {uploadingCount === 0 && uploadedPlanUrls.length > 0 && (
-                    <div className="flex items-center gap-1.5 mb-2 px-1">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                      <span className="text-xs text-green-600 font-semibold">{uploadedPlanUrls.length} page{uploadedPlanUrls.length > 1 ? 's' : ''} ready to analyse</span>
-                    </div>
-                  )}
-
-                  {/* Page list */}
-                  {planFiles.length > 0 && (
-                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                      {planFiles.map((file, idx) => (
-                        <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
-                          {planPreviewUrls[idx] ? (
-                            <img src={planPreviewUrls[idx]} alt={`Page ${idx + 1}`} className="w-8 h-8 object-cover rounded flex-shrink-0" />
-                          ) : (
-                            <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
-                              <FileImage className="w-4 h-4 text-gray-400" />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-gray-700 truncate">Page {idx + 1}: {file.name}</p>
-                            <p className="text-[10px] text-gray-400">{(file.size / 1024 / 1024).toFixed(1)}MB</p>
-                          </div>
-                          {uploadedPlanUrls[idx] ? (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
-                          ) : (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-pink-400 flex-shrink-0" />
-                          )}
-                          <button onClick={() => removePage(idx)} className="p-0.5 hover:bg-gray-200 rounded transition-colors flex-shrink-0">
-                            <X className="w-3 h-3 text-gray-400" />
-                          </button>
-                        </div>
-                      ))}
-                      {planFiles.length > 1 && (
-                        <button onClick={clearPlan} className="text-[10px] text-gray-400 hover:text-red-500 transition-colors w-full text-center py-1">
-                          Clear all pages
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  <h3 className="text-sm font-black text-gray-900 mb-2">2. Review the sample scope</h3>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    {SAMPLE_SCOPES[selectedTrade] ?? "Representative Australian trade estimate."}
+                  </p>
+                  <p className="text-[11px] text-gray-400 mt-3 pt-3 border-t border-gray-100">
+                    This is sample data for product exploration. No private plan is uploaded and no live AI run is consumed.
+                  </p>
                 </CardContent>
               </Card>
-
-              {/* Scoping Questions */}
-              {selectedTrade && (
-                <ScopingQuestionsPanel
-                  tradeId={selectedTrade}
-                  onChange={setScopingAnswers}
-                />
-              )}
-              {/* Voice-to-Estimate */}
-              {selectedTrade && (
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-xs text-gray-500 font-medium">Or speak the job description</span>
-                  <VoiceRecorder
-                    trade={selectedTrade}
-                    label="Speak Job"
-                    onTranscript={(text) => setJobDescription((prev: string) => prev ? `${prev} ${text}` : text)}
-                  />
-                </div>
-              )}
 
               {/* Pricing Controls */}
               <Card className="border-gray-200 shadow-sm">
                 <CardContent className="p-4">
-                  <h3 className="text-sm font-black text-gray-900 mb-3">3. Set your pricing</h3>
+                  <h3 className="text-sm font-black text-gray-900 mb-3">3. Adjust the pricing assumptions</h3>
                   <div className="space-y-4">
                     <div>
                       <div className="flex justify-between text-xs mb-1.5">
@@ -553,12 +277,12 @@ export default function DemoMode() {
                 {runDemo.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    AI is analysing...
+                    Recalculating sample...
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Generate AI Takeoff
+                    Recalculate Sample
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}
@@ -567,9 +291,9 @@ export default function DemoMode() {
               {/* Trust badges */}
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { icon: Shield, text: "GST Compliant", colour: "text-blue-500" },
-                  { icon: Clock, text: "Under 30s", colour: "text-orange-500" },
-                  { icon: DollarSign, text: "Real AU Prices", colour: "text-green-500" },
+                  { icon: Shield, text: "No plan upload", colour: "text-blue-500" },
+                  { icon: Clock, text: "Instant sample", colour: "text-orange-500" },
+                  { icon: DollarSign, text: "Editable rates", colour: "text-green-500" },
                   { icon: CheckCircle2, text: "No Sign-Up", colour: "text-pink-500" },
                 ].map(({ icon: Icon, text, colour }) => (
                   <div key={text} className="flex items-center gap-1.5 bg-white rounded-lg p-2 border border-gray-100">
@@ -588,12 +312,12 @@ export default function DemoMode() {
                     <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center mx-auto mb-5 shadow-xl">
                       <Sparkles className="w-10 h-10 text-white" />
                     </div>
-                    <h3 className="text-xl font-black text-gray-800 mb-2">Ready to analyse</h3>
+                    <h3 className="text-xl font-black text-gray-800 mb-2">Ready to explore</h3>
                     <p className="text-gray-400 text-sm max-w-xs mx-auto">
-                      Select a trade, upload your plans, and hit Generate. The AI will build a complete takeoff in seconds.
+                      Select a trade and recalculate the sample to see how estimate items, labour, markup and GST fit together.
                     </p>
                     <div className="mt-6 flex flex-wrap justify-center gap-2">
-                      {["Real AU pricing", "GST calculated", "Labour hours", "Trade savings"].map(tag => (
+                      {["Sample rates", "GST calculated", "Labour hours", "Markup control"].map(tag => (
                         <span key={tag} className="px-3 py-1 rounded-full bg-gray-100 text-gray-500 text-xs font-semibold">{tag}</span>
                       ))}
                     </div>
@@ -607,12 +331,12 @@ export default function DemoMode() {
                     <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center mx-auto mb-5 shadow-xl animate-pulse">
                       <Sparkles className="w-10 h-10 text-white" />
                     </div>
-                    <h3 className="text-xl font-black text-gray-800 mb-2">AI is reading your job...</h3>
+                    <h3 className="text-xl font-black text-gray-800 mb-2">Recalculating the sample...</h3>
                     <p className="text-gray-400 text-sm max-w-xs mx-auto mb-6">
-                      Identifying materials, calculating quantities, applying Australian pricing...
+                      Applying the selected rates, markup and GST settings.
                     </p>
                     <div className="space-y-2 max-w-xs mx-auto text-left">
-                      {["Parsing job description...", "Identifying materials...", "Applying 2024-25 AU pricing...", "Calculating labour hours..."].map((step, i) => (
+                      {["Loading sample scope...", "Applying sample rates...", "Calculating labour...", "Adding markup and GST..."].map((step, i) => (
                         <div key={i} className="flex items-center gap-2 text-xs text-gray-500">
                           <Loader2 className="w-3.5 h-3.5 animate-spin text-pink-500" />
                           {step}
@@ -629,11 +353,11 @@ export default function DemoMode() {
                   <div className="flex items-center gap-3 flex-wrap">
                     <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2">
                       <CheckCircle2 className="w-4 h-4 text-green-600" />
-                      <span className="text-sm font-black text-green-700">{result.confidence}% confidence</span>
+                      <span className="text-sm font-black text-green-700">Representative sample</span>
                     </div>
                     <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-3 py-2">
                       <Package className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-black text-blue-700">{result.items.length} items found</span>
+                      <span className="text-sm font-black text-blue-700">{result.items.length} sample line items</span>
                     </div>
                     <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-xl px-3 py-2">
                       <Clock className="w-4 h-4 text-orange-600" />
@@ -645,18 +369,6 @@ export default function DemoMode() {
                       </div>
                     )}
                   </div>
-
-                  {result.aiFallback && (
-                    <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-                      <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-black text-amber-900">Uploaded plan was not analysed</p>
-                        <p className="text-xs text-amber-800">
-                          This is a sample estimate because AI analysis failed. Try again, or contact support if it repeats.
-                        </p>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Tabs */}
                   <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
@@ -754,7 +466,7 @@ export default function DemoMode() {
                       {result.assumptions.length > 0 && (
                         <Card className="border-gray-200 shadow-sm">
                           <CardContent className="p-4">
-                            <h3 className="text-xs font-black text-gray-700 mb-2 uppercase tracking-wide">AI Assumptions</h3>
+                            <h3 className="text-xs font-black text-gray-700 mb-2 uppercase tracking-wide">Sample Assumptions</h3>
                             <ul className="space-y-1.5">
                               {result.assumptions.map((a: string, i: number) => (
                                 <li key={i} className="flex items-start gap-2 text-xs text-gray-500">
@@ -778,23 +490,23 @@ export default function DemoMode() {
                         </div>
                         <div className="flex-1">
                           <h3 className="text-base font-black text-gray-900 mb-1">
-                            Want to scan actual plans?
+                            Want KindAI configured for your workflow?
                           </h3>
                           <p className="text-sm text-gray-600 mb-3">
-                            Sign up free to upload photos of your plans and get AI Vision takeoffs. Save quotes, send to clients, and track your pipeline.
+                            Apply for the A$2,500 plus GST Founding Workflow Setup. It includes one cabinet or joinery workflow, two reviewed jobs and six months of Sole Tradie.
                           </p>
                           <div className="flex flex-wrap gap-2 mb-4">
-                            {["📸 Photo plan upload", "📄 PDF plans", "💾 Save quotes", "📧 Send to clients", "📊 Win rate dashboard"].map(f => (
+                            {["Two reviewed jobs", "Founder-led setup", "One user", "Six months included"].map(f => (
                               <span key={f} className="text-xs bg-white border border-pink-200 text-pink-700 rounded-full px-2.5 py-1 font-semibold">{f}</span>
                             ))}
                           </div>
                           <div className="flex flex-col sm:flex-row gap-2">
                             <Button
-                              onClick={() => window.location.href = getLoginUrl()}
+                              onClick={() => navigate("/evaluation")}
                               className="kindai-btn-primary px-6 py-2.5 rounded-full text-sm font-black h-auto shadow-lg"
                             >
                               <Sparkles className="w-4 h-4 mr-2" />
-                              Start Free — No Credit Card
+                              Apply for Founding Setup
                               <ChevronRight className="w-4 h-4 ml-1" />
                             </Button>
                             <Button
@@ -805,7 +517,7 @@ export default function DemoMode() {
                               View Pricing
                             </Button>
                           </div>
-                          <p className="text-xs text-gray-600 mt-2">Sole Tradie plan from $149/mo. Free demo available.</p>
+                          <p className="text-xs text-gray-600 mt-2">Application only. Approved applicants receive the exact scope before payment or private-plan processing.</p>
                         </div>
                       </div>
                     </CardContent>
@@ -818,9 +530,9 @@ export default function DemoMode() {
           {/* ── Social Proof Strip ── */}
           <div className="mt-12 grid sm:grid-cols-3 gap-4">
             {[
-              { icon: Star, text: "Tradies love it", sub: "5-star reviews from the field", colour: "text-yellow-500" },
-              { icon: BarChart3, text: "Win more jobs", sub: "Faster quotes = more tenders submitted", colour: "text-green-500" },
-              { icon: TrendingUp, text: "Save thousands", sub: "Trade pricing vs retail on every job", colour: "text-blue-500" },
+              { icon: Star, text: "Explore safely", sub: "No private files enter the public sample", colour: "text-yellow-500" },
+              { icon: BarChart3, text: "See the structure", sub: "Review line items, labour, markup and GST", colour: "text-green-500" },
+              { icon: TrendingUp, text: "Prove it properly", sub: "Apply for the paid setup with two real jobs", colour: "text-blue-500" },
             ].map(({ icon: Icon, text, sub, colour }) => (
               <div key={text} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center gap-3">
                 <Icon className={`w-8 h-8 ${colour}`} />

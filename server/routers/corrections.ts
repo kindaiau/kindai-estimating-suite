@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
-import { protectedProcedure, router } from "../_core/trpc";
+import { paidProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { estimateCorrections, jobOutcomes, estimates, lineItems } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 
 export const correctionsRouter = router({
   // ── Record a correction (called when user edits an AI-generated line item) ──
-  recordCorrection: protectedProcedure.input(z.object({
+  recordCorrection: paidProcedure.input(z.object({
     estimateId: z.number(),
     lineItemId: z.number().optional(),
     trade: z.string(),
@@ -35,7 +35,7 @@ export const correctionsRouter = router({
   }),
 
   // ── Batch record corrections (for when user saves multiple edits at once) ──
-  batchRecord: protectedProcedure.input(z.object({
+  batchRecord: paidProcedure.input(z.object({
     corrections: z.array(z.object({
       estimateId: z.number(),
       lineItemId: z.number().optional(),
@@ -68,7 +68,7 @@ export const correctionsRouter = router({
   }),
 
   // ── Get corrections for an estimate ──────────────────────────────────────
-  listForEstimate: protectedProcedure.input(z.object({
+  listForEstimate: paidProcedure.input(z.object({
     estimateId: z.number(),
   })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
@@ -81,7 +81,7 @@ export const correctionsRouter = router({
   }),
 
   // ── Get learning insights (patterns from corrections) ────────────────────
-  getLearningInsights: protectedProcedure.input(z.object({
+  getLearningInsights: paidProcedure.input(z.object({
     trade: z.string().optional(),
   })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
@@ -144,7 +144,7 @@ export const correctionsRouter = router({
   }),
 
   // ── Job Outcomes ─────────────────────────────────────────────────────────
-  recordOutcome: protectedProcedure.input(z.object({
+  recordOutcome: paidProcedure.input(z.object({
     estimateId: z.number(),
     projectId: z.number(),
     trade: z.string(),
@@ -208,7 +208,7 @@ export const correctionsRouter = router({
     return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0), variancePercent, profitPercent };
   }),
 
-  listOutcomes: protectedProcedure.input(z.object({
+  listOutcomes: paidProcedure.input(z.object({
     trade: z.string().optional(),
   })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
@@ -219,7 +219,7 @@ export const correctionsRouter = router({
       .orderBy(desc(jobOutcomes.createdAt));
   }),
 
-  getOutcome: protectedProcedure.input(z.object({ estimateId: z.number() })).query(async ({ ctx, input }) => {
+  getOutcome: paidProcedure.input(z.object({ estimateId: z.number() })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     const [outcome] = await db.select().from(jobOutcomes)
       .where(and(eq(jobOutcomes.estimateId, input.estimateId), eq(jobOutcomes.userId, ctx.user.id)))
@@ -228,7 +228,7 @@ export const correctionsRouter = router({
   }),
 
   // ── Accuracy dashboard data ──────────────────────────────────────────────
-  getAccuracyDashboard: protectedProcedure.input(z.object({
+  getAccuracyDashboard: paidProcedure.input(z.object({
     trade: z.string().optional(),
   })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());

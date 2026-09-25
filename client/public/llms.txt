@@ -1,0 +1,30 @@
+# KindAI Estimating Suite
+
+> KindAI prepares structured estimate drafts from supported plans, a customer's rates and business rules for Australian estimators to review.
+
+KindAI is designed for human-reviewed estimating workflows. It does not replace estimator judgement and does not provide final autonomous bids.
+
+## Public pages
+
+- [Home](https://kindaiestimator.com/): Product overview and founding setup path
+- [Pricing](https://kindaiestimator.com/pricing): Visible plans, prices, included users and limits
+- [Machine-readable pricing](https://kindaiestimator.com/pricing.md): Plain-text pricing and product limits
+- [Interactive sample](https://kindaiestimator.com/demo): Representative sample output; it does not analyse an uploaded plan
+- [Founding Workflow Setup](https://kindaiestimator.com/evaluation): Application for the paid cabinet and joinery founding offer
+- [Help](https://kindaiestimator.com/help): Supported files and review guidance
+- [About](https://kindaiestimator.com/about): Company and founder context
+- [Privacy](https://kindaiestimator.com/privacy-policy): Data and privacy terms
+- [Terms](https://kindaiestimator.com/terms): Product terms
+
+## Verified commercial summary
+
+- Interactive sample: No charge and no private-plan upload
+- Founding Workflow Setup: Proposed A$2,500 plus GST after application approval; one cabinet or joinery workflow, two reviewed jobs and six months of Sole Tradie
+- Sole Tradie: A$149/month or A$1,430.40/year, one included user and 20 AI Vision plan readings per month
+- Pro and larger configurations: Public proposed pricing is visible, but purchase requires workflow and support scoping
+- Upload limit: 32MB per file
+
+## Contact
+
+- Email: matt@kindaiestimator.com
+- Website: https://kindaiestimator.com/

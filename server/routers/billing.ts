@@ -1,16 +1,15 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { requireDatabase } from "../_core/errors";
-import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
+import { router, protectedProcedure, publicProcedure, adminProcedure } from "../_core/trpc";
 import { getDb } from "../db";
-import { users } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { betaSignups, users } from "../../drizzle/schema";
+import { and, eq } from "drizzle-orm";
 import { PILOT_SETUP_OFFER, PLANS, getPlanById, getPlanCheckoutAmount } from "../stripe/products";
 import {
   findOrCreateCustomer,
   createCheckoutSession,
   createPilotSetupCheckoutSession,
-  createProTrialCheckoutSession,
   createPortalSession,
   getStripe,
 } from "../stripe/stripe";
@@ -18,7 +17,7 @@ import {
 export const billingRouter = router({
   /** Get all available plans */
   getPlans: publicProcedure.query(() => {
-    return PLANS.map((p) => ({
+    return PLANS.filter(p => ["free", "sole_trader"].includes(p.id)).map((p) => ({
       id: p.id,
       name: p.name,
       tagline: p.tagline,
@@ -104,6 +103,12 @@ export const billingRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      if (input.planId !== "sole_trader") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Team and enterprise checkout is disabled until seat permissions and onboarding are validated.",
+        });
+      }
       const db = requireDatabase(await getDb());
 
       // Get user's current Stripe customer ID
@@ -112,12 +117,20 @@ export const billingRouter = router({
           stripeCustomerId: users.stripeCustomerId,
           email: users.email,
           name: users.name,
+          subscriptionTier: users.subscriptionTier,
+          subscriptionStatus: users.subscriptionStatus,
         })
         .from(users)
         .where(eq(users.id, ctx.user.id))
         .limit(1);
 
       if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      if (user.subscriptionTier !== "sole_trader" || user.subscriptionStatus !== "pilot_active") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Sole Tradie continuation is available after an approved Founding Workflow Setup.",
+        });
+      }
 
       // Find or create Stripe customer
       const customerId = await findOrCreateCustomer({
@@ -193,8 +206,8 @@ export const billingRouter = router({
       return { url: checkoutUrl };
     }),
 
-  /** Create a one-time Stripe Checkout Session for the founding pilot setup sprint */
-  createPilotSetupCheckout: publicProcedure
+  /** Create an approved one-time payment invitation for the founding workflow setup */
+  createPilotSetupCheckout: adminProcedure
     .input(
       z.object({
         name: z.string().min(1),
@@ -205,41 +218,59 @@ export const billingRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      const checkoutUrl = await createPilotSetupCheckoutSession({
-        name: input.name,
-        email: input.email,
-        phone: input.phone,
-        tradeType: input.tradeType,
+      const db = requireDatabase(await getDb());
+
+      const [application] = await db
+        .select({
+          id: betaSignups.id,
+          name: betaSignups.name,
+          email: betaSignups.email,
+          phone: betaSignups.phone,
+          trade: betaSignups.trade,
+          intent: betaSignups.intent,
+          status: betaSignups.status,
+          paymentStatus: betaSignups.paymentStatus,
+          stripeCheckoutSessionId: betaSignups.stripeCheckoutSessionId,
+        })
+        .from(betaSignups)
+        .where(eq(betaSignups.email, input.email.toLowerCase()))
+        .limit(1);
+
+      if (!application || application.intent !== "Paid Pilot Setup" || application.status !== "approved") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "An approved Founding Workflow Setup application is required before checkout can be created.",
+        });
+      }
+      if (application.paymentStatus === "paid") {
+        throw new TRPCError({ code: "CONFLICT", message: "This Founding Workflow Setup has already been paid." });
+      }
+
+      const checkout = await createPilotSetupCheckoutSession({
+        name: application.name,
+        email: application.email,
+        phone: application.phone ?? undefined,
+        tradeType: application.trade ?? undefined,
         origin: input.origin,
         amount: PILOT_SETUP_OFFER.amount,
         currency: PILOT_SETUP_OFFER.currency,
+        offerId: PILOT_SETUP_OFFER.id,
+        offerVersion: PILOT_SETUP_OFFER.version,
         productName: PILOT_SETUP_OFFER.name,
         productDescription: PILOT_SETUP_OFFER.description,
+        applicationId: application.id,
+        existingSessionId: application.stripeCheckoutSessionId,
       });
 
-      return { url: checkoutUrl };
-    }),
+      await db
+        .update(betaSignups)
+        .set({ stripeCheckoutSessionId: checkout.id })
+        .where(and(
+          eq(betaSignups.id, application.id),
+          eq(betaSignups.paymentStatus, "unpaid")
+        ));
 
-  /** Create a public $9 / 21-day Pro Trial Checkout Session — no login required */
-  createProTrialCheckout: publicProcedure
-    .input(
-      z.object({
-        name: z.string().min(1, "Name is required"),
-        email: z.string().email("Valid email required"),
-        phone: z.string().optional(),
-        tradeType: z.string().optional(),
-        origin: z.string().url(),
-      })
-    )
-    .mutation(async ({ input }) => {
-      const checkoutUrl = await createProTrialCheckoutSession({
-        name: input.name,
-        email: input.email,
-        phone: input.phone,
-        tradeType: input.tradeType,
-        origin: input.origin,
-      });
-      return { url: checkoutUrl };
+      return { url: checkout.url };
     }),
 
   /** Create a Stripe Customer Portal session */

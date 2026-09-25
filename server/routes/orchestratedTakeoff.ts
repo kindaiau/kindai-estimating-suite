@@ -12,6 +12,7 @@
  */
 
 import { Router, Request, Response } from "express";
+import { randomUUID } from "node:crypto";
 import { invokeLLM } from "../_core/llm";
 import { mediaContentFromUrl } from "../_core/mediaInputs";
 import { getDb } from "../db";
@@ -20,19 +21,15 @@ import { eq, and, desc } from "drizzle-orm";
 import { buildProductivityPromptSection } from "../labourProductivity";
 import { sdk } from "../_core/sdk";
 import { insertAiLineItems } from "./insertAiLineItems";
-import {
-  buildMetaUserData,
-  extractMetaClickIdentifiers,
-  sendMetaConversionEvent,
-} from "../metaCapi";
+import { completePlanReading, reservePlanReading } from "../aiEntitlements";
 
 export const orchestratedTakeoffRouter = Router();
 
 // ─── Auth helper ───────────────────────────────────────────────────────────────────────────────
-async function getUserFromRequest(req: Request): Promise<{ id: number; email: string } | null> {
+async function getUserFromRequest(req: Request): Promise<{ id: number; email: string; role: string } | null> {
   try {
     const user = await sdk.authenticateRequest(req);
-    return { id: user.id, email: user.email ?? "" };
+    return { id: user.id, email: user.email ?? "", role: user.role };
   } catch {
     return null;
   }
@@ -154,6 +151,16 @@ orchestratedTakeoffRouter.get("/api/orchestrated-takeoff", async (req: Request, 
     : rawImageUrl ? [rawImageUrl as string] : [];
   const imageUrl = imageUrls[0] ?? null; // backward compat for logging
 
+  if (user.role !== "admin") {
+    sendEvent(res, "error", { message: "This workflow is available only in a founder-led setup while it is being validated." });
+    return res.end();
+  }
+
+  if (!/(cabinet|joinery)/i.test(trade ?? "")) {
+    sendEvent(res, "error", { message: "The founding workflow is currently limited to cabinet making and commercial joinery." });
+    return res.end();
+  }
+
   if (!estimateId || !trade || !mode) {
     sendEvent(res, "error", { message: "Missing required parameters" });
     return res.end();
@@ -171,6 +178,14 @@ orchestratedTakeoffRouter.get("/api/orchestrated-takeoff", async (req: Request, 
     .limit(1);
   if (!est) {
     sendEvent(res, "error", { message: "Estimate not found" });
+    return res.end();
+  }
+
+  let usageReservation: { id: number };
+  try {
+    usageReservation = await reservePlanReading(user.id, `orchestrated:${estimateId}:${randomUUID()}`);
+  } catch (error) {
+    sendEvent(res, "error", { message: error instanceof Error ? error.message : "Paid plan access is required" });
     return res.end();
   }
 
@@ -642,53 +657,16 @@ Return JSON: { "anomalies": ["string"], "severity": "none" | "minor" | "major" }
 
     sendEvent(res, "step", {
       step: 5,
-      title: "Quote ready",
-      description: `${finalItems.length} line items — estimated trade total: $${Math.round(totalTrade).toLocaleString()}`,
+      title: "Draft ready for review",
+      description: `${finalItems.length} line items prepared. Review every quantity, rate, assumption and exclusion before use.`,
       status: "done",
     });
 
+    await completePlanReading(usageReservation.id, true);
     sendEvent(res, "complete", result);
 
-    // ─── Meta CAPI: InitiateCheckout (AI Takeoff completed = high-intent action) ──
-    const { fbp, fbc } = extractMetaClickIdentifiers(req.headers.cookie);
-    const clientIpAddress =
-      (req.headers["x-forwarded-for"] as string | undefined)
-        ?.split(",")
-        .map((v) => v.trim())
-        .find(Boolean) ?? req.socket.remoteAddress ?? undefined;
-    const clientUserAgent = req.headers["user-agent"] ?? undefined;
-
-    sendMetaConversionEvent({
-      eventName: "InitiateCheckout",
-      eventId: `takeoff_${estimateId}_${Date.now()}`,
-      actionSource: "website",
-      eventSourceUrl: `https://kindaiestimator.com/ai-takeoff`,
-      customData: {
-        currency: "AUD",
-        value: Math.round(totalTrade),
-        content_name: `AI Takeoff — ${trade}`,
-        content_category: trade,
-        content_ids: [estimateId],
-        num_items: finalItems.length,
-        trade,
-        mode,
-        confidence: result.confidence,
-        total_trade: Math.round(totalTrade),
-      },
-      userData: buildMetaUserData({
-        email: user.email,
-        clientIpAddress,
-        clientUserAgent,
-        fbp,
-        fbc,
-      }),
-    }).catch((err: unknown) => {
-      console.error(
-        "[Meta CAPI] Failed to send InitiateCheckout event:",
-        err instanceof Error ? err.message : String(err)
-      );
-    });
   } catch (err: any) {
+    await completePlanReading(usageReservation.id, false);
     console.error("[Orchestrated] Error:", err);
     sendEvent(res, "error", { message: err.message ?? "AI processing failed" });
   }

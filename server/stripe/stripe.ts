@@ -87,16 +87,29 @@ export async function createPilotSetupCheckoutSession(opts: {
   origin: string;
   amount: number;
   currency: string;
+  offerId: string;
+  offerVersion: string;
   productName: string;
   productDescription: string;
-}): Promise<string> {
+  applicationId: number;
+  existingSessionId?: string | null;
+}): Promise<{ id: string; url: string }> {
   const stripe = getStripe();
-  const successUrl = new URL("/beta", opts.origin);
+
+  if (opts.existingSessionId) {
+    const existing = await stripe.checkout.sessions.retrieve(opts.existingSessionId);
+    if (existing.status === "open" && existing.url) {
+      return { id: existing.id, url: existing.url };
+    }
+    if (existing.payment_status === "paid") {
+      throw new Error("This Founding Workflow Setup has already been paid.");
+    }
+  }
+  const successUrl = new URL("/evaluation", opts.origin);
   successUrl.searchParams.set("paid_setup", "success");
   successUrl.searchParams.set("session_id", "{CHECKOUT_SESSION_ID}");
 
-  const cancelUrl = new URL("/beta", opts.origin);
-  cancelUrl.searchParams.set("intent", "paid-setup");
+  const cancelUrl = new URL("/evaluation", opts.origin);
   cancelUrl.searchParams.set("checkout", "cancelled");
 
   const session = await stripe.checkout.sessions.create({
@@ -120,6 +133,9 @@ export async function createPilotSetupCheckoutSession(opts: {
     metadata: {
       intent: "Paid Pilot Setup",
       kindai_flow: "founding_pilot_setup",
+      offer_id: opts.offerId,
+      offer_version: opts.offerVersion,
+      application_id: opts.applicationId.toString(),
       customer_name: opts.name,
       customer_email: opts.email,
       customer_phone: opts.phone ?? "",
@@ -128,6 +144,9 @@ export async function createPilotSetupCheckoutSession(opts: {
     payment_intent_data: {
       metadata: {
         kindai_flow: "founding_pilot_setup",
+        offer_id: opts.offerId,
+        offer_version: opts.offerVersion,
+        application_id: opts.applicationId.toString(),
         customer_name: opts.name,
         customer_email: opts.email,
         customer_phone: opts.phone ?? "",
@@ -136,73 +155,12 @@ export async function createPilotSetupCheckoutSession(opts: {
     },
     success_url: successUrl.toString(),
     cancel_url: cancelUrl.toString(),
+  }, {
+    idempotencyKey: `kindai-setup-${opts.applicationId}-${opts.offerVersion}-${opts.existingSessionId ?? "initial"}`,
   });
 
   if (!session.url) throw new Error("Failed to create pilot setup checkout session URL");
-  return session.url;
-}
-
-/**
- * Create a one-time Checkout Session for the $9 / 21-day Pro Trial.
- * Fully public — no Stripe customer or auth required before payment.
- */
-export async function createProTrialCheckoutSession(opts: {
-  name: string;
-  email: string;
-  phone?: string;
-  tradeType?: string;
-  origin: string;
-}): Promise<string> {
-  const stripe = getStripe();
-
-  const successUrl = new URL("/pricing", opts.origin);
-  successUrl.searchParams.set("trial", "success");
-  successUrl.searchParams.set("session_id", "{CHECKOUT_SESSION_ID}");
-
-  const cancelUrl = new URL("/pricing", opts.origin);
-  cancelUrl.searchParams.set("trial", "cancelled");
-
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    customer_email: opts.email,
-    line_items: [
-      {
-        quantity: 1,
-        price_data: {
-          currency: "aud",
-          unit_amount: 900, // A$9
-          product_data: {
-            name: "Kindai Pro \u2014 21-Day Trial",
-            description:
-              "Full Pro access for 21 days. Unlimited Quick Quotes, Plan Reading (Vision AI), Company Memory, and Correction Learning. No lock-in.",
-          },
-        },
-      },
-    ],
-    phone_number_collection: { enabled: false },
-    client_reference_id: opts.email,
-    metadata: {
-      intent: "Pro Trial",
-      kindai_flow: "pro_trial_21_day",
-      customer_name: opts.name,
-      customer_email: opts.email,
-      customer_phone: opts.phone ?? "",
-      trade_type: opts.tradeType ?? "",
-    },
-    payment_intent_data: {
-      metadata: {
-        kindai_flow: "pro_trial_21_day",
-        customer_name: opts.name,
-        customer_email: opts.email,
-        trade_type: opts.tradeType ?? "",
-      },
-    },
-    success_url: successUrl.toString(),
-    cancel_url: cancelUrl.toString(),
-  });
-
-  if (!session.url) throw new Error("Failed to create Pro Trial checkout session URL");
-  return session.url;
+  return { id: session.id, url: session.url };
 }
 
 /**

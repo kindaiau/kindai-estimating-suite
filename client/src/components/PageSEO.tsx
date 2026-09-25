@@ -7,25 +7,25 @@ export { default as SEO } from "./SEO";
 export const PAGE_SEO = {
   home: {
     title: "Kindai Estimating Suite | AI-Powered Quoting for Australian Trades",
-    description: "AI estimating software for Australian tradies and builders. Scan plans with your phone, get instant takeoffs, send branded quotes with GST in 60 seconds. 10 trades covered.",
+    description: "AI-assisted estimating software that prepares structured drafts from supported plans, customer rates and business rules for an Australian estimator to review.",
     canonical: "/",
     keywords: "construction estimating software Australia, AI estimating software, trade quoting software Australia, builder quoting app, electrical estimating, plumbing estimating, tradie quoting, construction takeoff software, AI takeoff, GST quoting software",
   },
   pricing: {
     title: "Pricing | Kindai Estimating Suite",
-    description: "AI estimating software for Australian trades and cabinet makers. Faster first-pass takeoffs, review-ready quotes, and consistent pricing for your whole team. Plans from A$299/month.",
+    description: "KindAI pricing for the A$2,500 plus GST Founding Workflow Setup, A$149/month Sole Tradie plan and scoped team configurations.",
     canonical: "/pricing",
     keywords: "construction estimating software price Australia, estimating software cost, trade quoting software pricing, builder software subscription Australia",
   },
   demo: {
-    title: "Try Free Demo | AI Estimating Software Australia",
-    description: "Try Kindai's AI estimating software free — no sign-up required. See how AI reads your plans and generates a full quote with materials, labour, and GST in under 60 seconds.",
+    title: "Interactive Estimating Sample | KindAI Australia",
+    description: "Explore a representative estimating sample with adjustable labour, markup and GST assumptions. No private-plan upload and no open-ended free AI access.",
     canonical: "/demo",
     keywords: "free estimating software demo Australia, AI takeoff demo, construction quoting demo, try builder software free",
   },
   aiTakeoff: {
-    title: "AI Vision Takeoff | Scan Plans & Get Instant Quotes",
-    description: "Upload or photograph your construction plans. Kindai AI reads every symbol, counts every fixture, and generates a full materials and labour quote with GST automatically.",
+    title: "AI Vision Takeoff | Reviewable Plan Drafts",
+    description: "Upload a supported plan and review candidate dimensions, counts, materials, source references and unresolved items before an estimate is approved.",
     canonical: "/ai-takeoff",
     keywords: "AI takeoff software Australia, construction plan scanning, automated quantity takeoff, AI estimating from plans, scan plans get quote",
   },

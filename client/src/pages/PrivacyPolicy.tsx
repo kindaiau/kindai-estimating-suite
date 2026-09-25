@@ -71,8 +71,8 @@ export default function PrivacyPolicy() {
                 <p className="text-sm text-gray-400">IP address, browser type, device type, operating system, and cookies used to improve your experience and for security purposes.</p>
               </div>
               <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                <h3 className="font-semibold text-white mb-1">Meta Pixel Data</h3>
-                <p className="text-sm text-gray-400">We use the Meta Pixel to track conversions and improve our advertising. This may include information about your interactions with our website shared with Meta Platforms, Inc. You can opt out via your Facebook Ad Preferences.</p>
+                <h3 className="font-semibold text-white mb-1">AI Processing Data</h3>
+                <p className="text-sm text-gray-400">When you use an AI feature, supported plans, instructions, rates and related job context may be sent to our contracted AI processing provider to produce the requested draft. KindAI does not enable advertising trackers in the controlled founding launch.</p>
               </div>
             </div>
           </section>
@@ -90,7 +90,6 @@ export default function PrivacyPolicy() {
               <li>Measure product funnels, conversion points, and feature reliability using non-sensitive analytics events</li>
               <li>Comply with legal obligations</li>
               <li>Detect and prevent fraud or security incidents</li>
-              <li>Run targeted advertising campaigns on Meta platforms (Facebook and Instagram)</li>
             </ul>
           </section>
 
@@ -98,8 +97,7 @@ export default function PrivacyPolicy() {
             <h2 className="text-xl font-semibold text-white mb-3">4. How We Share Your Information</h2>
             <p className="mb-3">We do not sell your personal information. We may share your information with:</p>
             <ul className="list-disc list-inside space-y-2 text-gray-400 ml-2">
-              <li><strong className="text-white">Service providers</strong> — including Stripe (payments), AWS/S3 (file storage), Google (email via Gmail), and HubSpot (CRM) who process data on our behalf under strict data processing agreements</li>
-              <li><strong className="text-white">Meta Platforms, Inc.</strong> — for advertising purposes via the Meta Pixel, subject to Meta's own Privacy Policy</li>
+              <li><strong className="text-white">Service providers</strong> — including Stripe (payments), AWS/S3 (file storage), Google (email), HubSpot (CRM where enabled), and our contracted AI processing provider. They process data on our behalf to deliver the requested service.</li>
               <li><strong className="text-white">Legal authorities</strong> — where required by law, court order, or to protect our rights</li>
               <li><strong className="text-white">Business transfers</strong> — in the event of a merger, acquisition, or sale of assets, your data may be transferred as part of that transaction</li>
             </ul>
@@ -108,7 +106,7 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-xl font-semibold text-white mb-3">5. Data Storage and Security</h2>
             <p>
-              Your data is stored on secure servers located in Australia and the United States. We use industry-standard encryption (TLS/HTTPS) for data in transit and AES-256 encryption for data at rest. Access to personal data is restricted to authorised personnel only.
+              Data may be processed or stored in Australia and the United States by the service providers described above. HTTPS is used for data in transit, and access to production systems and personal data is restricted to authorised personnel and contracted processors.
             </p>
             <p className="mt-3">
               While we take reasonable steps to protect your information, no method of transmission over the internet is 100% secure. We encourage you to use a strong, unique password for your account.

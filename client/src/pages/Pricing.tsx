@@ -1,149 +1,62 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import SEO from "@/components/SEO";
-import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Check, X, ArrowRight, Shield, Users, Zap, Crown, Sparkles, Brain, Database, GitBranch, BarChart3, FileText, Star, Clock } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
-import { pixelViewPricingPage, pixelInitiateCheckout, pixelStartTrial } from "@/lib/metaPixel";
+import { Check, X, ArrowRight, Shield, Users, Zap, Crown, Sparkles, Brain, Database, GitBranch, BarChart3, FileText } from "lucide-react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
-import { toast } from "sonner";
 import { getLoginUrl } from "@/const";
-import { motion, useInView, AnimatePresence } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
 
 // ─── Tier definitions ─────────────────────────────────────────────────────────
 // Takeoff level labels shown on cards
-const TAKEOFF_LEVELS = {
-  quickQuote: { label: "Quick Quote", desc: "Text-based — describe the job, AI applies your price book", color: "bg-gray-100 text-gray-600" },
-  planReading: { label: "Plan Reading", desc: "Upload PDF plans — GPT-4o Vision reads dimensions & counts items", color: "bg-violet-100 text-violet-700", badge: "Vision AI" },
-  fullTakeoff: { label: "Full AI Takeoff", desc: "Plan Reading + orchestrated 5-step pipeline + correction history", color: "bg-orange-100 text-orange-700", badge: "Multimodal" },
-};
-
 const TIERS = [
   {
     id: "free",
-    name: "Free",
-    subtitle: "Try it out",
+    name: "Evaluation",
+    subtitle: "Test the workflow",
     monthlyPrice: 0,
+    yearlyTotal: 0,
     color: "from-gray-400 to-gray-500",
     border: "border-gray-200",
     badge: null,
-    cta: "Get Started Free",
+    cta: "Apply for Setup",
     ctaVariant: "outline" as const,
-    description: "Get a feel for the AI before you commit.",
-    takeoffs: { quickQuote: "3 / month", planReading: null, fullTakeoff: null },
+    description: "Explore a representative sample, then apply for the paid cabinet and joinery Founding Workflow Setup.",
+    takeoffs: { quickQuote: "Sample", planReading: null, fullTakeoff: null },
     features: [
-      { label: "Quick Quote — 3 / month", included: true },
+      { label: "Interactive estimating sample", included: true },
+      { label: "A$2,500 + GST setup by application", included: true },
       { label: "Plan Reading (Vision AI)", included: false },
-      { label: "Full AI Takeoff", included: false },
-      { label: "5 Projects", included: true },
+      { label: "Private workspace", included: false },
       { label: "Company Memory", included: false },
-      { label: "Correction Learning", included: false },
-      { label: "Accuracy Dashboard", included: false },
-      { label: "Xero Integration", included: false },
+      { label: "Correction Review", included: false },
       { label: "PDF Export", included: false },
-      { label: "Team Members", value: "1" },
+      { label: "Included users", value: "1" },
     ],
   },
   {
     id: "pro",
-    name: "Pro",
-    subtitle: "Sole traders & subbies",
+    name: "Sole Tradie",
+    subtitle: "Owner-operators",
     monthlyPrice: 149,
+    yearlyTotal: 1430.4,
     color: "from-pink-500 to-orange-500",
     border: "border-orange-400",
-    badge: "MOST POPULAR",
-    cta: "Start Pro",
-    ctaVariant: "default" as const,
-    description: "Your prices, your rules. The AI learns your business from day one.",
-    takeoffs: { quickQuote: "Unlimited", planReading: "10 / month", fullTakeoff: null },
-    features: [
-      { label: "Quick Quote — Unlimited", included: true },
-      { label: "Plan Reading (Vision AI) — 10 / mo", included: true, highlight: true },
-      { label: "Full AI Takeoff", included: false },
-      { label: "50 Projects", included: true },
-      { label: "Company Memory (price book)", included: true },
-      { label: "Correction Learning Loop", included: true },
-      { label: "Accuracy Dashboard", included: false },
-      { label: "Xero Integration", included: false },
-      { label: "PDF Export", included: true },
-      { label: "Team Members", value: "1" },
-    ],
-  },
-  {
-    id: "business",
-    name: "Business",
-    subtitle: "Growing trade businesses",
-    monthlyPrice: 499,
-    color: "from-blue-500 to-indigo-600",
-    border: "border-blue-400",
-    badge: "BEST VALUE",
-    cta: "Start Business",
-    ctaVariant: "default" as const,
-    description: "Full AI orchestration, Xero sync, and accuracy tracking for serious businesses.",
-    takeoffs: { quickQuote: "Unlimited", planReading: "Unlimited", fullTakeoff: "20 / month" },
-    features: [
-      { label: "Quick Quote — Unlimited", included: true },
-      { label: "Plan Reading (Vision AI) — Unlimited", included: true, highlight: true },
-      { label: "Full AI Takeoff — 20 / mo", included: true, highlight: true },
-      { label: "Unlimited Projects", included: true },
-      { label: "Company Memory (price book)", included: true },
-      { label: "Correction Learning Loop", included: true },
-      { label: "Accuracy Dashboard", included: true },
-      { label: "Xero Integration", included: true },
-      { label: "PDF Export", included: true },
-      { label: "Team Members", value: "3" },
-    ],
-  },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    subtitle: "Mid-size builders & estimators",
-    monthlyPrice: 1499,
-    color: "from-purple-500 to-pink-600",
-    border: "border-purple-400",
     badge: null,
-    cta: "Start Enterprise",
+    cta: "Apply for Setup",
     ctaVariant: "default" as const,
-    description: "White-label, team management, priority support, and custom integrations.",
-    takeoffs: { quickQuote: "Unlimited", planReading: "Unlimited", fullTakeoff: "Unlimited" },
+    description: "The A$149 monthly continuation option after the included founding setup period. New customers apply for setup first.",
+    takeoffs: { quickQuote: "Included", planReading: "20 / month", fullTakeoff: null },
     features: [
-      { label: "Quick Quote — Unlimited", included: true },
-      { label: "Plan Reading (Vision AI) — Unlimited", included: true, highlight: true },
-      { label: "Full AI Takeoff — Unlimited", included: true, highlight: true },
+      { label: "Quick Quote — Included", included: true },
+      { label: "Plan Reading (Vision AI) — 20 / mo", included: true, highlight: true },
       { label: "Unlimited Projects", included: true },
       { label: "Company Memory (price book)", included: true },
-      { label: "Correction Learning Loop", included: true },
-      { label: "Accuracy Dashboard", included: true },
-      { label: "Xero Integration", included: true },
-      { label: "White-label Branding", included: true },
-      { label: "Team Members", value: "10" },
-      { label: "Priority Support", included: true },
-    ],
-  },
-  {
-    id: "enterprise_plus",
-    name: "Enterprise+",
-    subtitle: "Large builders & commercial",
-    monthlyPrice: null,
-    color: "from-amber-400 to-orange-600",
-    border: "border-amber-400",
-    badge: "CUSTOM",
-    cta: "Talk to Us",
-    ctaVariant: "outline" as const,
-    description: "Custom pricing built around your team size, usage volume, and integration needs.",
-    takeoffs: { quickQuote: "Unlimited", planReading: "Unlimited", fullTakeoff: "Unlimited" },
-    features: [
-      { label: "Everything in Enterprise", included: true },
-      { label: "Custom AI Training Data", included: true },
-      { label: "Unlimited Team Members", included: true },
-      { label: "Dedicated Account Manager", included: true },
-      { label: "SLA + DPA Agreement", included: true },
-      { label: "Custom Integrations", included: true },
-      { label: "On-site Onboarding", included: true },
-      { label: "Annual Contract Pricing", included: true },
+      { label: "Approved Corrections Record", included: true },
+      { label: "PDF Export", included: true },
+      { label: "Included users", value: "1" },
     ],
   },
 ];
@@ -152,33 +65,17 @@ const FEATURE_HIGHLIGHTS = [
   {
     icon: Sparkles,
     title: "Plan Reading — Vision AI",
-    desc: "Powered by GPT-4o multimodal. Upload any PDF plan and the AI visually reads dimensions, counts fixtures, identifies components, and builds a first-pass takeoff — just like a trained estimator would.",
-    tier: "Pro+",
-    aiLabel: "GPT-4o Vision",
+    desc: "Upload a supported plan and Kindai identifies dimensions, counts, components, and assumptions for your estimator to review.",
+    tier: "Sole Tradie+",
+    aiLabel: "Vision processing",
     aiColor: "bg-violet-100 text-violet-700",
   },
-  {
-    icon: Brain,
-    title: "Full AI Takeoff — Multimodal",
-    desc: "The most advanced takeoff on the market. GPT-4o reads your plans, cross-references your price book, applies your correction history, and runs a 5-step orchestrated pipeline: Plan Interpretation → Quantity Extraction → Pricing → Business Rules → Draft Assembly.",
-    tier: "Business+",
-    aiLabel: "Multimodal AI",
-    aiColor: "bg-orange-100 text-orange-700",
-  },
-  { icon: Database, title: "Company Memory", desc: "Your price book, AI instructions, and job templates — the AI learns your business and applies your rates automatically", tier: "Pro+", aiLabel: null, aiColor: null },
-  { icon: GitBranch, title: "Correction Learning", desc: "Every edit you make trains the AI. After 10 jobs it starts pre-adjusting based on your patterns", tier: "Pro+", aiLabel: null, aiColor: null },
-  { icon: BarChart3, title: "Accuracy Dashboard", desc: "Track estimated vs actual, see where the AI is over/under, and measure improvement over time", tier: "Business+", aiLabel: null, aiColor: null },
-  { icon: FileText, title: "Xero Integration", desc: "Push any quote directly to Xero as a draft invoice. One click from estimate to invoice.", tier: "Business+", aiLabel: null, aiColor: null },
+  { icon: Database, title: "Company Memory", desc: "Keep your price book, instructions, and job templates together so each draft starts from your business rules.", tier: "Sole Tradie+", aiLabel: null, aiColor: null },
+  { icon: GitBranch, title: "Correction Review", desc: "Keep approved estimator changes visible so recurring adjustments can be checked on future drafts.", tier: "Sole Tradie", aiLabel: null, aiColor: null },
 ];
 
 const COMPETITOR_BENCHMARKS = [
-  { name: "Buildxact AU", price: "$199–$599/mo", notes: "Unlimited users, broad construction" },
-  { name: "BuildVision AI", price: "$299/mo", notes: "Cabinet-specific, 500 AI pages" },
-  { name: "Kreo Pro", price: "$175/user/mo", notes: "Per-user pricing, annual billing" },
-  { name: "Groundplan", price: "From $75/user/mo", notes: "Per-user/operator pricing" },
-  { name: "CabMaster", price: "A$106–$321/mo", notes: "Annual plans, cabinet-specific" },
-  { name: "Kindai Pro", price: "A$149/mo", notes: "Company memory + correction learning, unlimited users", highlight: true },
-  { name: "Kindai Business", price: "A$499/mo", notes: "Full AI orchestration + Xero + accuracy dashboard", highlight: true },
+  { name: "Sole Tradie", price: "A$149/mo", notes: "1 included user, 20 AI Vision takeoffs per month", highlight: true },
 ];
 
 // ─── Premium animated footer ──────────────────────────────────────────────────
@@ -187,7 +84,7 @@ function PremiumFooter() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   const footerLinks = [
-    { label: "Product", links: ["AI Takeoff", "Company Memory", "Xero Integration", "Accuracy Dashboard"] },
+    { label: "Product", links: ["Plan Reading", "Company Memory", "Correction Review", "Pricing"] },
     { label: "Company", links: ["About", "Pricing", "Blog", "Careers"] },
     { label: "Legal", links: ["Privacy Policy", "Terms of Service", "Security", "Support"] },
   ];
@@ -227,12 +124,9 @@ function PremiumFooter() {
               <span className="text-xl font-black kindai-gradient-text">kindai</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed mb-5">
-              From Plans to Quote in Minutes. AI That Learns Your Rates, Your Rules, Your Business.
+              Structured estimate drafts from your plans, rates and rules—with human review kept in the workflow.
             </p>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-xs text-gray-500">All systems operational</span>
-            </div>
+            <span className="text-xs text-gray-500">Controlled founding launch</span>
           </motion.div>
 
           {/* Link columns */}
@@ -279,10 +173,7 @@ function PremiumFooter() {
             © 2026 Kindai. Built for Australian construction businesses.
           </span>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-600">Powered by</span>
-            <span className="text-xs font-bold bg-gradient-to-r from-pink-400 to-orange-400 bg-clip-text text-transparent">
-              GPT-4o + Real Australian Pricing Data
-            </span>
+            <span className="text-xs text-gray-600">Draft outputs require estimator review.</span>
           </div>
         </motion.div>
       </div>
@@ -296,95 +187,13 @@ export default function Pricing() {
   const [, navigate] = useLocation();
   const [yearly, setYearly] = useState(false);
 
-  const checkoutMutation = trpc.billing.createCheckout.useMutation({
-    onSuccess: (data) => {
-      toast.info("Opening Stripe checkout...");
-      window.open(data.url, "_blank");
-    },
-    onError: (err) => toast.error(err.message),
-  });
-
-  const proTrialMutation = trpc.billing.createProTrialCheckout.useMutation({
-    onSuccess: (data) => {
-      window.location.assign(data.url);
-    },
-    onError: (err) => toast.error(err.message),
-  });
-
-  // Trial mini-form state
-  const [trialForm, setTrialForm] = useState({ name: "", email: "" });
-  const [showTrialForm, setShowTrialForm] = useState(false);
-
-  useEffect(() => {
-    pixelViewPricingPage();
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("trial") === "success") {
-      toast.success("Payment received! Check your email — your 21-day Pro Trial is now active.");
-      // Clean URL
-      window.history.replaceState({}, "", "/pricing");
-    }
-    if (params.get("trial") === "cancelled") {
-      toast.info("Checkout was cancelled. Your $9 trial offer is still waiting for you.");
-      window.history.replaceState({}, "", "/pricing");
-    }
-  }, []);
-
-  const handleStartProTrial = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!trialForm.name.trim() || !trialForm.email.trim()) {
-      toast.error("Please enter your name and email to start the trial.");
-      return;
-    }
-    pixelInitiateCheckout({ content_name: "Kindai Pro Trial $9", value: 9 });
-    proTrialMutation.mutate({
-      name: trialForm.name.trim(),
-      email: trialForm.email.trim(),
-      origin: window.location.origin,
-    });
-  };
-
-  const handleSubscribe = (tierId: string, price: number) => {
-    if (tierId === "pro" && !isAuthenticated) {
-      // Show inline trial form instead of login wall
-      setShowTrialForm(true);
-      setTimeout(() => {
-        document.getElementById("pro-trial-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }, 100);
-      return;
-    }
-    if (!isAuthenticated) {
-      window.location.href = getLoginUrl();
-      return;
-    }
-    if (tierId === "enterprise_plus") {
-      window.location.href = "mailto:matt@kindaiestimator.com?subject=Enterprise%2B%20Enquiry";
-      return;
-    }
-    if (tierId === "free") {
-      navigate("/dashboard");
-      return;
-    }
-    pixelInitiateCheckout({ content_name: `Kindai ${tierId}`, value: price });
-    // Map tier IDs to valid planId enum values
-    const planIdMap: Record<string, "sole_trader" | "small_builder" | "mid_builder" | "enterprise"> = {
-      pro: "sole_trader",
-      business: "small_builder",
-      enterprise: "mid_builder",
-    };
-    const planId = planIdMap[tierId];
-    if (!planId) return;
-    checkoutMutation.mutate({
-      planId,
-      interval: yearly ? "yearly" : "monthly",
-      origin: window.location.origin,
-    });
-  };
+  const handleSubscribe = () => navigate("/evaluation");
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
       <SEO
         title="Pricing | Kindai Estimating Suite"
-        description="Free, Pro ($149), Business ($499), Enterprise ($1,499), Enterprise+ (custom). AI estimating that learns your rates, your rules, your business."
+        description="Apply for a paid cabinet and joinery workflow setup. The included period continues on Sole Tradie at A$149 per month only if the customer chooses to subscribe."
         canonical="/pricing"
         keywords="construction estimating software price Australia, AI estimating software pricing, trade estimating AI Australia"
       />
@@ -430,7 +239,7 @@ export default function Pricing() {
             animate={{ opacity: 1, y: 0 }}
             className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/30 rounded-full px-4 py-1.5 text-sm font-bold text-orange-400 mb-5"
           >
-            <Sparkles className="w-3.5 h-3.5" /> 5 tiers. No per-user fees. Cancel anytime.
+            <Sparkles className="w-3.5 h-3.5" /> Controlled cabinet and joinery launch
           </motion.div>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -438,8 +247,8 @@ export default function Pricing() {
             transition={{ delay: 0.1 }}
             className="text-4xl sm:text-5xl font-black text-white leading-tight mb-4"
           >
-            The AI estimator that learns<br />
-            <span className="kindai-gradient-text">your rates, your rules, your business.</span>
+             AI-assisted estimating using<br />
+             <span className="kindai-gradient-text">your rates, your rules, your review.</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -447,7 +256,7 @@ export default function Pricing() {
             transition={{ delay: 0.2 }}
             className="text-gray-400 text-lg max-w-2xl mx-auto"
           >
-            Start free. Upgrade when you're ready. Every tier unlocks more intelligence — company memory, correction learning, orchestrated AI, and Xero integration.
+            Start with the representative sample, then apply for one paid cabinet or joinery workflow with one included user.
           </motion.p>
         </div>
       </section>
@@ -472,14 +281,19 @@ export default function Pricing() {
       {/* Pricing cards */}
       <section className="pb-16 px-4 bg-gray-50">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
-            {TIERS.map((tier, i) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start max-w-3xl mx-auto">
+            {TIERS.filter(tier => ["free", "pro"].includes(tier.id)).map((tier, i) => {
               const price = tier.monthlyPrice !== null
-                ? (yearly ? Math.round(tier.monthlyPrice * 0.8) : tier.monthlyPrice)
+                ? (yearly && tier.yearlyTotal !== null ? tier.yearlyTotal / 12 : tier.monthlyPrice)
                 : null;
               const isPopular = tier.badge === "MOST POPULAR";
-              const isBestValue = tier.badge === "BEST VALUE";
+              const isDark = tier.id === "business";
               const isCustom = tier.monthlyPrice === null;
+              const displayPrice = price === null
+                ? null
+                : Number.isInteger(price)
+                  ? price.toFixed(0)
+                  : price.toFixed(2);
 
               return (
                 <motion.div
@@ -490,7 +304,7 @@ export default function Pricing() {
                   transition={{ delay: i * 0.08 }}
                   className={`relative rounded-2xl border-2 ${tier.border} ${
                     isPopular ? "bg-white shadow-xl shadow-orange-100" :
-                    isBestValue ? "bg-gray-950 shadow-xl shadow-blue-900/20" :
+                    isDark ? "bg-gray-950 shadow-xl shadow-blue-900/20" :
                     "bg-white shadow-sm"
                   } overflow-hidden`}
                 >
@@ -498,7 +312,7 @@ export default function Pricing() {
                     <div className="absolute top-0 inset-x-0 flex justify-center -translate-y-0">
                       <span className={`text-white text-[10px] font-black px-3 py-1 rounded-b-lg ${
                         isPopular ? "bg-gradient-to-r from-pink-500 to-orange-500" :
-                        isBestValue ? "bg-gradient-to-r from-blue-500 to-indigo-600" :
+                        isDark ? "bg-gradient-to-r from-blue-500 to-indigo-600" :
                         "bg-gradient-to-r from-amber-400 to-orange-500"
                       }`}>
                         {tier.badge}
@@ -517,132 +331,50 @@ export default function Pricing() {
                         {tier.id === "enterprise_plus" && <Crown className="w-4 h-4 text-white" />}
                       </div>
                       <div>
-                        <div className={`font-black text-base ${isBestValue ? "text-white" : "text-gray-900"}`}>{tier.name}</div>
-                        <div className={`text-[10px] ${isBestValue ? "text-gray-400" : "text-gray-400"}`}>{tier.subtitle}</div>
+                        <div className={`font-black text-base ${isDark ? "text-white" : "text-gray-900"}`}>{tier.name}</div>
+                        <div className="text-[10px] text-gray-400">{tier.subtitle}</div>
                       </div>
                     </div>
 
-                    {/* Price — Pro card shows $9 trial offer prominently */}
+                    {/* Price */}
                     <div className="mb-3">
                       {isCustom ? (
                         <div>
-                          <span className={`text-2xl font-black ${isBestValue ? "text-white" : "text-gray-900"}`}>Custom</span>
+                          <span className={`text-2xl font-black ${isDark ? "text-white" : "text-gray-900"}`}>Custom</span>
                           <div className="text-[10px] text-gray-400 mt-0.5">Tailored to your business</div>
-                        </div>
-                      ) : tier.id === "pro" ? (
-                        <div>
-                          {/* $9 trial badge */}
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <span className="inline-flex items-center gap-1 bg-gradient-to-r from-pink-500 to-orange-500 text-white text-[11px] font-black px-2.5 py-1 rounded-full shadow-sm">
-                              <Star className="w-3 h-3" /> A$9 for 21 days
-                            </span>
-                          </div>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-black text-gray-900">A${price}</span>
-                            <span className="text-xs text-gray-400">/mo after trial</span>
-                          </div>
-                          {yearly && price !== null && price > 0 && (
-                            <div className="text-[10px] text-green-500 font-bold mt-0.5">A${price * 12}/yr</div>
-                          )}
-                          <div className="flex items-center gap-1 mt-1">
-                            <Clock className="w-3 h-3 text-orange-500" />
-                            <span className="text-[10px] text-orange-600 font-bold">21-day full Pro access. Cancel anytime.</span>
-                          </div>
                         </div>
                       ) : (
                         <div>
-                          <span className={`text-2xl font-black ${isBestValue ? "text-white" : "text-gray-900"}`}>
-                            {price === 0 ? "Free" : `A$${price}`}
+                          <span className={`text-2xl font-black ${isDark ? "text-white" : "text-gray-900"}`}>
+                            {price === 0 ? "Included" : `A$${displayPrice}`}
                           </span>
-                          {price !== 0 && <span className={`text-xs ${isBestValue ? "text-gray-400" : "text-gray-400"}`}>/mo</span>}
-                          {yearly && price !== null && price > 0 && (
-                            <div className="text-[10px] text-green-500 font-bold mt-0.5">A${price * 12}/yr</div>
+                          {price !== 0 && <span className="text-xs text-gray-400">/mo</span>}
+                          {yearly && tier.yearlyTotal !== null && tier.yearlyTotal > 0 && (
+                            <div className="text-[10px] text-green-500 font-bold mt-0.5">
+                              A${tier.yearlyTotal.toLocaleString("en-AU", { minimumFractionDigits: tier.yearlyTotal % 1 === 0 ? 0 : 2 })}/yr billed annually
+                            </div>
                           )}
                         </div>
                       )}
                     </div>
 
-                    <p className={`text-xs mb-4 leading-relaxed ${isBestValue ? "text-gray-400" : "text-gray-500"}`}>
+                    <p className={`text-xs mb-4 leading-relaxed ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                       {tier.description}
                     </p>
 
-                    {/* Pro CTA: show trial form for unauthenticated, normal checkout for authenticated */}
-                    {tier.id === "pro" ? (
-                      <div id="pro-trial-form">
-                        {!isAuthenticated ? (
-                          <AnimatePresence mode="wait">
-                            {!showTrialForm ? (
-                              <motion.div key="cta-btn" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                                <Button
-                                  onClick={() => handleSubscribe(tier.id, tier.monthlyPrice ?? 0)}
-                                  className="w-full py-2.5 rounded-full font-black text-sm h-auto mb-2 kindai-btn-primary"
-                                >
-                                  Start A$9 Pro Trial
-                                </Button>
-                                <p className="text-center text-[10px] text-gray-400">No account needed. Pay A$9, get 21 days of full Pro access.</p>
-                              </motion.div>
-                            ) : (
-                              <motion.form
-                                key="trial-form"
-                                initial={{ opacity: 0, y: -8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0 }}
-                                onSubmit={handleStartProTrial}
-                                className="space-y-2 mb-2"
-                              >
-                                <Input
-                                  type="text"
-                                  placeholder="Your name"
-                                  value={trialForm.name}
-                                  onChange={(e) => setTrialForm((f) => ({ ...f, name: e.target.value }))}
-                                  className="h-8 text-xs rounded-lg border-gray-200"
-                                  required
-                                />
-                                <Input
-                                  type="email"
-                                  placeholder="Email address"
-                                  value={trialForm.email}
-                                  onChange={(e) => setTrialForm((f) => ({ ...f, email: e.target.value }))}
-                                  className="h-8 text-xs rounded-lg border-gray-200"
-                                  required
-                                />
-                                <Button
-                                  type="submit"
-                                  disabled={proTrialMutation.isPending}
-                                  className="w-full py-2.5 rounded-full font-black text-sm h-auto kindai-btn-primary"
-                                >
-                                  {proTrialMutation.isPending ? "Opening Stripe..." : "Pay A$9 → Start Trial"}
-                                </Button>
-                                <p className="text-center text-[10px] text-gray-400">Secure checkout via Stripe. Cancel anytime.</p>
-                              </motion.form>
-                            )}
-                          </AnimatePresence>
-                        ) : (
-                          <Button
-                            onClick={() => handleSubscribe(tier.id, tier.monthlyPrice ?? 0)}
-                            disabled={checkoutMutation.isPending}
-                            className="w-full py-2.5 rounded-full font-black text-sm h-auto mb-4 kindai-btn-primary"
-                          >
-                            {checkoutMutation.isPending ? "Loading..." : "Start Pro"}
-                          </Button>
-                        )}
-                      </div>
-                    ) : (
                     <Button
-                      onClick={() => handleSubscribe(tier.id, tier.monthlyPrice ?? 0)}
-                      disabled={checkoutMutation.isPending}
+                      onClick={handleSubscribe}
                       variant={tier.ctaVariant}
                       className={`w-full py-2.5 rounded-full font-black text-sm h-auto mb-4 ${
                         isPopular ? "kindai-btn-primary" :
-                        isBestValue ? "bg-blue-500 hover:bg-blue-400 text-white border-0" :
+                        isDark ? "bg-blue-500 hover:bg-blue-400 text-white border-0" :
                         tier.id === "enterprise" ? "bg-gradient-to-r from-purple-500 to-pink-600 text-white border-0 hover:opacity-90" :
                         tier.id === "enterprise_plus" ? "border-amber-400 text-amber-600 hover:bg-amber-50" :
                         "border-gray-200 text-gray-700 hover:bg-gray-50"
                       }`}
                     >
-                      {checkoutMutation.isPending ? "Loading..." : tier.cta}
+                      {tier.cta}
                     </Button>
-                    )}
 
                     {/* Features */}
                     <div className="space-y-2">
@@ -657,7 +389,7 @@ export default function Pricing() {
                           ) : (
                             <Check className="w-3.5 h-3.5 text-green-500 shrink-0 mt-0.5" />
                           )}
-                          <span className={`${"included" in f && !f.included ? (isBestValue ? "text-gray-600" : "text-gray-300") : (isBestValue ? "text-gray-300" : "text-gray-600")}`}>
+                          <span className={`${"included" in f && !f.included ? (isDark ? "text-gray-600" : "text-gray-300") : (isDark ? "text-gray-300" : "text-gray-600")}`}>
                             {f.label}{"value" in f ? `: ${f.value}` : ""}
                           </span>
                         </div>
@@ -684,13 +416,13 @@ export default function Pricing() {
         <div className="max-w-5xl mx-auto relative">
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 bg-violet-500/10 border border-violet-500/30 rounded-full px-4 py-1.5 text-sm font-bold text-violet-400 mb-4">
-              <Sparkles className="w-3.5 h-3.5" /> Powered by GPT-4o Multimodal AI
+             <Sparkles className="w-3.5 h-3.5" /> Controlled AI-assisted drafting
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-white mb-3">
-              Three levels of AI intelligence
+               Two controlled drafting paths
             </h2>
             <p className="text-gray-400 text-sm max-w-xl mx-auto">
-              Each tier unlocks a more powerful AI engine. Start with Quick Quote, graduate to Vision AI plan reading, then run the full multimodal pipeline.
+               Use text inputs or supported plans with your own rates and rules. Both paths produce drafts for human review.
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
@@ -698,33 +430,23 @@ export default function Pricing() {
               {
                 level: "01",
                 name: "Quick Quote",
-                badge: "Free + Pro",
+                badge: "Paid workspace",
                 badgeColor: "bg-gray-700 text-gray-300",
-                desc: "Describe the job in plain English. The AI applies your price book, labour rates, and margin rules to build a GST-ready quote in seconds.",
-                model: "GPT-4o Text",
+                desc: "Describe the job in plain English. KindAI applies the price-book rows and rules you provide to prepare a draft for review.",
+                model: "Text model",
                 modelColor: "text-gray-400",
                 icon: "💬",
               },
               {
                 level: "02",
                 name: "Plan Reading",
-                badge: "Pro+",
+                badge: "Sole Tradie",
                 badgeColor: "bg-violet-900/60 text-violet-300 border border-violet-700",
-                desc: "Upload any PDF plan. GPT-4o Vision reads the drawing like a trained estimator — counting fixtures, reading dimensions, identifying components — and builds the first-pass takeoff automatically.",
-                model: "GPT-4o Vision AI",
+                desc: "Upload a supported PDF plan. Vision processing proposes dimensions, counts, components and source references for an estimator to check.",
+                model: "Vision model",
                 modelColor: "text-violet-400",
                 icon: "👁️",
                 highlight: true,
-              },
-              {
-                level: "03",
-                name: "Full AI Takeoff",
-                badge: "Business+",
-                badgeColor: "bg-orange-900/60 text-orange-300 border border-orange-700",
-                desc: "The complete pipeline. Plan Reading + your price book + correction history + 5-step orchestrated workflow: Plan Interpretation → Quantity Extraction → Pricing → Business Rules → Draft Assembly.",
-                model: "GPT-4o Multimodal",
-                modelColor: "text-orange-400",
-                icon: "🧠",
               },
             ].map((item, i) => (
               <motion.div
@@ -764,7 +486,7 @@ export default function Pricing() {
               What makes Kindai different
             </h2>
             <p className="text-gray-500 text-sm max-w-xl mx-auto">
-              These aren't just features — they're the systems that make your AI estimator smarter every single job.
+               The founding workflow keeps company inputs and estimator corrections attached to the drafting process.
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
@@ -794,22 +516,22 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* Market benchmarks */}
+      {/* Included capacity */}
       <section className="py-16 px-4 bg-gray-50">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-2xl sm:text-3xl font-black text-gray-900 mb-3">
-              How Kindai compares to the market
+              Included capacity at a glance
             </h2>
             <p className="text-gray-500 text-sm max-w-xl mx-auto">
-              No per-user fees. No seat limits. The only estimator that gets smarter the more you use it.
+               The controlled launch publishes one continuation plan with one included user and a defined monthly plan-reading allowance.
             </p>
           </div>
           <div className="overflow-x-auto rounded-2xl border border-gray-100 shadow-sm">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="text-left px-5 py-3 font-bold text-gray-500">Product</th>
+                  <th className="text-left px-5 py-3 font-bold text-gray-500">Plan</th>
                   <th className="text-left px-5 py-3 font-bold text-gray-500">Price</th>
                   <th className="text-left px-5 py-3 font-bold text-gray-500 hidden sm:table-cell">Notes</th>
                 </tr>
@@ -821,7 +543,7 @@ export default function Pricing() {
                     className={`border-b border-gray-50 ${row.highlight ? "bg-orange-50" : "hover:bg-gray-50"} transition-colors`}
                   >
                     <td className={`px-5 py-3 font-bold ${row.highlight ? "text-orange-600" : "text-gray-800"}`}>
-                      {row.name} {row.highlight && <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full ml-1">You</span>}
+                      {row.name}
                     </td>
                     <td className={`px-5 py-3 font-bold ${row.highlight ? "text-orange-600" : "text-gray-700"}`}>{row.price}</td>
                     <td className="px-5 py-3 text-gray-400 hidden sm:table-cell">{row.notes}</td>
@@ -840,8 +562,8 @@ export default function Pricing() {
           <div className="space-y-5">
             {[
               {
-                q: "What's the difference between Pro and Business?",
-                a: "Pro gives you company memory and correction learning — the AI knows your prices and learns from your edits. Business adds the full 5-step orchestrated AI workflow, Xero integration, accuracy dashboard, and 3 team members. If you're running a real business and want the AI to get smarter over time, Business is the right tier.",
+                q: "Can I buy a team plan now?",
+                a: "Not during the controlled founding launch. The public offer covers one cabinet or joinery workflow and one user. Team access will only be sold after permissions, seat limits, onboarding and support are validated.",
               },
               {
                 q: "What is Company Memory?",
@@ -849,27 +571,27 @@ export default function Pricing() {
               },
               {
                 q: "How does the Correction Learning Loop work?",
-                a: "Every time you edit an AI-generated line item, the system records what the AI said vs what you changed it to. After 10-20 corrections per trade, the AI starts pre-adjusting based on your patterns — e.g. 'this user always bumps electrical labour up by 15%'. It compounds over time.",
+                a: "Estimator changes can be recorded beside the draft so recurring corrections are visible during review. The founding offer does not promise autonomous learning or automatic price changes.",
               },
               {
                 q: "Can I import my own supplier pricing?",
-                a: "Yes — Pro and above. You can add your negotiated rates from any supplier directly into your price book. The AI will use your exact rates instead of market benchmarks.",
+                a: "Yes. Sole Tradie lets you maintain your own supplier and price-book rows. Drafts must use those customer-provided rates or clearly flag a missing rate for review.",
               },
               {
                 q: "Is my data used to train AI models?",
-                a: "No. Your uploaded plans, pricing, and job data are never used to train AI models. Your business data is not shared with any third party. Enterprise accounts can request a Data Processing Agreement.",
+                a: "Uploaded work is processed by the cloud, storage and AI providers required to deliver the service. Advertising trackers are disabled for the controlled launch. See the Privacy Policy for the current processing scope.",
               },
               {
                 q: "What file types does Plan Reading (Vision AI) support?",
-                a: "Plan Reading accepts PDF plans, architectural drawings, and engineering documents. It works best with standard A1/A3 construction plans, joinery elevations, electrical schematics, and plumbing layouts. JPG and PNG images of hand-drawn or scanned plans also work. Maximum file size is 50MB per upload.",
+                a: "Plan Reading accepts PDF, JPG, PNG and WebP files up to 32MB per upload. Clear drawings with readable dimensions and schedules produce the strongest draft for estimator review.",
               },
               {
                 q: "How accurate is the AI plan reading? Can I trust the numbers?",
-                a: "The AI returns a confidence score with every takeoff (typically 75–92% for clear plans). It flags assumptions it made — e.g. 'assumed 2-pac finish based on elevation style'. You always review and adjust before the quote goes out. Think of it as a trained estimator doing the first pass in 60 seconds — you do the final check. Most users find it gets 85–90% of items right on the first read.",
+                a: "KindAI produces a structured draft with source notes, assumptions and review flags. Reliability depends on plan quality and job complexity, so a qualified estimator must review quantities, rates, exclusions and compliance before a quote is issued.",
               },
               {
                 q: "Can it handle commercial jobs — large builders, joinery contractors, fitouts?",
-                a: "Yes — this is where Plan Reading shines. Commercial joinery packages, multi-apartment fitouts, and large builder projects are exactly what the Full AI Takeoff tier is built for. The AI reads multi-page plan sets, identifies component schedules, and applies your commercial pricing. Enterprise and Enterprise+ plans include custom AI training on your specific job types and materials.",
+                a: "Large packages are assessed during application. The founding setup is deliberately limited to one agreed workflow, up to five supported files, and two reviewed jobs. Broader autonomous or enterprise takeoff claims are not part of this offer.",
               },
             ].map((faq, i) => (
               <div key={i} className="bg-gray-50 rounded-xl p-5 border border-gray-100">
@@ -891,74 +613,33 @@ export default function Pricing() {
           />
         </div>
         <div className="max-w-3xl mx-auto text-center relative">
-          {/* $9 trial offer hero */}
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500/20 to-orange-500/20 border border-orange-500/40 rounded-full px-4 py-1.5 text-sm font-black text-orange-400 mb-5">
-            <Star className="w-4 h-4" /> Limited offer: A$9 for 21 days of full Pro access
+            <Sparkles className="w-4 h-4" /> Founding Workflow Setup
           </div>
           <h2 className="text-3xl font-black text-white mb-3">
-            Try Pro for A$9. No lock-in.
+            Configure one real cabinet or joinery workflow.
           </h2>
           <p className="text-gray-400 mb-2">
-            Get 21 days of full Pro access — Plan Reading, Company Memory, Correction Learning — for just A$9.
+            A$2,500 plus GST includes one configured workflow, two reviewed jobs and the first six months of Sole Tradie.
           </p>
           <p className="text-gray-500 text-sm mb-8">
-            After 21 days, continue at A$149/mo or cancel. No questions asked.
+            Applications are approved before payment or private-plan processing. No open-ended free AI account.
           </p>
-
-          {/* Inline trial form in final CTA */}
-          {!isAuthenticated ? (
-            <div className="max-w-sm mx-auto mb-6">
-              <form
-                onSubmit={handleStartProTrial}
-                className="flex flex-col gap-3"
-              >
-                <Input
-                  type="text"
-                  placeholder="Your name"
-                  value={trialForm.name}
-                  onChange={(e) => setTrialForm((f) => ({ ...f, name: e.target.value }))}
-                  className="h-10 text-sm rounded-xl border-white/10 bg-white/5 text-white placeholder:text-gray-500 focus:border-orange-500"
-                  required
-                />
-                <Input
-                  type="email"
-                  placeholder="Email address"
-                  value={trialForm.email}
-                  onChange={(e) => setTrialForm((f) => ({ ...f, email: e.target.value }))}
-                  className="h-10 text-sm rounded-xl border-white/10 bg-white/5 text-white placeholder:text-gray-500 focus:border-orange-500"
-                  required
-                />
-                <Button
-                  type="submit"
-                  disabled={proTrialMutation.isPending}
-                  size="lg"
-                  className="kindai-btn-primary px-10 py-4 rounded-full text-base font-black h-auto shadow-xl w-full"
-                >
-                  {proTrialMutation.isPending ? "Opening Stripe..." : "Start A$9 Pro Trial →"}
-                </Button>
-              </form>
-              <p className="text-xs text-gray-600 mt-3">Secure checkout via Stripe. Cancel anytime. No account needed before payment.</p>
-            </div>
-          ) : (
-            <div className="flex flex-wrap justify-center gap-4 mb-6">
-              <Button
-                onClick={() => handleSubscribe("pro", 149)}
-                size="lg"
-                className="kindai-btn-primary px-10 py-4 rounded-full text-base font-black h-auto shadow-xl"
-              >
-                Start Pro <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </div>
-          )}
-
           <div className="flex flex-wrap justify-center gap-4">
             <Button
-              onClick={() => handleSubscribe("free", 0)}
+              onClick={() => navigate("/evaluation")}
+              size="lg"
+              className="kindai-btn-primary px-10 py-4 rounded-full text-base font-black h-auto shadow-xl"
+            >
+              Apply for Founding Setup <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+            <Button
+              onClick={() => navigate("/demo")}
               size="lg"
               variant="outline"
               className="px-8 py-3 rounded-full text-sm font-black h-auto border-white/20 text-white hover:bg-white/10 bg-transparent"
             >
-              Or start free (no card needed)
+              Explore the Interactive Sample
             </Button>
           </div>
         </div>

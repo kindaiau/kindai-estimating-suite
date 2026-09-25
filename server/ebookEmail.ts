@@ -6,9 +6,9 @@
  * Email sequence:
  *   Day 0  — Instant delivery: ebook + welcome
  *   Day 2  — The #1 quoting mistake tradies make
- *   Day 4  — Social proof: how other tradies are using Kindai
- *   Day 7  — ROI calculator: what slow quoting is actually costing you
- *   Day 10 — Last chance: your Pro trial is waiting
+ *   Day 4  — How to review an AI estimate safely
+ *   Day 7  — ROI worksheet using the reader's own numbers
+ *   Day 10 — Founding Workflow Setup invitation
  */
 
 import { sendEmail } from "./resendSender";
@@ -27,6 +27,7 @@ const EBOOK_URL =
   "https://files.manuscdn.com/user_upload_by_module/session_file/310519663471157879/iNXMpnBeEkBKgRDm.pdf";
 const PRICING_URL = "https://kindaiestimator.com/pricing";
 const DEMO_URL = "https://kindaiestimator.com/demo";
+const EVALUATION_URL = "https://kindaiestimator.com/evaluation";
 
 // ─── Day 0: Instant Ebook Delivery ──────────────────────────────────────────
 
@@ -101,7 +102,7 @@ export async function sendEbookNurtureDay2(opts: {
   });
 }
 
-// ─── Day 4: Social Proof ─────────────────────────────────────────────────────
+// ─── Day 4: Safe review process ──────────────────────────────────────────────
 
 export async function sendEbookNurtureDay4(opts: {
   to: string;
@@ -110,30 +111,24 @@ export async function sendEbookNurtureDay4(opts: {
   const firstName = opts.name.split(" ")[0];
 
   const body = `
-    ${brandedH2("What tradies are saying after their first AI quote")}
+    ${brandedH2("How to review an AI estimate without trusting it blindly")}
     ${brandedP(`Hey ${firstName},`)}
-    ${brandedP(`I want to share something from one of our users — a cabinet maker in Adelaide who was spending 3+ hours on every commercial quote.`)}
+    ${brandedP(`AI can prepare a useful first draft, but the draft still needs an estimator. The safest evaluation is to compare the output with a job you already understand.`)}
     ${brandedInfoBox(`
-      <p style="margin:0 0 12px;color:${BRAND.textMuted};font-size:13px;font-style:italic;">Kindai Pro user feedback</p>
-      <p style="margin:0 0 16px;color:${BRAND.textWhite};font-size:17px;font-weight:600;line-height:1.6;">"I uploaded the plans and had a first-pass quote in about 40 minutes instead of half a day. The AI got most of it right — I just adjusted a couple of line items. Sent it that afternoon."</p>
-      <p style="margin:0;color:${BRAND.textMuted};font-size:14px;">— Cabinet maker, Adelaide SA</p>
+      <p style="margin:0 0 12px;color:${BRAND.textWhite};font-size:17px;font-weight:700;">Four things to check before a quote leaves your business</p>
+      <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">1. Quantities against the source drawings</p>
+      <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">2. Missing scope, exclusions and provisional items</p>
+      <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">3. Your actual labour, supplier and waste assumptions</p>
+      <p style="margin:0;color:${BRAND.textBody};font-size:15px;">4. Current compliance and tax requirements</p>
     `, BRAND.green)}
-    ${brandedP(`That's the shift. Not replacing the estimator — just removing the 3 hours of counting fixtures from scratch so you can spend 40 minutes reviewing and refining.`)}
-    ${brandedP(`If you're quoting more than 2-3 jobs a week, that time saving compounds fast. 3 hours × 3 jobs × 50 weeks = <strong style="color:${BRAND.orange};">450 hours a year</strong> you could get back.`)}
-    ${brandedInfoBox(`
-      <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">What Kindai Pro users are doing with that time:</p>
-      <p style="margin:0 0 6px;color:${BRAND.textBody};font-size:15px;">→ Quoting more jobs (more chances to win)</p>
-      <p style="margin:0 0 6px;color:${BRAND.textBody};font-size:15px;">→ Spending more time on the tools (what they actually love)</p>
-      <p style="margin:0;color:${BRAND.textBody};font-size:15px;">→ Getting home earlier</p>
-    `, BRAND.blue)}
-    ${brandedCta("Start A$9 Pro Trial →", PRICING_URL)}
-    ${brandedP(`A$9 gets you 21 days of full Pro access. No lock-in. Cancel anytime.`)}
+    ${brandedP(`The public sample lets you inspect the estimate structure without uploading a private plan. If the workflow looks relevant, the next step is the paid Cabinet & Joinery Founding Workflow Setup.`)}
+    ${brandedCta("Explore the estimating sample", DEMO_URL)}
     ${brandedSignature("Matt", "Co-founder, Kindai")}
   `;
 
   return sendEmail({
     to: opts.to,
-    subject: `What tradies are saying after their first Kindai quote`,
+    subject: `How to review an AI estimate safely`,
     html: brandedEmailWrap({
       bodyHtml: body,
       footerText: "You received this because you downloaded the Kindai free guide.",
@@ -152,25 +147,23 @@ export async function sendEbookNurtureDay7(opts: {
   const firstName = opts.name.split(" ")[0];
 
   const body = `
-    ${brandedH2("What slow quoting is actually costing you")}
+    ${brandedH2("Put a value on quoting time using your own numbers")}
     ${brandedP(`Hey ${firstName},`)}
-    ${brandedP(`Let me do some quick maths with you.`)}
+    ${brandedP(`Generic savings claims are not useful. Use the numbers from your own business instead.`)}
     ${brandedInfoBox(`
-      <p style="margin:0 0 16px;color:${BRAND.orange};font-size:17px;font-weight:700;">The real cost of manual quoting</p>
-      ${brandedStep(1, `Average time per quote: <strong style="color:${BRAND.textWhite};">3 hours</strong>`)}
-      ${brandedStep(2, `Quotes per week: <strong style="color:${BRAND.textWhite};">3 jobs</strong>`)}
-      ${brandedStep(3, `Your time value: <strong style="color:${BRAND.textWhite};">$120/hr</strong> (conservative)`)}
-      <p style="margin:16px 0 0;color:${BRAND.textWhite};font-size:18px;font-weight:700;">= $56,160 per year in quoting time alone</p>
+      <p style="margin:0 0 16px;color:${BRAND.orange};font-size:17px;font-weight:700;">Your baseline</p>
+      ${brandedStep(1, `Record the average hours spent preparing and checking one quote.`)}
+      ${brandedStep(2, `Multiply by the number of quotes your team prepares each month.`)}
+      ${brandedStep(3, `Multiply by the loaded hourly cost of the people doing that work.`)}
+      <p style="margin:16px 0 0;color:${BRAND.textWhite};font-size:16px;font-weight:700;">That is the cost to compare with a measured KindAI evaluation.</p>
     `, BRAND.orange)}
-    ${brandedP(`That's before you factor in the jobs you lost because your quote took 4 days instead of same-day.`)}
-    ${brandedP(`With Kindai, that 3-hour quote becomes 40 minutes. The AI does the first-pass takeoff. You review and send.`)}
     ${brandedInfoBox(`
-      <p style="margin:0 0 8px;color:${BRAND.green};font-size:17px;font-weight:700;">Time saved: ~2.3 hours per quote</p>
-      <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">3 quotes/week × 2.3 hrs × 50 weeks = <strong style="color:${BRAND.textWhite};">345 hours/year</strong></p>
-      <p style="margin:0;color:${BRAND.textBody};font-size:15px;">At $120/hr = <strong style="color:${BRAND.green};">$41,400 back in your pocket</strong></p>
+      <p style="margin:0 0 8px;color:${BRAND.green};font-size:17px;font-weight:700;">What to measure in the evaluation</p>
+      <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">Draft preparation time and estimator review time</p>
+      <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">Missed items, wrong quantities and pricing corrections</p>
+      <p style="margin:0;color:${BRAND.textBody};font-size:15px;">Whether the approved workflow is repeatable on the next job</p>
     `, BRAND.green)}
-    ${brandedP(`Try Pro for A$9 — 21 days of full access. No credit card lock-in. Upload your first plan and see what the AI does with it.`)}
-    ${brandedCta("Start A$9 Pro Trial →", PRICING_URL)}
+    ${brandedCta("Apply for Founding Workflow Setup", EVALUATION_URL)}
     ${brandedSignature("Matt", "Co-founder, Kindai")}
   `;
 
@@ -186,7 +179,7 @@ export async function sendEbookNurtureDay7(opts: {
   });
 }
 
-// ─── Day 10: Last Chance ─────────────────────────────────────────────────────
+// ─── Day 10: Paid setup invitation ───────────────────────────────────────────
 
 export async function sendEbookNurtureDay10(opts: {
   to: string;
@@ -195,27 +188,25 @@ export async function sendEbookNurtureDay10(opts: {
   const firstName = opts.name.split(" ")[0];
 
   const body = `
-    ${brandedH2(`${firstName}, your Pro trial is waiting`)}
+    ${brandedH2(`${firstName}, one real job is enough to test the fit`)}
     ${brandedP(`Hey ${firstName},`)}
-    ${brandedP(`This is the last email in this sequence — I won't keep nudging you after this.`)}
-    ${brandedP(`I just wanted to make sure you knew: <strong style="color:${BRAND.textWhite};">Kindai Pro is live</strong> and tradies across Australia are already using it to cut their quoting time by 80%.`)}
+    ${brandedP(`This is the last email in this sequence. I won't keep nudging you after this.`)}
+    ${brandedP(`If KindAI may fit your cabinet or joinery workflow, apply for the fixed A$2,500 plus GST setup. We confirm fit, scope and payment before asking for private files.`)}
     ${brandedInfoBox(`
-      <p style="margin:0 0 12px;color:${BRAND.textWhite};font-size:17px;font-weight:700;">What you get with Kindai Pro (A$9 for 21 days):</p>
-      <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">✅ Full AI Takeoff — upload plans, get a quote draft in 60 seconds</p>
-      <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">✅ Your own materials price book with trade pricing</p>
-      <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">✅ GST-ready quote builder with branded PDF export</p>
-      <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">✅ Company Memory — AI learns your rates, rules, and corrections</p>
-      <p style="margin:0;color:${BRAND.textBody};font-size:15px;">✅ Direct access to me — reply to this email anytime</p>
+      <p style="margin:0 0 12px;color:${BRAND.textWhite};font-size:17px;font-weight:700;">The paid setup covers:</p>
+      <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">One cabinet or joinery workflow and one user</p>
+      <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">Two reviewed real jobs with visible assumptions and corrections</p>
+      <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">Thirty days of email support</p>
+      <p style="margin:0;color:${BRAND.textBody};font-size:15px;">Six months of Sole Tradie with no automatic renewal</p>
     `, BRAND.hotPink)}
-    ${brandedP(`If it's not for you, no hard feelings. But if you've been thinking about it — A$9 for 21 days is less than a coffee a day.`)}
-    ${brandedCta("Start A$9 Pro Trial →", PRICING_URL)}
-    ${brandedP(`Either way — I hope the guide was useful. Good luck with the quoting.`)}
+    ${brandedCta("Apply for Founding Workflow Setup", EVALUATION_URL)}
+    ${brandedP(`Either way, I hope the guide was useful. Good luck with the quoting.`)}
     ${brandedSignature("Matt", "Co-founder, Kindai")}
   `;
 
   return sendEmail({
     to: opts.to,
-    subject: `${firstName}, your Pro trial is waiting`,
+    subject: `${firstName}, test KindAI on one real job`,
     html: brandedEmailWrap({
       bodyHtml: body,
       footerText: "You received this because you downloaded the Kindai free guide. This is the last email in the sequence.",

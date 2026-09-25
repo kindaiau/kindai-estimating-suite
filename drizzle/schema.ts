@@ -10,6 +10,7 @@ import {
   mysqlTable,
   text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
 
@@ -481,9 +482,37 @@ export const betaSignups = mysqlTable("beta_signups", {
   hubspotContactId: varchar("hubspotContactId", { length: 64 }), // HubSpot contact ID
   hubspotDealId: varchar("hubspotDealId", { length: 64 }), // HubSpot deal ID
   approvedAt: timestamp("approvedAt"),
+  offerVersion: varchar("offerVersion", { length: 32 }),
+  paymentStatus: mysqlEnum("pilotPaymentStatus", ["unpaid", "paid", "refunded"]).default("unpaid").notNull(),
+  stripeCheckoutSessionId: varchar("stripeCheckoutSessionId", { length: 255 }).unique(),
+  amountPaid: int("amountPaid"),
+  paymentCurrency: varchar("paymentCurrency", { length: 3 }),
+  paidAt: timestamp("paidAt"),
+  accessExpiresAt: timestamp("accessExpiresAt"),
+  confirmationClaimedAt: timestamp("confirmationClaimedAt"),
+  confirmationSentAt: timestamp("confirmationSentAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type BetaSignup = typeof betaSignups.$inferSelect;
+
+// ─── AI Usage Events ───────────────────────────────────────────────────────────
+export const aiUsageEvents = mysqlTable("ai_usage_events", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  requestKey: varchar("requestKey", { length: 255 }).notNull(),
+  quotaSlot: int("quotaSlot"),
+  usageType: mysqlEnum("usageType", ["plan_reading"]).notNull(),
+  status: mysqlEnum("usageStatus", ["reserved", "completed", "failed"]).default("reserved").notNull(),
+  periodStart: date("periodStart").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+}, (table) => ({
+  userRequestUnique: uniqueIndex("ai_usage_user_request_unique").on(table.userId, table.requestKey),
+  userPeriodSlotUnique: uniqueIndex("ai_usage_user_period_slot_unique").on(table.userId, table.periodStart, table.quotaSlot),
+  userPeriodStatusIdx: index("ai_usage_user_period_status_idx").on(table.userId, table.periodStart, table.status),
+}));
+
+export type AIUsageEvent = typeof aiUsageEvents.$inferSelect;
 export type InsertBetaSignup = typeof betaSignups.$inferInsert;
 
 // ─── Beta Nurture Emails ─────────────────────────────────────────────────────

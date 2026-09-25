@@ -87,6 +87,7 @@ beforeEach(() => {
   (getDb as ReturnType<typeof vi.fn>).mockReset();
   delete process.env.WEBHOOK_SECRET;
   delete process.env.FB_WEBHOOK_VERIFY_TOKEN;
+  process.env.ENABLE_LEGACY_FB_LEADS = "true";
   process.env.NODE_ENV = "test";
 });
 

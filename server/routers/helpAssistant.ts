@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { paidProcedure, publicProcedure, router } from "../_core/trpc";
 import { invokeLLM } from "../_core/llm";
 
 const KINDAI_SYSTEM_PROMPT = `You are the Kindai AI Assistant — an expert in Australian construction estimating, trade pricing, compliance, and project management.

@@ -1,26 +1,31 @@
+# Search and AI citation crawlers are allowed on public pages.
 User-agent: *
 Allow: /
-Allow: /beta
-Allow: /pricing
-Allow: /demo
-Allow: /ai-takeoff
-
-# Block authenticated/private pages from indexing
+Disallow: /api/
 Disallow: /dashboard
 Disallow: /projects
-Disallow: /estimate-builder
-Disallow: /profile
+Disallow: /estimates
+Disallow: /ai-takeoff
 Disallow: /billing
-Disallow: /labour-rates
-Disallow: /materials-library
-Disallow: /supplier-manager
-Disallow: /trade-profile
-Disallow: /variations-register
-Disallow: /quote-followups
-Disallow: /api/
+Disallow: /profile
+Disallow: /materials
+Disallow: /labour
+Disallow: /suppliers
+Disallow: /trade-profiles
+Disallow: /followups
+Disallow: /onboarding
+Disallow: /crm
+Disallow: /estimator
+Disallow: /automations
+Disallow: /analytics
+Disallow: /project-dashboard
+Disallow: /settings
+Disallow: /accuracy
+Disallow: /admin/
+Disallow: /launch-engine/
+Disallow: /ad-engine/
+Disallow: /motyl
+Disallow: /moytle
+Disallow: /getgas
 
-# Sitemap location
 Sitemap: https://kindaiestimator.com/sitemap.xml
-
-# Crawl delay (be kind to server)
-Crawl-delay: 1

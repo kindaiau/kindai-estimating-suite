@@ -2,9 +2,10 @@ import { Router, raw } from "express";
 import { getStripe } from "./stripe";
 import { ENV } from "../_core/env";
 import { getDb } from "../db";
-import { users } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { betaSignups, users } from "../../drizzle/schema";
+import { and, eq, isNull } from "drizzle-orm";
 import { sendPilotPaymentEmails } from "../resendEmail";
+import { PILOT_SETUP_OFFER } from "./products";
 import { buildPurchaseOrTrialEvent, sendMetaConversionEventSafely } from "../metaCapi";
 
 function isPaidPilotSetupSession(session: any) {
@@ -28,9 +29,19 @@ function getCheckoutCustomerDetails(session: any) {
   };
 }
 
+function normalizeEmail(value: unknown): string {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
+function addUtcMonths(start: Date, months: number): Date {
+  const result = new Date(start);
+  result.setUTCMonth(result.getUTCMonth() + months);
+  return result;
+}
+
 function getCheckoutEventSourceUrl(session: any) {
   if (session.metadata?.event_source_url) return session.metadata.event_source_url;
-  if (session.metadata?.kindai_flow === "founding_pilot_setup") return "https://kindaibook-55hbndtb.manus.space";
+  if (session.metadata?.kindai_flow === "founding_pilot_setup") return "https://kindaiestimator.com/evaluation";
   return "https://kindaiestimator.com/pricing";
 }
 
@@ -95,31 +106,154 @@ export function registerStripeWebhook(app: Router) {
         switch (event.type) {
           case "checkout.session.completed": {
             const session = event.data.object as any;
-            await sendCheckoutConversionToMeta(session);
 
             if (isPaidPilotSetupSession(session)) {
-              const customerDetails = session.customer_details ?? {};
-              await sendPilotPaymentEmails({
-                name:
-                  session.metadata?.customer_name ||
-                  customerDetails.name ||
-                  "Kindai pilot customer",
-                email:
-                  session.metadata?.customer_email ||
-                  customerDetails.email ||
-                  session.customer_email,
-                phone:
-                  session.metadata?.customer_phone ||
-                  customerDetails.phone ||
-                  undefined,
-                tradeType: session.metadata?.trade_type || undefined,
-                amountPaid: session.amount_total ?? 0,
-                currency: session.currency ?? "aud",
-                stripeSessionId: session.id,
-              });
-              console.log(`[Stripe Webhook] Paid pilot setup completed for ${session.customer_email ?? session.metadata?.customer_email}`);
+              const customer = getCheckoutCustomerDetails(session);
+              const email = normalizeEmail(customer.email);
+              const amountPaid = session.amount_total ?? 0;
+              const currency = String(session.currency ?? "").toLowerCase();
+              const applicationId = Number(session.metadata?.application_id ?? 0);
+
+              if (
+                !email ||
+                amountPaid !== PILOT_SETUP_OFFER.amount ||
+                currency !== PILOT_SETUP_OFFER.currency ||
+                session.metadata?.offer_id !== PILOT_SETUP_OFFER.id ||
+                session.metadata?.offer_version !== PILOT_SETUP_OFFER.version ||
+                !Number.isInteger(applicationId) ||
+                applicationId <= 0
+              ) {
+                throw new Error("Paid setup checkout did not match the approved offer amount, currency or customer email");
+              }
+
+              const db = await getDb();
+              if (!db) throw new Error("Database unavailable while activating paid setup");
+
+              const [application] = await db
+                .select({
+                  id: betaSignups.id,
+                  name: betaSignups.name,
+                  email: betaSignups.email,
+                  phone: betaSignups.phone,
+                  trade: betaSignups.trade,
+                  intent: betaSignups.intent,
+                  status: betaSignups.status,
+                  paymentStatus: betaSignups.paymentStatus,
+                  stripeCheckoutSessionId: betaSignups.stripeCheckoutSessionId,
+                  accessExpiresAt: betaSignups.accessExpiresAt,
+                  confirmationClaimedAt: betaSignups.confirmationClaimedAt,
+                  confirmationSentAt: betaSignups.confirmationSentAt,
+                })
+                .from(betaSignups)
+                .where(and(eq(betaSignups.id, applicationId), eq(betaSignups.email, email)))
+                .limit(1);
+
+              if (!application || application.intent !== "Paid Pilot Setup" || !["approved", "active"].includes(application.status)) {
+                throw new Error("No approved Founding Workflow Setup application matched the paid checkout");
+              }
+
+              if (application.stripeCheckoutSessionId !== session.id) {
+                throw new Error("Paid checkout session did not match the approved application invitation");
+              }
+
+              const paidAt = new Date((session.created ?? Math.floor(Date.now() / 1000)) * 1000);
+              const accessExpiresAt = application.accessExpiresAt ?? addUtcMonths(paidAt, 6);
+
+              if (application.paymentStatus !== "paid") {
+                const paymentUpdate = await db
+                  .update(betaSignups)
+                  .set({
+                    status: "active",
+                    offerVersion: PILOT_SETUP_OFFER.version,
+                    paymentStatus: "paid",
+                    amountPaid,
+                    paymentCurrency: currency,
+                    paidAt,
+                    accessExpiresAt,
+                  })
+                  .where(and(
+                    eq(betaSignups.id, application.id),
+                    eq(betaSignups.paymentStatus, "unpaid"),
+                    eq(betaSignups.stripeCheckoutSessionId, session.id)
+                  ));
+                const affected = Number((paymentUpdate as any)[0]?.affectedRows ?? (paymentUpdate as any).affectedRows ?? 0);
+                if (affected !== 1) {
+                  throw new Error("Paid setup activation lost its atomic payment-state claim");
+                }
+              }
+
+              const [account] = await db
+                .select({ id: users.id, tier: users.subscriptionTier, status: users.subscriptionStatus })
+                .from(users)
+                .where(eq(users.email, email))
+                .limit(1);
+
+              if (account && (account.tier === "free" || account.status === "pilot_active")) {
+                await db
+                  .update(users)
+                  .set({
+                    subscriptionTier: "sole_trader",
+                    subscriptionStatus: "pilot_active",
+                    isBetaUser: true,
+                    betaExpiresAt: accessExpiresAt,
+                    stripeCustomerId: typeof session.customer === "string" ? session.customer : undefined,
+                  })
+                  .where(eq(users.id, account.id));
+              }
+
+              if (!application.confirmationSentAt) {
+                if (
+                  application.confirmationClaimedAt &&
+                  Date.now() - new Date(application.confirmationClaimedAt).getTime() > 10 * 60 * 1000
+                ) {
+                  await db
+                    .update(betaSignups)
+                    .set({ confirmationClaimedAt: null })
+                    .where(and(
+                      eq(betaSignups.id, application.id),
+                      eq(betaSignups.confirmationClaimedAt, application.confirmationClaimedAt)
+                    ));
+                }
+                const claimedAt = new Date();
+                const claim = await db
+                  .update(betaSignups)
+                  .set({ confirmationClaimedAt: claimedAt })
+                  .where(and(
+                    eq(betaSignups.id, application.id),
+                    isNull(betaSignups.confirmationClaimedAt),
+                    isNull(betaSignups.confirmationSentAt)
+                  ));
+                const claimed = Number((claim as any)[0]?.affectedRows ?? (claim as any).affectedRows ?? 0) === 1;
+                if (claimed) {
+                  try {
+                    await sendPilotPaymentEmails({
+                      name: application.name || customer.name || "KindAI customer",
+                      email,
+                      phone: application.phone || customer.phone || undefined,
+                      tradeType: application.trade || session.metadata?.trade_type || undefined,
+                      amountPaid,
+                      currency,
+                      stripeSessionId: session.id,
+                    });
+                    await db
+                      .update(betaSignups)
+                      .set({ confirmationSentAt: new Date() })
+                      .where(and(eq(betaSignups.id, application.id), eq(betaSignups.confirmationClaimedAt, claimedAt)));
+                  } catch (error) {
+                    await db
+                      .update(betaSignups)
+                      .set({ confirmationClaimedAt: null })
+                      .where(and(eq(betaSignups.id, application.id), eq(betaSignups.confirmationClaimedAt, claimedAt)));
+                    throw error;
+                  }
+                }
+              }
+
+              console.log(`[Stripe Webhook] Paid setup activated for ${email} until ${accessExpiresAt.toISOString()}`);
               break;
             }
+
+            await sendCheckoutConversionToMeta(session);
 
             const userId = session.client_reference_id
               ? parseInt(session.client_reference_id)

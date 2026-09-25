@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
-import { protectedProcedure, router } from "../_core/trpc";
+import { paidProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { labourRates } from "../../drizzle/schema";
 import { eq, and, or, isNull } from "drizzle-orm";
 import { DEFAULT_LABOUR_RATES } from "../../shared/trades";
 
 export const labourRouter = router({
-  list: protectedProcedure.input(z.object({ trade: z.string().optional() })).query(async ({ ctx, input }) => {
+  list: paidProcedure.input(z.object({ trade: z.string().optional() })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     const conditions = [or(isNull(labourRates.userId), eq(labourRates.userId, ctx.user.id))];
     if (input.trade) conditions.push(eq(labourRates.trade, input.trade));
@@ -16,7 +16,7 @@ export const labourRouter = router({
     return rows;
   }),
 
-  seedDefaults: protectedProcedure.input(z.object({ trade: z.string() })).mutation(async ({ ctx, input }) => {
+  seedDefaults: paidProcedure.input(z.object({ trade: z.string() })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     const defaults = DEFAULT_LABOUR_RATES[input.trade];
     if (!defaults) return { seeded: 0 };
@@ -43,7 +43,7 @@ export const labourRouter = router({
     return { seeded: defaults.length };
   }),
 
-  create: protectedProcedure.input(z.object({
+  create: paidProcedure.input(z.object({
     trade: z.string().min(1),
     classification: z.string().min(1),
     baseRate: z.number().nonnegative(),
@@ -70,7 +70,7 @@ export const labourRouter = router({
     return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
   }),
 
-  update: protectedProcedure.input(z.object({
+  update: paidProcedure.input(z.object({
     id: z.number(),
     classification: z.string().optional(),
     baseRate: z.number().nonnegative().optional(),
@@ -97,7 +97,7 @@ export const labourRouter = router({
     return { success: true };
   }),
 
-  delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+  delete: paidProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     await db.update(labourRates).set({ isActive: false })
       .where(and(eq(labourRates.id, input.id), eq(labourRates.userId, ctx.user.id)));

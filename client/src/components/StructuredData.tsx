@@ -12,14 +12,21 @@ export function SoftwareAppSchema() {
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "Web",
     "url": "https://kindaiestimator.com",
-    "description": "AI-powered estimating and quoting software for Australian trades and builders. Scan construction plans, get instant takeoffs with materials, labour, and GST. Covers 20 Australian trades.",
+    "description": "AI-assisted estimating software for Australian trades and builders. KindAI prepares structured estimate drafts from supported plans and business rules for estimator review.",
     "offers": [
       {
         "@type": "Offer",
-        "name": "Free Trial",
+        "name": "Interactive Estimating Sample",
         "price": "0",
         "priceCurrency": "AUD",
-        "description": "Free plan — 3 AI quotes per month, 5 projects"
+        "description": "Representative sample with no private-plan upload or open-ended free AI account"
+      },
+      {
+        "@type": "Offer",
+        "name": "Cabinet and Joinery Founding Workflow Setup",
+        "price": "2750",
+        "priceCurrency": "AUD",
+        "description": "A$2,750 including GST for one configured workflow, two reviewed jobs and the first six months of Sole Tradie; application approval required"
       },
       {
         "@type": "Offer",
@@ -27,46 +34,22 @@ export function SoftwareAppSchema() {
         "price": "149",
         "priceCurrency": "AUD",
         "billingIncrement": "P1M",
-        "description": "Solo tradie plan — AI takeoffs, PDF quotes, GST"
-      },
-      {
-        "@type": "Offer",
-        "name": "Pro",
-        "price": "450",
-        "priceCurrency": "AUD",
-        "billingIncrement": "P1M",
-        "description": "Pro plan — team workflows, Xero, accuracy dashboard"
-      },
-      {
-        "@type": "Offer",
-        "name": "Enterprise & Custom Solutions",
-        "price": "0",
-        "priceCurrency": "AUD",
-        "billingIncrement": "P1M",
-        "description": "Custom pricing by contact for enterprise workflows"
+        "description": "One included user and 20 AI Vision takeoffs per month"
       }
     ],
     "featureList": [
       "AI Vision Takeoff from construction plans",
-      "20 Australian trade modules",
-      "GST-compliant quoting",
-      "Fair Work Act labour rates",
+      "Trade-specific estimating workflows",
+      "GST calculation and review",
+      "Configurable labour and material rates",
       "Branded PDF quote generation",
-      "Supplier integration (Reece, Middy's, Bowens, Boral)",
-      "Market benchmarking",
-      "Automated quote follow-up emails",
+      "Supplier and company price-book inputs",
       "Variations register",
-      "All 8 Australian states and territories"
+      "Human approval before quote issue"
     ],
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": "4.9",
-      "reviewCount": "47",
-      "bestRating": "5"
-    },
     "screenshot": "https://kindaiestimator.com/og-image.png",
     "softwareVersion": "1.0",
-    "releaseNotes": "AI estimating suite for Australian trades — plan reading, company memory, auto-SWMS",
+    "releaseNotes": "Controlled cabinet and joinery launch with human-reviewed plan reading and company inputs",
     "inLanguage": "en-AU",
     "availableOnDevice": "Desktop, Mobile, Tablet",
     "countriesSupported": "AU"
@@ -120,7 +103,7 @@ export function FAQSchema() {
         "name": "What is Kindai Estimating Suite?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Kindai Estimating Suite is AI-powered estimating and quoting software for Australian trades and builders. You photograph or upload your construction plans, and the AI reads every symbol, counts every fixture, and generates a full quote with materials, labour, markup, and GST in under 60 seconds."
+          "text": "KindAI Estimating Suite is AI-assisted estimating software for Australian trades and builders. It prepares a structured draft from supported plans, rates and business rules. A qualified estimator reviews quantities, assumptions, exclusions, pricing and compliance before a quote is issued."
         }
       },
       {
@@ -128,7 +111,7 @@ export function FAQSchema() {
         "name": "Which Australian trades does Kindai support?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Kindai covers 20 Australian trades: Electrical, Plumbing, Carpentry, Concreting, HVAC, Flooring, Landscaping, Cabinet Making & Joinery, Rendering, Painting, Bricklaying, Roofing, Tiling, Waterproofing, Fire Protection, Glazing, Quantity Surveying, Demolition, Swimming Pool Construction, and Steel Fabrication."
+          "text": "KindAI contains multiple trade workflow modules, but the current Founding Workflow Setup is limited to one cabinet-making or commercial-joinery workflow. Other trades require separate fit and product verification before purchase."
         }
       },
       {
@@ -136,7 +119,7 @@ export function FAQSchema() {
         "name": "Is Kindai GST compliant?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes. All Kindai quotes automatically include 10% GST with a full GST breakdown. Quotes are compliant with Australian tax requirements and include ABN fields, GST registration details, and proper invoice formatting."
+          "text": "KindAI can calculate and display 10% GST in an estimate or quote. The issuing business remains responsible for reviewing its GST registration details, tax treatment and final document requirements."
         }
       },
       {
@@ -144,15 +127,15 @@ export function FAQSchema() {
         "name": "How much does Kindai cost?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Kindai pricing starts at $149/month for Sole Tradie, $450/month for Pro, and Enterprise & Custom Solutions are scoped directly with the Kindai team."
+          "text": "The cabinet and joinery Founding Workflow Setup costs A$2,750 including GST. It includes the first six months of Sole Tradie. After that period, the customer may choose Sole Tradie at A$149 per month or stop; there is no automatic setup renewal."
         }
       },
       {
         "@type": "Question",
-        "name": "Does Kindai work for large construction companies?",
+        "name": "Does Kindai offer team or enterprise plans?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes. Kindai is designed to scale from solo tradies to $100M+ construction companies. Enterprise features include multi-user access, variations registers, supplier integration, automated follow-up sequences, and market benchmarking."
+          "text": "Not during the controlled founding launch. The public offer covers one agreed cabinet or joinery workflow and one user. Team permissions, seat limits, integrations and support must be validated before any broader offer is sold."
         }
       },
       {
@@ -160,7 +143,7 @@ export function FAQSchema() {
         "name": "What states does Kindai cover in Australia?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Kindai covers all 8 Australian states and territories: NSW, VIC, QLD, SA, WA, TAS, NT, and ACT. Compliance requirements, licensing bodies (QBCC, VBA, NSW Fair Trading), and labour rates are tailored per state."
+          "text": "KindAI can record state or territory context for Australian estimating workflows. Users remain responsible for checking the current licensing, workplace, tax and technical requirements that apply to each job."
         }
       }
     ]

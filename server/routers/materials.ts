@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
-import { protectedProcedure, router } from "../_core/trpc";
+import { paidProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { materials } from "../../drizzle/schema";
 import { eq, and, or, isNull, desc } from "drizzle-orm";
 
 export const materialsRouter = router({
-  list: protectedProcedure.input(z.object({ trade: z.string().optional() })).query(async ({ ctx, input }) => {
+  list: paidProcedure.input(z.object({ trade: z.string().optional() })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     const conditions = [or(isNull(materials.userId), eq(materials.userId, ctx.user.id))];
     if (input.trade) conditions.push(eq(materials.trade, input.trade));
@@ -15,7 +15,7 @@ export const materialsRouter = router({
       .orderBy(materials.trade, materials.category, materials.name);
   }),
 
-  create: protectedProcedure.input(z.object({
+  create: paidProcedure.input(z.object({
     trade: z.string().min(1),
     category: z.string().min(1),
     name: z.string().min(1),
@@ -36,7 +36,7 @@ export const materialsRouter = router({
     return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
   }),
 
-  update: protectedProcedure.input(z.object({
+  update: paidProcedure.input(z.object({
     id: z.number(),
     name: z.string().optional(),
     description: z.string().optional(),
@@ -56,7 +56,7 @@ export const materialsRouter = router({
     return { success: true };
   }),
 
-  delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+  delete: paidProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     await db.update(materials).set({ isActive: false })
       .where(and(eq(materials.id, input.id), eq(materials.userId, ctx.user.id)));

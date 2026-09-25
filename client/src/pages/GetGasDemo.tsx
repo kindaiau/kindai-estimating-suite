@@ -346,8 +346,6 @@ export default function GetGasDemo() {
     timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
     runDemo.mutate({
       trade: "plumbing",
-      planImageUrls: [],
-      jobDescription: "New residential gas installation — single storey 4-bedroom home, South Australia. Rinnai B26 continuous flow hot water system, 900mm gas cooktop, outdoor BBQ bayonet, LPG setup. First fix rough-in through wall cavities, second fix appliance connections, excess flow valve on meter, sound test and AS/NZS 5601 compliance certificate required. Use GetGas standard package pricing: single storey builder rate $1,679 ex GST.",
       markupPercent,
       labourRate: 120,
       useTradePrice: true,

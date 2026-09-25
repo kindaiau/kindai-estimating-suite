@@ -177,8 +177,6 @@ export default function MotylDemo() {
     timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
     runDemo.mutate({
       trade: "cabinetry",
-      planImageUrls: MOTYL_PLAN_URLS,
-      jobDescription: "Commercial kitchen joinery for apartment complex. APT 314 Kitchen Type-F. Cabinet codes JF-01 to JF-06. Polytec Gossamer White Smooth doors, Blum LEGRABOX drawer systems, Castella Ledge 100mm handles, Zenith Vitrified Ceramic benchtop, Vridan toughened glass splashback. Full spec sheet provided. Use exact product codes from materials schedule.",
       markupPercent: 20,
       labourRate: 95,
       useTradePrice: true,
