@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
-import { protectedProcedure, router } from "../_core/trpc";
+import { paidProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { companyProfiles, priceBookItems, jobTemplates, estimateCorrections } from "../../drizzle/schema";
 import { eq, and, desc, like, sql } from "drizzle-orm";
@@ -8,7 +8,7 @@ import { eq, and, desc, like, sql } from "drizzle-orm";
 // ─── Company Profile Router ─────────────────────────────────────────────────
 export const companyMemoryRouter = router({
   // ── Company Profile ──────────────────────────────────────────────────────
-  getProfile: protectedProcedure.query(async ({ ctx }) => {
+  getProfile: paidProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
     const [profile] = await db.select().from(companyProfiles)
       .where(eq(companyProfiles.userId, ctx.user.id))
@@ -16,7 +16,7 @@ export const companyMemoryRouter = router({
     return profile ?? null;
   }),
 
-  upsertProfile: protectedProcedure.input(z.object({
+  upsertProfile: paidProcedure.input(z.object({
     businessName: z.string().optional(),
     abn: z.string().optional(),
     acn: z.string().optional(),
@@ -59,7 +59,7 @@ export const companyMemoryRouter = router({
   }),
 
   // ── Price Book ───────────────────────────────────────────────────────────
-  listPriceBook: protectedProcedure.input(z.object({
+  listPriceBook: paidProcedure.input(z.object({
     trade: z.string().optional(),
     category: z.string().optional(),
     search: z.string().optional(),
@@ -74,7 +74,7 @@ export const companyMemoryRouter = router({
       .orderBy(desc(priceBookItems.updatedAt));
   }),
 
-  addPriceBookItem: protectedProcedure.input(z.object({
+  addPriceBookItem: paidProcedure.input(z.object({
     trade: z.string().optional(),
     category: z.string(),
     itemCode: z.string().optional(),
@@ -94,7 +94,7 @@ export const companyMemoryRouter = router({
     return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
   }),
 
-  updatePriceBookItem: protectedProcedure.input(z.object({
+  updatePriceBookItem: paidProcedure.input(z.object({
     id: z.number(),
     trade: z.string().optional(),
     category: z.string().optional(),
@@ -115,7 +115,7 @@ export const companyMemoryRouter = router({
     return { success: true };
   }),
 
-  deletePriceBookItem: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+  deletePriceBookItem: paidProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     // Soft delete
     await db.update(priceBookItems).set({ isActive: false })
@@ -123,7 +123,7 @@ export const companyMemoryRouter = router({
     return { success: true };
   }),
 
-  bulkImportPriceBook: protectedProcedure.input(z.object({
+  bulkImportPriceBook: paidProcedure.input(z.object({
     items: z.array(z.object({
       trade: z.string().optional(),
       category: z.string(),
@@ -149,7 +149,7 @@ export const companyMemoryRouter = router({
   }),
 
   // ── Job Templates ────────────────────────────────────────────────────────
-  listTemplates: protectedProcedure.input(z.object({
+  listTemplates: paidProcedure.input(z.object({
     trade: z.string().optional(),
   })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
@@ -160,7 +160,7 @@ export const companyMemoryRouter = router({
       .orderBy(desc(jobTemplates.timesUsed));
   }),
 
-  createTemplate: protectedProcedure.input(z.object({
+  createTemplate: paidProcedure.input(z.object({
     trade: z.string(),
     name: z.string().min(1),
     description: z.string().optional(),
@@ -187,7 +187,7 @@ export const companyMemoryRouter = router({
     return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
   }),
 
-  saveEstimateAsTemplate: protectedProcedure.input(z.object({
+  saveEstimateAsTemplate: paidProcedure.input(z.object({
     estimateId: z.number(),
     name: z.string().min(1),
     description: z.string().optional(),
@@ -222,7 +222,7 @@ export const companyMemoryRouter = router({
     return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
   }),
 
-  useTemplate: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+  useTemplate: paidProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     const [template] = await db.select().from(jobTemplates)
       .where(and(eq(jobTemplates.id, input.id), eq(jobTemplates.userId, ctx.user.id)))
@@ -237,7 +237,7 @@ export const companyMemoryRouter = router({
     return { lineItems: template.lineItems, trade: template.trade, name: template.name };
   }),
 
-  deleteTemplate: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+  deleteTemplate: paidProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     await db.update(jobTemplates).set({ isActive: false })
       .where(and(eq(jobTemplates.id, input.id), eq(jobTemplates.userId, ctx.user.id)));
@@ -245,7 +245,7 @@ export const companyMemoryRouter = router({
   }),
 
   // ── Correction Stats (for AI learning dashboard) ─────────────────────────
-  getCorrectionStats: protectedProcedure.input(z.object({
+  getCorrectionStats: paidProcedure.input(z.object({
     trade: z.string().optional(),
   })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
@@ -280,7 +280,7 @@ export const companyMemoryRouter = router({
   }),
 
   // ── Get company memory context for AI prompts ────────────────────────────
-  getAIContext: protectedProcedure.input(z.object({
+  getAIContext: paidProcedure.input(z.object({
     trade: z.string(),
   })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());

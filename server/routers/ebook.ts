@@ -35,6 +35,13 @@ export const ebookRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      return {
+        success: false,
+        alreadyRegistered: false,
+        retired: true,
+        message: "This guide has been retired. Use the representative sample at https://kindaiestimator.com/demo.",
+      };
+
       // Check for duplicate
       const db = (await getDb())!;
 

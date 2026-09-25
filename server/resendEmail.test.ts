@@ -288,17 +288,18 @@ describe("Pilot funnel Resend emails", () => {
       phone: "0400000000",
       tradeType: "Carpentry",
       intent: "Paid Pilot Setup",
+      source: "live_plan_evaluation",
     });
 
     expect(result).toEqual({ leadSent: true, ownerSent: true });
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toMatchObject({
       to: "dave@example.com",
-      subject: "Your Kindai pilot spot request",
+      subject: "Your KindAI Founding Workflow Setup application",
     });
     expect(JSON.parse(String(fetchMock.mock.calls[1][1]?.body))).toMatchObject({
       to: "matt@kindaiestimator.com",
-      subject: "New Kindai pilot lead: Dave Builder",
+      subject: "New KindAI setup application: Dave Builder",
     });
   });
 
@@ -314,7 +315,7 @@ describe("Pilot funnel Resend emails", () => {
       email: "sarah@example.com",
       phone: "0411111111",
       tradeType: "Electrical",
-      amountPaid: 100000,
+      amountPaid: 275000,
       currency: "aud",
       stripeSessionId: "cs_test_paid",
     });
@@ -324,10 +325,10 @@ describe("Pilot funnel Resend emails", () => {
     const customerBody = JSON.parse(String(customerCall[1]?.body));
     const ownerBody = JSON.parse(String(ownerCall[1]?.body));
 
-    expect(customerBody.subject).toBe("Your Kindai founding pilot setup is secured");
-    expect(customerBody.text).toContain("$1,000.00");
-    expect(ownerBody.subject).toBe("Paid Kindai pilot setup: Sarah Sparky");
-    expect(ownerBody.text).toContain("book the setup sprint");
+    expect(customerBody.subject).toBe("Your KindAI Founding Workflow Setup payment is confirmed");
+    expect(customerBody.text).toContain("$2,750.00");
+    expect(ownerBody.subject).toBe("Paid KindAI workflow setup: Sarah Sparky");
+    expect(ownerBody.text).toContain("book the setup session");
     expect(ownerBody.text).toContain("cs_test_paid");
   });
 });

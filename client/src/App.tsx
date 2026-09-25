@@ -1,5 +1,4 @@
 import Analytics from "./components/Analytics";
-import MetaPixel from "./components/MetaPixel";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
@@ -20,6 +19,7 @@ import Pricing from "./pages/Pricing";
 import Billing from "./pages/Billing";
 import TradeProfile from "./pages/TradeProfile";
 import DemoMode from "./pages/DemoMode";
+import Evaluation from "./pages/Evaluation";
 import SupplierManager from "./pages/SupplierManager";
 import QuoteFollowups from "./pages/QuoteFollowups";
 import VariationsRegister from "./pages/VariationsRegister";
@@ -35,13 +35,10 @@ import { lazy, Suspense } from "react";
 import CompanySettings from "./pages/CompanySettings";
 import AccuracyDashboard from "./pages/AccuracyDashboard";
 import MotylDemo from "./pages/MotylDemo";
-import EbookGuide from "./pages/EbookGuide";
 import GetGasDemo from "./pages/GetGasDemo";
-import AIHelpAssistant from "./components/AIHelpAssistant";
 import PostHogPageTracker from "./components/PostHogPageTracker";
 import Login from "./pages/Login";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import IndustryLandingPage from "./pages/saas/IndustryLandingPage";
 import Onboarding from "./pages/saas/Onboarding";
 import CrmPipeline from "./pages/saas/CrmPipeline";
 import EstimatorWorkspace from "./pages/saas/EstimatorWorkspace";
@@ -50,7 +47,6 @@ import AnalyticsDashboard from "./pages/saas/AnalyticsDashboard";
 import ProjectDashboard from "./pages/saas/ProjectDashboard";
 import SwmsEditor from "./pages/SwmsEditor";
 import SwmsSign from "./pages/SwmsSign";
-import BetaExpired from "./pages/BetaExpired";
 
 const FbLeadsDashboard = lazy(() => import("./pages/FbLeadsDashboard"));
 const LaunchEngineLandingPage = lazy(() => import("./launch-engine/LandingPage"));
@@ -82,8 +78,9 @@ function Router() {
         <Route path="/billing" component={protectedPage(Billing)} />
         <Route path="/trade-profiles" component={protectedPage(TradeProfile)} />
         <Route path="/demo" component={DemoMode} />
+        <Route path="/evaluation" component={Evaluation} />
         <Route path="/login" component={Login} />
-        <Route path="/beta-expired" component={BetaExpired} />
+        <Route path="/beta-expired">{() => { window.location.replace("/pricing"); return null; }}</Route>
         <Route path="/suppliers" component={protectedPage(SupplierManager)} />
         <Route path="/followups" component={protectedPage(QuoteFollowups)} />
         <Route path="/projects/:projectId/variations" component={protectedPage(VariationsRegister)} />
@@ -96,8 +93,8 @@ function Router() {
         <Route path="/terms-of-service" component={TermsOfService} />
         <Route path="/support" component={Support} />
         <Route path="/cabinet-joinery" component={CabinetJoinery} />
-        <Route path="/cabinet-makers">{() => <IndustryLandingPage industryKey="cabinet-makers" />}</Route>
-        <Route path="/electricians">{() => <IndustryLandingPage industryKey="electricians" />}</Route>
+        <Route path="/cabinet-makers">{() => { window.location.replace("/cabinet-joinery"); return null; }}</Route>
+        <Route path="/electricians">{() => { window.location.replace("/"); return null; }}</Route>
         <Route path="/about" component={About} />
         <Route path="/help" component={Help} />
         <Route path="/onboarding" component={protectedPage(Onboarding)} />
@@ -109,10 +106,10 @@ function Router() {
         <Route path="/admin/fb-leads" component={protectedPage(FbLeadsDashboard)} />
         <Route path="/settings" component={protectedPage(CompanySettings)} />
         <Route path="/accuracy" component={protectedPage(AccuracyDashboard)} />
-        <Route path="/motyl" component={MotylDemo} />
-        <Route path="/guide" component={EbookGuide} />
-        <Route path="/moytle" component={MotylDemo} />
-        <Route path="/getgas" component={GetGasDemo} />
+        <Route path="/motyl" component={protectedPage(MotylDemo)} />
+        <Route path="/guide">{() => { window.location.replace("/demo"); return null; }}</Route>
+        <Route path="/moytle" component={protectedPage(MotylDemo)} />
+        <Route path="/getgas" component={protectedPage(GetGasDemo)} />
         <Route path="/launch-engine/brand-scan" component={LaunchEngineBrandScanPage} />
         <Route path="/launch-engine/dashboard" component={protectedPage(LaunchEngineDashboardPage)} />
         <Route path="/launch-engine" component={LaunchEngineLandingPage} />
@@ -133,11 +130,9 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster position="top-right" richColors />
-          <MetaPixel />
           <Analytics />
           <PostHogPageTracker />
           <Router />
-          <AIHelpAssistant />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

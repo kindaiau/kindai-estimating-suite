@@ -1,0 +1,30 @@
+flowchart TD
+    A[Research evidence<br/>Market, buyer, competitor, channel] --> B{Narrow launch decision}
+    B --> C[Cabinet and joinery only<br/>Five founding businesses]
+    C --> D[Public representative sample<br/>No private upload or live public AI]
+    D --> E[Founding setup application]
+    E --> F{Founder qualifies fit}
+    F -- Not suitable --> G[Decline or hold<br/>No payment]
+    F -- Approved --> H[Fixed scope and payment invitation]
+    H --> I[A$2,750 incl. GST<br/>Stripe test and webhook gates]
+    I --> J[Six-month Sole Tradie access<br/>One user, 20 plan readings per month]
+    J --> K[Controlled setup<br/>Up to 5 files, 150 price rows, 20 rules]
+    K --> L[Reviewed job 1<br/>Record sources, assumptions and corrections]
+    L --> M[Reviewed job 2<br/>Test repeatability]
+    M --> N{Evidence gate}
+    N -- Fails safety or fit --> O[Pause recruitment<br/>Fix one dominant failure]
+    N -- Passes --> P[Permissioned proof asset]
+    P --> Q[Warm introductions and founder outreach]
+    Q --> R[Referrers and ACFA education]
+    R --> S[SEO, case notes and proof-led social]
+
+    T[[Release gates before payment opens<br/>Staging migration and rollback<br/>Stripe replay, duplicate, refund and expiry<br/>Deletion, legal review and monitoring]] -. blocks .-> I
+
+    classDef evidence fill:#eef2ff,stroke:#4f46e5,color:#111827;
+    classDef offer fill:#fff7ed,stroke:#f97316,color:#111827;
+    classDef safe fill:#ecfdf5,stroke:#059669,color:#111827;
+    classDef gate fill:#fef2f2,stroke:#dc2626,color:#111827;
+    class A,P,Q,R,S evidence;
+    class C,D,E,H,J,K,L,M offer;
+    class G,O safe;
+    class B,F,N,T,I gate;

@@ -1,0 +1,26 @@
+User-agent: *
+Allow: /
+Allow: /beta
+Allow: /pricing
+Allow: /demo
+Allow: /ai-takeoff
+
+# Block authenticated/private pages from indexing
+Disallow: /dashboard
+Disallow: /projects
+Disallow: /estimate-builder
+Disallow: /profile
+Disallow: /billing
+Disallow: /labour-rates
+Disallow: /materials-library
+Disallow: /supplier-manager
+Disallow: /trade-profile
+Disallow: /variations-register
+Disallow: /quote-followups
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://kindaiestimator.com/sitemap.xml
+
+# Crawl delay (be kind to server)
+Crawl-delay: 1

@@ -141,6 +141,13 @@
       "when": 1778832617068,
       "tag": "0019_friendly_thunderbolt_ross",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1790378012504,
+      "tag": "0020_fuzzy_whistler",
+      "breakpoints": true
     }
   ]
 }

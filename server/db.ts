@@ -1,7 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { betaSignups, InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -109,6 +109,47 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     await db.insert(users).values(values).onDuplicateKeyUpdate({
       set: updateSet,
     });
+
+    const normalizedEmail = typeof user.email === "string" ? user.email.trim().toLowerCase() : "";
+    if (normalizedEmail) {
+      const [paidSetup] = await db
+        .select({
+          status: betaSignups.status,
+          intent: betaSignups.intent,
+          paymentStatus: betaSignups.paymentStatus,
+          accessExpiresAt: betaSignups.accessExpiresAt,
+        })
+        .from(betaSignups)
+        .where(eq(betaSignups.email, normalizedEmail))
+        .limit(1);
+
+      const accessIsActive =
+        paidSetup?.status === "active" &&
+        paidSetup.intent === "Paid Pilot Setup" &&
+        paidSetup.paymentStatus === "paid" &&
+        paidSetup.accessExpiresAt &&
+        new Date(paidSetup.accessExpiresAt).getTime() > Date.now();
+
+      if (accessIsActive) {
+        const [currentUser] = await db
+          .select({ id: users.id, tier: users.subscriptionTier, status: users.subscriptionStatus })
+          .from(users)
+          .where(eq(users.openId, user.openId))
+          .limit(1);
+
+        if (currentUser && (currentUser.tier === "free" || currentUser.status === "pilot_active")) {
+          await db
+            .update(users)
+            .set({
+              subscriptionTier: "sole_trader",
+              subscriptionStatus: "pilot_active",
+              isBetaUser: true,
+              betaExpiresAt: paidSetup.accessExpiresAt,
+            })
+            .where(eq(users.id, currentUser.id));
+        }
+      }
+    }
   } catch (error) {
     console.error("[Database] Failed to upsert user:", error);
     throw error;

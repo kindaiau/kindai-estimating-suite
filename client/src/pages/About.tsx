@@ -44,7 +44,7 @@ export default function About() {
       <section className="pb-20 px-6">
         <div className="max-w-3xl mx-auto space-y-8">
           <p className="text-base sm:text-xl text-white/70 leading-relaxed">
-            Every day, skilled tradespeople across Australia spend hours doing work that has nothing to do with their trade — writing up quotes, calculating materials, chasing numbers, second-guessing their margins. A full-time estimator costs $130,000 a year. Most small builders and sole traders can't afford that. So they guess. And guessing costs them jobs, money, and sleep.
+            Skilled trade businesses can spend a large part of their week turning plans, schedules, supplier rates and business rules into a quote. Small teams often carry that review work themselves, so every missing item or unclear assumption matters.
           </p>
 
           <div className="border-l-4 border-[#ff6b35] pl-6">
@@ -52,11 +52,11 @@ export default function About() {
           </div>
 
           <p className="text-base sm:text-xl text-white/70 leading-relaxed">
-            We're an Australian AI startup built around one idea: the best tradies shouldn't lose work because they're slow at paperwork. Our estimating suite uses AI to read your plans, understand your trade, calculate your materials and labour, and deliver a GST-compliant quote in under 60 seconds — whether you're a cabinet maker in Brisbane, an electrician in Melbourne, or a concreter in Perth.
+            We're an Australian AI startup built around one idea: software should prepare the first draft while an experienced person stays responsible for the estimate. KindAI uses supported plans, customer rates and written business rules to structure a draft for review.
           </p>
 
           <p className="text-base sm:text-xl text-white/70 leading-relaxed">
-            We cover all 10 major trades. We know Australian pricing, Australian compliance, and Australian conditions. We're not a US product bolted onto the local market — we were built here, for here.
+            The first commercial lane is cabinet making and commercial joinery in Australia. Other trade modules exist, but each workflow must be verified before it is sold or relied on.
           </p>
         </div>
       </section>
@@ -110,7 +110,7 @@ export default function About() {
       <section className="py-20 px-6 bg-[#111111]">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-extrabold mb-4">Ready to stop guessing?</h2>
-          <p className="text-white/60 text-lg mb-8">AI estimating that learns your rates, your rules, your business.</p>
+          <p className="text-white/60 text-lg mb-8">AI-assisted drafts using your rates and rules, with estimator review kept in control.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/pricing">
               <button className="bg-[#ff6b35] hover:bg-[#ff8c42] text-white font-bold px-8 py-4 rounded-full text-lg transition-colors">

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { paidProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { quoteTokens, estimates, lineItems, users } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
@@ -13,7 +13,7 @@ function generateToken(): string {
 
 export const quoteTokensRouter = router({
   // Send quote to client — creates a token and returns the public URL
-  sendQuote: protectedProcedure.input(z.object({
+  sendQuote: paidProcedure.input(z.object({
     estimateId: z.number().int().positive(),
     clientName: z.string().min(1).max(255),
     clientEmail: z.string().email().optional().or(z.literal("")),
@@ -88,7 +88,7 @@ export const quoteTokensRouter = router({
   }),
 
   // Get all sent quotes for the current user
-  listSentQuotes: protectedProcedure.query(async ({ ctx }) => {
+  listSentQuotes: paidProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return [];
     const tokens = await db

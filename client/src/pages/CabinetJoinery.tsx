@@ -1,7 +1,5 @@
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
-import { pixelViewContent } from "@/lib/metaPixel";
 import { Button } from "@/components/ui/button";
 import SEO from "@/components/SEO";
 import { CheckCircle2, ArrowRight, Shield, Clock, Users, FileText, ChevronRight } from "lucide-react";
@@ -11,8 +9,8 @@ const LOGO_URL = import.meta.env.VITE_APP_LOGO || "/favicon.ico";
 const HOW_IT_WORKS = [
   {
     step: "01",
-    title: "Upload the plan",
-    desc: "Drop in PDFs, tender drawings, or marked-up site sketches. Any format your team already uses.",
+    title: "Hand over agreed files",
+    desc: "After approval and payment, provide up to five supported PDF, JPG or PNG files through the controlled setup process.",
   },
   {
     step: "02",
@@ -27,37 +25,22 @@ const HOW_IT_WORKS = [
 ];
 
 const WHY_DIFFERENT = [
-  { text: "Faster first-pass estimates — reduce manual counting time" },
-  { text: "More consistent pricing across jobs and estimators" },
-  { text: "Cleaner handoff between admin, estimator, and sales" },
-  { text: "Less scope missed on repeat cabinetry work" },
-  { text: "Better review process before quotes go out" },
+  { text: "One defined cabinet or joinery workflow" },
+  { text: "Source notes, assumptions and review flags kept visible" },
+  { text: "Customer-authorised price-book rows and written rules" },
+  { text: "Two distinct jobs reviewed with the nominated estimator" },
+  { text: "No final quote or accuracy guarantee" },
   { text: "Uses your pricing rules, labour logic, markup, and GST settings" },
-];
-
-const PROOF_ITEMS = [
-  { item: "Laminex Chalk Matt 16mm MDF board", qty: "48 sheets", price: "$94.50/sheet", total: "$4,536" },
-  { item: "Polytec Ravine Natural Oak 18mm", qty: "24 sheets", price: "$118.00/sheet", total: "$2,832" },
-  { item: "Blum TANDEM plus BLUMOTION 550mm", qty: "96 runners", price: "$38.40/pair", total: "$3,686" },
-  { item: "Blum CLIP top BLUMOTION 110° hinges", qty: "144 hinges", price: "$6.20 ea", total: "$893" },
-  { item: "Caesarstone 6131 Bianco Drift 20mm", qty: "18 lineal m", price: "$485/lm", total: "$8,730" },
-  { item: "Hettich soft-close drawer inserts", qty: "48 sets", price: "$22.80/set", total: "$1,094" },
-  { item: "Workshop fabrication labour (80h)", qty: "80 hrs", price: "$95/hr", total: "$7,600" },
-  { item: "Site installation labour (32h)", qty: "32 hrs", price: "$110/hr", total: "$3,520" },
 ];
 
 export default function CabinetJoinery() {
   const [, navigate] = useLocation();
 
-  useEffect(() => {
-    pixelViewContent({ content_name: "Cabinet Joinery Landing", content_category: "Landing" });
-  }, []);
-
   return (
     <div className="min-h-screen bg-white text-gray-900">
       <SEO
         title="AI Estimating for Cabinet Makers & Joinery Teams | Kindai"
-        description="Kindai helps cabinet and joinery businesses produce faster first-pass takeoffs and review-ready quote drafts. Built for commercial joinery teams, not just residential kitchens."
+        description="Apply for a paid KindAI cabinet and joinery workflow setup covering one user, agreed company inputs and two estimator-reviewed jobs."
         canonical="/cabinet-joinery"
         keywords="cabinet making estimating software Australia, joinery estimating AI, commercial joinery quoting software, cabinet takeoff software, AI estimating cabinet makers"
       />
@@ -82,11 +65,11 @@ export default function CabinetJoinery() {
               See a Cabinet Estimate
             </Button>
             <Button
-              onClick={() => window.location.href = 'mailto:matt@kindaiestimator.com?subject=Enterprise%20Pilot%20Enquiry%20%E2%80%93%20Cabinet%20Making'}
+              onClick={() => navigate("/evaluation")}
               size="sm"
               className="kindai-btn-primary text-xs font-bold px-4"
             >
-              Book Enterprise Pilot
+              Apply for Founding Setup
             </Button>
           </div>
         </div>
@@ -123,7 +106,7 @@ export default function CabinetJoinery() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-gray-400 text-lg sm:text-xl mb-8 max-w-2xl"
           >
-            Upload a plan, marked-up PDF, or site photo. Kindai creates a first-pass takeoff and draft quote so your estimator can review, adjust, and send faster.
+            Apply for one paid workflow using agreed files, authorised rates and written rules. KindAI prepares a structured draft for your estimator to review before issue.
           </motion.p>
 
           {/* Trust bar */}
@@ -152,11 +135,11 @@ export default function CabinetJoinery() {
             className="flex flex-wrap gap-4"
           >
             <Button
-              onClick={() => window.location.href = 'mailto:matt@kindaiestimator.com?subject=Enterprise%20Pilot%20Enquiry%20%E2%80%93%20Cabinet%20Making'}
+              onClick={() => navigate("/evaluation")}
               size="lg"
               className="kindai-btn-primary px-8 py-4 rounded-full text-base font-black h-auto shadow-xl"
             >
-              Book an Enterprise Pilot <ArrowRight className="w-5 h-5 ml-2" />
+              Apply for Founding Setup <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
             <Button
               onClick={() => navigate("/demo")}
@@ -168,28 +151,6 @@ export default function CabinetJoinery() {
             </Button>
           </motion.div>
 
-          {/* Demo Video with Voiceover */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.5 }}
-            className="mt-14 rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-gray-900"
-          >
-            <video
-              autoPlay
-              muted
-              loop
-              playsInline
-              controls
-              className="w-full aspect-video"
-              poster=""
-            >
-              <source src="https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai_cabinet_demo_voiceover_50c05dcb.mp4" type="video/mp4" />
-            </video>
-            <div className="px-4 py-3 bg-gray-900/80 text-center">
-              <p className="text-sm text-gray-400">Real screen recording — Cabinet Making AI takeoff demo with voiceover</p>
-            </div>
-          </motion.div>
         </div>
       </section>
 
@@ -201,73 +162,14 @@ export default function CabinetJoinery() {
               For estimators and business owners
             </div>
             <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-5">
-              Give your estimators a faster starting point —<br />
+              Give your estimator a visible starting point —<br />
               <span className="kindai-gradient-text">not another black box.</span>
             </h2>
             <p className="text-gray-500 text-lg leading-relaxed mb-8">
-              Kindai helps cabinet teams move from drawings to a review-ready estimate faster by reducing manual counting, standardising pricing logic, and making quote preparation more consistent across the business.
+              KindAI keeps the candidate scope, company inputs, source notes and assumptions together so the nominated estimator can inspect the draft.
             </p>
             <p className="text-gray-500 text-base leading-relaxed">
-              Every output is a draft for your estimator to review. Your team checks every line, adjusts quantities, overrides prices, and approves before anything goes to a client. Kindai accelerates the process — your estimators make the call.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Section 3 — Proof block */}
-      <section className="py-20 px-4 bg-gray-50">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-50 border border-teal-200 text-teal-700 text-xs font-bold mb-4">
-              Real output example
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3">
-              What a Kindai cabinet estimate looks like.
-            </h2>
-            <p className="text-gray-500 text-base max-w-xl mx-auto">
-              Cabinet quantities, panel and hardware lines, benchtop allowances, labour and markup — structured for your estimator to review and adjust.
-            </p>
-          </div>
-
-          <div className="bg-gray-950 rounded-2xl p-6 border border-white/10 shadow-2xl max-w-3xl mx-auto">
-            <div className="flex items-center gap-3 mb-5 pb-4 border-b border-white/10">
-              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-xs text-white/50 font-mono">Kindai AI Takeoff — Commercial Kitchen Joinery, 3-level office fitout</span>
-              <span className="ml-auto text-xs text-teal-400 font-bold">Draft — pending estimator review</span>
-            </div>
-
-            <div className="space-y-2 text-xs mb-4">
-              {PROOF_ITEMS.map((row, i) => (
-                <div key={i} className="grid grid-cols-12 gap-2 bg-white/5 rounded-lg px-3 py-2 border border-white/5 items-center">
-                  <span className="text-white/70 col-span-5">{row.item}</span>
-                  <span className="text-white/40 col-span-2 text-right">{row.qty}</span>
-                  <span className="text-white/40 col-span-3 text-right">{row.price}</span>
-                  <span className="text-green-400 font-bold col-span-2 text-right">{row.total}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="border-t border-white/10 pt-4 space-y-2">
-              <div className="flex justify-between text-xs text-white/50">
-                <span>Subtotal (ex GST)</span>
-                <span className="text-white font-bold">$32,891</span>
-              </div>
-              <div className="flex justify-between text-xs text-white/50">
-                <span>Markup (18%)</span>
-                <span className="text-orange-400 font-bold">+$5,920</span>
-              </div>
-              <div className="flex justify-between text-xs text-white/50">
-                <span>GST (10%)</span>
-                <span className="text-white font-bold">$3,881</span>
-              </div>
-              <div className="flex justify-between items-center bg-gradient-to-r from-teal-500/20 to-green-500/20 rounded-lg px-3 py-2 border border-teal-500/30 mt-2">
-                <span className="text-white font-black text-sm">Total Quote (inc GST)</span>
-                <span className="text-teal-400 font-black text-xl">$42,692</span>
-              </div>
-            </div>
-
-            <p className="text-white/25 text-[10px] text-center mt-3">
-              AI-generated draft — all quantities, prices and totals reviewed and approved by estimator before issue
+              Every output remains a draft. Your estimator checks each line, adjusts quantities, overrides prices and approves before anything goes to a client.
             </p>
           </div>
         </div>
@@ -314,7 +216,7 @@ export default function CabinetJoinery() {
                 Built for the way cabinet teams actually quote
               </div>
               <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-6">
-                Less time counting.<br />More time winning jobs.
+                Draft the count first.<br />Review the work that matters.
               </h2>
               <div className="space-y-3">
                 {WHY_DIFFERENT.map((item, i) => (
@@ -327,10 +229,10 @@ export default function CabinetJoinery() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { icon: Clock, label: "Time saved per estimate", value: "2–4 hrs", sub: "on first-pass takeoffs" },
-                { icon: FileText, label: "Quote consistency", value: "100%", sub: "same logic every job" },
-                { icon: Users, label: "Team access", value: "Unlimited", sub: "users on Pro plan" },
-                { icon: Shield, label: "Data security", value: "Enterprise", sub: "grade infrastructure" },
+                { icon: Clock, label: "Workflow", value: "Draft first", sub: "estimator review before issue" },
+                { icon: FileText, label: "Pricing logic", value: "Visible", sub: "rates and assumptions stay reviewable" },
+                { icon: Users, label: "Included access", value: "1 user", sub: "in the founding setup" },
+                { icon: Shield, label: "Approval", value: "Human", sub: "your team makes the final call" },
               ].map((stat, i) => (
                 <div key={i} className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
                   <stat.icon className="w-5 h-5 text-teal-500 mb-3" />
@@ -344,23 +246,23 @@ export default function CabinetJoinery() {
         </div>
       </section>
 
-      {/* Section 6 — Enterprise block */}
+      {/* Section 6 — Founding setup */}
       <section className="py-20 px-4 bg-gray-950">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/70 text-xs font-bold mb-5">
-            <Shield className="w-3.5 h-3.5 text-blue-400" /> For larger cabinet manufacturers and joinery businesses
+            <Shield className="w-3.5 h-3.5 text-blue-400" /> Five founding cabinet and joinery businesses
           </div>
           <h2 className="text-3xl sm:text-4xl font-black text-white mb-5">
-            Structured pilot for teams that need to get it right.
+            One fixed paid setup. No cheap trial.
           </h2>
           <p className="text-white/60 text-lg max-w-2xl mx-auto mb-8">
-            If you manage multiple estimators, multiple project types, or high quote volume, Kindai can be rolled out through a structured 30–45 day pilot with onboarding, pricing-rule setup, sample data import, and weekly review sessions.
+            A$2,500 plus GST includes one workflow, one user, up to 150 price-book rows, two reviewed real jobs, 30 days of email support and the first six months of Sole Tradie.
           </p>
           <div className="grid sm:grid-cols-3 gap-4 mb-10 text-left">
             {[
-              { title: "30–45 day pilot", desc: "Real jobs, real data, real results. Success criteria agreed upfront." },
-              { title: "Pricing rule setup", desc: "Your supplier rates, labour models, markup rules, and GST settings configured before day one." },
-              { title: "Weekly review", desc: "We review outputs with your team, adjust the model, and track accuracy against your benchmarks." },
+              { title: "One defined workflow", desc: "Cabinet making or commercial joinery only for the founding cohort." },
+              { title: "Your pricing inputs", desc: "Up to 150 authorised price-book rows and 20 written estimating rules." },
+              { title: "Two reviewed jobs", desc: "We record assumptions and corrections with your nominated estimator." },
             ].map((item, i) => (
               <div key={i} className="bg-white/5 rounded-xl p-5 border border-white/10">
                 <h3 className="font-black text-white text-sm mb-2">{item.title}</h3>
@@ -369,11 +271,11 @@ export default function CabinetJoinery() {
             ))}
           </div>
           <Button
-onClick={() => window.location.href = 'mailto:matt@kindaiestimator.com?subject=30-Day%20Pilot%20Enquiry%20%E2%80%93%20Cabinet%20Making'}
+            onClick={() => navigate("/evaluation")}
             size="lg"
             className="kindai-btn-primary px-8 py-4 rounded-full text-base font-black h-auto shadow-xl"
           >
-            Book a 30-Day Pilot <ArrowRight className="w-5 h-5 ml-2" />
+            Apply for A$2,500 Setup <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
         </div>
       </section>
@@ -382,18 +284,18 @@ onClick={() => window.location.href = 'mailto:matt@kindaiestimator.com?subject=3
       <section className="py-20 px-4 bg-white">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-5">
-            Stop starting every cabinet estimate from scratch.
+            Define one cabinet or joinery workflow before any broader rollout.
           </h2>
           <p className="text-gray-500 text-lg mb-8 max-w-2xl mx-auto">
-            See how Kindai helps your team draft quotes faster, review with confidence, and respond to more opportunities without adding estimator headcount.
+            Explore the representative sample, then apply for the fixed paid setup if the workflow matches your business.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button
-              onClick={() => window.location.href = 'mailto:matt@kindaiestimator.com?subject=Enterprise%20Pilot%20Enquiry%20%E2%80%93%20Cabinet%20Making'}
+              onClick={() => navigate("/evaluation")}
               size="lg"
               className="kindai-btn-primary px-10 py-4 rounded-full text-base font-black h-auto shadow-xl"
             >
-              Book an Enterprise Pilot <ArrowRight className="w-5 h-5 ml-2" />
+              Apply for Founding Setup <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </div>
         </div>

@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
-import { protectedProcedure, router } from "../_core/trpc";
+import { paidProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { projects } from "../../drizzle/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 
 export const projectsRouter = router({
-  list: protectedProcedure.query(async ({ ctx }) => {
+  list: paidProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
     return db.select().from(projects)
       .where(eq(projects.userId, ctx.user.id))
@@ -14,7 +14,7 @@ export const projectsRouter = router({
       .limit(500); // Prevent unbounded queries
   }),
 
-  get: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
+  get: paidProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     const result = await db.select().from(projects)
       .where(and(eq(projects.id, input.id), eq(projects.userId, ctx.user.id)))
@@ -22,7 +22,7 @@ export const projectsRouter = router({
     return result[0] ?? null;
   }),
 
-  create: protectedProcedure.input(z.object({
+  create: paidProcedure.input(z.object({
     name: z.string().min(1),
     clientName: z.string().optional(),
     clientEmail: z.string().email().optional().or(z.literal("")),
@@ -44,7 +44,7 @@ export const projectsRouter = router({
     return { id };
   }),
 
-  update: protectedProcedure.input(z.object({
+  update: paidProcedure.input(z.object({
     id: z.number(),
     name: z.string().min(1).optional(),
     clientName: z.string().optional(),
@@ -63,13 +63,13 @@ export const projectsRouter = router({
     return { success: true };
   }),
 
-  delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+  delete: paidProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     await db.delete(projects).where(and(eq(projects.id, input.id), eq(projects.userId, ctx.user.id)));
     return { success: true };
   }),
 
-  stats: protectedProcedure.query(async ({ ctx }) => {
+  stats: paidProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
     // Use SQL aggregation instead of fetching all rows into memory
     const rows = await db

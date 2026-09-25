@@ -4,7 +4,7 @@ import { TRPCError } from "@trpc/server";
 import { getIndustryConfig, industryList, type IndustryKey } from "../../config/industries";
 import { requireDatabase } from "../_core/errors";
 import { invokeLLM } from "../_core/llm";
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { paidProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import {
   analyticsEvents,
@@ -124,14 +124,14 @@ export const saasRouter = router({
       return { success: true };
     }),
 
-  getWorkspace: protectedProcedure.query(async ({ ctx }) => {
+  getWorkspace: paidProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
     const organization = await getOrCreateOrganization(db, ctx.user.id);
     const industry = getIndustryConfig(organization.industryKey);
     return { organization, industry };
   }),
 
-  completeOnboarding: protectedProcedure
+  completeOnboarding: paidProcedure
     .input(z.object({
       industryKey: industryKeySchema,
       companyName: z.string().min(2).max(255),
@@ -163,7 +163,7 @@ export const saasRouter = router({
       return { success: true };
     }),
 
-  createLead: protectedProcedure
+  createLead: paidProcedure
     .input(z.object({
       name: z.string().min(2).max(255),
       email: z.string().email().optional().or(z.literal("")),
@@ -208,7 +208,7 @@ export const saasRouter = router({
       return { id, score };
     }),
 
-  listLeads: protectedProcedure.query(async ({ ctx }) => {
+  listLeads: paidProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
     const organization = await getOrCreateOrganization(db, ctx.user.id);
     return db
@@ -219,7 +219,7 @@ export const saasRouter = router({
       .limit(250);
   }),
 
-  updateLeadStage: protectedProcedure
+  updateLeadStage: paidProcedure
     .input(z.object({ id: z.number(), stage: leadStageSchema }))
     .mutation(async ({ ctx, input }) => {
       const db = requireDatabase(await getDb());
@@ -239,7 +239,7 @@ export const saasRouter = router({
       return { success: true };
     }),
 
-  crmStats: protectedProcedure.query(async ({ ctx }) => {
+  crmStats: paidProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
     const organization = await getOrCreateOrganization(db, ctx.user.id);
     const rows = await db
@@ -253,7 +253,7 @@ export const saasRouter = router({
     }, {});
   }),
 
-  generateEstimateDraft: protectedProcedure
+  generateEstimateDraft: paidProcedure
     .input(z.object({
       industryKey: industryKeySchema.optional(),
       scope: z.string().min(10).max(6000),
@@ -289,7 +289,7 @@ export const saasRouter = router({
       }
     }),
 
-  analyticsSummary: protectedProcedure.query(async ({ ctx }) => {
+  analyticsSummary: paidProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
     const organization = await getOrCreateOrganization(db, ctx.user.id);
     const [leadCount] = await db.select({ value: count() }).from(crmLeads).where(eq(crmLeads.organizationId, organization.id));
@@ -308,7 +308,7 @@ export const saasRouter = router({
     };
   }),
 
-  logEvent: protectedProcedure
+  logEvent: paidProcedure
     .input(z.object({
       eventName: z.string().min(2).max(128),
       source: z.string().max(128).optional(),
@@ -329,7 +329,7 @@ export const saasRouter = router({
       return { success: true };
     }),
 
-  createAutomationLog: protectedProcedure
+  createAutomationLog: paidProcedure
     .input(z.object({
       agent: z.enum(["acquisition", "conversion", "delivery", "system"]),
       eventType: z.string().min(2).max(128),
@@ -350,7 +350,7 @@ export const saasRouter = router({
       return { success: true };
     }),
 
-  listAutomationLogs: protectedProcedure.query(async ({ ctx }) => {
+  listAutomationLogs: paidProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
     const organization = await getOrCreateOrganization(db, ctx.user.id);
     return db

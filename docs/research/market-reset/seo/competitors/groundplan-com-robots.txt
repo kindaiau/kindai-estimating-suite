@@ -1,0 +1,117 @@
+User-agent:*
+
+Sitemap: https://groundplan.com/sitemap.xml
+
+# =============================================
+# Groundplan robots.txt
+# https://groundplan.com/robots.txt
+# Last updated: February 2026
+# =============================================
+
+# --- DEFAULT: Allow all crawlers ---
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+# --- TRADITIONAL SEARCH ENGINES ---
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# --- OPENAI (ChatGPT) ---
+# GPTBot: Collects training data for GPT models
+# OAI-SearchBot: Powers real-time web results in ChatGPT search
+# ChatGPT-User: Fetches pages on-demand during ChatGPT conversations
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+# --- ANTHROPIC (Claude) ---
+# ClaudeBot: Primary crawler for Claude AI
+# Claude-User: On-demand page fetcher for live Claude queries
+# Claude-SearchBot: Powers Claude's web search capabilities
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+# --- GOOGLE (Gemini / AI Overviews) ---
+# Google-Extended: Controls use of content for Gemini and AI Overviews
+# Google-CloudVertexBot: Google Cloud Vertex AI applications
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Google-CloudVertexBot
+Allow: /
+
+# --- PERPLEXITY ---
+# PerplexityBot: Builds Perplexity's AI search index
+# Perplexity-User: On-demand fetcher triggered by user queries
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# --- MICROSOFT (Copilot / Bing Chat) ---
+User-agent: Bingbot
+Allow: /
+
+# --- APPLE (Siri / Spotlight / Apple Intelligence) ---
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# --- AMAZON ---
+User-agent: Amazonbot
+Allow: /
+
+# --- META (AI features across Facebook, Instagram, WhatsApp) ---
+User-agent: FacebookBot
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+User-agent: Meta-ExternalFetcher
+Allow: /
+
+# --- BYTEDANCE (TikTok / Doubao) ---
+User-agent: Bytespider
+Allow: /
+
+# --- OTHER AI SEARCH / ASSISTANTS ---
+User-agent: YouBot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Diffbot
+Allow: /
+
+# --- SITEMAPS ---
+Sitemap: https://groundplan.com/sitemap.xml
+
+# --- LLMs.txt ---
+# For AI models seeking structured information about Groundplan:
+# https://groundplan.com/llms.txt
+
+Sitemap: https://groundplan.com/sitemap.xml

@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
-import { protectedProcedure, router } from "../_core/trpc";
+import { paidProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { variations } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
 export const variationsRouter = router({
-  list: protectedProcedure.input(z.object({
+  list: paidProcedure.input(z.object({
     projectId: z.number().int().positive(),
   })).query(async ({ input, ctx }) => {
     const db = requireDatabase(await getDb());
@@ -18,7 +18,7 @@ export const variationsRouter = router({
       .orderBy(desc(variations.createdAt));
   }),
 
-  create: protectedProcedure.input(z.object({
+  create: paidProcedure.input(z.object({
     projectId: z.number().int().positive(),
     estimateId: z.number().int().positive().optional(),
     title: z.string().min(1).max(255),
@@ -56,7 +56,7 @@ export const variationsRouter = router({
     return { variationNumber };
   }),
 
-  update: protectedProcedure.input(z.object({
+  update: paidProcedure.input(z.object({
     id: z.number().int().positive(),
     title: z.string().min(1).max(255).optional(),
     description: z.string().max(2000).optional(),
@@ -96,7 +96,7 @@ export const variationsRouter = router({
     return { success: true };
   }),
 
-  delete: protectedProcedure.input(z.object({
+  delete: paidProcedure.input(z.object({
     id: z.number().int().positive(),
   })).mutation(async ({ input, ctx }) => {
     const db = await getDb();
@@ -114,7 +114,7 @@ export const variationsRouter = router({
   }),
 
   // Get running contract sum for a project
-  getContractSummary: protectedProcedure.input(z.object({
+  getContractSummary: paidProcedure.input(z.object({
     projectId: z.number().int().positive(),
     originalContractValue: z.number().default(0),
   })).query(async ({ input, ctx }) => {

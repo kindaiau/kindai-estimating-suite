@@ -14,7 +14,7 @@ interface SEOProps {
 const BASE_URL = "https://kindaiestimator.com";
 const DEFAULT_TITLE = "Kindai | AI Estimating for Australian Trades";
 const DEFAULT_DESCRIPTION =
-  "Scan plans, get instant AI takeoffs and GST-ready quotes in 60 seconds. Built for Australian tradies and builders.";
+  "KindAI prepares structured estimate drafts from supported plans, rates and business rules for Australian estimators to review.";
 const DEFAULT_KEYWORDS =
   "AI estimating software Australia, construction quoting software, trade takeoff software, builder quoting app, AI construction estimating";
 const META_DOMAIN_VERIFICATION = import.meta.env.VITE_META_DOMAIN_VERIFICATION as string | undefined;

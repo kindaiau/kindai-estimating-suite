@@ -367,7 +367,7 @@ export default function BetaLanding() {
             </p>
             <div className="mt-5 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-4 text-center">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-300">Founding offer</p>
-              <p className="mt-1 text-3xl font-extrabold text-white">A$1,000</p>
+              <p className="mt-1 text-3xl font-extrabold text-white">A$2,500</p>
               <p className="mt-1 text-sm text-gray-300">Setup + first 6 months included</p>
             </div>
             <a href="#beta-form" onClick={() => updateForm({ intent: "Paid Pilot Setup" })}>

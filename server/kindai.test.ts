@@ -317,24 +317,20 @@ describe("AI Vision Takeoff pricing logic", () => {
 });
 
 describe("AI supplier recommendation", () => {
-  it("getSuppliers returns suppliers for valid trade", async () => {
+  it("getSuppliers requires a verifiable paid workspace", async () => {
     const caller = appRouter.createCaller(makeCtx());
-    const suppliers = await caller.ai.getSuppliers({ trade: "electrical" });
-    expect(Array.isArray(suppliers)).toBe(true);
-    expect(suppliers.length).toBeGreaterThan(0);
-    // Each supplier should have required fields
-    for (const s of suppliers) {
-      expect(s.name).toBeTruthy();
-      expect(s.website).toBeTruthy();
-      expect(["trade", "retail", "online"]).toContain(s.type);
-    }
+    await expect(caller.ai.getSuppliers({ trade: "electrical" })).rejects.toMatchObject({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Database unavailable",
+    });
   });
 
-  it("getSuppliers filters by state when provided", async () => {
+  it("getSuppliers does not bypass paid access when a state is provided", async () => {
     const caller = appRouter.createCaller(makeCtx());
-    const suppliers = await caller.ai.getSuppliers({ trade: "plumbing", state: "QLD" });
-    expect(Array.isArray(suppliers)).toBe(true);
-    expect(suppliers.length).toBeGreaterThan(0);
+    await expect(caller.ai.getSuppliers({ trade: "plumbing", state: "QLD" })).rejects.toMatchObject({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Database unavailable",
+    });
   });
 });
 

@@ -20,15 +20,15 @@ const FAQS = [
   },
   {
     q: "How many pages can I upload per job?",
-    a: "Up to 50 pages per job. This covers the full drawing set for most commercial projects — architectural plans, structural drawings, electrical schematics, hydraulic layouts, and hardware schedules can all be uploaded together. Kindai analyses all pages as a single combined takeoff and merges the results automatically.",
+    a: "The Founding Workflow Setup is limited to up to five agreed files for each reviewed job. Larger drawing sets are not part of the public offer and must be assessed separately before private files are accepted.",
   },
   {
     q: "What is the maximum file size?",
-    a: "32MB per file. For large-format scans (A0/A1 plans), this is more than enough at 300 DPI. If your file exceeds 32MB, try reducing the scan resolution to 200 DPI — the AI can still read it accurately at that resolution.",
+    a: "32MB per file. If a scan is larger, reduce its resolution and confirm that dimensions, notes and schedules remain readable before handover.",
   },
   {
     q: "Can I scan plans on our office printer?",
-    a: "Yes — this is the recommended workflow for most companies. Scan to PDF on your office multifunction printer (Ricoh, Konica Minolta, Canon, HP, Kyocera) and save at 200–300 DPI. Email or save to a shared drive, then upload directly to Kindai. The whole process takes under 2 minutes.",
+    a: "Yes. Scan to PDF on your office multifunction printer and aim for readable dimensions, notes and schedules. Keep each agreed file below 32MB and inspect the export before handover.",
   },
   {
     q: "Can I photograph plans with my phone?",
@@ -36,11 +36,11 @@ const FAQS = [
   },
   {
     q: "How does Kindai handle multi-page uploads?",
-    a: "Kindai processes your pages in batches of 5, then merges all results into a single combined takeoff. Duplicate items across pages are automatically summed — so if page 3 shows 12 power points and page 7 shows 8 more, the final takeoff shows 20. The confidence score reflects the overall quality across all pages.",
+    a: "For the founding workflow, up to five agreed files can be considered together. The estimator must check duplicate references, schedules, quantities and exclusions across every file before the draft is accepted.",
   },
   {
     q: "What if my plan is hand-drawn or low quality?",
-    a: "Kindai can read hand-drawn plans, but accuracy improves significantly with printed or digital plans. For hand-drawn sketches, add a detailed job description in the text field to help the AI fill in any gaps. The confidence score on your results will indicate how much the AI relied on the plan vs. your description.",
+    a: "Printed or digital plans with clear dimensions are the safer input. Hand-drawn or low-quality plans may produce incomplete evidence, so missing or uncertain items must be flagged and checked rather than filled in by assumption.",
   },
   {
     q: "Does Kindai work with CAD or BIM files?",
@@ -48,11 +48,11 @@ const FAQS = [
   },
   {
     q: "How accurate is the AI takeoff?",
-    a: "Accuracy depends on plan quality and complexity. For clear, printed plans at 200+ DPI, Kindai typically achieves 85–95% accuracy on item identification and 90%+ on quantities. The confidence score shown on every result tells you how certain the AI is. For critical quotes, always review the results and adjust any items where you have specific knowledge.",
+    a: "Reliability depends on plan quality, drawing conventions, trade and job complexity. KindAI provides source notes, assumptions and review flags, but these do not replace checking the underlying quantities. A qualified estimator must review the scope, rates, exclusions and compliance before any quote is issued.",
   },
   {
     q: "Can I use Kindai for a 50-page commercial set?",
-    a: "Yes — this is exactly what Kindai is built for. Upload all 50 pages at once. The AI will process them in batches and deliver a single merged takeoff. For very large commercial projects, we recommend grouping pages by trade (e.g. upload electrical drawings separately from hydraulic drawings) to get the most accurate trade-specific pricing.",
+    a: "Not under the public founding scope. The paid setup covers up to five agreed files per reviewed job. A 50-page commercial set requires separate product, workflow and support validation before it can be offered.",
   },
 ];
 
@@ -92,7 +92,7 @@ const BEST_PRACTICES = [
     icon: Monitor,
     colour: "from-violet-500 to-purple-500",
     title: "CAD / Digital Export",
-    badge: "Highest Accuracy",
+    badge: "Strongest Input",
     badgeColour: "bg-violet-100 text-violet-700",
     steps: [
       "In AutoCAD, Revit, or ArchiCAD: File → Export → PDF",
@@ -100,13 +100,13 @@ const BEST_PRACTICES = [
       "Include all relevant drawing sheets",
       "Upload the exported PDF directly",
     ],
-    tip: "PDF exports from CAD software are the highest quality input. Kindai can read every line, symbol, and annotation with maximum accuracy.",
+    tip: "A clear vector PDF generally gives the model more readable detail than a compressed photo. Review every extracted item and dimension against the drawing.",
   },
   {
     icon: Smartphone,
     colour: "from-emerald-500 to-teal-500",
     title: "Large-Format Scanner",
-    badge: "Enterprise",
+    badge: "Large Plan Scan",
     badgeColour: "bg-amber-100 text-amber-700",
     steps: [
       "Use HP DesignJet, Contex, or similar large-format scanner",
@@ -114,18 +114,18 @@ const BEST_PRACTICES = [
       "Export as PDF — not TIFF",
       "Split very large files into logical sections if over 32MB",
     ],
-    tip: "Large-format scanners produce the best results for A0/A1 engineering drawings. If your scan is over 32MB, reduce DPI to 200 — Kindai reads it just as accurately.",
+    tip: "Large-format scanners preserve detail on A0/A1 drawings. If a scan is over 32MB, reduce the DPI and check that dimensions and annotations remain readable before uploading.",
   },
 ];
 
-// ─── Enterprise Workflow ───────────────────────────────────────────────────────
-const ENTERPRISE_STEPS = [
-  { num: "01", title: "Gather your drawing set", desc: "Collect all relevant plan sheets: architectural, structural, electrical, hydraulic, mechanical, hardware schedules. No need to sort them — Kindai handles mixed drawing types." },
-  { num: "02", title: "Scan or export to PDF", desc: "Use your office scanner or CAD export. Aim for 200–300 DPI. Save as PDF. One file per drawing sheet is fine — Kindai accepts up to 50 pages per job." },
-  { num: "03", title: "Upload all pages at once", desc: "Drag and drop all your PDF/image files into the upload zone. Kindai uploads them in parallel and shows you a page list with upload status for each file." },
-  { num: "04", title: "Select your trade and set pricing", desc: "Choose the relevant trade from the dropdown. Set your markup percentage and labour rate. Kindai uses your saved rates automatically if you have a trade profile set up." },
-  { num: "05", title: "Generate the takeoff", desc: "Hit Generate. Kindai processes your pages in batches of 5, analyses each batch with GPT-4 Vision, then merges all results into a single combined takeoff. For 50 pages, expect 2–4 minutes." },
-  { num: "06", title: "Review and export", desc: "Review the materials list, check the confidence score, and adjust any items as needed. Export to PDF or send directly to your quoting software via the export options." },
+// ─── Founding Workflow ─────────────────────────────────────────────────────────
+const FOUNDING_STEPS = [
+  { num: "01", title: "Agree one workflow", desc: "The application confirms one cabinet-making or commercial-joinery workflow and the estimator responsible for review." },
+  { num: "02", title: "Prepare supported files", desc: "Provide up to five agreed PDF, JPG or PNG files. Each file must be no larger than 32MB and readable at normal zoom." },
+  { num: "03", title: "Use the controlled handover", desc: "Private files are accepted only after application approval, payment and confirmation of the processing scope." },
+  { num: "04", title: "Provide authorised inputs", desc: "Supply up to 150 approved price-book rows and 20 written estimating rules for the agreed workflow." },
+  { num: "05", title: "Prepare a structured draft", desc: "KindAI uses the supported files and approved company inputs to propose quantities, source notes, assumptions and review flags." },
+  { num: "06", title: "Review before issue", desc: "A qualified estimator checks quantities, rates, exclusions, compliance and client details before any quote is exported or sent." },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -137,9 +137,9 @@ export default function Help() {
     <div className="min-h-screen bg-white">
       <SEO
         title="Help & Best Practices | Kindai Estimating Suite"
-        description="Learn how to get the best results from Kindai AI estimating software. Scanning tips, multi-page upload guide, enterprise workflow, and FAQs for construction companies."
+        description="Learn how to prepare supported files and review KindAI estimate drafts during the controlled cabinet and joinery founding workflow."
         canonical="/help"
-        keywords="Kindai help, construction estimating software guide, plan scanning tips, multi-page upload, AI takeoff best practices, enterprise construction estimating"
+        keywords="Kindai help, cabinet estimating workflow, joinery plan reading, plan scanning tips, AI draft review"
       />
 
       {/* ── Nav ── */}
@@ -155,7 +155,7 @@ export default function Help() {
           <div className="flex items-center gap-3">
             <button onClick={() => navigate("/pricing")} className="text-sm text-gray-500 hover:text-gray-900 font-semibold hidden sm:block">Pricing</button>
             <button onClick={() => navigate("/demo")} className="text-sm font-bold text-white bg-gradient-to-r from-pink-500 to-orange-500 px-4 py-2 rounded-full">
-              Try Free Demo
+              Explore Sample
             </button>
           </div>
         </div>
@@ -174,13 +174,13 @@ export default function Help() {
             </span>
           </h1>
           <p className="text-gray-300 text-lg max-w-2xl mx-auto">
-            Everything you need to know about uploading plans, scanning best practices, and getting accurate takeoffs — whether you're a sole trader or a 200-person construction company.
+            Learn how to prepare agreed files, inspect source notes and assumptions, and review every draft before it becomes a quote.
           </p>
           <div className="flex flex-wrap justify-center gap-4 mt-6 text-sm text-gray-400">
-            <span className="flex items-center gap-1.5"><Upload className="w-4 h-4 text-pink-400" /> Up to 50 pages per job</span>
+            <span className="flex items-center gap-1.5"><Upload className="w-4 h-4 text-pink-400" /> Up to five agreed files in the founding workflow</span>
             <span className="flex items-center gap-1.5"><FileImage className="w-4 h-4 text-blue-400" /> 32MB per file</span>
             <span className="flex items-center gap-1.5"><Layers className="w-4 h-4 text-green-400" /> PDF, JPG, PNG, WebP</span>
-            <span className="flex items-center gap-1.5"><Zap className="w-4 h-4 text-yellow-400" /> AI batching for large sets</span>
+            <span className="flex items-center gap-1.5"><Zap className="w-4 h-4 text-yellow-400" /> Estimator review required</span>
           </div>
         </div>
       </div>
@@ -198,8 +198,8 @@ export default function Help() {
           <div className="grid sm:grid-cols-3 gap-4">
             {[
               { icon: ScanLine, title: "Scan or photograph your plans", desc: "Use your office scanner, phone camera, or CAD export. PDF is preferred.", colour: "text-pink-500" },
-              { icon: Upload, title: "Upload up to 50 pages", desc: "Drag and drop all pages at once. Kindai handles the rest automatically.", colour: "text-blue-500" },
-              { icon: CheckCircle2, title: "Get your combined takeoff", desc: "AI analyses every page and delivers one merged materials list with pricing.", colour: "text-green-500" },
+              { icon: Upload, title: "Hand over up to five agreed files", desc: "Use the controlled setup process after approval and payment. Keep each file under 32MB.", colour: "text-blue-500" },
+              { icon: CheckCircle2, title: "Review the combined draft", desc: "Check quantities, assumptions, rates and exclusions against the source drawings before approval.", colour: "text-green-500" },
             ].map((item, i) => (
               <Card key={i} className="border-gray-100 shadow-sm">
                 <CardContent className="p-5">
@@ -300,17 +300,17 @@ export default function Help() {
           </div>
         </section>
 
-        {/* ── Enterprise Workflow ── */}
+        {/* ── Founding Workflow ── */}
         <section>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
               <Building2 className="w-4 h-4 text-white" />
             </div>
-            <h2 className="text-2xl font-black text-gray-900">Enterprise Workflow</h2>
+            <h2 className="text-2xl font-black text-gray-900">Founding Workflow</h2>
           </div>
-          <p className="text-gray-500 mb-6 ml-11">For companies with full drawing sets (20–50 pages), here's the recommended end-to-end workflow.</p>
+          <p className="text-gray-500 mb-6 ml-11">The controlled process for the paid cabinet and joinery founding setup.</p>
           <div className="space-y-3">
-            {ENTERPRISE_STEPS.map((step, i) => (
+            {FOUNDING_STEPS.map((step, i) => (
               <div key={i} className="flex gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-orange-500 flex items-center justify-center flex-shrink-0">
                   <span className="text-white font-black text-xs">{step.num}</span>
@@ -334,8 +334,8 @@ export default function Help() {
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
             {[
-              { icon: CheckCircle2, colour: "text-green-500", title: "Do this", items: ["Use PDF format wherever possible", "Scan at 200–300 DPI minimum", "Upload all pages for a job together", "Add a job description for extra context", "Select the correct trade before generating", "Review the confidence score on results"] },
-              { icon: AlertTriangle, colour: "text-amber-500", title: "Avoid this", items: ["Blurry or out-of-focus photos", "Plans photographed at an angle", "Very dark or shadowed images", "Files over 32MB (reduce DPI instead)", "Uploading unrelated drawings in the same job", "Ignoring a low confidence score without reviewing"] },
+              { icon: CheckCircle2, colour: "text-green-500", title: "Do this", items: ["Use PDF format wherever possible", "Keep dimensions and notes readable", "Use only the agreed files for the reviewed job", "Provide authorised rates and written rules", "Confirm the cabinet or joinery workflow", "Review source notes, assumptions and flags"] },
+              { icon: AlertTriangle, colour: "text-amber-500", title: "Avoid this", items: ["Blurry or out-of-focus photos", "Plans photographed at an angle", "Very dark or shadowed images", "Files over 32MB", "Uploading unrelated drawings in the same job", "Ignoring missing evidence or review flags"] },
             ].map((col, i) => (
               <Card key={i} className={`border-${i === 0 ? "green" : "amber"}-100 shadow-sm`}>
                 <CardContent className="p-5">
@@ -388,13 +388,13 @@ export default function Help() {
         {/* ── CTA ── */}
         <section className="text-center py-8">
           <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-10 text-white">
-            <h2 className="text-2xl sm:text-3xl font-black mb-3">Ready to try it?</h2>
-            <p className="text-gray-300 mb-6 max-w-md mx-auto">No account needed. Upload a plan and get a full AI takeoff in 60 seconds.</p>
+            <h2 className="text-2xl sm:text-3xl font-black mb-3">Start with the transparent sample.</h2>
+            <p className="text-gray-300 mb-6 max-w-md mx-auto">Explore the estimate structure without uploading a private plan. The next step is an application for the A$2,500 plus GST cabinet and joinery Founding Workflow Setup.</p>
             <button
               onClick={() => navigate("/demo")}
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-500 text-white font-black text-sm shadow-lg hover:shadow-pink-500/30 transition-all"
             >
-              Try Free Demo <ArrowRight className="w-4 h-4" />
+              Explore the Sample <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </section>

@@ -91,6 +91,10 @@ function isProduction() {
  * Optional header: X-Webhook-Secret (matches WEBHOOK_SECRET env var)
  */
 fbLeadWebhookRouter.post("/fb-lead", async (req: Request, res: Response) => {
+  if (process.env.ENABLE_LEGACY_FB_LEADS !== "true") {
+    return res.status(410).json({ error: "Legacy Facebook beta lead funnel is retired" });
+  }
+
   const startTime = Date.now();
 
   // ── Optional secret validation ──────────────────────────────────────────────
@@ -290,6 +294,10 @@ fbLeadWebhookRouter.post("/fb-lead", async (req: Request, res: Response) => {
  * Facebook webhook verification endpoint (for direct FB webhook setup if needed)
  */
 fbLeadWebhookRouter.get("/fb-lead", (req: Request, res: Response) => {
+  if (process.env.ENABLE_LEGACY_FB_LEADS !== "true") {
+    return res.status(410).json({ error: "Legacy Facebook beta lead funnel is retired" });
+  }
+
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];

@@ -1,0 +1,11 @@
+Captured: 2026-09-26
+TypeScript: PASS
+Focused pricing consistency tests: 4 PASS
+Production build: PASS
+Production HTML bytes: 3176
+Main JavaScript bytes: 1749717
+Main CSS bytes: 241965
+Vite reported main JS gzip bytes: 491510
+Vite reported main CSS gzip bytes: 33190
+Editor runtime markers in production: 0
+Previous live HTML bytes: 370136

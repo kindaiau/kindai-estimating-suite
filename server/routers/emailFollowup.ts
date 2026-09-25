@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
-import { protectedProcedure, router } from "../_core/trpc";
+import { paidProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { estimates, quoteFollowups } from "../../drizzle/schema";
 import { eq, and, lte, isNull } from "drizzle-orm";
@@ -116,7 +116,7 @@ Context:
 // ─── Router ──────────────────────────────────────────────────────────────────
 export const emailFollowupRouter = router({
   // Get all follow-ups for an estimate
-  getFollowups: protectedProcedure.input(z.object({
+  getFollowups: paidProcedure.input(z.object({
     estimateId: z.number(),
   })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
@@ -128,7 +128,7 @@ export const emailFollowupRouter = router({
   }),
 
   // Schedule follow-up sequence when a quote is sent
-  scheduleSequence: protectedProcedure.input(z.object({
+  scheduleSequence: paidProcedure.input(z.object({
     estimateId: z.number(),
     clientEmail: z.string().email(),
     clientName: z.string(),
@@ -171,7 +171,7 @@ export const emailFollowupRouter = router({
   }),
 
   // Preview an email before sending
-  previewEmail: protectedProcedure.input(z.object({
+  previewEmail: paidProcedure.input(z.object({
     estimateId: z.number(),
     dayOffset: z.number(),
     clientName: z.string(),
@@ -212,7 +212,7 @@ export const emailFollowupRouter = router({
   }),
 
   // Send a follow-up email (marks as sent, generates content)
-  sendFollowup: protectedProcedure.input(z.object({
+  sendFollowup: paidProcedure.input(z.object({
     followupId: z.number(),
     estimateId: z.number(),
     customBody: z.string().optional(),
@@ -279,7 +279,7 @@ export const emailFollowupRouter = router({
   }),
 
   // Cancel a follow-up
-  cancelFollowup: protectedProcedure.input(z.object({
+  cancelFollowup: paidProcedure.input(z.object({
     followupId: z.number(),
   })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
@@ -289,7 +289,7 @@ export const emailFollowupRouter = router({
   }),
 
   // Get follow-up templates (for display in UI)
-  getTemplates: protectedProcedure.query(() => {
+  getTemplates: paidProcedure.query(() => {
     return Object.entries(FOLLOWUP_TEMPLATES).map(([key, t]) => ({
       key,
       dayOffset: key === "day1" ? 1 : key === "day3" ? 3 : key === "day7" ? 7 : 14,

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
-import { protectedProcedure, router } from "../_core/trpc";
+import { paidProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { supplierConnections, lineItems, estimates } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
@@ -8,14 +8,14 @@ import { AUSTRALIAN_SUPPLIERS } from "./ai";
 
 export const suppliersRouter = router({
   // List user's connected suppliers
-  list: protectedProcedure.query(async ({ ctx }) => {
+  list: paidProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
     return db.select().from(supplierConnections)
       .where(and(eq(supplierConnections.userId, ctx.user.id), eq(supplierConnections.isActive, true)));
   }),
 
   // Add a supplier connection
-  add: protectedProcedure.input(z.object({
+  add: paidProcedure.input(z.object({
     supplierName: z.string().min(1),
     supplierWebsite: z.string().url().optional(),
     supplierType: z.enum(["trade_account", "retail", "direct", "custom"]).default("trade_account"),
@@ -38,7 +38,7 @@ export const suppliersRouter = router({
   }),
 
   // Update a supplier connection
-  update: protectedProcedure.input(z.object({
+  update: paidProcedure.input(z.object({
     id: z.number(),
     supplierName: z.string().optional(),
     supplierWebsite: z.string().url().optional(),
@@ -60,7 +60,7 @@ export const suppliersRouter = router({
   }),
 
   // Delete a supplier connection
-  delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+  delete: paidProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     await db.update(supplierConnections).set({ isActive: false } as any)
       .where(and(eq(supplierConnections.id, input.id), eq(supplierConnections.userId, ctx.user.id)));
@@ -68,7 +68,7 @@ export const suppliersRouter = router({
   }),
 
   // Get recommended suppliers for a trade (from built-in database)
-  getRecommended: protectedProcedure.input(z.object({
+  getRecommended: paidProcedure.input(z.object({
     trade: z.string(),
     state: z.string().optional(),
   })).query(({ input }) => {
@@ -80,7 +80,7 @@ export const suppliersRouter = router({
   }),
 
   // Generate a materials order list for an estimate
-  generateOrderList: protectedProcedure.input(z.object({
+  generateOrderList: paidProcedure.input(z.object({
     estimateId: z.number(),
     supplierId: z.number().optional(), // if specified, apply that supplier's discount
   })).query(async ({ ctx, input }) => {

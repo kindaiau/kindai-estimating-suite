@@ -85,11 +85,12 @@ describe("Stripe Products & Plans (5-Tier Enterprise Value-Based)", () => {
     expect(sb!.tagline).toContain("growing trade teams");
   });
 
-  it("mid_builder plan is $1,499/mo — replaces full-time estimator", () => {
+  it("mid_builder plan is $1,499/mo for a high-volume estimating team", () => {
     const mb = getPlanById("mid_builder");
     expect(mb).toBeDefined();
     expect(mb!.priceMonthly).toBe(149900);
-    expect(mb!.tagline).toContain("full-time estimator");
+    expect(mb!.tagline).toContain("high-volume estimating team");
+    expect(mb!.tagline).not.toContain("replace");
   });
 
   it("enterprise plan is custom pricing by contact", () => {
@@ -117,10 +118,12 @@ describe("Stripe Products & Plans (5-Tier Enterprise Value-Based)", () => {
   });
 
   it("defines the one-time founding pilot setup offer", () => {
-    expect(PILOT_SETUP_OFFER.name).toContain("Founding Pilot Setup");
+    expect(PILOT_SETUP_OFFER.name).toContain("Founding Workflow Setup");
     expect(PILOT_SETUP_OFFER.name).toContain("6 Months");
     expect(PILOT_SETUP_OFFER.description).toContain("first 6 months");
-    expect(PILOT_SETUP_OFFER.amount).toBe(100000);
+    expect(PILOT_SETUP_OFFER.priceExGst).toBe(250000);
+    expect(PILOT_SETUP_OFFER.gstAmount).toBe(25000);
+    expect(PILOT_SETUP_OFFER.amount).toBe(275000);
     expect(PILOT_SETUP_OFFER.currency).toBe("aud");
   });
 
@@ -143,11 +146,11 @@ describe("Stripe Products & Plans (5-Tier Enterprise Value-Based)", () => {
     });
   });
 
-  it("free plan has restrictive limits", () => {
+  it("evaluation plan has no private projects or free AI allowance", () => {
     const free = getPlanById("free")!;
-    expect(free.limits.estimatesPerMonth).toBe(3);
-    expect(free.limits.aiTakeoffsPerMonth).toBe(3);
-    expect(free.limits.projectsTotal).toBe(5);
+    expect(free.limits.estimatesPerMonth).toBe(0);
+    expect(free.limits.aiTakeoffsPerMonth).toBe(0);
+    expect(free.limits.projectsTotal).toBe(0);
   });
 
   it("mid_builder plan has unlimited estimates and takeoffs", () => {
@@ -227,16 +230,16 @@ describe("ROI Calculator", () => {
 // ─── Billing Router Tests ──────────────────────────────────────────────────────
 
 describe("Billing Router", () => {
-  it("getPlans returns all 5 plans publicly", async () => {
+  it("getPlans returns only validated plans publicly", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
     const plans = await caller.billing.getPlans();
-    expect(plans).toHaveLength(5);
+    expect(plans).toHaveLength(2);
     expect(plans[0].id).toBe("free");
     expect(plans[1].id).toBe("sole_trader");
-    expect(plans[2].id).toBe("small_builder");
-    expect(plans[3].id).toBe("mid_builder");
-    expect(plans[4].id).toBe("enterprise");
+    expect(plans.map(plan => plan.id)).not.toContain("small_builder");
+    expect(plans.map(plan => plan.id)).not.toContain("mid_builder");
+    expect(plans.map(plan => plan.id)).not.toContain("enterprise");
   });
 
   it("getPlans returns tagline and targetAudience for each plan", async () => {
@@ -250,12 +253,12 @@ describe("Billing Router", () => {
     });
   });
 
-  it("getPlans returns popular flag for small_builder plan", async () => {
+  it("getPlans does not advertise an unvalidated popular team tier", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
     const plans = await caller.billing.getPlans();
     const sb = plans.find((p) => p.id === "small_builder");
-    expect(sb?.popular).toBe(true);
+    expect(sb).toBeUndefined();
     const free = plans.find((p) => p.id === "free");
     expect(free?.popular).toBe(false);
   });

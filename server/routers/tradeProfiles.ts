@@ -1,6 +1,6 @@
 import z from "zod";
 import { requireDatabase } from "../_core/errors";
-import { protectedProcedure, router } from "../_core/trpc";
+import { paidProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { tradeProfiles, emailTemplates } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
@@ -141,7 +141,7 @@ const supplierSchema = z.object({
 // ─── Router ──────────────────────────────────────────────────────────────────
 export const tradeProfilesRouter = router({
   // Get trade profile for a specific trade
-  get: protectedProcedure.input(z.object({ trade: z.string() })).query(async ({ ctx, input }) => {
+  get: paidProcedure.input(z.object({ trade: z.string() })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     const result = await db.select().from(tradeProfiles)
       .where(and(eq(tradeProfiles.userId, ctx.user.id), eq(tradeProfiles.trade, input.trade)))
@@ -150,13 +150,13 @@ export const tradeProfilesRouter = router({
   }),
 
   // Get all trade profiles for the user
-  list: protectedProcedure.query(async ({ ctx }) => {
+  list: paidProcedure.query(async ({ ctx }) => {
     const db = requireDatabase(await getDb());
     return db.select().from(tradeProfiles).where(eq(tradeProfiles.userId, ctx.user.id));
   }),
 
   // Upsert trade profile (create or update)
-  upsert: protectedProcedure.input(z.object({
+  upsert: paidProcedure.input(z.object({
     trade: z.string(),
     businessName: z.string().optional(),
     abn: z.string().optional(),
@@ -224,7 +224,7 @@ export const tradeProfilesRouter = router({
   }),
 
   // Get email templates for a trade
-  getEmailTemplates: protectedProcedure.input(z.object({ trade: z.string().optional() })).query(async ({ ctx, input }) => {
+  getEmailTemplates: paidProcedure.input(z.object({ trade: z.string().optional() })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
     const all = await db.select().from(emailTemplates).where(eq(emailTemplates.userId, ctx.user.id));
     if (input.trade) {
@@ -234,7 +234,7 @@ export const tradeProfilesRouter = router({
   }),
 
   // Upsert email template
-  upsertEmailTemplate: protectedProcedure.input(z.object({
+  upsertEmailTemplate: paidProcedure.input(z.object({
     id: z.number().optional(),
     trade: z.string().optional(),
     type: z.enum(["quote_delivery", "quote_followup", "quote_reminder", "quote_accepted", "supplier_order"]),
@@ -265,7 +265,7 @@ export const tradeProfilesRouter = router({
   }),
 
   // Get default template for a type (pre-fills editor with sensible defaults)
-  getDefaultTemplate: protectedProcedure.input(z.object({
+  getDefaultTemplate: paidProcedure.input(z.object({
     type: z.enum(["quote_delivery", "quote_followup", "quote_reminder", "quote_accepted", "supplier_order"]),
     trade: z.string().optional(),
   })).query(({ input }) => {
@@ -273,7 +273,7 @@ export const tradeProfilesRouter = router({
   }),
 
   // AI-generate a custom email template based on business profile
-  generateEmailTemplate: protectedProcedure.input(z.object({
+  generateEmailTemplate: paidProcedure.input(z.object({
     type: z.enum(["quote_delivery", "quote_followup", "quote_reminder", "quote_accepted", "supplier_order"]),
     trade: z.string(),
     businessName: z.string().optional(),
@@ -327,7 +327,7 @@ Return JSON: { "subject": "...", "bodyHtml": "..." }`,
   }),
 
   // Preview rendered email with sample data
-  previewEmail: protectedProcedure.input(z.object({
+  previewEmail: paidProcedure.input(z.object({
     bodyHtml: z.string(),
     subject: z.string(),
     trade: z.string().optional(),
@@ -374,7 +374,7 @@ Return JSON: { "subject": "...", "bodyHtml": "..." }`,
   }),
 
   // Upload company logo to S3 and save URL to trade profile
-  uploadLogo: protectedProcedure.input(z.object({
+  uploadLogo: paidProcedure.input(z.object({
     trade: z.string(),
     fileName: z.string().max(255),
     fileBase64: z.string().max(5_500_000), // ~4MB base64 encoded
@@ -402,7 +402,7 @@ Return JSON: { "subject": "...", "bodyHtml": "..." }`,
   }),
 
   // Remove company logo from trade profile
-  removeLogo: protectedProcedure.input(z.object({
+  removeLogo: paidProcedure.input(z.object({
     trade: z.string(),
   })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());

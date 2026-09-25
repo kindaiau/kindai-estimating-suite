@@ -12,7 +12,7 @@
  * and returns a plain-English confirmation of what changed.
  */
 import { z } from "zod";
-import { protectedProcedure, router } from "../_core/trpc";
+import { paidProcedure, router } from "../_core/trpc";
 import { invokeLLM, Tool, Message } from "../_core/llm";
 import { requireDatabase } from "../_core/errors";
 import { getDb } from "../db";
@@ -129,7 +129,7 @@ export const estimateAgentRouter = router({
    * Main conversational edit endpoint.
    * Accepts a message + estimate context, runs tool-calling loop, applies changes.
    */
-  chat: protectedProcedure
+  chat: paidProcedure
     .input(
       z.object({
         estimateId: z.number(),

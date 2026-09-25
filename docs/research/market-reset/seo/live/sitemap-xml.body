@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- Homepage -->
+  <url>
+    <loc>https://kindaiestimator.com/</loc>
+    <lastmod>2026-04-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://kindaiestimator.com/"/>
+  </url>
+
+  <!-- Beta Landing -->
+  <url>
+    <loc>https://kindaiestimator.com/beta</loc>
+    <lastmod>2026-04-07</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://kindaiestimator.com/beta"/>
+  </url>
+
+  <!-- Pricing -->
+  <url>
+    <loc>https://kindaiestimator.com/pricing</loc>
+    <lastmod>2026-04-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://kindaiestimator.com/pricing"/>
+  </url>
+
+  <!-- Free Demo -->
+  <url>
+    <loc>https://kindaiestimator.com/demo</loc>
+    <lastmod>2026-04-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://kindaiestimator.com/demo"/>
+  </url>
+
+  <!-- AI Takeoff (authenticated, still indexable for SEO) -->
+  <url>
+    <loc>https://kindaiestimator.com/ai-takeoff</loc>
+    <lastmod>2026-04-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="en-AU" href="https://kindaiestimator.com/ai-takeoff"/>
+  </url>
+
+</urlset>

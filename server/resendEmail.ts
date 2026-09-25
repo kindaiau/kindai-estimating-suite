@@ -11,6 +11,7 @@ type PilotLeadInput = {
   phone?: string;
   tradeType?: string;
   intent: string;
+  source?: string;
 };
 
 type PilotPaymentInput = {
@@ -72,8 +73,19 @@ function getOwnerNotificationEmail() {
 export async function sendPilotLeadEmails(input: PilotLeadInput) {
   const notificationEmail =
     getOwnerNotificationEmail();
+  const isFoundingSetupApplication = input.source === "live_plan_evaluation";
 
-  const leadText = `Hey ${input.name},
+  const leadText = isFoundingSetupApplication
+    ? `Hey ${input.name},
+
+Thanks for applying for the KindAI Founding Workflow Setup.
+
+The proposed setup is A$2,500 plus GST for one cabinet or joinery workflow, two reviewed jobs and the first six months of Sole Tradie.
+
+No payment has been taken and no place is reserved yet. I’ll review the details and contact you to confirm fit. Please do not email private plans until we have agreed on the scope and secure handover process.
+
+– Matt`
+    : `Hey ${input.name},
 
 Thanks for requesting a Kindai pilot spot.
 
@@ -85,7 +97,7 @@ I’ll be in touch shortly to confirm if there’s a good fit.
 
 – Matt`;
 
-  const matthewText = `New Kindai pilot lead received.
+  const matthewText = `${isFoundingSetupApplication ? "New KindAI Founding Workflow Setup application" : "New KindAI pilot lead received"}.
 
 Name: ${input.name}
 Email: ${input.email}
@@ -93,17 +105,19 @@ Phone: ${input.phone || "Not provided"}
 Trade: ${input.tradeType || "Not provided"}
 Intent: ${input.intent}
 
-Follow up today. This is a revenue lead.`;
+Follow up today. ${isFoundingSetupApplication ? "No payment has been taken. Confirm fixed-scope fit before requesting files or creating a payment invitation." : "This is a revenue lead."}`;
 
   const [leadSent, ownerSent] = await Promise.all([
     sendResendEmail({
       to: input.email,
-      subject: "Your Kindai pilot spot request",
+      subject: isFoundingSetupApplication ? "Your KindAI Founding Workflow Setup application" : "Your KindAI pilot spot request",
       text: leadText,
     }),
     sendResendEmail({
       to: notificationEmail,
-      subject: `New Kindai pilot lead: ${input.name}`,
+      subject: isFoundingSetupApplication
+        ? `New KindAI setup application: ${input.name}`
+        : `New KindAI pilot lead: ${input.name}`,
       text: matthewText,
     }),
   ]);
@@ -120,17 +134,17 @@ export async function sendPilotPaymentEmails(input: PilotPaymentInput) {
 
   const customerText = `Hey ${input.name},
 
-Your Kindai founding pilot setup is paid and secured.
+Your KindAI Founding Workflow Setup payment is confirmed.
 
-Next step: Matt will personally follow up to book your setup sprint and confirm the quoting workflow we should build first.
+Next step: create or sign in to your KindAI account using this same email address at https://kindaiestimator.com/login. Matt will then contact you to book the 90-minute setup session.
 
-Your setup includes one founder-led setup sprint, your first quoting workflow, margin and GST checks, supplier pricing structure, 7 days of support, and your first 6 months of Kindai.
+Your setup includes one cabinet or joinery workflow, up to 150 price-book rows, up to 20 written rules, two reviewed real jobs, 30 days of email support, and six months of Sole Tradie for one user. The included access does not renew automatically.
 
 Amount paid: ${formattedAmount}
 
 – Matt`;
 
-  const ownerText = `Paid Kindai founding pilot setup received.
+  const ownerText = `Paid KindAI Founding Workflow Setup received.
 
 Name: ${input.name}
 Email: ${input.email}
@@ -139,17 +153,17 @@ Trade: ${input.tradeType || "Not provided"}
 Amount paid: ${formattedAmount}
 Stripe checkout session: ${input.stripeSessionId}
 
-Action: follow up today and book the setup sprint.`;
+Action: confirm the beta-signup record is active, verify the account uses the same email, then book the setup session.`;
 
   const [customerSent, ownerSent] = await Promise.all([
     sendResendEmail({
       to: input.email,
-      subject: "Your Kindai founding pilot setup is secured",
+      subject: "Your KindAI Founding Workflow Setup payment is confirmed",
       text: customerText,
     }),
     sendResendEmail({
       to: notificationEmail,
-      subject: `Paid Kindai pilot setup: ${input.name}`,
+      subject: `Paid KindAI workflow setup: ${input.name}`,
       text: ownerText,
     }),
   ]);
