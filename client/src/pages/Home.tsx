@@ -2,7 +2,7 @@
  * Kindai Homepage — Conversion-focused landing page
  *
  * Design philosophy: Award-level SaaS landing page with dark hero, product proof,
- * social proof, and a clear path to the $9 Pro Trial or free signup.
+ * social proof, and clear paths to pricing or the interactive demo.
  * No waitlist. No beta. This is a live product.
  *
  * Structure: Hero → Video → How It Works → AI That Learns → Trades → Features →
@@ -14,18 +14,14 @@ import { SoftwareAppSchema, OrganizationSchema, FAQSchema } from "@/components/S
 import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Zap, Shield, Brain, FileText, Users, BarChart3,
   ChevronRight, CheckCircle2, Star, ArrowRight, HardHat,
   Camera, Sparkles, DollarSign, Truck, Clock, Upload, Play, Lock
 } from "lucide-react";
-import { motion, useInView, AnimatePresence, useMotionValueEvent, useScroll } from "framer-motion";
+import { motion, useInView, useMotionValueEvent, useScroll } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
-import { pixelViewContent, pixelInitiateCheckout, generateMetaEventId, getMetaBrowserContext } from "@/lib/metaPixel";
-import { ph } from "@/lib/posthog";
-import { trpc } from "@/lib/trpc";
-import { toast } from "sonner";
+import { pixelViewContent } from "@/lib/metaPixel";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663471157879/UNVDthJPfT4ofd4pppvMM2/kindai-logo_1dd661a8.png";
 
@@ -110,7 +106,7 @@ function ScrollNav({ isAuthenticated, navigate }: {
                 Log In
               </Button>
               <Button onClick={() => navigate("/pricing")} className="kindai-btn-primary px-5 rounded-full text-sm font-bold hidden sm:flex">
-                Try Pro — A$9
+                View Pricing
               </Button>
             </>
           )}
@@ -207,29 +203,6 @@ export default function Home() {
   const { isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
 
-  // Pro trial form state (used in hero and final CTA)
-  const [trialForm, setTrialForm] = useState({ name: "", email: "" });
-  const proTrialMutation = trpc.billing.createProTrialCheckout.useMutation({
-    onSuccess: (data) => {
-      window.location.assign(data.url);
-    },
-    onError: (err) => toast.error(err.message),
-  });
-
-  const handleStartProTrial = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!trialForm.name.trim() || !trialForm.email.trim()) {
-      toast.error("Please enter your name and email.");
-      return;
-    }
-    pixelInitiateCheckout({ content_name: "Kindai Pro Trial $9", value: 9 });
-    proTrialMutation.mutate({
-      name: trialForm.name.trim(),
-      email: trialForm.email.trim(),
-      origin: window.location.origin,
-    });
-  };
-
   // Lazy-load video section
   const videoSectionRef = useRef(null);
   const videoInView = useInView(videoSectionRef, { once: true, margin: "200px" });
@@ -251,7 +224,7 @@ export default function Home() {
     <div className="min-h-screen bg-white">
       <SEO
         title="Kindai | AI Estimating for Australian Trades"
-        description="Upload plans, get AI takeoffs and GST-ready quotes in 60 seconds. Try Pro for A$9. Built for Australian tradies and builders."
+        description="Upload plans, prepare AI-assisted takeoffs, and build GST-ready quote drafts. Built for Australian tradies and builders."
       />
       <SoftwareAppSchema />
       <OrganizationSchema />
@@ -281,14 +254,13 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
-            {/* $9 trial badge */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-pink-500/20 to-orange-500/20 border border-orange-500/40 text-orange-400 text-xs font-black mb-6"
             >
-              <Star className="w-3.5 h-3.5" /> Try Pro for A$9 — 21 days, full access
+              <Sparkles className="w-3.5 h-3.5" /> AI-assisted estimating for Australian trades
             </motion.div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.05] mb-6">
@@ -301,7 +273,7 @@ export default function Home() {
               Kindai reads your plans, applies your price book, and builds a GST-ready quote in 60 seconds. Built for Australian tradies.
             </p>
 
-            {/* Hero CTA — direct to pricing or inline trial */}
+            {/* Hero CTA */}
             {!isAuthenticated ? (
               <div className="max-w-md mx-auto lg:mx-0">
                 <div className="flex flex-col sm:flex-row gap-3 mb-3">
@@ -310,18 +282,18 @@ export default function Home() {
                     size="lg"
                     className="kindai-btn-primary px-8 py-4 rounded-full text-base font-black h-auto shadow-xl flex-1"
                   >
-                    Start A$9 Pro Trial <ArrowRight className="w-5 h-5 ml-2" />
+                    View Plans <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                   <Button
-                    onClick={handleGetStarted}
+                    onClick={() => navigate("/demo")}
                     size="lg"
                     variant="outline"
                     className="px-6 py-4 rounded-full text-base font-black h-auto border-white/30 text-white hover:bg-white/10 bg-transparent"
                   >
-                    Try Free
+                    Try Live Demo
                   </Button>
                 </div>
-                <p className="text-white/40 text-xs">No lock-in. Cancel anytime. A$9 gets you 21 days of full Pro access.</p>
+                <p className="text-white/40 text-xs">Plans start at A$149 per month. Review the demo before choosing.</p>
               </div>
             ) : (
               <Button
@@ -480,7 +452,7 @@ export default function Home() {
               size="lg"
               className="kindai-btn-primary w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 rounded-full text-sm sm:text-base font-black h-auto shadow-xl"
             >
-              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 mr-2" /> Start A$9 Pro Trial
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 mr-2" /> View Plans
             </Button>
             <Button
               onClick={() => navigate("/demo")}
@@ -526,7 +498,7 @@ export default function Home() {
               size="lg"
               className="kindai-btn-primary px-8 py-4 rounded-full text-base font-black h-auto shadow-xl"
             >
-              <Sparkles className="w-5 h-5 mr-2" /> Start A$9 Pro Trial
+              <Sparkles className="w-5 h-5 mr-2" /> View Plans
             </Button>
           </div>
         </div>
@@ -869,7 +841,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Final CTA — $9 Pro Trial ── */}
+      {/* ── Final CTA ── */}
       <section className="py-24 px-4 bg-gray-950 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <motion.div
@@ -886,9 +858,8 @@ export default function Home() {
             animate={{ y: [0, -6, 0] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           />
-          {/* $9 trial badge */}
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500/20 to-orange-500/20 border border-orange-500/40 rounded-full px-4 py-1.5 text-sm font-black text-orange-400 mb-5">
-            <Star className="w-4 h-4" /> A$9 for 21 days of full Pro access
+            <Sparkles className="w-4 h-4" /> Plans from A$149 per month
           </div>
           <h2 className="text-4xl sm:text-5xl font-black text-white mb-4">
             Give your estimators an <span className="kindai-gradient-text">unfair advantage.</span>
@@ -897,39 +868,26 @@ export default function Home() {
             Kindai cuts first-pass takeoff time by up to 80%. Your team quotes more jobs, wins more work, and controls every margin.
           </p>
           <p className="text-gray-500 text-sm mb-8">
-            Try Pro for A$9. After 21 days, continue at A$149/mo or cancel. No questions asked.
+            Explore the demo first, then choose the plan that fits your workflow.
           </p>
 
-          {/* Inline trial form */}
           {!isAuthenticated ? (
-            <div className="max-w-sm mx-auto mb-6">
-              <form onSubmit={handleStartProTrial} className="flex flex-col gap-3">
-                <Input
-                  type="text"
-                  placeholder="Your name"
-                  value={trialForm.name}
-                  onChange={(e) => setTrialForm((f) => ({ ...f, name: e.target.value }))}
-                  className="h-10 text-sm rounded-xl border-white/10 bg-white/5 text-white placeholder:text-gray-500 focus:border-orange-500"
-                  required
-                />
-                <Input
-                  type="email"
-                  placeholder="Email address"
-                  value={trialForm.email}
-                  onChange={(e) => setTrialForm((f) => ({ ...f, email: e.target.value }))}
-                  className="h-10 text-sm rounded-xl border-white/10 bg-white/5 text-white placeholder:text-gray-500 focus:border-orange-500"
-                  required
-                />
-                <Button
-                  type="submit"
-                  disabled={proTrialMutation.isPending}
-                  size="lg"
-                  className="kindai-btn-primary px-10 py-4 rounded-full text-base font-black h-auto shadow-xl w-full"
-                >
-                  {proTrialMutation.isPending ? "Opening Stripe..." : "Start A$9 Pro Trial →"}
-                </Button>
-              </form>
-              <p className="text-xs text-gray-600 mt-3">Secure checkout via Stripe. Cancel anytime. No account needed.</p>
+            <div className="flex flex-wrap justify-center gap-4 mb-6">
+              <Button
+                onClick={() => navigate("/pricing")}
+                size="lg"
+                className="kindai-btn-primary px-10 py-4 rounded-full text-base font-black h-auto shadow-xl"
+              >
+                View Plans <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+              <Button
+                onClick={() => navigate("/demo")}
+                size="lg"
+                variant="outline"
+                className="px-8 py-4 rounded-full text-base font-black h-auto border-white/20 text-white hover:bg-white/10 bg-transparent"
+              >
+                Try Live Demo
+              </Button>
             </div>
           ) : (
             <Button

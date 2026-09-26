@@ -176,10 +176,10 @@ export default function BetaExpired() {
                 className="text-3xl sm:text-4xl font-black"
                 style={{ fontFamily: "Nunito, sans-serif", color: "oklch(12% .02 270)" }}
               >
-                A$9<span className="text-lg font-medium" style={{ color: "oklch(52% .018 270)" }}>/month</span>
+                A$149<span className="text-lg font-medium" style={{ color: "oklch(52% .018 270)" }}>/month</span>
               </h2>
               <p className="text-sm mt-1" style={{ color: "oklch(52% .018 270)" }}>
-                7-day free trial included — cancel anytime
+                Monthly billing — cancel anytime
               </p>
             </div>
 
@@ -248,7 +248,7 @@ export default function BetaExpired() {
             </span>
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4" style={{ color: "oklch(72% .25 145)" }} />
-              7-day free trial
+              A$149 monthly plan
             </span>
           </div>
 
