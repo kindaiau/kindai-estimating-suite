@@ -8,7 +8,7 @@
  *   Day 2  — The #1 quoting mistake tradies make
  *   Day 4  — Social proof: how other tradies are using Kindai
  *   Day 7  — ROI calculator: what slow quoting is actually costing you
- *   Day 10 — Last chance: your Pro trial is waiting
+ *   Day 10 — Final check-in: see whether Kindai fits
  */
 
 import { sendEmail } from "./resendSender";
@@ -126,8 +126,8 @@ export async function sendEbookNurtureDay4(opts: {
       <p style="margin:0 0 6px;color:${BRAND.textBody};font-size:15px;">→ Spending more time on the tools (what they actually love)</p>
       <p style="margin:0;color:${BRAND.textBody};font-size:15px;">→ Getting home earlier</p>
     `, BRAND.blue)}
-    ${brandedCta("Start A$9 Pro Trial →", PRICING_URL)}
-    ${brandedP(`A$9 gets you 21 days of full Pro access. No lock-in. Cancel anytime.`)}
+    ${brandedCta("View Kindai Pricing →", PRICING_URL)}
+    ${brandedP(`Review the plans and choose only when the workflow and value make sense for your business.`)}
     ${brandedSignature("Matt", "Co-founder, Kindai")}
   `;
 
@@ -169,8 +169,8 @@ export async function sendEbookNurtureDay7(opts: {
       <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">3 quotes/week × 2.3 hrs × 50 weeks = <strong style="color:${BRAND.textWhite};">345 hours/year</strong></p>
       <p style="margin:0;color:${BRAND.textBody};font-size:15px;">At $120/hr = <strong style="color:${BRAND.green};">$41,400 back in your pocket</strong></p>
     `, BRAND.green)}
-    ${brandedP(`Try Pro for A$9 — 21 days of full access. No credit card lock-in. Upload your first plan and see what the AI does with it.`)}
-    ${brandedCta("Start A$9 Pro Trial →", PRICING_URL)}
+    ${brandedP(`Use the public demo to understand the workflow, then review the full-price plans when you are ready.`)}
+    ${brandedCta("View Plans and Pricing →", PRICING_URL)}
     ${brandedSignature("Matt", "Co-founder, Kindai")}
   `;
 
@@ -195,27 +195,27 @@ export async function sendEbookNurtureDay10(opts: {
   const firstName = opts.name.split(" ")[0];
 
   const body = `
-    ${brandedH2(`${firstName}, your Pro trial is waiting`)}
+    ${brandedH2(`${firstName}, see whether Kindai fits your workflow`)}
     ${brandedP(`Hey ${firstName},`)}
     ${brandedP(`This is the last email in this sequence — I won't keep nudging you after this.`)}
-    ${brandedP(`I just wanted to make sure you knew: <strong style="color:${BRAND.textWhite};">Kindai Pro is live</strong> and tradies across Australia are already using it to cut their quoting time by 80%.`)}
+    ${brandedP(`I just wanted to make sure you had the links to review the workflow and current pricing before deciding whether Kindai fits your business.`)}
     ${brandedInfoBox(`
-      <p style="margin:0 0 12px;color:${BRAND.textWhite};font-size:17px;font-weight:700;">What you get with Kindai Pro (A$9 for 21 days):</p>
+      <p style="margin:0 0 12px;color:${BRAND.textWhite};font-size:17px;font-weight:700;">What to review before choosing Kindai Pro:</p>
       <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">✅ Full AI Takeoff — upload plans, get a quote draft in 60 seconds</p>
       <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">✅ Your own materials price book with trade pricing</p>
       <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">✅ GST-ready quote builder with branded PDF export</p>
       <p style="margin:0 0 8px;color:${BRAND.textBody};font-size:15px;">✅ Company Memory — AI learns your rates, rules, and corrections</p>
       <p style="margin:0;color:${BRAND.textBody};font-size:15px;">✅ Direct access to me — reply to this email anytime</p>
     `, BRAND.hotPink)}
-    ${brandedP(`If it's not for you, no hard feelings. But if you've been thinking about it — A$9 for 21 days is less than a coffee a day.`)}
-    ${brandedCta("Start A$9 Pro Trial →", PRICING_URL)}
+    ${brandedP(`If it is not a fit, no hard feelings. The demo and pricing page give you the clearest current view of the product.`)}
+    ${brandedCta("Review Kindai Pricing →", PRICING_URL)}
     ${brandedP(`Either way — I hope the guide was useful. Good luck with the quoting.`)}
     ${brandedSignature("Matt", "Co-founder, Kindai")}
   `;
 
   return sendEmail({
     to: opts.to,
-    subject: `${firstName}, your Pro trial is waiting`,
+    subject: `${firstName}, see whether Kindai fits your workflow`,
     html: brandedEmailWrap({
       bodyHtml: body,
       footerText: "You received this because you downloaded the Kindai free guide. This is the last email in the sequence.",

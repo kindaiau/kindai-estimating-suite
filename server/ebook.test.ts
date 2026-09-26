@@ -182,7 +182,8 @@ describe("Ebook Email Sequence", () => {
       await sendEbookNurtureDay10({ to: "test@test.com", name: "Test User" });
 
       const call = mockSendEmail.mock.calls[0][0];
-      expect(call.html).toContain("Pro Trial");
+      expect(call.html).toContain("Review Kindai Pricing");
+      expect(call.html).not.toContain("A$9");
     });
   });
 
