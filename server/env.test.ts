@@ -16,12 +16,16 @@ describe("environment validation", () => {
     delete process.env.VITE_APP_ID;
     delete process.env.JWT_SECRET;
     delete process.env.OAUTH_SERVER_URL;
+    delete process.env.SUPABASE_URL;
+    delete process.env.SUPABASE_ANON_KEY;
+    delete process.env.VITE_SUPABASE_URL;
+    delete process.env.VITE_SUPABASE_ANON_KEY;
     delete process.env.DATABASE_URL;
 
     const status = getEnvironmentStatus();
 
-    expect(status.auth.ready).toBe(true);
-    expect(status.auth.missingRequired).toEqual([]);
+    expect(status.auth.ready).toBe(false);
+    expect(status.auth.missingRequired).toHaveLength(2);
     expect(status.database.ready).toBe(false);
     expect(status.database.missingRequired).toEqual(["DATABASE_URL"]);
   });
@@ -30,11 +34,26 @@ describe("environment validation", () => {
     delete process.env.VITE_APP_ID;
     delete process.env.JWT_SECRET;
     delete process.env.OAUTH_SERVER_URL;
+    delete process.env.SUPABASE_URL;
+    delete process.env.SUPABASE_ANON_KEY;
+    delete process.env.VITE_SUPABASE_URL;
+    delete process.env.VITE_SUPABASE_ANON_KEY;
     delete process.env.DATABASE_URL;
 
     expect(() => validateServerEnv()).toThrow(
       "Missing required startup environment variables"
     );
+  });
+
+  it("treats Supabase configuration as valid startup auth configuration", () => {
+    delete process.env.VITE_APP_ID;
+    delete process.env.JWT_SECRET;
+    delete process.env.OAUTH_SERVER_URL;
+    process.env.SUPABASE_URL = "https://example.supabase.co";
+    process.env.SUPABASE_ANON_KEY = "anon";
+    process.env.DATABASE_URL = "mysql://user:pass@localhost:3306/kindai";
+
+    expect(() => validateServerEnv()).not.toThrow();
   });
 
   it("returns a required env value when present", () => {
