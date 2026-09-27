@@ -110,14 +110,14 @@ export const PLANS: SubscriptionPlan[] = [
   // ─── TIER 2: SOLE TRADER ─────────────────────────────────────────────────────
   {
     id: "sole_trader",
-    name: "Sole Tradie",
+    name: "Pro",
     tagline: "Quote faster. Win more jobs.",
     description: "For the one-person operation. Replaces hours of manual quoting with 60-second AI takeoffs. Pays for itself on the first job.",
     targetAudience: "Sole traders and owner-operators (1–2 people)",
     annualSavings: "Saves 8–12 hrs/week in quoting time",
     roiStatement: "At $85/hr, that's $35,000+ of your time back every year",
     priceMonthly: 14900, // $149/mo
-    priceYearly: 143040, // $119/mo billed annually ($1,428/yr — saves $360)
+    priceYearly: 143040, // $119.20/mo billed annually ($1,430.40/yr — saves 20%)
     features: [
       { text: "Unlimited estimates", included: true },
       { text: "20 AI Vision Takeoffs per month", included: true },
@@ -144,14 +144,14 @@ export const PLANS: SubscriptionPlan[] = [
   // ─── TIER 3: PRO ─────────────────────────────────────────────────────────────
   {
     id: "small_builder",
-    name: "Pro",
+    name: "Business",
     tagline: "For growing trade teams.",
     description: "For trade businesses with a small team. Adds unlimited AI volume, client-owned accounting integrations, accuracy reporting, and team workflows.",
     targetAudience: "Trade businesses with 3–15 staff",
     annualSavings: "Replaces a $55,000–$75,000/yr part-time estimator",
-    roiStatement: "You pay $5,400/yr. You save $55,000+. That's a 10x return.",
-    priceMonthly: 45000, // $450/mo
-    priceYearly: 432000, // $360/mo billed annually ($4,320/yr — saves $1,080)
+    roiStatement: "You pay $5,988/yr on monthly billing. You save $55,000+.",
+    priceMonthly: 49900, // $499/mo
+    priceYearly: 479040, // $399.20/mo billed annually ($4,790.40/yr — saves 20%)
     popular: true,
     features: [
       { text: "Unlimited estimates", included: true },
@@ -180,14 +180,14 @@ export const PLANS: SubscriptionPlan[] = [
   // ─── TIER 4: MID-TIER BUILDER ────────────────────────────────────────────────
   {
     id: "mid_builder",
-    name: "Mid-Tier Builder",
+    name: "Enterprise",
     tagline: "Replace your full-time estimator.",
     description: "For construction companies turning over $2M–$20M/yr. Replaces a full-time estimator ($130K–$180K loaded cost) and eliminates underquoting risk.",
     targetAudience: "Construction companies with 15–100 staff, $2M–$20M turnover",
     annualSavings: "Replaces a $130,000–$180,000/yr full-time estimator",
     roiStatement: "You pay $17,988/yr. You save $130,000+. That's a 7x return — plus zero underquoting risk.",
     priceMonthly: 149900, // $1,499/mo
-    priceYearly: 1438800, // $1,199/mo billed annually ($14,388/yr — saves $3,600)
+    priceYearly: 1439040, // $1,199.20/mo billed annually ($14,390.40/yr — saves 20%)
     features: [
       { text: "Everything in Pro, plus:", included: true },
       { text: "Unlimited AI Vision Takeoffs", included: true },
@@ -213,7 +213,7 @@ export const PLANS: SubscriptionPlan[] = [
   // ─── TIER 5: ENTERPRISE ──────────────────────────────────────────────────────
   {
     id: "enterprise",
-    name: "Enterprise & Custom Solutions",
+    name: "Enterprise+",
     tagline: "Built around your workflow.",
     description: "For builders and major trade teams that need custom onboarding, integrations, supplier price books, and commercial support around their existing or recommended systems.",
     targetAudience: "Tier 1–3 builders, $20M+ turnover, multi-state operations",

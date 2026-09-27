@@ -22,10 +22,10 @@ const TIER_COLOURS: Record<string, string> = {
 
 const TIER_NAMES: Record<string, string> = {
   free: "Starter (Free)",
-  sole_trader: "Sole Tradie",
-  small_builder: "Pro",
-  mid_builder: "Commercial",
-  enterprise: "Enterprise & Custom",
+  sole_trader: "Pro",
+  small_builder: "Business",
+  mid_builder: "Enterprise",
+  enterprise: "Enterprise+",
 };
 
 const STATUS_BADGES: Record<string, { label: string; icon: typeof CheckCircle2; colour: string }> = {

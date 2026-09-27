@@ -144,7 +144,7 @@ export function FAQSchema() {
         "name": "How much does Kindai cost?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Kindai pricing starts at $149/month for Sole Tradie, $450/month for Pro, and Enterprise & Custom Solutions are scoped directly with the Kindai team."
+          "text": "Kindai Pro is A$149/month, Business is A$499/month, and Enterprise is A$1,499/month. Enterprise+ pricing is tailored to your business."
         }
       },
       {

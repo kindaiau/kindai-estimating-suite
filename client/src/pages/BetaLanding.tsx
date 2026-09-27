@@ -38,7 +38,7 @@ function useCountdown(target: Date) {
 }
 
 const BETA_PERKS = [
-  { icon: Zap, text: "Full platform access — free during beta (normally $149–$450/mo)" },
+  { icon: Zap, text: "Full platform access — free during beta (paid plans from A$149/mo)" },
   { icon: Shield, text: "Founding member pricing locked in when we go paid" },
   { icon: Users, text: "Your feedback directly shapes the product" },
   { icon: Star, text: "Your business listed as a Kindai Founding Partner" },
