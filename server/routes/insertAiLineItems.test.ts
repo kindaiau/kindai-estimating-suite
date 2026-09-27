@@ -34,4 +34,50 @@ describe("buildAiLineItemRows", () => {
       subtotal: "135",
     });
   });
+
+  it("normalizes swapped retail/trade prices before selecting unit rate", () => {
+    const rows = buildAiLineItemRows(7, [
+      {
+        description: "LED batten",
+        unit: "ea",
+        quantity: 2,
+        tradePrice: 42,
+        retailPrice: 30,
+        category: "Materials",
+        labourMinutes: 0,
+        wasteFactor: 0,
+      },
+    ], {
+      useTradePrice: true,
+    });
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      unitRate: "30",
+      subtotal: "60",
+    });
+  });
+
+  it("derives missing trade pricing from retail pricing", () => {
+    const rows = buildAiLineItemRows(11, [
+      {
+        description: "MCB 20A",
+        unit: "ea",
+        quantity: 5,
+        tradePrice: 0,
+        retailPrice: 25,
+        category: "Materials",
+        labourMinutes: 0,
+        wasteFactor: 0,
+      },
+    ], {
+      useTradePrice: true,
+    });
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      unitRate: "20",
+      subtotal: "100",
+    });
+  });
 });
