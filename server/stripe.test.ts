@@ -9,6 +9,8 @@ import {
   getPlanById,
   getPlanCheckoutAmount,
 } from "./stripe/products";
+import { isCheckoutPriceCurrent } from "./stripe/stripe";
+import type Stripe from "stripe";
 
 // ─── Test helpers ──────────────────────────────────────────────────────────────
 
@@ -50,6 +52,33 @@ function createPublicContext(): TrpcContext {
 // ─── Product / Plan Tests ──────────────────────────────────────────────────────
 
 describe("Stripe Products & Plans (5-Tier Enterprise Value-Based)", () => {
+  it("uses the advertised Business price for both billing intervals", () => {
+    const business = getPlanById("small_builder")!;
+    expect(getPlanCheckoutAmount(business, "monthly")).toBe(49900);
+    expect(getPlanCheckoutAmount(business, "yearly")).toBe(479040);
+  });
+
+  it("keeps all published annual prices at an exact 20% discount", () => {
+    for (const planId of ["sole_trader", "small_builder", "mid_builder"]) {
+      const plan = getPlanById(planId)!;
+      expect(plan.priceYearly).toBe(Math.round(plan.priceMonthly * 12 * 0.8));
+    }
+  });
+
+  it("does not reuse an outdated Stripe price or the wrong billing interval", () => {
+    const currentPrice = {
+      unit_amount: 49900,
+      currency: "aud",
+      billing_scheme: "per_unit",
+      recurring: { interval: "month", interval_count: 1 },
+    } as Stripe.Price;
+
+    expect(isCheckoutPriceCurrent(currentPrice, 49900, "monthly")).toBe(true);
+    expect(isCheckoutPriceCurrent(currentPrice, 45000, "monthly")).toBe(false);
+    expect(isCheckoutPriceCurrent(currentPrice, 49900, "yearly")).toBe(false);
+    expect(isCheckoutPriceCurrent({ ...currentPrice, currency: "usd" }, 49900, "monthly")).toBe(false);
+  });
+
   it("defines exactly 5 subscription tiers", () => {
     expect(PLANS).toHaveLength(5);
     expect(PLANS.map((p) => p.id)).toEqual([
@@ -75,12 +104,12 @@ describe("Stripe Products & Plans (5-Tier Enterprise Value-Based)", () => {
     expect(solo!.priceYearly).toBe(143040);
   });
 
-  it("small_builder plan is the $450/mo Pro tier", () => {
+  it("small_builder checkout matches the A$499/mo Business tier", () => {
     const sb = getPlanById("small_builder");
     expect(sb).toBeDefined();
-    expect(sb!.name).toBe("Pro");
-    expect(sb!.priceMonthly).toBe(45000);
-    expect(sb!.priceYearly).toBe(432000);
+    expect(sb!.name).toBe("Business");
+    expect(sb!.priceMonthly).toBe(49900);
+    expect(sb!.priceYearly).toBe(479040);
     expect(sb!.popular).toBe(true);
     expect(sb!.tagline).toContain("growing trade teams");
   });
@@ -95,7 +124,7 @@ describe("Stripe Products & Plans (5-Tier Enterprise Value-Based)", () => {
   it("enterprise plan is custom pricing by contact", () => {
     const ent = getPlanById("enterprise");
     expect(ent).toBeDefined();
-    expect(ent!.name).toBe("Enterprise & Custom Solutions");
+    expect(ent!.name).toBe("Enterprise+");
     expect(ent!.priceMonthly).toBe(0);
     expect(ent!.priceYearly).toBe(0);
     expect(ent!.contactSales).toBe(true);

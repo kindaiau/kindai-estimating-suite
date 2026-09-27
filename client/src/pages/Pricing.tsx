@@ -26,6 +26,7 @@ const TIERS = [
     name: "Free",
     subtitle: "Try it out",
     monthlyPrice: 0,
+    yearlyPriceCents: 0,
     color: "from-gray-400 to-gray-500",
     border: "border-gray-200",
     badge: null,
@@ -51,6 +52,7 @@ const TIERS = [
     name: "Pro",
     subtitle: "Sole traders & subbies",
     monthlyPrice: 149,
+    yearlyPriceCents: 143040,
     color: "from-pink-500 to-orange-500",
     border: "border-orange-400",
     badge: "MOST POPULAR",
@@ -76,6 +78,7 @@ const TIERS = [
     name: "Business",
     subtitle: "Growing trade businesses",
     monthlyPrice: 499,
+    yearlyPriceCents: 479040,
     color: "from-blue-500 to-indigo-600",
     border: "border-blue-400",
     badge: "BEST VALUE",
@@ -101,6 +104,7 @@ const TIERS = [
     name: "Enterprise",
     subtitle: "Mid-size builders & estimators",
     monthlyPrice: 1499,
+    yearlyPriceCents: 1439040,
     color: "from-purple-500 to-pink-600",
     border: "border-purple-400",
     badge: null,
@@ -127,6 +131,7 @@ const TIERS = [
     name: "Enterprise+",
     subtitle: "Large builders & commercial",
     monthlyPrice: null,
+    yearlyPriceCents: null,
     color: "from-amber-400 to-orange-600",
     border: "border-amber-400",
     badge: "CUSTOM",
@@ -308,12 +313,12 @@ export default function Pricing() {
   }, []);
 
   const handleSubscribe = (tierId: string, price: number) => {
-    if (!isAuthenticated) {
-      window.location.href = getLoginUrl();
-      return;
-    }
     if (tierId === "enterprise_plus") {
       window.location.href = "mailto:matt@kindaiestimator.com?subject=Enterprise%2B%20Enquiry";
+      return;
+    }
+    if (!isAuthenticated) {
+      window.location.href = getLoginUrl();
       return;
     }
     if (tierId === "free") {
@@ -431,7 +436,7 @@ export default function Pricing() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
             {TIERS.map((tier, i) => {
               const price = tier.monthlyPrice !== null
-                ? (yearly ? Math.round(tier.monthlyPrice * 0.8) : tier.monthlyPrice)
+                ? (yearly ? tier.yearlyPriceCents! / 1200 : tier.monthlyPrice)
                 : null;
               const isPopular = tier.badge === "MOST POPULAR";
               const isBestValue = tier.badge === "BEST VALUE";
@@ -488,11 +493,11 @@ export default function Pricing() {
                       ) : (
                         <div>
                           <span className={`text-2xl font-black ${isBestValue ? "text-white" : "text-gray-900"}`}>
-                            {price === 0 ? "Free" : `A$${price}`}
+                            {price === 0 ? "Free" : `A$${price?.toLocaleString("en-AU", { minimumFractionDigits: yearly ? 2 : 0, maximumFractionDigits: 2 })}`}
                           </span>
                           {price !== 0 && <span className={`text-xs ${isBestValue ? "text-gray-400" : "text-gray-400"}`}>/mo</span>}
                           {yearly && price !== null && price > 0 && (
-                            <div className="text-[10px] text-green-500 font-bold mt-0.5">A${price * 12}/yr</div>
+                            <div className="text-[10px] text-green-500 font-bold mt-0.5">A${(tier.yearlyPriceCents! / 100).toLocaleString("en-AU", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} billed yearly</div>
                           )}
                         </div>
                       )}
@@ -503,7 +508,7 @@ export default function Pricing() {
                     </p>
 
                     <Button
-                      onClick={() => handleSubscribe(tier.id, tier.monthlyPrice ?? 0)}
+                      onClick={() => handleSubscribe(tier.id, yearly ? (tier.yearlyPriceCents ?? 0) / 100 : tier.monthlyPrice ?? 0)}
                       disabled={checkoutMutation.isPending}
                       variant={tier.ctaVariant}
                       className={`w-full py-2.5 rounded-full font-black text-sm h-auto mb-4 ${

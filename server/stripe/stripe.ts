@@ -12,6 +12,18 @@ export function getStripe(): Stripe {
   return _stripe;
 }
 
+export function isCheckoutPriceCurrent(
+  price: Stripe.Price,
+  amount: number,
+  interval: "monthly" | "yearly"
+): boolean {
+  return price.unit_amount === amount &&
+    price.currency === "aud" &&
+    price.billing_scheme === "per_unit" &&
+    price.recurring?.interval === (interval === "yearly" ? "year" : "month") &&
+    price.recurring?.interval_count === 1;
+}
+
 /**
  * Find or create a Stripe Customer for a given user
  */

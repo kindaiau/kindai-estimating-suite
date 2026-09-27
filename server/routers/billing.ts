@@ -12,6 +12,7 @@ import {
   createPilotSetupCheckoutSession,
   createPortalSession,
   getStripe,
+  isCheckoutPriceCurrent,
 } from "../stripe/stripe";
 
 export const billingRouter = router({
@@ -156,8 +157,9 @@ export const billingRouter = router({
 
       let priceId: string;
 
-      if (prices.data.length > 0) {
-        priceId = prices.data[0].id;
+      const existingPrice = prices.data[0];
+      if (existingPrice && isCheckoutPriceCurrent(existingPrice, priceAmount, input.interval)) {
+        priceId = existingPrice.id;
       } else {
         // Create product and price
         const product = await stripe.products.create({
@@ -174,6 +176,7 @@ export const billingRouter = router({
             interval: input.interval === "yearly" ? "year" : "month",
           },
           lookup_key: `kindai_${input.planId}_${input.interval}`,
+          transfer_lookup_key: Boolean(existingPrice),
         });
 
         priceId = price.id;
