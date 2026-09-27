@@ -53,6 +53,7 @@ import SwmsSign from "./pages/SwmsSign";
 import BetaExpired from "./pages/BetaExpired";
 
 const FbLeadsDashboard = lazy(() => import("./pages/FbLeadsDashboard"));
+const FencingEstimator = lazy(() => import("./pages/FencingEstimator"));
 const LaunchEngineLandingPage = lazy(() => import("./launch-engine/LandingPage"));
 const LaunchEngineBrandScanPage = lazy(() => import("./launch-engine/BrandScanPage"));
 const LaunchEngineDashboardPage = lazy(() => import("./launch-engine/DashboardPage"));
@@ -103,6 +104,7 @@ function Router() {
         <Route path="/onboarding" component={protectedPage(Onboarding)} />
         <Route path="/crm" component={protectedPage(CrmPipeline)} />
         <Route path="/estimator" component={protectedPage(EstimatorWorkspace)} />
+        <Route path="/fencing" component={protectedPage(FencingEstimator)} />
         <Route path="/automations" component={protectedPage(AutomationCenter)} />
         <Route path="/analytics" component={protectedPage(AnalyticsDashboard)} />
         <Route path="/project-dashboard" component={protectedPage(ProjectDashboard)} />
