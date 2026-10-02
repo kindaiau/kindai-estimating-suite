@@ -1,3 +1,4 @@
+import { assertProPrice, proTaxConfig } from "../stripe/proCheckout";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { requireDatabase } from "../_core/errors";
@@ -5,7 +6,7 @@ import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import { getDb } from "../db";
 import { users } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
-import { PILOT_SETUP_OFFER, PLANS, getPlanById, getPlanCheckoutAmount } from "../stripe/products";
+import { PILOT_SETUP_OFFER, NEW_SALES_PLANS, PLANS, getPlanById, getPlanCheckoutAmount } from "../stripe/products";
 import {
   findOrCreateCustomer,
   createCheckoutSession,
@@ -15,9 +16,13 @@ import {
 } from "../stripe/stripe";
 
 export const billingRouter = router({
+  offerTax: publicProcedure.query(() => {
+    try { const tax = proTaxConfig(); return { ready: true, behavior: tax.behavior, automatic: tax.automatic }; }
+    catch { return { ready: false, behavior: null, automatic: null }; }
+  }),
   /** Get all available plans */
   getPlans: publicProcedure.query(() => {
-    return PLANS.map((p) => ({
+    return NEW_SALES_PLANS.map((p) => ({
       id: p.id,
       name: p.name,
       tagline: p.tagline,
@@ -97,7 +102,7 @@ export const billingRouter = router({
   createCheckout: protectedProcedure
     .input(
       z.object({
-        planId: z.enum(["sole_trader", "small_builder", "mid_builder", "enterprise"]),
+        planId: z.literal("pro"),
         interval: z.enum(["monthly", "yearly"]).default("monthly"),
         origin: z.string(),
       })
@@ -105,10 +110,15 @@ export const billingRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = requireDatabase(await getDb());
 
+      const tax = proTaxConfig();
+      const publicOrigin = process.env.PUBLIC_APP_ORIGIN;
+      if (!publicOrigin || new URL(publicOrigin).origin !== input.origin) throw new TRPCError({ code: "BAD_REQUEST", message: "Unrecognised checkout origin" });
+
       // Get user's current Stripe customer ID
       const [user] = await db
         .select({
           stripeCustomerId: users.stripeCustomerId,
+          stripeSubscriptionId: users.stripeSubscriptionId,
           email: users.email,
           name: users.name,
         })
@@ -117,6 +127,8 @@ export const billingRouter = router({
         .limit(1);
 
       if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+
+      if (user.stripeSubscriptionId) throw new TRPCError({ code: "CONFLICT", message: "Manage your existing subscription in Billing; no second subscription was created." });
 
       // Find or create Stripe customer
       const customerId = await findOrCreateCustomer({
@@ -149,7 +161,7 @@ export const billingRouter = router({
 
       // Search for existing price or create one
       const prices = await stripe.prices.list({
-        lookup_keys: [`kindai_${input.planId}_${input.interval}`],
+        lookup_keys: [`kindai_pro_2026_${input.interval}_${tax.behavior}`],
         active: true,
         limit: 1,
       });
@@ -157,6 +169,7 @@ export const billingRouter = router({
       let priceId: string;
 
       if (prices.data.length > 0) {
+        assertProPrice(prices.data[0], input.interval, tax.behavior);
         priceId = prices.data[0].id;
       } else {
         // Create product and price
@@ -164,17 +177,18 @@ export const billingRouter = router({
           name: `Kindai ${plan.name} (${input.interval})`,
           description: plan.description,
           metadata: { planId: input.planId },
-        });
+        }, { idempotencyKey: `kindai-pro-product:${input.interval}:${tax.behavior}` });
 
         const price = await stripe.prices.create({
           product: product.id,
           unit_amount: priceAmount,
           currency: "aud",
+          tax_behavior: tax.behavior,
           recurring: {
             interval: input.interval === "yearly" ? "year" : "month",
           },
-          lookup_key: `kindai_${input.planId}_${input.interval}`,
-        });
+          lookup_key: `kindai_pro_2026_${input.interval}_${tax.behavior}`,
+        }, { idempotencyKey: `kindai-pro-price:${input.interval}:${tax.behavior}:${priceAmount}` });
 
         priceId = price.id;
       }
@@ -187,6 +201,9 @@ export const billingRouter = router({
         userEmail: user.email ?? ctx.user.email ?? "",
         userName: user.name ?? ctx.user.name ?? undefined,
         origin: input.origin,
+        automaticTax: tax.automatic,
+        planId: "pro",
+        idempotencyKey: `pro-checkout:${ctx.user.id}:${priceId}`,
       });
 
       return { url: checkoutUrl };

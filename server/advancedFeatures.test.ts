@@ -108,17 +108,17 @@ describe("Advanced Feature Schema Tables", () => {
 
 // ── Correction Capture in Estimates Router ──
 describe("Correction Capture in Estimates Router", () => {
-  it("should import estimateCorrections in estimates router", async () => {
+  it("should delegate correction persistence to the transactional edit helper", async () => {
     // Verify the estimates router file has the correction capture code
     const fs = await import("fs");
     const content = fs.readFileSync("server/routers/estimates.ts", "utf-8");
-    expect(content).toContain("estimateCorrections");
-    expect(content).toContain("Correction capture");
-    expect(content).toContain("quantity_change");
-    expect(content).toContain("rate_change");
-    expect(content).toContain("waste_change");
-    expect(content).toContain("description_change");
-    expect(content).toContain("unit_change");
+    expect(content).toContain("editEstimate");
+    const helper = fs.readFileSync("server/estimateEdits.ts", "utf-8");
+    expect(helper).toContain("quantity_change");
+    expect(helper).toContain("rate_change");
+    expect(helper).toContain("waste_change");
+    expect(helper).toContain("description_change");
+    expect(helper).toContain("unit_change");
   });
 });
 

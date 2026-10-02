@@ -11,10 +11,10 @@ interface SEOProps {
   noIndex?: boolean;
 }
 
-const BASE_URL = "https://kindaiestimator.com";
+const BASE_URL = "https://kindai.au";
 const DEFAULT_TITLE = "Kindai | AI Estimating for Australian Trades";
 const DEFAULT_DESCRIPTION =
-  "Scan plans, get instant AI takeoffs and GST-ready quotes in 60 seconds. Built for Australian tradies and builders.";
+  "Upload drawings, review your takeoff and prepare GST-ready quotes for Australian trade contractors.";
 const DEFAULT_KEYWORDS =
   "AI estimating software Australia, construction quoting software, trade takeoff software, builder quoting app, AI construction estimating";
 const META_DOMAIN_VERIFICATION = import.meta.env.VITE_META_DOMAIN_VERIFICATION as string | undefined;

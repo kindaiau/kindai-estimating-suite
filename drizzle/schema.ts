@@ -21,6 +21,7 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  emailVerified: boolean("emailVerified").default(false).notNull(),
   // Trade preferences
   defaultTrade: varchar("defaultTrade", { length: 64 }),
   companyName: text("companyName"),
@@ -31,7 +32,7 @@ export const users = mysqlTable("users", {
   // Stripe
   stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
   stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
-  subscriptionTier: mysqlEnum("subscriptionTier", ["free", "sole_trader", "small_builder", "mid_builder", "enterprise"]).default("free").notNull(),
+  subscriptionTier: mysqlEnum("subscriptionTier", ["free", "sole_trader", "small_builder", "mid_builder", "enterprise", "pro"]).default("free").notNull(),
   subscriptionStatus: varchar("subscriptionStatus", { length: 32 }).default("none"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -1047,3 +1048,23 @@ export const companyProcedures = mysqlTable("company_procedures", {
 
 export type CompanyProcedure = typeof companyProcedures.$inferSelect;
 export type InsertCompanyProcedure = typeof companyProcedures.$inferInsert;
+
+// One nullable unique freeUserId is the lifetime free-sheet claim. Failed jobs retain it.
+export const takeoffJobs = mysqlTable('takeoff_jobs', {
+  id: varchar('id', { length: 100 }).primaryKey(),
+  userId: int('userId').notNull(),
+  freeUserId: int('freeUserId').unique(),
+  estimateId: int('estimateId').notNull(),
+  expectedVersion: int('expectedVersion').notNull(),
+  requestHash: varchar('requestHash', { length: 64 }).notNull(),
+  status: mysqlEnum('status', ['running', 'completed', 'failed']).notNull(),
+  attempts: int('attempts').default(1).notNull(),
+  result: json('result'),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+export const planUploads = mysqlTable('plan_uploads', {
+  fileKey: varchar('fileKey', { length: 255 }).primaryKey(),
+  userId: int('userId').notNull(),
+  url: text('url').notNull(),
+  pageCount: int('pageCount').notNull(),
+});
