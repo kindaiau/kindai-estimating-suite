@@ -1,3 +1,5 @@
+import { beginTakeoff, completeTakeoff, failTakeoff, type Job } from "../takeoffJobs";
+import { z } from "zod";
 /**
  * orchestratedTakeoff.ts
  * 5-step orchestrated AI workflow for premium takeoff generation.
@@ -19,7 +21,6 @@ import { estimates, lineItems, tradeProfiles, companyProfiles, priceBookItems, e
 import { eq, and, desc } from "drizzle-orm";
 import { buildProductivityPromptSection } from "../labourProductivity";
 import { sdk } from "../_core/sdk";
-import { insertAiLineItems } from "./insertAiLineItems";
 import {
   buildMetaUserData,
   extractMetaClickIdentifiers,
@@ -132,7 +133,7 @@ function extractLLMContent(content: string | Array<{ type: string; text?: string
 }
 
 // ─── Main SSE endpoint ────────────────────────────────────────────────────────
-orchestratedTakeoffRouter.get("/api/orchestrated-takeoff", async (req: Request, res: Response) => {
+orchestratedTakeoffRouter.post("/api/orchestrated-takeoff", async (req: Request, res: Response) => {
   // Set SSE headers
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -146,12 +147,19 @@ orchestratedTakeoffRouter.get("/api/orchestrated-takeoff", async (req: Request, 
     return res.end();
   }
 
-  const { estimateId, trade, mode, planDescription, projectDetails, additionalContext, scopeDocUrl } = req.query as Record<string, string>;
+  const parsed = z.object({
+    labourRate: z.number().finite().min(0).max(10000).default(95), useTradePrice: z.boolean().default(true),
+    estimateId: z.coerce.number().int().positive(), requestId: z.string().min(16).max(64),
+    trade: z.string().min(1).max(64), mode: z.enum(['vision', 'text']),
+    imageUrls: z.array(z.string().url()).max(50).default([]),
+    planDescription: z.string().max(20000).optional(), projectDetails: z.string().max(10000).optional(),
+    additionalContext: z.string().max(10000).optional(), scopeDocUrl: z.string().url().optional(),
+  }).safeParse(req.body);
+  if (!parsed.success) { sendEvent(res, 'error', { message: 'Invalid takeoff submission' }); return res.end(); }
+  const { trade, mode, planDescription, projectDetails, additionalContext, scopeDocUrl, requestId } = parsed.data;
+  const estimateId = String(parsed.data.estimateId);
   // imageUrl can be a single string or an array of strings (multi-page PDF)
-  const rawImageUrl = req.query.imageUrl;
-  const imageUrls: string[] = Array.isArray(rawImageUrl)
-    ? (rawImageUrl as string[]).filter(Boolean)
-    : rawImageUrl ? [rawImageUrl as string] : [];
+  const imageUrls = parsed.data.imageUrls;
   const imageUrl = imageUrls[0] ?? null; // backward compat for logging
 
   if (!estimateId || !trade || !mode) {
@@ -174,6 +182,12 @@ orchestratedTakeoffRouter.get("/api/orchestrated-takeoff", async (req: Request, 
     return res.end();
   }
 
+  let job: Job;
+  try {
+    job = await beginTakeoff(db, user.id, Number(estimateId), requestId, parsed.data, imageUrls, mode === 'text', Boolean(scopeDocUrl));
+    if (job.status === 'completed') { sendEvent(res, 'complete', job.result); return res.end(); }
+  } catch (error) { sendEvent(res, 'error', { message: error instanceof Error ? error.message : 'Cannot start scan' }); return res.end(); }
+
   // Load company memory and custom rates
   let companyProfile: any = null;
   let priceBook: any[] = [];
@@ -186,7 +200,7 @@ orchestratedTakeoffRouter.get("/api/orchestrated-takeoff", async (req: Request, 
       .limit(1);
 
     priceBook = await db.select().from(priceBookItems)
-      .where(and(eq(priceBookItems.userId, user.id), eq(priceBookItems.trade, trade)))
+      .where(and(eq(priceBookItems.userId, user.id), eq(priceBookItems.trade, trade), eq(priceBookItems.isActive, true)))
       .limit(50);
 
     corrections = await db.select({
@@ -228,7 +242,7 @@ Default Exclusions: ${companyProfile.defaultExclusions ?? "None specified"}
 Quote Tone: ${companyProfile.quoteTone ?? "professional"}` : "";
 
   const priceBookContext = priceBook.length > 0
-    ? `\nYOUR PRICE BOOK (use these exact rates):\n${priceBook.map(p => `- ${p.description} (${p.unit}): $${p.rate} trade`).join("\n")}`
+    ? `\nYOUR PRICE BOOK (use these exact rates):\n${priceBook.map(p => `- ${p.name} (${p.unit}): $${p.unitPrice} trade`).join("\n")}`
     : "";
 
   const correctionContext = corrections.length > 0
@@ -629,16 +643,7 @@ Return JSON: { "anomalies": ["string"], "severity": "none" | "minor" | "major" }
       },
     };
 
-    // Save to database
-    await db.update(estimates).set({
-      aiConfidenceScore: result.confidence,
-      aiAssumptions: result.assumptions as any,
-      aiTakeoffData: result.items as any,
-    }).where(eq(estimates.id, parseInt(estimateId)));
-
-    // ─── INSERT LINE ITEMS INTO lineItems TABLE ──────────────────────────────
-    // Critical: EstimateBuilder reads from lineItems table, not aiTakeoffData JSON
-    await insertAiLineItems(parseInt(estimateId), finalItems);
+    await completeTakeoff(db, job, result, parsed.data.labourRate, parsed.data.useTradePrice);
 
     sendEvent(res, "step", {
       step: 5,
@@ -689,6 +694,7 @@ Return JSON: { "anomalies": ["string"], "severity": "none" | "minor" | "major" }
       );
     });
   } catch (err: any) {
+    await failTakeoff(db, job);
     console.error("[Orchestrated] Error:", err);
     sendEvent(res, "error", { message: err.message ?? "AI processing failed" });
   }

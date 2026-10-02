@@ -1,3 +1,6 @@
+import { beginTakeoff, completeTakeoff, failTakeoff } from "../takeoffJobs";
+import { preparePlan } from "../planPreparation";
+import { planUploads } from "../../drizzle/schema";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -9,7 +12,6 @@ import { eq, and, desc } from "drizzle-orm";
 import { storageGet, storagePut } from "../storage";
 import { nanoid } from "nanoid";
 import { buildProductivityPromptSection } from "../labourProductivity";
-import { insertAiLineItems } from "../routes/insertAiLineItems";
 
 // Convert HEIC/HEIF buffer to JPEG — lazy dynamic import to avoid ESM crash
 let _heicConvertAi: ((opts: { buffer: Buffer; format: string; quality: number }) => Promise<Uint8Array>) | null = null;
@@ -1345,6 +1347,7 @@ function mergeTakeoffResults(results: TakeoffResult[], totalPages: number): Take
 export const aiRouter = router({
   // Upload plan image/PDF to S3 (single file, up to 32MB, HEIC auto-converted)
   uploadPlan: protectedProcedure.input(z.object({
+    selectedPage: z.number().int().positive().optional(),
     fileName: z.string().max(255),
     fileBase64: z.string().max(44_000_000), // ~32MB base64 encoded
     contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf", "image/heic", "image/heif"]),
@@ -1365,9 +1368,15 @@ export const aiRouter = router({
     } else {
       finalBuffer = rawBuffer;
     }
+    const prepared = await preparePlan(finalBuffer, contentType, input.selectedPage);
+    finalBuffer = prepared.buffer;
+    ext = prepared.ext;
     const key = `plans/${ctx.user.id}/${nanoid()}.${ext}`;
     const { url } = await storagePut(key, finalBuffer, contentType);
-    return { url, key };
+    const db = await getDb();
+    if (!db) throw new Error("Database unavailable");
+    await db.insert(planUploads).values({ fileKey: key, userId: ctx.user.id, url, pageCount: prepared.pageCount });
+    return { url, key, pageCount: prepared.pageCount };
   }),
 
   // Upload multiple plan pages to S3 (up to 50 pages, 32MB each)
@@ -1395,8 +1404,14 @@ export const aiRouter = router({
       } else {
         buffer = rawBuffer;
       }
+      const prepared = await preparePlan(buffer, contentType);
+      buffer = prepared.buffer;
+      ext = prepared.ext;
       const key = `plans/${ctx.user.id}/${nanoid()}.${ext}`;
       const { url } = await storagePut(key, buffer, contentType);
+      const db = await getDb();
+      if (!db) throw new Error("Database unavailable");
+      await db.insert(planUploads).values({ fileKey: key, userId: ctx.user.id, url, pageCount: prepared.pageCount });
       results.push({ url, key, fileName: page.fileName });
     }
     return { pages: results, count: results.length };
@@ -1505,6 +1520,7 @@ export const aiRouter = router({
 
   // AI Vision Takeoff — analyse a single uploaded plan image
   visionTakeoff: protectedProcedure.input(z.object({
+    requestId: z.string().min(16).max(64),
     estimateId: z.number(),
     trade: z.string(),
     imageUrl: z.string().url(),
@@ -1518,6 +1534,9 @@ export const aiRouter = router({
       .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
       .limit(1);
     if (!est) throw new Error("Estimate not found");
+    const job = await beginTakeoff(db, ctx.user.id, input.estimateId, input.requestId, input, [input.imageUrl], false);
+    if (job.status === 'completed') return job.result as TakeoffResult;
+    try {
 
     // Fetch user's custom rates and company memory for this trade
     const customRates = await fetchCustomRates(db, ctx.user.id, input.trade);
@@ -1543,20 +1562,18 @@ export const aiRouter = router({
     const result = JSON.parse(content) as TakeoffResult;
 
     // Save AI data to estimate
-    await db.update(estimates).set({
-      aiConfidenceScore: result.confidence,
-      aiAssumptions: result.assumptions as any,
-      aiTakeoffData: result.items as any,
-    }).where(eq(estimates.id, input.estimateId));
-
-    // Insert line items into the lineItems table so EstimateBuilder can display them
-    await insertAiLineItems(input.estimateId, result.items);
+    await completeTakeoff(db, job, result, Number(customRates?.defaultLabourRate ?? 95));
 
     return result;
+    } catch (error) {
+      await failTakeoff(db, job);
+      throw error;
+    }
   }),
 
   // Multi-page Vision Takeoff — analyse up to 50 plan pages in batches of 5, merge results
   visionTakeoffMultiPage: protectedProcedure.input(z.object({
+    requestId: z.string().min(16).max(64),
     estimateId: z.number(),
     trade: z.string(),
     imageUrls: z.array(z.string().url()).min(1).max(50),
@@ -1570,6 +1587,9 @@ export const aiRouter = router({
       .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
       .limit(1);
     if (!est) throw new Error("Estimate not found");
+    const job = await beginTakeoff(db, ctx.user.id, input.estimateId, input.requestId, input, input.imageUrls, false);
+    if (job.status === 'completed') return job.result as TakeoffResult;
+    try {
 
     const customRates = await fetchCustomRates(db, ctx.user.id, input.trade);
     const memory = await fetchCompanyMemory(db, ctx.user.id, input.trade);
@@ -1612,8 +1632,10 @@ export const aiRouter = router({
         try {
           batchResults.push(JSON.parse(content) as TakeoffResult);
         } catch {
-          console.warn(`[MultiPageTakeoff] Failed to parse batch ${batchIdx + 1}`);
+          throw new Error(`Drawing batch ${batchIdx + 1} could not be read. No partial takeoff was saved; retry the same submission.`);
         }
+      } else {
+        throw new Error(`Drawing batch ${batchIdx + 1} returned no content. No partial takeoff was saved.`);
       }
     }
 
@@ -1622,20 +1644,18 @@ export const aiRouter = router({
     // Merge all batch results into a single combined takeoff
     const merged = mergeTakeoffResults(batchResults, input.imageUrls.length);
     // Save merged AI data to estimate
-    await db.update(estimates).set({
-      aiConfidenceScore: merged.confidence,
-      aiAssumptions: merged.assumptions as any,
-      aiTakeoffData: merged.items as any,
-    }).where(eq(estimates.id, input.estimateId));
-
-    // Insert line items into the lineItems table so EstimateBuilder can display them
-    await insertAiLineItems(input.estimateId, merged.items);
+    await completeTakeoff(db, job, merged, Number(customRates?.defaultLabourRate ?? 95));
 
     return { ...merged, pageCount: input.imageUrls.length, batchCount: batches.length };
+    } catch (error) {
+      await failTakeoff(db, job);
+      throw error;
+    }
   }),
 
   // Text-based takeoff (enhanced with section-by-section output)
   analyzePlan: protectedProcedure.input(z.object({
+    requestId: z.string().min(16).max(64),
     estimateId: z.number(),
     trade: z.string(),
     planDescription: z.string().min(10),
@@ -1648,6 +1668,9 @@ export const aiRouter = router({
       .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
       .limit(1);
     if (!est) throw new Error("Estimate not found");
+    const job = await beginTakeoff(db, ctx.user.id, input.estimateId, input.requestId, input, [], true);
+    if (job.status === 'completed') return job.result as TakeoffResult;
+    try {
 
     // Fetch user's custom rates and company memory for this trade
     const customRates = await fetchCustomRates(db, ctx.user.id, input.trade);
@@ -1674,16 +1697,13 @@ Generate a complete, section-by-section takeoff with accurate 2024-25 Australian
 
     const result = JSON.parse(content) as TakeoffResult;
 
-    await db.update(estimates).set({
-      aiConfidenceScore: result.confidence,
-      aiAssumptions: result.assumptions as any,
-      aiTakeoffData: result.items as any,
-    }).where(eq(estimates.id, input.estimateId));
-
-    // Insert line items into the lineItems table so EstimateBuilder can display them
-    await insertAiLineItems(input.estimateId, result.items);
+    await completeTakeoff(db, job, result, Number(customRates?.defaultLabourRate ?? 95));
 
     return result;
+    } catch (error) {
+      await failTakeoff(db, job);
+      throw error;
+    }
   }),
 
   // Get supplier recommendations for a trade + state

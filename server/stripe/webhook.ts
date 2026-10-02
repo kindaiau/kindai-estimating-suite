@@ -3,7 +3,7 @@ import { getStripe } from "./stripe";
 import { ENV } from "../_core/env";
 import { getDb } from "../db";
 import { users } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { sendPilotPaymentEmails } from "../resendEmail";
 import { buildPurchaseOrTrialEvent, sendMetaConversionEventSafely } from "../metaCapi";
 
@@ -135,8 +135,10 @@ export function registerStripeWebhook(app: Router) {
                 const priceId = sub.items?.data?.[0]?.price?.id;
                 const lookupKey = sub.items?.data?.[0]?.price?.lookup_key ?? "";
 
-                let tier: "free" | "sole_trader" | "small_builder" | "mid_builder" | "enterprise" = "sole_trader";
-                if (lookupKey.includes("enterprise") || priceId?.includes("enterprise")) {
+                let tier: "free" | "sole_trader" | "small_builder" | "mid_builder" | "enterprise" | "pro" = "sole_trader";
+                if (lookupKey.startsWith("kindai_pro_2026_")) {
+                  tier = "pro";
+                } else if (lookupKey.includes("enterprise") || priceId?.includes("enterprise")) {
                   tier = "enterprise";
                 } else if (lookupKey.includes("mid_builder") || priceId?.includes("mid_builder")) {
                   tier = "mid_builder";
@@ -152,7 +154,7 @@ export function registerStripeWebhook(app: Router) {
                     stripeCustomerId: session.customer as string,
                     stripeSubscriptionId: session.subscription as string,
                     subscriptionTier: tier,
-                    subscriptionStatus: "active",
+                    subscriptionStatus: sub.status ?? "incomplete",
                   })
                   .where(eq(users.id, userId));
 
@@ -174,9 +176,9 @@ export function registerStripeWebhook(app: Router) {
               await db
                 .update(users)
                 .set({
-                  subscriptionStatus: cancelAtPeriodEnd ? "cancelling" : status,
+                  subscriptionStatus: status,
                 })
-                .where(eq(users.stripeCustomerId, customerId));
+                .where(and(eq(users.stripeCustomerId, customerId), eq(users.stripeSubscriptionId, subscription.id)));
 
               console.log(`[Stripe Webhook] Subscription updated for customer ${customerId}: ${status}`);
             }
@@ -196,7 +198,7 @@ export function registerStripeWebhook(app: Router) {
                   subscriptionStatus: "cancelled",
                   stripeSubscriptionId: null,
                 })
-                .where(eq(users.stripeCustomerId, customerId));
+                .where(and(eq(users.stripeCustomerId, customerId), eq(users.stripeSubscriptionId, subscription.id)));
 
               console.log(`[Stripe Webhook] Subscription cancelled for customer ${customerId}`);
             }

@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
 import { invokeLLM, type MessageContent } from "../_core/llm";
@@ -342,6 +343,7 @@ export const demoRouter = router({
     planImageUrl: z.string().url().optional(), // CDN URL of single uploaded plan image (legacy)
     planImageUrls: z.array(z.string().url()).max(50).optional(), // CDN URLs for multi-page upload
   })).mutation(async ({ input }) => {
+    if (input.planImageUrl || input.planImageUrls?.length || input.jobDescription) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Sign in to scan your drawing sheet. Public demos use sample data only.' });
     // Normalise: prefer planImageUrls array, fall back to single planImageUrl
     const imageUrls = input.planImageUrls && input.planImageUrls.length > 0
       ? input.planImageUrls

@@ -1,3 +1,5 @@
+import { TRPCError } from "@trpc/server";
+import { lockEstimate } from "../estimateEdits";
 import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -27,9 +29,13 @@ export const correctionsRouter = router({
     itemDescription: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
-    const result = await db.insert(estimateCorrections).values({
-      ...input,
-      userId: ctx.user.id,
+    const result = await db.transaction(async tx => {
+      await lockEstimate(tx, ctx.user.id, input.estimateId);
+      if (input.lineItemId) {
+        const [item] = await tx.select().from(lineItems).where(and(eq(lineItems.id, input.lineItemId), eq(lineItems.estimateId, input.estimateId))).limit(1);
+        if (!item) throw new TRPCError({ code: "NOT_FOUND", message: "Line item not found" });
+      }
+      return tx.insert(estimateCorrections).values({ ...input, userId: ctx.user.id });
     });
     return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
   }),
@@ -56,15 +62,17 @@ export const correctionsRouter = router({
     })),
   })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
-    let count = 0;
-    for (const c of input.corrections) {
-      await db.insert(estimateCorrections).values({
-        ...c,
-        userId: ctx.user.id,
-      });
-      count++;
-    }
-    return { recorded: count };
+    return db.transaction(async tx => {
+      for (const c of [...input.corrections].sort((a, b) => a.estimateId - b.estimateId)) {
+        await lockEstimate(tx, ctx.user.id, c.estimateId);
+        if (c.lineItemId) {
+          const [item] = await tx.select().from(lineItems).where(and(eq(lineItems.id, c.lineItemId), eq(lineItems.estimateId, c.estimateId))).limit(1);
+          if (!item) throw new TRPCError({ code: "NOT_FOUND", message: "Line item not found" });
+        }
+        await tx.insert(estimateCorrections).values({ ...c, userId: ctx.user.id });
+      }
+      return { recorded: input.corrections.length };
+    });
   }),
 
   // ── Get corrections for an estimate ──────────────────────────────────────

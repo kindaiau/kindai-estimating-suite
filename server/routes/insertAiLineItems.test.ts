@@ -24,14 +24,14 @@ describe("buildAiLineItemRows", () => {
     expect(rows[0]).toMatchObject({
       estimateId: 42,
       description: "Double GPO",
-      unitRate: "24",
-      subtotal: "79.2",
+      unitRate: "24.00",
+      subtotal: "79.20",
     });
     expect(rows[1]).toMatchObject({
       category: "Labour",
-      quantity: "1.5",
+      quantity: "1.500",
       unitRate: "90",
-      subtotal: "135",
+      subtotal: "135.00",
     });
   });
 });

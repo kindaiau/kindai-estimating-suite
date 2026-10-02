@@ -1,3 +1,4 @@
+import { supabase } from "@/lib/supabase";
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, Loader2, AlertCircle, Brain, Ruler, DollarSign, ShieldCheck, FileText } from "lucide-react";
@@ -14,6 +15,9 @@ export interface OrchestrationStep {
 }
 
 interface OrchestrationProgressProps {
+  requestId: string;
+  labourRate: number;
+  useTradePrice: boolean;
   estimateId: number;
   trade: string;
   mode: "vision" | "text";
@@ -44,6 +48,7 @@ const INITIAL_STEPS: OrchestrationStep[] = [
 ];
 
 export function OrchestrationProgress({
+  requestId, labourRate, useTradePrice,
   estimateId,
   trade,
   mode,
@@ -63,67 +68,47 @@ export function OrchestrationProgress({
     const controller = new AbortController();
     abortRef.current = controller;
 
-    const params = new URLSearchParams({
-      estimateId: String(estimateId),
-      trade,
-      mode,
-      ...(planDescription ? { planDescription } : {}),
-      ...(additionalContext ? { additionalContext } : {}),
-      ...(projectDetails ? { projectDetails } : {}),
-      ...(scopeDocUrl ? { scopeDocUrl } : {}),
-    });
-    // Append each image URL as a separate param so multi-page PDFs send ALL pages
-    if (imageUrls && imageUrls.length > 0) {
-      imageUrls.forEach(url => params.append("imageUrl", url));
-    }
-
-    const url = `/api/orchestrated-takeoff?${params.toString()}`;
-
-    const es = new EventSource(url);
-
-    // Guard against double-firing: onerror can fire after `complete` when the server
-    // closes the SSE connection immediately after sending the final event.
     let completed = false;
-
-    es.addEventListener("step", (e) => {
-      const data = JSON.parse(e.data) as OrchestrationStep;
-      setSteps(prev => prev.map(s => s.step === data.step ? { ...s, ...data } : s));
-      if (data.status === "running") setCurrentStep(data.step);
-    });
-
-    es.addEventListener("complete", (e) => {
-      if (completed) return;
-      completed = true;
-      es.close();
-      const result = JSON.parse(e.data);
-      onComplete(result);
-    });
-
-    es.addEventListener("error", (e) => {
-      if (completed) return;
-      completed = true;
-      es.close();
+    async function run() {
       try {
-        const data = JSON.parse((e as MessageEvent).data ?? "{}");
-        onError(data.message ?? "AI processing failed");
-      } catch {
-        onError("AI processing failed");
+        const session = supabase ? (await supabase.auth.getSession()).data.session : null;
+        const storageKey = `kindai:scan:${estimateId}`;
+        const stableId = sessionStorage.getItem(storageKey) ?? requestId;
+        sessionStorage.setItem(storageKey, stableId);
+        const response = await fetch('/api/orchestrated-takeoff', {
+          method: 'POST', credentials: 'include', signal: controller.signal,
+          headers: { 'Content-Type': 'application/json', ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}) },
+          body: JSON.stringify({ requestId: stableId, labourRate, useTradePrice, estimateId, trade, mode, imageUrls, planDescription, additionalContext, projectDetails, scopeDocUrl }),
+        });
+        if (!response.ok || !response.body) throw new Error('Cannot connect to the takeoff service');
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        while (true) {
+          const chunk = await reader.read();
+          if (chunk.done) break;
+          buffer += decoder.decode(chunk.value, { stream: true });
+          let end: number;
+          while ((end = buffer.indexOf('\n\n')) >= 0) {
+            const frame = buffer.slice(0, end); buffer = buffer.slice(end + 2);
+            const event = frame.split('\n').find(l => l.startsWith('event: '))?.slice(7);
+            const data = JSON.parse(frame.split('\n').find(l => l.startsWith('data: '))?.slice(6) ?? '{}');
+            if (event === 'step') {
+              setSteps(prev => prev.map(s => s.step === data.step ? { ...s, ...data } : s));
+              if (data.status === 'running') setCurrentStep(data.step);
+            }
+            if (event === 'complete') { completed = true; onComplete(data); }
+            if (event === 'error') throw new Error(data.message ?? 'Scan failed');
+          }
+        }
+        if (!completed) throw new Error('Connection interrupted. Retry the same submission to retrieve its result.');
+      } catch (error) {
+        if (!controller.signal.aborted && !completed) onError(error instanceof Error ? error.message : 'Scan failed');
       }
-    });
-
-    // Fallback: if SSE native error fires (connection drop)
-    es.onerror = () => {
-      if (completed) return;
-      completed = true;
-      es.close();
-      onError("Connection to AI server lost. Please try again.");
-    };
-
-    return () => {
-      es.close();
-      controller.abort();
-    };
-  }, [estimateId, trade, mode, JSON.stringify(imageUrls), planDescription, additionalContext, projectDetails]);
+    }
+    void run();
+    return () => controller.abort();
+  }, [requestId, labourRate, useTradePrice, estimateId, trade, mode, JSON.stringify(imageUrls), planDescription, additionalContext, projectDetails]);
 
   const completedCount = steps.filter(s => s.status === "done").length;
   const progress = (completedCount / 5) * 100;

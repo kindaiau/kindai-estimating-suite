@@ -1,3 +1,4 @@
+import { PRO_OFFER } from "../../shared/kindaiOffer";
 /**
  * Kindai Estimating Suite — Enterprise Value-Based Pricing Model
  *
@@ -245,8 +246,28 @@ export const PLANS: SubscriptionPlan[] = [
   },
 ];
 
+export const PRO_PLAN: SubscriptionPlan = {
+  id: 'pro', name: 'Pro', popular: true, tagline: 'From drawing to reviewed quote.',
+  description: 'Plan takeoff and quoting for Australian trade contractors.',
+  priceMonthly: PRO_OFFER.monthlyCents, priceYearly: PRO_OFFER.yearlyCents,
+  features: [
+    { text: 'Uncapped plan uploads', included: true },
+    { text: 'Custom trade rate books', included: true },
+    { text: 'Variation tracking', included: true },
+    { text: 'Branded GST-ready PDF quotes', included: true },
+  ],
+  limits: { estimatesPerMonth: -1, aiTakeoffsPerMonth: -1, projectsTotal: -1, teamMembers: 1 },
+  targetAudience: 'Australian plumbing, gas and hydraulic contractors',
+  annualSavings: 'AUD298 (16.67%) versus twelve monthly payments', roiStatement: '',
+};
+export const NEW_SALES_PLANS = [
+  { ...PLANS[0], name: 'One free sheet', description: 'One lifetime drawing-sheet scan per verified user. No credit card.',
+    features: [{ text: 'One drawing-sheet scan', included: true }], limits: { ...PLANS[0].limits, aiTakeoffsPerMonth: 1 } },
+  PRO_PLAN,
+];
+
 export function getPlanById(id: string): SubscriptionPlan | undefined {
-  return PLANS.find((p) => p.id === id);
+  return id === "pro" ? PRO_PLAN : PLANS.find((p) => p.id === id);
 }
 
 export function formatPrice(cents: number): string {

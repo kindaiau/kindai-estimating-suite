@@ -37,7 +37,7 @@ export async function findOrCreateCustomer(opts: {
     email: opts.email,
     name: opts.name ?? undefined,
     metadata: { userId: opts.userId.toString() },
-  });
+  }, { idempotencyKey: `kindai-customer:${opts.userId}` });
 
   return customer.id;
 }
@@ -52,6 +52,9 @@ export async function createCheckoutSession(opts: {
   userEmail: string;
   userName?: string;
   origin: string;
+  automaticTax?: boolean;
+  planId?: string;
+  idempotencyKey?: string;
   successPath?: string;
   cancelPath?: string;
 }): Promise<string> {
@@ -60,8 +63,10 @@ export async function createCheckoutSession(opts: {
   const session = await stripe.checkout.sessions.create({
     customer: opts.customerId,
     mode: "subscription",
+    automatic_tax: { enabled: opts.automaticTax ?? false },
+    subscription_data: { metadata: { planId: opts.planId ?? "" } },
     line_items: [{ price: opts.priceId, quantity: 1 }],
-    allow_promotion_codes: true,
+    allow_promotion_codes: false,
     client_reference_id: opts.userId.toString(),
     metadata: {
       user_id: opts.userId.toString(),
@@ -70,7 +75,7 @@ export async function createCheckoutSession(opts: {
     },
     success_url: `${opts.origin}${opts.successPath ?? "/billing?success=true"}`,
     cancel_url: `${opts.origin}${opts.cancelPath ?? "/pricing?cancelled=true"}`,
-  });
+  }, opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : undefined);
 
   if (!session.url) throw new Error("Failed to create checkout session URL");
   return session.url;

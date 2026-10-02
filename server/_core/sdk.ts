@@ -308,6 +308,7 @@ class SDKServer {
       name: displayName,
       email,
       loginMethod: "supabase",
+      emailVerified: Boolean(supabaseUser.email_confirmed_at),
       defaultTrade,
       lastSignedIn: signedInAt,
     });

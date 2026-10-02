@@ -26,7 +26,7 @@ export default function PrivacyPolicy() {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-6 py-12">
         <h1 className="text-3xl font-bold text-white mb-2">Privacy Policy</h1>
-        <p className="text-white/40 text-sm mb-10">Last updated: 8 April 2026</p>
+        <p className="text-white/40 text-sm mb-10">Last updated: 2 October 2026</p>
 
         <div className="space-y-10 text-gray-300 leading-relaxed">
 
@@ -34,7 +34,7 @@ export default function PrivacyPolicy() {
             <h2 className="text-xl font-semibold text-white mb-3">1. Who We Are</h2>
             <p>
               Kindai Estimating Suite ("Kindai", "we", "us", or "our") is operated by Kindai Pty Ltd, an Australian company. Our platform provides AI-powered estimating tools for trades and construction professionals. Our website is located at{" "}
-              <a href="https://kindaiestimator.com" className="text-orange-400 hover:underline">kindaiestimator.com</a>.
+              <a href="https://kindai.au" className="text-orange-400 hover:underline">kindai.au</a>.
             </p>
             <p className="mt-3">
               If you have any questions about this Privacy Policy, please contact us at{" "}
@@ -60,7 +60,7 @@ export default function PrivacyPolicy() {
               </div>
               <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                 <h3 className="font-semibold text-white mb-1">Uploaded Content</h3>
-                <p className="text-sm text-gray-400">Plans, documents, and images you upload to use our AI takeoff and estimating features. These are processed to generate your estimates and stored securely.</p>
+                <p className="text-sm text-gray-400">Plans, documents, and images you upload to use our AI takeoff and estimating features. These are processed to generate your estimates and stored with the service.</p>
               </div>
               <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                 <h3 className="font-semibold text-white mb-1">Payment Information</h3>
@@ -108,11 +108,17 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-xl font-semibold text-white mb-3">5. Data Storage and Security</h2>
             <p>
-              Your data is stored on secure servers located in Australia and the United States. We use industry-standard encryption (TLS/HTTPS) for data in transit and AES-256 encryption for data at rest. Access to personal data is restricted to authorised personnel only.
+              Uploaded drawings, saved estimates and rate books are stored to provide the service. Account ownership checks control access to estimate and rate-book operations. AI processing uses external service providers. Contact us to confirm the storage location, provider terms and security controls required by your project before uploading confidential drawings.
             </p>
             <p className="mt-3">
               While we take reasonable steps to protect your information, no method of transmission over the internet is 100% secure. We encourage you to use a strong, unique password for your account.
             </p>
+          </section>
+
+          <section aria-labelledby="drawing-data">
+            <h2 id="drawing-data" className="text-xl font-semibold text-white mb-3">Drawing Processing and Enterprise Data Requirements</h2>
+            <p>The free drawing-sheet scan uses stored uploads. It is not a memory-only service with automatic deletion after ten minutes. Zero-data-retention processing, Australian-only residency and specific encryption-at-rest controls require confirmation of the applicable service configuration and provider agreements.</p>
+            <p className="mt-3">Human corrections are saved with the estimate and an audit history. Relevant correction history may be included in later estimating prompts. Recording a correction is not the same as training a model.</p>
           </section>
 
           <section>
@@ -172,7 +178,7 @@ export default function PrivacyPolicy() {
             <div className="bg-white/5 rounded-lg p-5 border border-white/10">
               <p className="font-semibold text-white mb-2">Kindai Pty Ltd</p>
               <p className="text-gray-400 text-sm">Email: <a href="mailto:hello@kindaiestimator.com?subject=Privacy%20%26%20Data" className="text-orange-400 hover:underline">hello@kindaiestimator.com</a></p>
-              <p className="text-gray-400 text-sm mt-1">Website: <a href="https://kindaiestimator.com" className="text-orange-400 hover:underline">kindaiestimator.com</a></p>
+              <p className="text-gray-400 text-sm mt-1">Website: <a href="https://kindai.au" className="text-orange-400 hover:underline">kindai.au</a></p>
               <p className="text-gray-400 text-sm mt-1">Data Deletion: <a href="/data-deletion" className="text-orange-400 hover:underline">kindaiestimator.com/data-deletion</a></p>
             </div>
           </section>

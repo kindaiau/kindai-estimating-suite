@@ -227,16 +227,13 @@ describe("ROI Calculator", () => {
 // ─── Billing Router Tests ──────────────────────────────────────────────────────
 
 describe("Billing Router", () => {
-  it("getPlans returns all 5 plans publicly", async () => {
+  it("getPlans returns only free and Pro for new sales", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
     const plans = await caller.billing.getPlans();
-    expect(plans).toHaveLength(5);
+    expect(plans).toHaveLength(2);
     expect(plans[0].id).toBe("free");
-    expect(plans[1].id).toBe("sole_trader");
-    expect(plans[2].id).toBe("small_builder");
-    expect(plans[3].id).toBe("mid_builder");
-    expect(plans[4].id).toBe("enterprise");
+    expect(plans[1].id).toBe("pro");
   });
 
   it("getPlans returns tagline and targetAudience for each plan", async () => {
@@ -254,7 +251,7 @@ describe("Billing Router", () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
     const plans = await caller.billing.getPlans();
-    const sb = plans.find((p) => p.id === "small_builder");
+    const sb = plans.find((p) => p.id === "pro");
     expect(sb?.popular).toBe(true);
     const free = plans.find((p) => p.id === "free");
     expect(free?.popular).toBe(false);

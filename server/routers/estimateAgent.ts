@@ -1,3 +1,5 @@
+import { requireProFeature } from "../entitlements";
+import { editEstimate } from "../estimateEdits";
 /**
  * estimateAgent.ts
  * Conversational estimate editing via LLM tool calling.
@@ -146,6 +148,7 @@ export const estimateAgentRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+    await requireProFeature(ctx.user.id);
       const db = requireDatabase(await getDb());
 
       // Load estimate + verify ownership
@@ -159,6 +162,7 @@ export const estimateAgentRouter = router({
         return { reply: "Estimate not found or you don't have access to it.", actions: [] };
       }
 
+      let editVersion = estimate.version;
       // Load current line items
       const items = await db
         .select()
@@ -240,19 +244,8 @@ export const estimateAgentRouter = router({
                 notes?: string;
               };
               const subtotal = (quantity * unitRate).toFixed(2);
-              await db.insert(lineItems).values({
-                estimateId: input.estimateId,
-                description,
-                category: category as any,
-                unit,
-                quantity: quantity.toString(),
-                unitRate: unitRate.toString(),
-                subtotal,
-                section: section ?? null,
-                notes: notes ?? null,
-                isFromAi: false,
-                sortOrder: items.length + actionsPerformed.length,
-              });
+              const saved = await editEstimate(db, ctx.user.id, input.estimateId, editVersion, { kind: 'add', values: { description, category, unit, quantity, unitRate, notes, wasteFactor: 0 } });
+              editVersion = saved.version;
               toolResult = `Added: ${description} — ${quantity} ${unit} @ $${unitRate} = $${subtotal}`;
             } else if (toolName === "update_line_item") {
               const { id, description, quantity, unitRate, notes } = args as {
@@ -274,16 +267,8 @@ export const estimateAgentRouter = router({
                 const newQty = quantity ?? parseFloat(item.quantity);
                 const newRate = unitRate ?? parseFloat(item.unitRate);
                 const newSubtotal = (newQty * newRate).toFixed(2);
-                await db
-                  .update(lineItems)
-                  .set({
-                    ...(description !== undefined && { description }),
-                    ...(quantity !== undefined && { quantity: quantity.toString() }),
-                    ...(unitRate !== undefined && { unitRate: unitRate.toString() }),
-                    ...(notes !== undefined && { notes }),
-                    subtotal: newSubtotal,
-                  })
-                  .where(eq(lineItems.id, id));
+                const saved = await editEstimate(db, ctx.user.id, input.estimateId, editVersion, { kind: 'update', id, values: { ...(description !== undefined ? { description } : {}), ...(quantity !== undefined ? { quantity } : {}), ...(unitRate !== undefined ? { unitRate } : {}), ...(notes !== undefined ? { notes } : {}) } });
+                editVersion = saved.version;
                 toolResult = `Updated item ${id}: new subtotal $${newSubtotal}`;
               }
             } else if (toolName === "delete_line_item") {
@@ -296,8 +281,7 @@ export const estimateAgentRouter = router({
               if (!item) {
                 toolResult = `Error: Line item ${id} not found in this estimate.`;
               } else {
-                await db.delete(lineItems).where(eq(lineItems.id, id));
-                toolResult = `Deleted: ${item.description}`;
+                toolResult = "Deletion requires explicit approval. Use the item delete control in the estimate editor.";
               }
             } else if (toolName === "get_estimate_summary") {
               const currentItems = await requireDatabase(await getDb())

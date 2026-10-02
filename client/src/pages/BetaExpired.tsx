@@ -70,7 +70,7 @@ export default function BetaExpired() {
 
   const handleUpgrade = () => {
     checkoutMutation.mutate({
-      planId: "sole_trader",
+      planId: "pro",
       interval: "monthly",
       origin: window.location.origin,
     });

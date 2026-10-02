@@ -1,3 +1,7 @@
+import { requireProFeature } from "../entitlements";
+import { TRPCError } from "@trpc/server";
+import { editEstimate, lockEstimate, saveTotals } from "../estimateEdits";
+import { itemFields, markupSchema, priceEstimate, priceLine } from "../estimatePricing";
 import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -35,12 +39,11 @@ export const estimatesRouter = router({
 
   getWithLineItems: protectedProcedure.input(z.object({ id: z.number() })).query(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
-    const [estimate] = await db.select().from(estimates)
-      .where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)))
-      .limit(1);
-    if (!estimate) return null;
-    const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, input.id));
-    return { ...estimate, lineItems: items };
+    return db.transaction(async tx => {
+      const estimate = await lockEstimate(tx, ctx.user.id, input.id);
+      const items = await tx.select().from(lineItems).where(eq(lineItems.estimateId, input.id));
+      return { ...estimate, lineItems: items };
+    });
   }),
 
   getAssurance: protectedProcedure.input(z.object({
@@ -90,11 +93,14 @@ export const estimatesRouter = router({
     projectId: z.number(),
     trade: z.string(),
     title: z.string().min(1),
-    margin: z.number().optional(),
+    margin: markupSchema.optional(),
     complianceState: z.enum(["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"]).optional(),
     notes: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
+    const { projects } = await import("../../drizzle/schema");
+    const [project] = await db.select().from(projects).where(and(eq(projects.id, input.projectId), eq(projects.userId, ctx.user.id))).limit(1);
+    if (!project) throw new TRPCError({ code: "NOT_FOUND", message: "Project not found" });
     const quoteNumber = `KAI-${new Date().getFullYear()}-${nanoid(6).toUpperCase()}`;
     const acceptanceToken = nanoid(32);
     const result = await db.insert(estimates).values({
@@ -151,9 +157,10 @@ export const estimatesRouter = router({
 
   update: protectedProcedure.input(z.object({
     id: z.number(),
+    expectedVersion: z.number().int().positive(),
     title: z.string().optional(),
     status: z.enum(["draft", "review", "sent", "accepted", "declined"]).optional(),
-    margin: z.number().optional(),
+    margin: markupSchema.optional(),
     complianceState: z.enum(["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"]).optional(),
     complianceChecked: z.boolean().optional(),
     complianceNotes: z.string().optional(),
@@ -162,176 +169,30 @@ export const estimatesRouter = router({
     notes: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
-    const { id, margin, ...rest } = input;
-    const data: Record<string, unknown> = { ...rest };
-    if (margin !== undefined) data.margin = margin.toString();
-    await db.update(estimates).set(data as any).where(and(eq(estimates.id, id), eq(estimates.userId, ctx.user.id)));
-    return { success: true };
-  }),
-
-  recalculate: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
-    const db = requireDatabase(await getDb());
-    const [estimate] = await db.select().from(estimates)
-      .where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)))
-      .limit(1);
-    if (!estimate) throw new Error("Estimate not found");
-
-    const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, input.id));
-    const subtotal = items.reduce((sum, item) => {
-      const qty = parseFloat(item.quantity as string) || 0;
-      const rate = parseFloat(item.unitRate as string) || 0;
-      const waste = parseFloat((item.wasteFactor as string) || "0") / 100;
-      return sum + qty * rate * (1 + waste);
-    }, 0);
-
-    const marginRate = (parseFloat(estimate.margin ?? "0") || 0) / 100;
-    const subtotalWithMargin = subtotal * (1 + marginRate);
-    const gstAmount = subtotalWithMargin * GST_RATE;
-    const total = subtotalWithMargin + gstAmount;
-
-    await db.update(estimates).set({
-      subtotal: subtotalWithMargin.toFixed(2) as any,
-      gstAmount: gstAmount.toFixed(2) as any,
-      total: total.toFixed(2) as any,
-    }).where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)));
-
-    return { subtotal: subtotalWithMargin, gstAmount, total };
-  }),
-
-  // Line Items
-  addLineItem: protectedProcedure.input(z.object({
-    estimateId: z.number(),
-    category: z.string(),
-    description: z.string().min(1),
-    unit: z.string(),
-    quantity: z.number().positive(),
-    unitRate: z.number().nonnegative(),
-    wasteFactor: z.number().min(0).max(100).optional(),
-    notes: z.string().optional(),
-    isFromAi: z.boolean().optional(),
-  })).mutation(async ({ ctx, input }) => {
-    const db = requireDatabase(await getDb());
-    // Verify ownership
-    const [est] = await db.select().from(estimates)
-      .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
-      .limit(1);
-    if (!est) throw new Error("Estimate not found");
-
-    const qty = input.quantity;
-    const rate = input.unitRate;
-    const waste = (input.wasteFactor ?? 0) / 100;
-    const subtotal = qty * rate * (1 + waste);
-
-    const result = await db.insert(lineItems).values({
-      ...input,
-      wasteFactor: (input.wasteFactor ?? 0).toString() as any,
-      quantity: qty.toString() as any,
-      unitRate: rate.toString() as any,
-      subtotal: subtotal.toFixed(2) as any,
+    const { id, expectedVersion, margin, ...rest } = input;
+    return db.transaction(async tx => {
+      const estimate = await lockEstimate(tx, ctx.user.id, id, expectedVersion);
+      const data = { ...rest, ...(margin !== undefined ? { margin: String(margin) } : {}) };
+      await tx.update(estimates).set(data).where(eq(estimates.id, id));
+      return saveTotals(tx, { ...estimate, ...data });
     });
-    return { id: Number((result as any)[0]?.insertId ?? (result as any).insertId ?? 0) };
   }),
 
-  updateLineItem: protectedProcedure.input(z.object({
-    id: z.number(),
-    estimateId: z.number(),
-    category: z.string().optional(),
-    description: z.string().optional(),
-    unit: z.string().optional(),
-    quantity: z.number().positive().optional(),
-    unitRate: z.number().nonnegative().optional(),
-    wasteFactor: z.number().min(0).max(100).optional(),
-    notes: z.string().optional(),
-  })).mutation(async ({ ctx, input }) => {
+  recalculate: protectedProcedure.input(z.object({ id: z.number().int().positive(), expectedVersion: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
-    const [est] = await db.select().from(estimates)
-      .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
-      .limit(1);
-    if (!est) throw new Error("Estimate not found");
-
-    const [existing] = await db.select().from(lineItems).where(eq(lineItems.id, input.id)).limit(1);
-    if (!existing) throw new Error("Line item not found");
-
-    const qty = input.quantity ?? (parseFloat(existing.quantity as string) || 0);
-    const rate = input.unitRate ?? (parseFloat(existing.unitRate as string) || 0);
-    const waste = (input.wasteFactor ?? parseFloat((existing.wasteFactor as string) || "0")) / 100;
-    const subtotal = qty * rate * (1 + waste);
-
-    await db.update(lineItems).set({
-      ...input,
-      quantity: qty.toString() as any,
-      unitRate: rate.toString() as any,
-      wasteFactor: ((input.wasteFactor ?? parseFloat((existing.wasteFactor as string) || "0"))).toString() as any,
-      subtotal: subtotal.toFixed(2) as any,
-    }).where(eq(lineItems.id, input.id));
-
-    // ── Correction capture: record every human edit to AI-generated items ──
-    if (existing.isFromAi) {
-      const corrections: any[] = [];
-      const oldQty = parseFloat(existing.quantity as string);
-      const oldRate = parseFloat(existing.unitRate as string);
-      const oldWaste = parseFloat(existing.wasteFactor as string);
-
-      if (input.quantity != null && Math.abs(input.quantity - oldQty) > 0.001) {
-        corrections.push({
-          estimateId: input.estimateId, lineItemId: input.id, userId: ctx.user.id, trade: est.trade,
-          correctionType: "quantity_change", fieldName: "quantity",
-          aiValue: oldQty.toString(), humanValue: input.quantity.toString(),
-          itemDescription: existing.description, createdAt: new Date(),
-        });
-      }
-      if (input.unitRate != null && Math.abs(input.unitRate - oldRate) > 0.01) {
-        corrections.push({
-          estimateId: input.estimateId, lineItemId: input.id, userId: ctx.user.id, trade: est.trade,
-          correctionType: "rate_change", fieldName: "unitRate",
-          aiValue: oldRate.toString(), humanValue: input.unitRate.toString(),
-          itemDescription: existing.description, createdAt: new Date(),
-        });
-      }
-      if (input.wasteFactor != null && Math.abs(input.wasteFactor - oldWaste) > 0.1) {
-        corrections.push({
-          estimateId: input.estimateId, lineItemId: input.id, userId: ctx.user.id, trade: est.trade,
-          correctionType: "waste_change", fieldName: "wasteFactor",
-          aiValue: oldWaste.toString(), humanValue: input.wasteFactor.toString(),
-          itemDescription: existing.description, createdAt: new Date(),
-        });
-      }
-      if (input.description && input.description !== existing.description) {
-        corrections.push({
-          estimateId: input.estimateId, lineItemId: input.id, userId: ctx.user.id, trade: est.trade,
-          correctionType: "description_change", fieldName: "description",
-          aiValue: existing.description, humanValue: input.description,
-          itemDescription: input.description, createdAt: new Date(),
-        });
-      }
-      if (input.unit && input.unit !== existing.unit) {
-        corrections.push({
-          estimateId: input.estimateId, lineItemId: input.id, userId: ctx.user.id, trade: est.trade,
-          correctionType: "unit_change", fieldName: "unit",
-          aiValue: existing.unit, humanValue: input.unit,
-          itemDescription: existing.description, createdAt: new Date(),
-        });
-      }
-
-      // Batch insert all corrections in a single query
-      if (corrections.length > 0) {
-        await db.insert(estimateCorrections).values(corrections).catch(err =>
-          console.warn("[Correction] Failed to record:", err.message)
-        );
-      }
-    }
-
-    return { success: true };
+    return db.transaction(async tx => saveTotals(tx, await lockEstimate(tx, ctx.user.id, input.id, input.expectedVersion)));
   }),
 
-  deleteLineItem: protectedProcedure.input(z.object({ id: z.number(), estimateId: z.number() })).mutation(async ({ ctx, input }) => {
-    const db = requireDatabase(await getDb());
-    const [est] = await db.select().from(estimates)
-      .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)))
-      .limit(1);
-    if (!est) throw new Error("Estimate not found");
-    await db.delete(lineItems).where(and(eq(lineItems.id, input.id), eq(lineItems.estimateId, input.estimateId)));
-    return { success: true };
+  addLineItem: protectedProcedure.input(itemFields.extend({ estimateId: z.number().int().positive(), expectedVersion: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
+    const { estimateId, expectedVersion, ...values } = input;
+    return editEstimate(requireDatabase(await getDb()), ctx.user.id, estimateId, expectedVersion, { kind: "add", values });
+  }),
+  updateLineItem: protectedProcedure.input(itemFields.partial().extend({ wasteFactor: itemFields.shape.wasteFactor.removeDefault().optional(), id: z.number().int().positive(), estimateId: z.number().int().positive(), expectedVersion: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
+    const { id, estimateId, expectedVersion, ...values } = input;
+    return editEstimate(requireDatabase(await getDb()), ctx.user.id, estimateId, expectedVersion, { kind: "update", id, values });
+  }),
+  deleteLineItem: protectedProcedure.input(z.object({ id: z.number().int().positive(), estimateId: z.number().int().positive(), expectedVersion: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
+    return editEstimate(requireDatabase(await getDb()), ctx.user.id, input.estimateId, input.expectedVersion, { kind: "delete", id: input.id });
   }),
 
   getLineItems: protectedProcedure.input(z.object({ estimateId: z.number() })).query(async ({ ctx, input }) => {
@@ -345,14 +206,12 @@ export const estimatesRouter = router({
 
   delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
     const db = requireDatabase(await getDb());
-    // Verify ownership before deleting associated line items
-    const [est] = await db.select({ id: estimates.id }).from(estimates)
-      .where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)))
-      .limit(1);
-    if (!est) throw new Error("Estimate not found");
-    await db.delete(lineItems).where(eq(lineItems.estimateId, input.id));
-    await db.delete(estimates).where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)));
-    return { success: true };
+    return db.transaction(async tx => {
+      await lockEstimate(tx, ctx.user.id, input.id);
+      await tx.delete(lineItems).where(eq(lineItems.estimateId, input.id));
+      await tx.delete(estimates).where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)));
+      return { success: true };
+    });
   }),
 
   stats: protectedProcedure.query(async ({ ctx }) => {
@@ -457,17 +316,17 @@ export const estimatesRouter = router({
     };
   }),
 
-  generatePdf: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+  generatePdf: protectedProcedure.input(z.object({ id: z.number(), expectedVersion: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
+    await requireProFeature(ctx.user.id);
     const db = requireDatabase(await getDb());
 
-    // Load estimate
-    const [estimate] = await db.select().from(estimates)
-      .where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id)))
-      .limit(1);
-    if (!estimate) throw new Error("Estimate not found");
-
-    // Load line items
-    const items = await db.select().from(lineItems).where(eq(lineItems.estimateId, input.id));
+    const { estimate, items } = await db.transaction(async tx => {
+      const estimate = await lockEstimate(tx, ctx.user.id, input.id, input.expectedVersion);
+      const items = await tx.select().from(lineItems).where(eq(lineItems.estimateId, input.id));
+      const totals = priceEstimate(items, estimate.margin);
+      await tx.update(estimates).set(totals).where(eq(estimates.id, input.id));
+      return { estimate: { ...estimate, ...totals }, items: items.map(item => ({ ...item, subtotal: priceLine(item) })) };
+    });
 
     // Load user profile
     const [user] = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
@@ -479,7 +338,7 @@ export const estimatesRouter = router({
 
     // Load project for client info
     const { projects } = await import("../../drizzle/schema");
-    const [project] = await db.select().from(projects).where(eq(projects.id, estimate.projectId)).limit(1);
+    const [project] = await db.select().from(projects).where(and(eq(projects.id, estimate.projectId), eq(projects.userId, ctx.user.id))).limit(1);
 
     // Build line item rows
     const lineItemRows = items.map(item => ({
@@ -537,10 +396,11 @@ export const estimatesRouter = router({
     const { url } = await storagePut(fileKey, pdfBuffer, "application/pdf");
 
     // Save URL to estimate
-    await db.update(estimates).set({
+    const [pdfSaved] = await db.update(estimates).set({
       quotePdfUrl: url,
       quotePdfKey: fileKey,
-    } as any).where(eq(estimates.id, input.id));
+    } as any).where(and(eq(estimates.id, input.id), eq(estimates.userId, ctx.user.id), eq(estimates.version, input.expectedVersion)));
+    if (!pdfSaved.affectedRows) throw new TRPCError({ code: "CONFLICT", message: "Estimate changed during export. Generate a new PDF from the saved version." });
 
     // ─── Meta CAPI: Purchase (quote PDF generated = quote sent to client) ──
     const pdfFbIds = extractMetaClickIdentifiers(ctx.req.headers.cookie);
@@ -577,6 +437,6 @@ export const estimatesRouter = router({
       );
     });
 
-    return { url, fileKey };
+    return { url, fileKey, version: estimate.version, totals: { subtotal: estimate.subtotal, gstAmount: estimate.gstAmount, total: estimate.total } };
   }),
 });

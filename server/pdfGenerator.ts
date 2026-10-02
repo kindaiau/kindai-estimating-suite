@@ -97,9 +97,17 @@ function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(amount);
 }
 
-function buildHtml(data: PdfQuoteData): string {
+const escapeHtml = (value: string) => value.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+export function buildHtml(input: PdfQuoteData): string {
+  const data = { ...input };
+  for (const key of Object.keys(data) as (keyof PdfQuoteData)[]) {
+    if (typeof data[key] === 'string') (data as unknown as Record<string, unknown>)[key] = escapeHtml(data[key] as string);
+  }
+  data.lineItems = input.lineItems.map(item => ({ ...item, description: escapeHtml(item.description), category: escapeHtml(item.category), unit: escapeHtml(item.unit) }));
+  data.aiAssumptions = input.aiAssumptions?.map(escapeHtml);
+
   const compliance = TRADE_COMPLIANCE[data.trade] ?? TRADE_COMPLIANCE.carpentry;
-  const brandColor = data.brandColor ?? "#FF2D78";
+  const brandColor = /^#[0-9a-f]{6}$/i.test(data.brandColor ?? "") ? data.brandColor : "#047857";
   const validUntil = data.quoteValidDays
     ? new Date(Date.now() + data.quoteValidDays * 86400000).toLocaleDateString("en-AU")
     : null;
@@ -109,7 +117,7 @@ function buildHtml(data: PdfQuoteData): string {
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(item);
     return acc;
-  }, {} as Record<string, LineItemRow[]>);
+  }, Object.create(null) as Record<string, LineItemRow[]>);
 
   const itemRows = Object.entries(groupedItems).map(([category, items]) => `
     <tr class="category-row">
@@ -423,8 +431,8 @@ function buildHtml(data: PdfQuoteData): string {
       </div>
       ${data.margin && data.marginAmount ? `
       <div class="totals-row markup">
-        <span class="totals-label">Margin (${data.margin}%)</span>
-        <span>+${formatCurrency(data.marginAmount)}</span>
+        <span class="totals-label">Markup (${data.margin}%, included in subtotal)</span>
+        <span>${formatCurrency(data.marginAmount)}</span>
       </div>
       ` : ""}
       <div class="totals-row gst">
@@ -520,7 +528,7 @@ export async function generateQuotePdf(data: PdfQuoteData): Promise<Buffer> {
   const html = buildHtml(data);
 
   const browser = await puppeteer.launch({
-    executablePath: "/usr/bin/chromium-browser",
+    executablePath: process.env.CHROMIUM_PATH || "/usr/bin/chromium-browser",
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
@@ -532,6 +540,7 @@ export async function generateQuotePdf(data: PdfQuoteData): Promise<Buffer> {
 
   try {
     const page = await browser.newPage();
+    await page.setJavaScriptEnabled(false);
     await page.setContent(html, { waitUntil: "networkidle0" });
     const pdf = await page.pdf({
       format: "A4",
