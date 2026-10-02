@@ -97,6 +97,7 @@ The handoff source bundle contains full fenced TypeScript/TSX blocks for the bas
 - Real Chromium PDF generated locally; `pdftotext` verified 13.27 subtotal, 1.33 GST and 14.60 total. PDF renderer test is distinct from mocked storage/export API testing.
 - Puppeteer at 375px and 1440px: homepage no horizontal overflow or JS exceptions, keyboard skip link/ROI adjustment; editor draft export guard, canonical total 44.83 after save; conflict preserves draft, loads current version, retries explicitly. API calls were mocked for browser tests. Results/screenshots are in `docs/validation/`.
 - `corepack pnpm build`: passed. Vite still reports a large main bundle (~1.94 MB minified / 504 kB gzip); this is a performance concern, not a failed build.
+- GitHub PR validation job passed. Dependency-review check is blocked because the repository Dependency Graph is disabled. The secret scanner initially flagged the disposable test credential URL; the fixture now uses explicit loopback connection fields, and the unchanged scanner passes locally. No live credential was involved and no scanner rule was weakened.
 - Redirects: source inventory and test contract prepared; **actual hosting-layer configuration unavailable and therefore unverified**. No domain mutation/deployment performed.
 
 **Classification: NOT READY for launch.** Highest-priority next technical work:

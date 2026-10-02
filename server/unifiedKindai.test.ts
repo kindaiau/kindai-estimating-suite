@@ -67,7 +67,7 @@ integration('transaction and quota integration against disposable MariaDB', () =
   let pool: mysql.Pool;
   let db: ReturnType<typeof drizzle>;
   beforeAll(async () => {
-    pool = mysql.createPool('mysql://root:local-test-only@127.0.0.1:3307/kindai_test');
+    pool = mysql.createPool({ host: '127.0.0.1', port: 3307, user: 'root', password: 'local-test-only', database: 'kindai_test' });
     db = drizzle(pool); mocks.db = db;
   });
   afterAll(async () => { await pool.end(); });
