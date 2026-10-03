@@ -1,3 +1,5 @@
+import { RecoverTakeoff } from "@/components/RecoverTakeoff";
+import { VerifyAccountEmail } from "@/components/VerifyAccountEmail";
 import { useLocation } from "wouter";
 import { useState, useRef, useMemo, useEffect } from "react";
 import { pixelUploadPlan, pixelRunTakeoff } from "@/lib/metaPixel";
@@ -485,6 +487,8 @@ export default function AITakeoff() {
         keywords="AI takeoff software Australia, construction plan scanning, automated quantity takeoff, AI estimating from plans, scan plans get quote, electrical plan takeoff, plumbing takeoff software"
         noIndex={false}
       />
+      {user && !user.emailVerified && user.subscriptionTier === "free" && <VerifyAccountEmail />}
+      {user && <RecoverTakeoff />}
       {/* Hero Header */}
       <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
         <div className="absolute inset-0 opacity-20">

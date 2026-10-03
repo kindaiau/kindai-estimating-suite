@@ -119,6 +119,7 @@ export const billingRouter = router({
         .select({
           stripeCustomerId: users.stripeCustomerId,
           stripeSubscriptionId: users.stripeSubscriptionId,
+          subscriptionStatus: users.subscriptionStatus,
           email: users.email,
           name: users.name,
         })
@@ -128,7 +129,7 @@ export const billingRouter = router({
 
       if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
 
-      if (user.stripeSubscriptionId) throw new TRPCError({ code: "CONFLICT", message: "Manage your existing subscription in Billing; no second subscription was created." });
+      if (user.stripeSubscriptionId && !["canceled", "cancelled", "incomplete_expired"].includes(user.subscriptionStatus ?? "")) throw new TRPCError({ code: "CONFLICT", message: "Manage your existing subscription in Billing; no second subscription was created." });
 
       // Find or create Stripe customer
       const customerId = await findOrCreateCustomer({

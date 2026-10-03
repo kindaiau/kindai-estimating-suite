@@ -1,3 +1,4 @@
+import { reconcileSubscription } from "./reconcile";
 import { Router, raw } from "express";
 import { getStripe } from "./stripe";
 import { ENV } from "../_core/env";
@@ -121,109 +122,18 @@ export function registerStripeWebhook(app: Router) {
               break;
             }
 
-            const userId = session.client_reference_id
-              ? parseInt(session.client_reference_id)
-              : session.metadata?.user_id
-              ? parseInt(session.metadata.user_id)
-              : null;
-
-            if (userId && session.subscription) {
-              const db = await getDb();
-              if (db) {
-                // Fetch the subscription to determine the plan
-                const sub = await stripe.subscriptions.retrieve(session.subscription as string) as any;
-                const priceId = sub.items?.data?.[0]?.price?.id;
-                const lookupKey = sub.items?.data?.[0]?.price?.lookup_key ?? "";
-
-                let tier: "free" | "sole_trader" | "small_builder" | "mid_builder" | "enterprise" | "pro" = "sole_trader";
-                if (lookupKey.startsWith("kindai_pro_2026_")) {
-                  tier = "pro";
-                } else if (lookupKey.includes("enterprise") || priceId?.includes("enterprise")) {
-                  tier = "enterprise";
-                } else if (lookupKey.includes("mid_builder") || priceId?.includes("mid_builder")) {
-                  tier = "mid_builder";
-                } else if (lookupKey.includes("small_builder") || priceId?.includes("small_builder")) {
-                  tier = "small_builder";
-                } else if (lookupKey.includes("sole_trader") || priceId?.includes("sole_trader")) {
-                  tier = "sole_trader";
-                }
-
-                await db
-                  .update(users)
-                  .set({
-                    stripeCustomerId: session.customer as string,
-                    stripeSubscriptionId: session.subscription as string,
-                    subscriptionTier: tier,
-                    subscriptionStatus: sub.status ?? "incomplete",
-                  })
-                  .where(eq(users.id, userId));
-
-                console.log(`[Stripe Webhook] User ${userId} subscribed to ${tier}`);
-              }
-            }
-            break;
-          }
-
-          case "customer.subscription.updated": {
-            const subscription = event.data.object as any;
-            const customerId = subscription.customer as string;
-
             const db = await getDb();
-            if (db) {
-              const status = subscription.status;
-              const cancelAtPeriodEnd = subscription.cancel_at_period_end;
-
-              await db
-                .update(users)
-                .set({
-                  subscriptionStatus: status,
-                })
-                .where(and(eq(users.stripeCustomerId, customerId), eq(users.stripeSubscriptionId, subscription.id)));
-
-              console.log(`[Stripe Webhook] Subscription updated for customer ${customerId}: ${status}`);
-            }
+            if (!db) throw new Error('Database unavailable');
+            await reconcileSubscription(db, stripe, event);
             break;
           }
-
-          case "customer.subscription.deleted": {
-            const subscription = event.data.object as any;
-            const customerId = subscription.customer as string;
-
-            const db = await getDb();
-            if (db) {
-              await db
-                .update(users)
-                .set({
-                  subscriptionTier: "free",
-                  subscriptionStatus: "cancelled",
-                  stripeSubscriptionId: null,
-                })
-                .where(and(eq(users.stripeCustomerId, customerId), eq(users.stripeSubscriptionId, subscription.id)));
-
-              console.log(`[Stripe Webhook] Subscription cancelled for customer ${customerId}`);
-            }
-            break;
-          }
-
-          case "invoice.paid": {
-            const invoice = event.data.object as any;
-            console.log(`[Stripe Webhook] Invoice paid: ${invoice.id} for customer ${invoice.customer}`);
-            break;
-          }
-
+          case "customer.subscription.updated":
+          case "customer.subscription.deleted":
+          case "invoice.paid":
           case "invoice.payment_failed": {
-            const invoice = event.data.object as any;
-            const customerId = invoice.customer as string;
-
             const db = await getDb();
-            if (db) {
-              await db
-                .update(users)
-                .set({ subscriptionStatus: "past_due" })
-                .where(eq(users.stripeCustomerId, customerId));
-
-              console.log(`[Stripe Webhook] Payment failed for customer ${customerId}`);
-            }
+            if (!db) throw new Error('Database unavailable');
+            await reconcileSubscription(db, stripe, event);
             break;
           }
 

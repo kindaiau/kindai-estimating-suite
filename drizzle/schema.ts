@@ -434,11 +434,17 @@ export type SupplierConnection = typeof supplierConnections.$inferSelect;
 export type InsertSupplierConnection = typeof supplierConnections.$inferInsert;
 
 // ─── Quote Tokens (Public Quote Acceptance Links) ─────────────────────────────
+export type IssuedQuoteSnapshot = {
+  estimate: Pick<typeof estimates.$inferSelect, 'id' | 'title' | 'trade' | 'notes' | 'subtotal' | 'gstAmount' | 'total' | 'version'>;
+  items: (typeof lineItems.$inferSelect)[];
+  sender: Pick<typeof users.$inferSelect, 'name' | 'companyName' | 'abn' | 'phone' | 'email' | 'licenseNumber'>;
+};
 export const quoteTokens = mysqlTable("quote_tokens", {
   id: int("id").autoincrement().primaryKey(),
   estimateId: int("estimateId").notNull(),
   userId: int("userId").notNull(),
   token: varchar("token", { length: 128 }).notNull().unique(),
+  snapshot: json("snapshot").$type<IssuedQuoteSnapshot>(),
   clientName: varchar("clientName", { length: 255 }),
   clientEmail: varchar("clientEmail", { length: 320 }),
   status: mysqlEnum("status", ["pending", "viewed", "accepted", "declined", "expired"]).default("pending").notNull(),
@@ -1057,8 +1063,10 @@ export const takeoffJobs = mysqlTable('takeoff_jobs', {
   estimateId: int('estimateId').notNull(),
   expectedVersion: int('expectedVersion').notNull(),
   requestHash: varchar('requestHash', { length: 64 }).notNull(),
+  requestPayload: json('requestPayload'),
   status: mysqlEnum('status', ['running', 'completed', 'failed']).notNull(),
   attempts: int('attempts').default(1).notNull(),
+  leaseExpiresAt: timestamp('leaseExpiresAt').notNull(),
   result: json('result'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
 });
@@ -1067,4 +1075,28 @@ export const planUploads = mysqlTable('plan_uploads', {
   userId: int('userId').notNull(),
   url: text('url').notNull(),
   pageCount: int('pageCount').notNull(),
+});
+
+export const oauthStates = mysqlTable('oauth_states', {
+  id: varchar('id', { length: 64 }).primaryKey(),
+  userId: int('userId').notNull(),
+  browserHash: varchar('browserHash', { length: 64 }).notNull(),
+  origin: varchar('origin', { length: 255 }).notNull(),
+  expiresAt: timestamp('expiresAt').notNull(),
+});
+
+export const stripeEvents = mysqlTable('stripe_events', {
+  id: varchar('id', { length: 255 }).primaryKey(),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});
+
+export const emailChallenges = mysqlTable('email_challenges', {
+  userId: int('userId').primaryKey(),
+  email: varchar('email', { length: 320 }).notNull(),
+  codeHash: varchar('codeHash', { length: 64 }).notNull(),
+  expiresAt: timestamp('expiresAt').notNull(),
+  sentAt: timestamp('sentAt').notNull(),
+  windowAt: timestamp('windowAt').notNull(),
+  sends: int('sends').notNull(),
+  attempts: int('attempts').notNull(),
 });

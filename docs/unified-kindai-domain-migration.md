@@ -7,7 +7,7 @@ Source inventory:
 - Browser routing: `client/src/App.tsx` retains existing project/estimate, billing, login, quote acceptance, privacy and legacy campaign paths.
 - Manus callback: `/api/oauth/callback`, registered in `server/_core/oauth.ts`; redirect URI depends on the browser origin (`client/src/const.ts`). Session cookies do not automatically migrate between domains.
 - Supabase: email confirmation returns to `${window.location.origin}/onboarding` in `client/src/contexts/SupabaseAuthContext.tsx`. Both origins must be configured in the provider while transitioning.
-- Xero: `/api/xero/callback` exchanges using the original origin carried in base64-encoded state (the callback does not verify a signature). Do not redirect in-flight callback requests. The unverified state/user mapping requires a separate OAuth security fix before enabling or migrating Xero.
+- Xero: `/api/xero/callback` now consumes an expiring, one-use opaque state bound to the initiating browser and recorded user. The origin must match `PUBLIC_APP_ORIGIN`. Do not redirect in-flight callback requests. Existing base64 states are rejected and require restarting the connection. Provider allowlist and deployed behavior remain unverified.
 - Stripe: `/api/stripe/webhook` receives a raw signed body before JSON middleware. Keep the old webhook endpoint alive until the new destination is configured and tested. Do not send HTTP301 for webhook POSTs.
 - Existing source references include `kindaiestimator.com`, `kindaibook-55hbndtb.manus.space`, and historical `kindai.com.au`. Source references alone do not establish domain ownership or the active CDN.
 

@@ -1,8 +1,11 @@
+import { lockEstimate } from "../estimateEdits";
+import { priceEstimate } from "../estimatePricing";
+import { appOrigin } from "../xeroState";
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { quoteTokens, estimates, lineItems, users } from "../../drizzle/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import crypto from "crypto";
 import { buildQuoteAssuranceReport, deriveAssuranceEstimate } from "../assurance";
@@ -15,6 +18,7 @@ export const quoteTokensRouter = router({
   // Send quote to client — creates a token and returns the public URL
   sendQuote: protectedProcedure.input(z.object({
     estimateId: z.number().int().positive(),
+    expectedVersion: z.number().int().positive(),
     clientName: z.string().min(1).max(255),
     clientEmail: z.string().email().optional().or(z.literal("")),
     message: z.string().max(2000).optional(),
@@ -24,20 +28,18 @@ export const quoteTokensRouter = router({
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
-    // Verify estimate belongs to user
-    const [estimate] = await db
-      .select()
-      .from(estimates)
-      .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)));
-
-    if (!estimate) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Estimate not found" });
-    }
-
+    return db.transaction(async db => {
+    const estimate = await lockEstimate(db, ctx.user.id, input.estimateId, input.expectedVersion);
     const items = await db
       .select()
       .from(lineItems)
       .where(eq(lineItems.estimateId, input.estimateId));
+    const totals = priceEstimate(items, estimate.margin);
+    const snapshot = {
+      estimate: { id: estimate.id, title: estimate.title, trade: estimate.trade, notes: estimate.notes, version: estimate.version, ...totals },
+      items,
+      sender: { name: ctx.user.name, companyName: ctx.user.companyName, abn: ctx.user.abn, phone: ctx.user.phone, email: ctx.user.email, licenseNumber: ctx.user.licenseNumber },
+    };
     const assurance = buildQuoteAssuranceReport(deriveAssuranceEstimate(estimate, items), items);
     if (!assurance.canIssue) {
       throw new TRPCError({
@@ -56,7 +58,8 @@ export const quoteTokensRouter = router({
       .set({ status: "expired" })
       .where(and(
         eq(quoteTokens.estimateId, input.estimateId),
-        eq(quoteTokens.userId, ctx.user.id)
+        eq(quoteTokens.userId, ctx.user.id),
+        sql`${quoteTokens.status} IN ('pending', 'viewed')`
       ));
 
     // Create new token
@@ -64,6 +67,7 @@ export const quoteTokensRouter = router({
       estimateId: input.estimateId,
       userId: ctx.user.id,
       token,
+      snapshot,
       clientName: input.clientName,
       clientEmail: input.clientEmail || null,
       message: input.message,
@@ -77,7 +81,7 @@ export const quoteTokensRouter = router({
       .set({ status: "sent" })
       .where(and(eq(estimates.id, input.estimateId), eq(estimates.userId, ctx.user.id)));
 
-    const quoteUrl = `${input.origin}/quote/accept/${token}`;
+    const quoteUrl = `${appOrigin(input.origin)}/quote/accept/${token}`;
 
     return {
       token,
@@ -85,6 +89,7 @@ export const quoteTokensRouter = router({
       expiresAt,
       clientEmail: input.clientEmail || null,
     };
+    });
   }),
 
   // Get all sent quotes for the current user
@@ -103,6 +108,7 @@ export const quoteTokensRouter = router({
         viewedAt: quoteTokens.viewedAt,
         respondedAt: quoteTokens.respondedAt,
         estimateId: quoteTokens.estimateId,
+        snapshot: quoteTokens.snapshot,
         estimateTitle: estimates.title,
         estimateTotal: estimates.total,
         estimateTrade: estimates.trade,
@@ -112,7 +118,10 @@ export const quoteTokensRouter = router({
       .where(eq(quoteTokens.userId, ctx.user.id))
       .orderBy(quoteTokens.createdAt);
 
-    return tokens;
+    return tokens.map(({ snapshot: raw, ...token }) => {
+      const snapshot = typeof raw === 'string' ? JSON.parse(raw) as NonNullable<typeof raw> : raw;
+      return snapshot ? { ...token, estimateTitle: snapshot.estimate.title, estimateTotal: snapshot.estimate.total, estimateTrade: snapshot.estimate.trade } : token;
+    });
   }),
 
   // Public: get quote by token (no auth required)
@@ -140,44 +149,13 @@ export const quoteTokensRouter = router({
       await db
         .update(quoteTokens)
         .set({ status: "viewed", viewedAt: new Date() })
-        .where(eq(quoteTokens.id, qt.id));
+        .where(and(eq(quoteTokens.id, qt.id), eq(quoteTokens.status, "pending")));
     }
 
-    // Get estimate details
-    const [estimate] = await db
-      .select()
-      .from(estimates)
-      .where(eq(estimates.id, qt.estimateId));
+    if (!qt.snapshot) throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'This legacy quote needs to be reissued by the contractor before it can be reviewed or accepted.' });
+    const snapshot = typeof qt.snapshot === 'string' ? JSON.parse(qt.snapshot) as NonNullable<typeof qt.snapshot> : qt.snapshot;
+    return { token: qt, ...snapshot };
 
-    if (!estimate) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Estimate not found" });
-    }
-
-    // Get line items
-    const items = await db
-      .select()
-      .from(lineItems)
-      .where(eq(lineItems.estimateId, qt.estimateId));
-
-    // Get sender info (company name, ABN, phone)
-    const [sender] = await db
-      .select({
-        name: users.name,
-        companyName: users.companyName,
-        abn: users.abn,
-        phone: users.phone,
-        email: users.email,
-        licenseNumber: users.licenseNumber,
-      })
-      .from(users)
-      .where(eq(users.id, qt.userId));
-
-    return {
-      token: qt,
-      estimate,
-      items,
-      sender,
-    };
   }),
 
   // Public: accept or decline a quote
@@ -190,10 +168,11 @@ export const quoteTokensRouter = router({
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
+    return db.transaction(async db => {
     const [qt] = await db
       .select()
       .from(quoteTokens)
-      .where(eq(quoteTokens.token, input.token));
+      .where(eq(quoteTokens.token, input.token)).for("update");
 
     if (!qt) {
       throw new TRPCError({ code: "NOT_FOUND", message: "Quote not found" });
@@ -202,6 +181,8 @@ export const quoteTokensRouter = router({
     if (qt.status === "expired" || (qt.expiresAt && qt.expiresAt < new Date())) {
       throw new TRPCError({ code: "FORBIDDEN", message: "This quote link has expired" });
     }
+
+    if (!qt.snapshot) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Ask the contractor to reissue this legacy quote." });
 
     if (qt.status === "accepted" || qt.status === "declined") {
       throw new TRPCError({ code: "BAD_REQUEST", message: "This quote has already been responded to" });
@@ -218,5 +199,6 @@ export const quoteTokensRouter = router({
       .where(eq(quoteTokens.id, qt.id));
 
     return { success: true, status: input.action };
+    });
   }),
 });

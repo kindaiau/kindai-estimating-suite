@@ -2,7 +2,7 @@ import { beforeAll, afterAll, beforeEach, describe, it, expect, vi } from 'vites
 import mysql from 'mysql2/promise';
 import { drizzle } from 'drizzle-orm/mysql2';
 import { eq, sql } from 'drizzle-orm';
-import { estimates, lineItems, users, projects, estimateCorrections, takeoffJobs, planUploads } from '../drizzle/schema';
+import { estimates, lineItems, users, projects, estimateCorrections, takeoffJobs, planUploads, oauthStates, stripeEvents, emailChallenges, quoteTokens } from '../drizzle/schema';
 import { editEstimate } from './estimateEdits';
 import { itemFields, priceLine, priceEstimate } from './estimatePricing';
 import { beginTakeoff, completeTakeoff, failTakeoff } from './takeoffJobs';
@@ -16,6 +16,9 @@ vi.mock('./db', () => ({ getDb: async () => mocks.db }));
 vi.mock('./pdfGenerator', () => ({ generateQuotePdf: mocks.pdf }));
 vi.mock('./storage', () => ({ storagePut: async () => ({ url: 'https://test.invalid/quote.pdf' }) }));
 vi.mock('./metaCapi', () => ({ sendMetaConversionEvent: async () => {}, extractMetaClickIdentifiers: () => ({}), buildMetaUserData: () => ({}) }));
+
+const mailMock = vi.hoisted(() => vi.fn(async (_: any) => true));
+vi.mock('./resendEmail', () => ({ sendResendEmail: mailMock }));
 
 const stripeMocks = vi.hoisted(() => ({ list: vi.fn(), createPrice: vi.fn(), checkout: vi.fn(), customer: vi.fn() }));
 vi.mock('./stripe/stripe', () => ({
@@ -72,7 +75,7 @@ integration('transaction and quota integration against disposable MariaDB', () =
   });
   afterAll(async () => { await pool.end(); });
   beforeEach(async () => {
-    for (const table of [takeoffJobs, planUploads, estimateCorrections, lineItems, estimates, projects, users]) await db.delete(table);
+    for (const table of [oauthStates, stripeEvents, emailChallenges, quoteTokens, takeoffJobs, planUploads, estimateCorrections, lineItems, estimates, projects, users]) await db.delete(table);
     await db.insert(users).values([{ id: 1, openId: 'test:one', emailVerified: true, subscriptionTier: 'pro', subscriptionStatus: 'active' }, { id: 2, openId: 'test:two', emailVerified: true }]);
     await db.insert(projects).values([{ id: 1, userId: 1, name: 'Commercial plumbing', trade: 'plumbing' }, { id: 2, userId: 2, name: 'Other tenant', trade: 'plumbing' }]);
     await db.insert(estimates).values([{ id: 1, projectId: 1, userId: 1, trade: 'plumbing', title: 'Quote', margin: '20', aiTakeoffData: [{ quantity: 99 }] }, { id: 2, projectId: 2, userId: 2, trade: 'plumbing', title: 'Other' }]);
@@ -217,4 +220,86 @@ integration('transaction and quota integration against disposable MariaDB', () =
     await expect(beginTakeoff(db, 2, 2, 'submission-one-123', {}, ['https://test.invalid/foreign'])).rejects.toThrow('own account');
     expect(await db.select().from(takeoffJobs)).toHaveLength(0);
   });
+  it('recovers an expired attempt once and fences both late completion and late failure', async () => {
+    await upload();
+    const old = await beginTakeoff(db, 2, 2, 'recovery-test-12345', { url }, [url]);
+    await db.update(takeoffJobs).set({ leaseExpiresAt: new Date(Date.now() - 1000) });
+    const outcomes = await Promise.allSettled([1,2].map(() => beginTakeoff(db, 2, 2, 'recovery-test-12345', { url }, [url])));
+    expect(outcomes.filter(o => o.status === 'fulfilled')).toHaveLength(1);
+    const retry = (outcomes.find(o => o.status === 'fulfilled') as PromiseFulfilledResult<any>).value;
+    expect(retry.attempts).toBe(2);
+    await failTakeoff(db, old);
+    expect((await db.select().from(takeoffJobs))[0].status).toBe('running');
+    const result = { items: [{ description: 'Pipe', quantity: 2, unit: 'm', tradePrice: 4, category: 'Materials' }], confidence: 70, assumptions: [] };
+    await expect(completeTakeoff(db, old, result)).rejects.toMatchObject({ code: 'CONFLICT' });
+    expect(await db.select().from(lineItems)).toHaveLength(0);
+    await completeTakeoff(db, retry, result);
+    expect(await db.select().from(lineItems)).toHaveLength(1);
+  });
+  it('Xero state rejects forgery, browser mismatch, expiry and concurrent replay', async () => {
+    const { issueXeroState, consumeXeroState } = await import('./xeroState');
+    vi.stubEnv('PUBLIC_APP_ORIGIN', 'https://kindai.au');
+    await expect(issueXeroState(db, 1, 'https://evil.invalid')).rejects.toThrow();
+    const issued = await issueXeroState(db, 1, 'https://kindai.au');
+    await expect(consumeXeroState(db, issued.state, '0'.repeat(64))).rejects.toThrow();
+    const results = await Promise.allSettled([1,2].map(() => consumeXeroState(db, issued.state, issued.browser)));
+    expect(results.filter(r => r.status === 'fulfilled')).toHaveLength(1);
+    const expired = await issueXeroState(db, 1, 'https://kindai.au');
+    await db.update(oauthStates).set({ expiresAt: new Date(Date.now() - 1000) });
+    await expect(consumeXeroState(db, expired.state, expired.browser)).rejects.toThrow();
+    vi.unstubAllEnvs();
+  });
+  it('legacy email verification requires a delivered code, binds account email and rejects replay', async () => {
+    const { emailVerificationRouter } = await import('./routers/emailVerification');
+    await db.update(users).set({ emailVerified: false, email: 'legacy@example.test' }).where(eq(users.id, 2));
+    const caller = emailVerificationRouter.createCaller({ user: { id: 2 }, req: {}, res: {} } as any);
+    mailMock.mockClear(); mailMock.mockResolvedValue(true);
+    await caller.request();
+    const code = mailMock.mock.calls[0][0].text.match(/code is (\d{8})/)[1];
+    await expect(caller.request()).rejects.toMatchObject({ code: 'TOO_MANY_REQUESTS' });
+    await expect(caller.confirm({ code: '00000000' })).rejects.toThrow('Invalid');
+    expect((await db.select().from(emailChallenges))[0].attempts).toBe(1);
+    await caller.confirm({ code });
+    expect((await db.select().from(users).where(eq(users.id, 2)))[0].emailVerified).toBe(true);
+    await expect(caller.confirm({ code })).rejects.toThrow('Invalid');
+  });
+  it('failed verification delivery rolls back the challenge', async () => {
+    const { emailVerificationRouter } = await import('./routers/emailVerification');
+    await db.update(users).set({ emailVerified: false, email: 'legacy@example.test' }).where(eq(users.id, 2));
+    mailMock.mockResolvedValueOnce(false);
+    await expect(emailVerificationRouter.createCaller({ user: { id: 2 }, req: {}, res: {} } as any).request()).rejects.toThrow('could not be sent');
+    expect(await db.select().from(emailChallenges)).toHaveLength(0);
+  });
+  it('issued quote stays immutable after edits and responses serialize', async () => {
+    const { quoteTokensRouter } = await import('./routers/quoteTokens');
+    vi.stubEnv('PUBLIC_APP_ORIGIN', 'https://kindai.au');
+    const saved = await editEstimate(db, 1, 1, 1, { kind: 'add', values: item });
+    const [user] = await db.select().from(users).where(eq(users.id, 1));
+    const caller = quoteTokensRouter.createCaller({ user, req: {}, res: {} } as any);
+    const issued = await caller.sendQuote({ estimateId: 1, expectedVersion: saved.version, clientName: 'Client', origin: 'https://kindai.au' });
+    await editEstimate(db, 1, 1, saved.version, { kind: 'update', id: saved.id, values: { quantity: 5 } });
+    const visible = await caller.getByToken({ token: issued.token });
+    expect(visible.estimate.total).toBe('14.60');
+    expect(visible.items[0].quantity).toBe('1.005');
+    const responses = await Promise.allSettled(['accepted', 'declined'].map(action => caller.respond({ token: issued.token, action: action as 'accepted' | 'declined' })));
+    expect(responses.filter(r => r.status === 'fulfilled')).toHaveLength(1);
+    await expect(caller.sendQuote({ estimateId: 1, expectedVersion: saved.version, clientName: 'Client', origin: 'https://kindai.au' })).rejects.toMatchObject({ code: 'CONFLICT' });
+    vi.unstubAllEnvs();
+  });
+  it('Stripe duplicates and delayed failures use latest provider state and preserve unrelated subscriptions', async () => {
+    const { reconcileSubscription } = await import('./stripe/reconcile');
+    await db.update(users).set({ stripeCustomerId: 'cus_mock', stripeSubscriptionId: 'sub_current' }).where(eq(users.id, 1));
+    const retrieve = vi.fn(async () => ({ customer: 'cus_mock', status: 'active', items: { data: [{ price: { lookup_key: 'kindai_pro_2026_monthly_inclusive' } }] } }));
+    const stripe = { subscriptions: { retrieve } };
+    const event = { id: 'evt_mock_1', type: 'invoice.payment_failed', data: { object: { customer: 'cus_mock', subscription: 'sub_current' } } };
+    await Promise.all([1,2].map(() => reconcileSubscription(db, stripe, event)));
+    expect(retrieve).toHaveBeenCalledTimes(1);
+    expect((await db.select().from(users).where(eq(users.id, 1)))[0].subscriptionStatus).toBe('active');
+    await reconcileSubscription(db, stripe, { ...event, id: 'evt_mock_2', data: { object: { customer: 'cus_mock', subscription: 'sub_old' } } });
+    expect(retrieve).toHaveBeenCalledTimes(1);
+    retrieve.mockRejectedValueOnce(new Error('Provider unavailable'));
+    await expect(reconcileSubscription(db, stripe, { ...event, id: 'evt_mock_3' })).rejects.toThrow();
+    expect((await db.select().from(stripeEvents)).map(e => e.id)).not.toContain('evt_mock_3');
+  });
+
 });

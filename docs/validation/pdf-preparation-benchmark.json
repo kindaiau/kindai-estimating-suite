@@ -1,0 +1,30 @@
+{
+  "classification": "Synthetic PDF preparation only; no model calls; no commercial accuracy or latency claim supported",
+  "sourcePages": 50,
+  "vectorLinesPerPage": 2000,
+  "selectedPage": 37,
+  "sourceBytes": 1242360,
+  "runs": [
+    {
+      "durationMs": 12,
+      "outputBytes": 25437
+    },
+    {
+      "durationMs": 4,
+      "outputBytes": 25437
+    },
+    {
+      "durationMs": 4,
+      "outputBytes": 25437
+    },
+    {
+      "durationMs": 4,
+      "outputBytes": 25437
+    },
+    {
+      "durationMs": 4,
+      "outputBytes": 25437
+    }
+  ],
+  "peakRssBytes": 388366336
+}

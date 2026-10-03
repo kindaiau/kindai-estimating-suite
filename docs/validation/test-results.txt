@@ -1,11 +1,8 @@
-> kindai-estimating-suite@1.0.0 test /workspace/kindai-estimating-suite
-> vitest run
-
 
  RUN  v4.1.4 /workspace/kindai-estimating-suite
 
 
  Test Files  26 passed | 3 skipped (29)
-      Tests  378 passed | 5 skipped (383)
-   Start at  22:51:19
-   Duration  4.53s (transform 1.57s, setup 0ms, import 6.26s, tests 2.44s, environment 2ms)
+      Tests  384 passed | 5 skipped (389)
+   Start at  21:09:15
+   Duration  4.64s (transform 1.34s, setup 0ms, import 6.46s, tests 2.60s, environment 2ms)

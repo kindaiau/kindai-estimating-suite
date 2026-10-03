@@ -22,11 +22,12 @@ export async function beginTakeoff(db: Db, userId: number, estimateId: number, r
     if (existing) {
       if (existing.requestHash !== requestHash || existing.estimateId !== estimateId) throw new TRPCError({ code: 'CONFLICT', message: 'Submission ID already belongs to another request' });
       if (existing.status === 'completed') return { ...existing, result: typeof existing.result === 'string' ? JSON.parse(existing.result) : existing.result };
-      if (existing.status === 'running') throw new TRPCError({ code: 'CONFLICT', message: 'This scan is still running. Retry the same submission after it finishes; it will not be charged twice.' });
+      if (existing.status === 'running' && existing.leaseExpiresAt > new Date()) throw new TRPCError({ code: 'CONFLICT', message: 'This scan is still running. Retry the same submission after it finishes; it will not be submitted again while it is running.' });
       if (existing.attempts >= 3) throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Scan retry limit reached. Contact support with your submission ID.' });
       await lockEstimate(tx, userId, estimateId, existing.expectedVersion);
-      await tx.update(takeoffJobs).set({ status: 'running', attempts: existing.attempts + 1 }).where(eq(takeoffJobs.id, id));
-      return { ...existing, status: 'running' as const, attempts: existing.attempts + 1 };
+      const leaseExpiresAt = new Date(Date.now() + 30 * 60_000);
+      await tx.update(takeoffJobs).set({ status: 'running', leaseExpiresAt, attempts: existing.attempts + 1 }).where(eq(takeoffJobs.id, id));
+      return { ...existing, status: 'running' as const, leaseExpiresAt, attempts: existing.attempts + 1 };
     }
     const estimate = await lockEstimate(tx, userId, estimateId);
     if (estimate.aiTakeoffData) throw new TRPCError({ code: 'CONFLICT', message: 'This estimate already has a takeoff. Create a new estimate to preserve its original evidence.' });
@@ -42,17 +43,19 @@ export async function beginTakeoff(db: Db, userId: number, estimateId: number, r
       const [claim] = await tx.select().from(takeoffJobs).where(eq(takeoffJobs.freeUserId, userId)).limit(1);
       if (claim) throw new TRPCError({ code: 'FORBIDDEN', message: 'Your lifetime free scan is already reserved or used. Retry the original failed submission or choose Pro.' });
     }
-    const job: typeof takeoffJobs.$inferInsert = { id, userId, freeUserId: paid ? null : userId, estimateId, expectedVersion: estimate.version, requestHash, status: 'running', attempts: 1 };
+    const job: typeof takeoffJobs.$inferInsert = { id, userId, freeUserId: paid ? null : userId, estimateId, expectedVersion: estimate.version, requestHash, requestPayload: payload, status: 'running', attempts: 1, leaseExpiresAt: new Date(Date.now() + 30 * 60_000) };
     await tx.insert(takeoffJobs).values(job);
     return { ...job, result: null, createdAt: new Date() } as Job;
   });
 }
 export async function failTakeoff(db: Db, job: Job) {
-  await db.update(takeoffJobs).set({ status: 'failed' }).where(and(eq(takeoffJobs.id, job.id), eq(takeoffJobs.status, 'running')));
+  await db.update(takeoffJobs).set({ status: 'failed' }).where(and(eq(takeoffJobs.id, job.id), eq(takeoffJobs.status, 'running'), eq(takeoffJobs.attempts, job.attempts)));
 }
 export async function completeTakeoff(db: Db, job: Job, result: { items: Parameters<typeof buildAiLineItemRows>[1]; confidence: number; assumptions: string[] }, labourRate = 95, useTradePrice = true) {
   return db.transaction(async tx => {
     const estimate = await lockEstimate(tx, job.userId, job.estimateId, job.expectedVersion);
+    const [currentJob] = await tx.select().from(takeoffJobs).where(eq(takeoffJobs.id, job.id)).limit(1).for('update');
+    if (!currentJob || currentJob.status !== 'running' || currentJob.attempts !== job.attempts || currentJob.leaseExpiresAt <= new Date()) throw new TRPCError({ code: 'CONFLICT', message: 'This scan attempt expired or was replaced. Retry the original submission.' });
     const rows = buildAiLineItemRows(job.estimateId, result.items, { labourRate, useTradePrice });
     if (!rows.length) throw new Error('No takeoff items returned. Retry the original submission.');
     for (let i = 0; i < rows.length; i += 50) await tx.insert(lineItems).values(rows.slice(i, i + 50));

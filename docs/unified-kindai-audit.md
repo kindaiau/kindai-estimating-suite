@@ -1,3 +1,7 @@
+# Follow-up status
+
+The recovery, legacy email verification, issued-quote snapshot, Stripe entitlement ordering and Xero callback findings below are superseded by the implementation and local evidence in [launch evidence](unified-kindai-launch-evidence.md). Production remains NOT READY; see the [migration/recovery runbook](unified-kindai-recovery-runbook.md).
+
 # A. ENGINE AND DEPLOYMENT
 
 Audit baseline: `a15f444372cc1229a09caf4ad61bdb8b8310cd8c`. Implementation branch: `codex/unified-kindai-free-scan-pro`. This is a source review plus offline/local validation, not certification of the deployed service. The repository uses React 19/Vite, TypeScript/Express, tRPC/React Query and **Drizzle/MySQL**, not Knex. `AGENTS.md` was read before implementation. No suitable existing task branch or launch ZIP was found.

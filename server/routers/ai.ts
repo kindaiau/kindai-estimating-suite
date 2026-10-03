@@ -1,6 +1,6 @@
 import { beginTakeoff, completeTakeoff, failTakeoff } from "../takeoffJobs";
 import { preparePlan } from "../planPreparation";
-import { planUploads } from "../../drizzle/schema";
+import { planUploads, takeoffJobs } from "../../drizzle/schema";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -1345,6 +1345,10 @@ function mergeTakeoffResults(results: TakeoffResult[], totalPages: number): Take
 
 // ─── Router ──────────────────────────────────────────────────────────────────
 export const aiRouter = router({
+  recentJobs: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb(); if (!db) throw new Error('Database unavailable');
+    return db.select({ id: takeoffJobs.id, estimateId: takeoffJobs.estimateId, status: takeoffJobs.status, attempts: takeoffJobs.attempts, leaseExpiresAt: takeoffJobs.leaseExpiresAt, payload: takeoffJobs.requestPayload }).from(takeoffJobs).where(eq(takeoffJobs.userId, ctx.user.id)).orderBy(desc(takeoffJobs.createdAt)).limit(10);
+  }),
   // Upload plan image/PDF to S3 (single file, up to 32MB, HEIC auto-converted)
   uploadPlan: protectedProcedure.input(z.object({
     selectedPage: z.number().int().positive().optional(),

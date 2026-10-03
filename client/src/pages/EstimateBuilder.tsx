@@ -1047,13 +1047,14 @@ export default function EstimateBuilder() {
               <Button
                 onClick={() => sendQuote.mutate({
                   estimateId,
+                  expectedVersion: estimate.version,
                   clientName: sendForm.clientName || "Client",
                   clientEmail: sendForm.clientEmail || "",
                   origin: window.location.origin,
                   message: sendForm.message || undefined,
                   expiryDays: parseInt(sendForm.expiryDays),
                 })}
-                disabled={sendQuote.isPending}
+                disabled={sendQuote.isPending || hasUnsavedEdits}
                 className="bg-orange-500 hover:bg-orange-600 text-white"
               >
                 {sendQuote.isPending ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Generating...</> : <><Send className="w-3.5 h-3.5 mr-1.5" /> Generate Quote Link</>}
