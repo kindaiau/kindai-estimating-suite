@@ -1,3 +1,14 @@
+# Goal update — 4 October 2026 (Adelaide)
+
+The readiness goal includes consolidating the **two existing sites, kindaiestimator.com and kindai.au, into the unified experience at kindai.au**. This interprets the owner’s follow-up “kindai.au” as the destination, not evidence of another legacy domain. The owner identifies Cloudflare as the hosting provider. No Cloudflare account/zone, Worker/Pages project, origin configuration or rules export is available in the connected tools, so the actual deployment layer remains unverified.
+
+| Migration | Source | Destination | Status |
+|---|---|---|---|
+| 1 | kindaiestimator.com | kindai.au | Prepare Cloudflare migration; verify www aliases and path mapping |
+| Unified site | Existing kindai.au content and routes | kindai.au | Integrate homepage and estimating workflow; preserve valid existing routes |
+
+For the consolidation: inventory existing content and routes, map valid paths and queries, review canonical URLs and SEO, validate TLS/aliases, protect auth and integration callbacks, preview HTTP301 rules without loops, and prepare rollback. Preserve project data, issued quote links and billing history. Both sites must be reviewed together to avoid redirect chains or conflicting rules. The original no-DNS/no-deployment boundary remains in force; adding migration scope does not authorize live changes.
+
 # Domain migration — prepared, not applied
 
 No hosting-layer redirect configuration for the active React/Vite/Express deployment was found. `docker/Dockerfile` starts the separate Python/FastAPI stack, not this Node application. `.github/workflows/ci.yml` validates code but does not establish which hosting service serves kindai.au. Applying an Express catch-all or inventing a Vercel file would not satisfy a real hosting-layer migration.

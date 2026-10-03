@@ -1,3 +1,11 @@
+# Owner decisions — 4 October 2026 (Adelaide)
+
+Advertised Pro prices are confirmed **GST-inclusive**: A$149/month and A$1,490/year. `PRO_OFFER.taxBehavior` now fixes inclusive pricing; a conflicting exclusive deployment setting or Stripe price is rejected. The offer displays “Prices include GST.” Stripe automatic-tax configuration, registration and product tax-code evidence remain unverified, so an unset automatic-tax setting still blocks checkout. No existing subscription price was changed.
+
+Cloudflare is owner-confirmed. The readiness goal includes consolidating kindaiestimator.com and kindai.au into one experience at kindai.au, based on the owner’s follow-up. See the updated domain migration inventory. No Cloudflare configuration was changed.
+
+Validation for this decision: typecheck and production build passed; 27 focused tests passed against the disposable local database, including rejection of exclusive tax behavior. These updates supersede references below to undecided inclusive/exclusive treatment and an unknown hosting provider; the detailed hosting configuration is still missing.
+
 # Launch evidence, 2026-10-03 UTC
 
 Classification: **NOT READY**. The code changes and local checks below are complete; commercial acceptance and runtime evidence are outstanding. No production configuration is inferred from source defaults.

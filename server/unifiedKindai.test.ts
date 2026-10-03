@@ -53,6 +53,16 @@ describe('exact decimal pricing and checkout contracts (offline)', () => {
     vi.stubEnv('PRO_GST_BEHAVIOR', ''); vi.stubEnv('PRO_STRIPE_AUTOMATIC_TAX', '');
     expect(proTaxConfig).toThrow('awaiting confirmed'); vi.unstubAllEnvs();
   });
+  it('enforces approved inclusive GST and rejects a conflicting deployment or Stripe price', () => {
+    vi.stubEnv('PRO_GST_BEHAVIOR', ''); vi.stubEnv('PRO_STRIPE_AUTOMATIC_TAX', 'true');
+    expect(proTaxConfig()).toEqual({ behavior: 'inclusive', automatic: true });
+    vi.stubEnv('PRO_GST_BEHAVIOR', 'exclusive');
+    expect(proTaxConfig).toThrow('must include GST');
+    for (const interval of ['monthly', 'yearly'] as const) {
+      expect(() => assertProPrice({ unit_amount: proPrice(interval), currency: 'aud', recurring: { interval: interval === 'monthly' ? 'month' : 'year', interval_count: 1 }, tax_behavior: 'exclusive' }, interval, 'exclusive')).toThrow();
+    }
+    vi.unstubAllEnvs();
+  });
   it('extracts only the selected sheet from a multipage PDF', async () => {
     const doc = await PDFDocument.create(); doc.addPage([100, 200]); doc.addPage([300, 400]);
     const bytes = Buffer.from(await doc.save());

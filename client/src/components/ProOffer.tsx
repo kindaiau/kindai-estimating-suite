@@ -16,7 +16,8 @@ export function ProOffer() {
     </fieldset>
     <p className="text-4xl font-semibold">A${(interval === 'monthly' ? PRO_OFFER.monthlyCents : PRO_OFFER.yearlyCents) / 100}<span className="text-base text-slate-300"> / {interval === 'monthly' ? 'month' : 'year'}</span></p>
     <p className="text-slate-300 mt-3">Annual saving: A$298 (16.67%) versus twelve monthly payments.</p>
-    <p className="text-sm text-slate-300 mt-2">{tax.data?.ready ? (tax.data.behavior === 'inclusive' ? 'Prices include GST where applicable.' : 'Prices exclude GST. Applicable tax is added at checkout.') : 'GST treatment is awaiting confirmation. Checkout is not yet available.'}</p>
+    <p className="text-sm text-slate-300 mt-2">Prices include GST.</p>
+    {!tax.data?.ready && <p className="text-sm text-slate-300 mt-2">Checkout is not yet available.</p>}
     <ul className="grid sm:grid-cols-2 gap-3 my-7 text-slate-200">
       <li>Uncapped plan uploads</li><li>Custom trade rate books</li><li>Variation tracking</li><li>Branded GST-ready PDF quotes</li>
     </ul>
