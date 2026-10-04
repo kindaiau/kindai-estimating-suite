@@ -252,31 +252,10 @@ export default function DemoMode() {
       trackEvent("demo_takeoff_failed", { reason: "validation_missing_trade" });
       return;
     }
-    const missingRequired = getScopingQuestions(selectedTrade).filter((q) => {
-      if (!q.required) return false;
-      const value = scopingAnswers[q.id];
-      return value === undefined || value === "" || (Array.isArray(value) && value.length === 0);
-    });
-    if (missingRequired.length > 0) {
-      toast.error(`Please answer ${missingRequired.length} required scope question${missingRequired.length > 1 ? "s" : ""} before generating.`);
-      trackEvent("demo_takeoff_failed", {
-        trade: selectedTrade,
-        reason: "validation_missing_scope",
-        missingRequiredCount: missingRequired.length,
-      });
+    if (uploadedPlanUrls.length || planFile || jobDescription !== (DEMO_PROMPTS[selectedTrade] ?? "") || Object.keys(scopingAnswers).length) {
+      window.location.assign('/ai-takeoff');
       return;
     }
-    if (planFile && !uploadedPlanUrl) {
-      toast.error("Plan is still uploading, please wait a moment.");
-      trackEvent("demo_takeoff_failed", {
-        trade: selectedTrade,
-        reason: "validation_plan_uploading",
-      });
-      return;
-    }
-    // Inject scoping answers into the job description for the AI
-    const scopingContext = formatScopingAnswers(getScopingQuestions(selectedTrade), scopingAnswers);
-    const enrichedDescription = (jobDescription || "") + scopingContext;
     trackEvent("demo_takeoff_started", {
       trade: selectedTrade,
       hasPlan: uploadedPlanUrls.length > 0,
@@ -288,12 +267,9 @@ export default function DemoMode() {
     });
     runDemo.mutate({
       trade: selectedTrade,
-      jobDescription: enrichedDescription || undefined,
       markupPercent,
       labourRate,
       useTradePrice,
-      planImageUrl: uploadedPlanUrls[0] || undefined,
-      planImageUrls: uploadedPlanUrls.length > 0 ? uploadedPlanUrls : undefined,
     });
   };
 

@@ -2,27 +2,27 @@ import { beforeAll, afterAll, beforeEach, describe, it, expect, vi } from 'vites
 import mysql from 'mysql2/promise';
 import { drizzle } from 'drizzle-orm/mysql2';
 import { eq, sql } from 'drizzle-orm';
-import { estimates, lineItems, users, projects, estimateCorrections, takeoffJobs, planUploads, oauthStates, stripeEvents, emailChallenges, quoteTokens } from '../drizzle/schema';
+import { estimates, lineItems, users, projects, estimateCorrections, takeoffJobs, planUploads, oauthStates, stripeEvents, emailChallenges, quoteTokens, checkoutAttempts } from '../drizzle/schema';
 import { editEstimate } from './estimateEdits';
-import { itemFields, priceLine, priceEstimate } from './estimatePricing';
+import { itemFields, priceLine, priceEstimate, savedPricingMatches } from './estimatePricing';
 import { beginTakeoff, completeTakeoff, failTakeoff } from './takeoffJobs';
 import { preparePlan } from './planPreparation';
 import { PDFDocument } from 'pdf-lib';
 import { proPrice, assertProPrice, proTaxConfig } from './stripe/proCheckout';
 import { illustrativeTimeValue } from '../shared/kindaiOffer';
 
-const mocks = vi.hoisted(() => ({ db: null as any, pdf: vi.fn(async (_: any) => Buffer.from('mock-pdf')) }));
+const mocks = vi.hoisted(() => ({ db: null as any, upload: vi.fn(async (_key: string, _buffer: Buffer, _type: string) => ({ url: 'https://test.invalid/quote.pdf' })), pdf: vi.fn(async (_: any) => Buffer.from('mock-pdf')) }));
 vi.mock('./db', () => ({ getDb: async () => mocks.db }));
 vi.mock('./pdfGenerator', () => ({ generateQuotePdf: mocks.pdf }));
-vi.mock('./storage', () => ({ storagePut: async () => ({ url: 'https://test.invalid/quote.pdf' }) }));
+vi.mock('./storage', () => ({ storagePut: mocks.upload }));
 vi.mock('./metaCapi', () => ({ sendMetaConversionEvent: async () => {}, extractMetaClickIdentifiers: () => ({}), buildMetaUserData: () => ({}) }));
 
 const mailMock = vi.hoisted(() => vi.fn(async (_: any) => true));
 vi.mock('./resendEmail', () => ({ sendResendEmail: mailMock }));
 
-const stripeMocks = vi.hoisted(() => ({ list: vi.fn(), createPrice: vi.fn(), checkout: vi.fn(), customer: vi.fn() }));
+const stripeMocks = vi.hoisted(() => ({ list: vi.fn(), createPrice: vi.fn(), checkout: vi.fn(), customer: vi.fn(), retrieveSession: vi.fn(), listSessions: vi.fn(), expireSession: vi.fn(), subscriptions: vi.fn(), retrieveSubscription: vi.fn() }));
 vi.mock('./stripe/stripe', () => ({
-  getStripe: () => ({ prices: { list: stripeMocks.list, create: stripeMocks.createPrice }, products: { create: async () => ({ id: 'prod_mock' }) } }),
+  getStripe: () => ({ checkout: { sessions: { retrieve: stripeMocks.retrieveSession, list: stripeMocks.listSessions, expire: stripeMocks.expireSession } }, subscriptions: { list: stripeMocks.subscriptions, retrieve: stripeMocks.retrieveSubscription }, prices: { list: stripeMocks.list, create: stripeMocks.createPrice }, products: { create: async () => ({ id: 'prod_mock' }) } }),
   findOrCreateCustomer: stripeMocks.customer, createCheckoutSession: stripeMocks.checkout,
   createPilotSetupCheckoutSession: vi.fn(), createPortalSession: vi.fn(),
 }));
@@ -63,6 +63,14 @@ describe('exact decimal pricing and checkout contracts (offline)', () => {
     }
     vi.unstubAllEnvs();
   });
+  it('public sample demo works with pricing options and rejects customer inputs', async () => {
+    const { demoRouter } = await import('./routers/demo');
+    modelMock.mockClear();
+    const caller = demoRouter.createCaller({ user: null, req: {}, res: {} } as any);
+    const sample = await caller.runDemo({ trade: 'plumbing', markupPercent: 25, labourRate: 110, useTradePrice: false });
+    expect(sample.items.length).toBeGreaterThan(0); expect(modelMock).not.toHaveBeenCalled();
+    await expect(caller.runDemo({ trade: 'plumbing', jobDescription: 'Customer plumbing job' })).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+  });
   it('extracts only the selected sheet from a multipage PDF', async () => {
     const doc = await PDFDocument.create(); doc.addPage([100, 200]); doc.addPage([300, 400]);
     const bytes = Buffer.from(await doc.save());
@@ -85,11 +93,23 @@ integration('transaction and quota integration against disposable MariaDB', () =
   });
   afterAll(async () => { await pool.end(); });
   beforeEach(async () => {
-    for (const table of [oauthStates, stripeEvents, emailChallenges, quoteTokens, takeoffJobs, planUploads, estimateCorrections, lineItems, estimates, projects, users]) await db.delete(table);
+    for (const table of [checkoutAttempts, oauthStates, stripeEvents, emailChallenges, quoteTokens, takeoffJobs, planUploads, estimateCorrections, lineItems, estimates, projects, users]) await db.delete(table);
     await db.insert(users).values([{ id: 1, openId: 'test:one', emailVerified: true, subscriptionTier: 'pro', subscriptionStatus: 'active' }, { id: 2, openId: 'test:two', emailVerified: true }]);
     await db.insert(projects).values([{ id: 1, userId: 1, name: 'Commercial plumbing', trade: 'plumbing' }, { id: 2, userId: 2, name: 'Other tenant', trade: 'plumbing' }]);
     await db.insert(estimates).values([{ id: 1, projectId: 1, userId: 1, trade: 'plumbing', title: 'Quote', margin: '20', aiTakeoffData: [{ quantity: 99 }] }, { id: 2, projectId: 2, userId: 2, trade: 'plumbing', title: 'Other' }]);
-    mocks.pdf.mockClear();
+    mocks.pdf.mockClear(); mocks.upload.mockClear();
+    Object.values(stripeMocks).forEach(mock => mock.mockReset());
+    stripeMocks.subscriptions.mockResolvedValue({ data: [], has_more: false });
+    stripeMocks.listSessions.mockResolvedValue({ data: [], has_more: false });
+    stripeMocks.retrieveSubscription.mockResolvedValue({ status: 'active' });
+    const sessions = new Map<string, any>();
+    stripeMocks.checkout.mockImplementation(async (_options, request) => {
+      const key = _options.idempotencyKey;
+      if (!sessions.has(key)) sessions.set(key, { id: `cs_${sessions.size}`, status: 'open', url: `https://checkout.stripe.test/${sessions.size}` });
+      return sessions.get(key);
+    });
+    stripeMocks.retrieveSession.mockImplementation(async id => [...sessions.values()].find(session => session.id === id));
+    stripeMocks.expireSession.mockImplementation(async id => { const session = [...sessions.values()].find(session => session.id === id); session.status = 'expired'; return session; });
   });
   it('add → edit → delete persists items, totals, audit and versions; preserves AI evidence', async () => {
     const added = await editEstimate(db, 1, 1, 1, { kind: 'add', values: item });
@@ -144,7 +164,7 @@ integration('transaction and quota integration against disposable MariaDB', () =
   });
   it('checkout creates exact monthly/yearly prices, blocks stale Stripe prices and existing subscribers', async () => {
     vi.stubEnv('PRO_GST_BEHAVIOR', 'inclusive'); vi.stubEnv('PRO_STRIPE_AUTOMATIC_TAX', 'true'); vi.stubEnv('PUBLIC_APP_ORIGIN', 'https://kindai.au');
-    stripeMocks.list.mockResolvedValue({ data: [] }); stripeMocks.customer.mockResolvedValue('cus_mock'); stripeMocks.checkout.mockResolvedValue('https://checkout.stripe.test/mock');
+    stripeMocks.list.mockResolvedValue({ data: [] }); stripeMocks.customer.mockResolvedValue('cus_mock');
     stripeMocks.createPrice.mockImplementation(async args => ({ id: `price_${args.unit_amount}` }));
     const { billingRouter } = await import('./routers/billing');
     const caller = billingRouter.createCaller({ user: { id: 2 }, req: {}, res: {} } as any);
@@ -154,6 +174,7 @@ integration('transaction and quota integration against disposable MariaDB', () =
       expect(stripeMocks.checkout.mock.calls[1][0]).toMatchObject({ priceId: 'price_149000', automaticTax: true, planId: 'pro' });
       stripeMocks.list.mockResolvedValue({ data: [{ id: 'price_wrong', unit_amount: 143040, currency: 'aud', recurring: { interval: 'year', interval_count: 1 }, tax_behavior: 'inclusive' }] });
       await expect(caller.createCheckout({ planId: 'pro', interval: 'yearly', origin: 'https://kindai.au' })).rejects.toThrow('does not match');
+      stripeMocks.list.mockResolvedValue({ data: [] });
       await db.update(users).set({ stripeSubscriptionId: 'sub_existing' }).where(eq(users.id, 2));
       await expect(caller.createCheckout({ planId: 'pro', interval: 'monthly', origin: 'https://kindai.au' })).rejects.toThrow('existing subscription');
     } finally { vi.unstubAllEnvs(); }
@@ -299,17 +320,197 @@ integration('transaction and quota integration against disposable MariaDB', () =
   it('Stripe duplicates and delayed failures use latest provider state and preserve unrelated subscriptions', async () => {
     const { reconcileSubscription } = await import('./stripe/reconcile');
     await db.update(users).set({ stripeCustomerId: 'cus_mock', stripeSubscriptionId: 'sub_current' }).where(eq(users.id, 1));
-    const retrieve = vi.fn(async () => ({ customer: 'cus_mock', status: 'active', items: { data: [{ price: { lookup_key: 'kindai_pro_2026_monthly_inclusive' } }] } }));
+    const retrieve = vi.fn(async (id: string) => ({ customer: 'cus_mock', status: id === 'sub_old' ? 'canceled' : 'active', items: { data: [{ price: { lookup_key: 'kindai_pro_2026_monthly_inclusive' } }] } }));
     const stripe = { subscriptions: { retrieve } };
     const event = { id: 'evt_mock_1', type: 'invoice.payment_failed', data: { object: { customer: 'cus_mock', subscription: 'sub_current' } } };
     await Promise.all([1,2].map(() => reconcileSubscription(db, stripe, event)));
     expect(retrieve).toHaveBeenCalledTimes(1);
     expect((await db.select().from(users).where(eq(users.id, 1)))[0].subscriptionStatus).toBe('active');
     await reconcileSubscription(db, stripe, { ...event, id: 'evt_mock_2', data: { object: { customer: 'cus_mock', subscription: 'sub_old' } } });
-    expect(retrieve).toHaveBeenCalledTimes(1);
+    expect(retrieve).toHaveBeenCalledTimes(3);
     retrieve.mockRejectedValueOnce(new Error('Provider unavailable'));
     await expect(reconcileSubscription(db, stripe, { ...event, id: 'evt_mock_3' })).rejects.toThrow();
     expect((await db.select().from(stripeEvents)).map(e => e.id)).not.toContain('evt_mock_3');
+  });
+
+  it('paid upload preserves every PDF sheet despite a stale selectedPage; free upload extracts the selected sheet', async () => {
+    const { aiRouter } = await import('./routers/ai');
+    const doc = await PDFDocument.create(); doc.addPage([100, 200]); doc.addPage([300, 400]);
+    const input = { fileName: 'plans.pdf', contentType: 'application/pdf' as const, fileBase64: Buffer.from(await doc.save()).toString('base64'), selectedPage: 2 };
+    const paid = aiRouter.createCaller({ user: { id: 1, subscriptionTier: 'free' }, req: {}, res: {} } as any);
+    expect((await paid.uploadPlan(input)).pageCount).toBe(2);
+    expect((await PDFDocument.load(mocks.upload.mock.calls[0][1])).getPageCount()).toBe(2);
+    const free = aiRouter.createCaller({ user: { id: 2, subscriptionTier: 'pro' }, req: {}, res: {} } as any);
+    expect((await free.uploadPlan(input)).pageCount).toBe(1);
+    expect((await PDFDocument.load(mocks.upload.mock.calls[1][1])).getPage(0).getWidth()).toBe(300);
+    await expect(free.uploadPlan({ ...input, selectedPage: 3 })).rejects.toThrow('Choose a drawing sheet');
+  });
+  it('description-only edits do not fabricate numeric corrections and section survives edits', async () => {
+    const added = await editEstimate(db, 1, 1, 1, { kind: 'add', values: { ...item, section: 'Ground floor' } });
+    const updated = await editEstimate(db, 1, 1, added.version, { kind: 'update', id: added.id, values: { description: 'Reviewed copper' } });
+    expect(updated.items[0].section).toBe('Ground floor');
+    const corrections = await db.select().from(estimateCorrections);
+    expect(corrections.filter(row => ['quantity', 'unitRate', 'wasteFactor'].includes(row.fieldName ?? ''))).toHaveLength(0);
+    expect(corrections.some(row => row.fieldName === 'description')).toBe(true);
+  });
+  it('legacy rounding must be recalculated and reviewed before quote issuance', async () => {
+    const { quoteTokensRouter } = await import('./routers/quoteTokens');
+    const { saveTotals } = await import('./estimateEdits');
+    await db.insert(lineItems).values({ estimateId: 1, category: 'Materials', description: 'Pipe', unit: 'm', quantity: '1.005', unitRate: '1', subtotal: '1.00' });
+    await db.update(estimates).set({ margin: '0', subtotal: '1.00', gstAmount: '0.10', total: '1.10' }).where(eq(estimates.id, 1));
+    vi.stubEnv('PUBLIC_APP_ORIGIN', 'https://kindai.au');
+    const caller = quoteTokensRouter.createCaller({ user: (await db.select().from(users).where(eq(users.id, 1)))[0], req: {}, res: {} } as any);
+    const input = { estimateId: 1, expectedVersion: 1, clientName: 'Client', origin: 'https://kindai.au' };
+    await expect(caller.sendQuote(input)).rejects.toThrow('Recalculate');
+    expect(await db.select().from(quoteTokens)).toHaveLength(0);
+    const saved = await db.transaction(async tx => saveTotals(tx, (await tx.select().from(estimates).where(eq(estimates.id, 1)))[0]));
+    await expect(caller.sendQuote(input)).rejects.toMatchObject({ code: 'CONFLICT' });
+    const issued = await caller.sendQuote({ ...input, expectedVersion: saved.version });
+    expect((await caller.getByToken({ token: issued.token })).items[0].subtotal).toBe('1.01');
+    vi.unstubAllEnvs();
+  });
+  it('serializes concurrent checkout retries and expires conflicting intervals', async () => {
+    const { pendingCheckout } = await import('./stripe/pendingCheckout');
+    await db.update(users).set({ stripeCustomerId: 'cus_mock' }).where(eq(users.id, 2));
+    const options = { userId: 2, customerId: 'cus_mock', priceId: 'price_month', userEmail: 'test@example.test', origin: 'https://kindai.au', automaticTax: true, planId: 'pro' };
+    const result = await Promise.all([pendingCheckout(db, options), pendingCheckout(db, options)]);
+    expect(result[0]).toEqual(result[1]); expect(stripeMocks.checkout).toHaveBeenCalledTimes(1);
+    const previous = (await db.select().from(checkoutAttempts))[0];
+    await pendingCheckout(db, { ...options, priceId: 'price_year' });
+    expect(stripeMocks.expireSession).toHaveBeenCalledWith(previous.sessionId);
+    expect(stripeMocks.checkout.mock.calls[1][0].idempotencyKey).not.toBe(stripeMocks.checkout.mock.calls[0][0].idempotencyKey);
+  });
+  it('expired checkout rotates its key; completed checkout blocks a new payment before mapping', async () => {
+    const { pendingCheckout } = await import('./stripe/pendingCheckout');
+    await db.update(users).set({ stripeCustomerId: 'cus_mock' }).where(eq(users.id, 2));
+    const options = { userId: 2, customerId: 'cus_mock', priceId: 'price_month', userEmail: 'test@example.test', origin: 'https://kindai.au' };
+    await pendingCheckout(db, options);
+    const old = (await db.select().from(checkoutAttempts))[0];
+    await stripeMocks.expireSession(old.sessionId);
+    await pendingCheckout(db, options);
+    const next = (await db.select().from(checkoutAttempts))[0];
+    expect(next.id).not.toBe(old.id);
+    stripeMocks.retrieveSession.mockResolvedValue({ id: next.sessionId, status: 'complete' });
+    await expect(pendingCheckout(db, options)).rejects.toThrow('completed');
+    expect(stripeMocks.checkout).toHaveBeenCalledTimes(2);
+  });
+  it('preserves a durable attempt across an accepted-but-interrupted Stripe response', async () => {
+    const { pendingCheckout } = await import('./stripe/pendingCheckout');
+    await db.update(users).set({ stripeCustomerId: 'cus_mock' }).where(eq(users.id, 2));
+    const options = { userId: 2, customerId: 'cus_mock', priceId: 'price_month', userEmail: 'test@example.test', origin: 'https://kindai.au' };
+    const acceptedCreate = stripeMocks.checkout.getMockImplementation()!;
+    stripeMocks.checkout.mockImplementationOnce(async args => { await acceptedCreate(args); throw new Error('Response lost'); });
+    await expect(pendingCheckout(db, options)).rejects.toThrow('Response lost');
+    expect((await db.select().from(checkoutAttempts))[0].sessionId).toBeNull();
+    await pendingCheckout(db, options);
+    expect(stripeMocks.checkout.mock.calls[0][0].idempotencyKey).toBe(stripeMocks.checkout.mock.calls[1][0].idempotencyKey);
+  });
+  it('blocks unmapped live subscriptions and fails closed during provider errors', async () => {
+    const { pendingCheckout } = await import('./stripe/pendingCheckout');
+    await db.update(users).set({ stripeCustomerId: 'cus_mock' }).where(eq(users.id, 2));
+    const options = { userId: 2, customerId: 'cus_mock', priceId: 'price_month', userEmail: '', origin: 'https://kindai.au' };
+    stripeMocks.subscriptions.mockResolvedValueOnce({ data: [{ id: 'sub_unmapped', status: 'active' }], has_more: false });
+    await expect(pendingCheckout(db, options)).rejects.toThrow('reconciliation');
+    stripeMocks.subscriptions.mockRejectedValueOnce(new Error('Provider offline'));
+    await expect(pendingCheckout(db, options)).rejects.toThrow('Provider offline');
+    expect(await db.select().from(checkoutAttempts)).toHaveLength(0); expect(stripeMocks.checkout).not.toHaveBeenCalled();
+  });
+  it('unknown replacement prices never restore a previous enterprise tier', async () => {
+    const { reconcileSubscription } = await import('./stripe/reconcile');
+    await db.update(users).set({ stripeCustomerId: 'cus_mock', stripeSubscriptionId: 'sub_old', subscriptionTier: 'enterprise' }).where(eq(users.id, 1));
+    const retrieve = vi.fn(async (id: string) => ({ customer: 'cus_mock', status: id === 'sub_old' ? 'canceled' : 'active', created: id === 'sub_old' ? 1 : 2, items: { data: [{ price: { lookup_key: 'unknown' } }] } }));
+    const event = { id: 'evt_replace', type: 'checkout.session.completed', data: { object: { customer: 'cus_mock', subscription: 'sub_new', client_reference_id: '1' } } };
+    await reconcileSubscription(db, { subscriptions: { retrieve } }, event);
+    const [account] = await db.select().from(users).where(eq(users.id, 1));
+    expect(account.subscriptionTier).toBe('free'); expect(account.stripeSubscriptionId).toBe('sub_new');
+    await reconcileSubscription(db, { subscriptions: { retrieve } }, { ...event, id: 'evt_repeat' });
+    expect((await db.select().from(users).where(eq(users.id, 1)))[0].subscriptionTier).toBe('free');
+  });
+  it('terminal legacy subscriptions lose tier-only feature access and retain their mapped ID', async () => {
+    const { reconcileSubscription } = await import('./stripe/reconcile');
+    for (const status of ['canceled', 'incomplete_expired']) {
+      await db.update(users).set({ stripeCustomerId: 'cus_mock', stripeSubscriptionId: 'sub_legacy', subscriptionTier: 'enterprise' }).where(eq(users.id, 1));
+      const retrieve = vi.fn(async () => ({ customer: 'cus_mock', status, items: { data: [{ price: { lookup_key: 'grandfathered' } }] } }));
+      await reconcileSubscription(db, { subscriptions: { retrieve } }, { id: `evt_${status}`, type: 'customer.subscription.deleted', data: { object: { customer: 'cus_mock', id: 'sub_legacy' } } });
+      expect((await db.select().from(users).where(eq(users.id, 1)))[0]).toMatchObject({ subscriptionTier: 'free', stripeSubscriptionId: 'sub_legacy', subscriptionStatus: status });
+    }
+  });
+  it('duplicate live subscriptions raise an explicit billing error without consuming the event', async () => {
+    const { reconcileSubscription } = await import('./stripe/reconcile');
+    await db.update(users).set({ stripeCustomerId: 'cus_mock', stripeSubscriptionId: 'sub_existing' }).where(eq(users.id, 1));
+    const retrieve = vi.fn(async () => ({ customer: 'cus_mock', status: 'active', created: 2, items: { data: [{ price: { lookup_key: 'kindai_pro_2026_monthly_inclusive' } }] } }));
+    await expect(reconcileSubscription(db, { subscriptions: { retrieve } }, { id: 'evt_duplicate', type: 'checkout.session.completed', data: { object: { customer: 'cus_mock', subscription: 'sub_duplicate', client_reference_id: '1' } } })).rejects.toThrow('Duplicate live');
+    expect(await db.select().from(stripeEvents)).toHaveLength(0);
+    expect((await db.select().from(users).where(eq(users.id, 1)))[0].stripeSubscriptionId).toBe('sub_existing');
+  });
+
+  it('auth upserts preserve manual verification for the same email and reset it for a changed address', async () => {
+    const mysqlDriver = (await import('mysql2')).default;
+    const { ENV } = await import('./_core/env');
+    const previousUrl = ENV.databaseUrl;
+    ENV.databaseUrl = 'mysql://example.invalid/kindai_test'; // Driver below uses the fixed disposable pool.
+    const poolSpy = vi.spyOn(mysqlDriver, 'createPool').mockReturnValueOnce({ promise: () => pool } as any);
+    try {
+      const actual = await vi.importActual<typeof import('./db')>('./db');
+      await db.update(users).set({ email: 'legacy@example.test', emailVerified: true }).where(eq(users.id, 2));
+      await actual.upsertUser({ openId: 'test:two', email: 'legacy@example.test', emailVerified: false });
+      expect((await db.select().from(users).where(eq(users.id, 2)))[0].emailVerified).toBe(true);
+      await actual.upsertUser({ openId: 'test:two', email: 'changed@example.test', emailVerified: false });
+      expect((await db.select().from(users).where(eq(users.id, 2)))[0].emailVerified).toBe(false);
+      await actual.upsertUser({ openId: 'test:two', email: 'confirmed@example.test', emailVerified: true });
+      expect((await db.select().from(users).where(eq(users.id, 2)))[0].emailVerified).toBe(true);
+    } finally { ENV.databaseUrl = previousUrl; poolSpy.mockRestore(); }
+  });
+
+  it('a completed, mapped, canceled purchase gets a fresh attempt for resubscription', async () => {
+    const { pendingCheckout } = await import('./stripe/pendingCheckout');
+    await db.update(users).set({ stripeCustomerId: 'cus_mock' }).where(eq(users.id, 2));
+    const options = { userId: 2, customerId: 'cus_mock', priceId: 'price_month', userEmail: '', origin: 'https://kindai.au' };
+    await pendingCheckout(db, options);
+    const [old] = await db.select().from(checkoutAttempts);
+    await db.update(users).set({ stripeSubscriptionId: 'sub_canceled', subscriptionStatus: 'canceled' }).where(eq(users.id, 2));
+    stripeMocks.retrieveSubscription.mockResolvedValue({ status: 'canceled' });
+    const retrieve = stripeMocks.retrieveSession.getMockImplementation()!;
+    stripeMocks.retrieveSession.mockImplementation(async id => id === old.sessionId ? { id, status: 'complete', subscription: 'sub_canceled' } : retrieve(id));
+    await pendingCheckout(db, options);
+    expect((await db.select().from(checkoutAttempts))[0].id).not.toBe(old.id);
+  });
+  it('expires old untracked subscription checkouts before creating a new attempt', async () => {
+    const { pendingCheckout } = await import('./stripe/pendingCheckout');
+    await db.update(users).set({ stripeCustomerId: 'cus_mock' }).where(eq(users.id, 2));
+    stripeMocks.listSessions.mockResolvedValueOnce({ data: [{ id: 'cs_old', mode: 'subscription', client_reference_id: '2' }, { id: 'cs_pilot', mode: 'payment', client_reference_id: '2' }], has_more: false });
+    stripeMocks.expireSession.mockResolvedValueOnce({ id: 'cs_old', status: 'expired' });
+    await pendingCheckout(db, { userId: 2, customerId: 'cus_mock', priceId: 'price_month', userEmail: '', origin: 'https://kindai.au' });
+    expect(stripeMocks.expireSession).toHaveBeenCalledExactlyOnceWith('cs_old');
+    expect(stripeMocks.expireSession.mock.invocationCallOrder[0]).toBeLessThan(stripeMocks.checkout.mock.invocationCallOrder[0]);
+  });
+
+  it('concurrent monthly and yearly purchases leave only one open session', async () => {
+    const { pendingCheckout } = await import('./stripe/pendingCheckout');
+    await db.update(users).set({ stripeCustomerId: 'cus_mock' }).where(eq(users.id, 2));
+    const options = { userId: 2, customerId: 'cus_mock', userEmail: '', origin: 'https://kindai.au' };
+    const outcomes = await Promise.allSettled(['price_month', 'price_year'].map(priceId => pendingCheckout(db, { ...options, priceId })));
+    expect(outcomes.some(outcome => outcome.status === 'fulfilled')).toBe(true);
+    const sessions = await Promise.all(stripeMocks.checkout.mock.results.map(result => result.value));
+    expect(sessions.filter(session => session.status === 'open')).toHaveLength(1);
+    expect(await db.select().from(checkoutAttempts)).toHaveLength(1);
+  });
+  it('grandfathered unknown prices retain only their own mapped active legacy tier', async () => {
+    const { reconcileSubscription } = await import('./stripe/reconcile');
+    await db.update(users).set({ stripeCustomerId: 'cus_mock', stripeSubscriptionId: 'sub_legacy', subscriptionTier: 'enterprise' }).where(eq(users.id, 1));
+    const retrieve = vi.fn(async () => ({ customer: 'cus_mock', status: 'active', items: { data: [{ price: { lookup_key: 'grandfathered' } }] } }));
+    await reconcileSubscription(db, { subscriptions: { retrieve } }, { id: 'evt_legacy', type: 'customer.subscription.updated', data: { object: { customer: 'cus_mock', id: 'sub_legacy' } } });
+    expect((await db.select().from(users).where(eq(users.id, 1)))[0].subscriptionTier).toBe('enterprise');
+  });
+
+  it('agent add-line-item tool preserves the requested quote section', async () => {
+    const { estimateAgentRouter } = await import('./routers/estimateAgent');
+    modelMock.mockReset();
+    modelMock.mockResolvedValueOnce({ choices: [{ message: { content: '', tool_calls: [{ id: 'tool_section', type: 'function', function: { name: 'add_line_item', arguments: JSON.stringify({ description: 'Fixture', category: 'Materials', unit: 'ea', quantity: 1, unitRate: 100, section: 'Upper floor' }) } }] } }] });
+    modelMock.mockResolvedValueOnce({ choices: [{ message: { content: 'Added fixture' } }] });
+    const caller = estimateAgentRouter.createCaller({ user: { id: 1 }, req: {}, res: {} } as any);
+    await caller.chat({ estimateId: 1, message: 'Add upper floor fixture' });
+    expect((await db.select().from(lineItems))[0].section).toBe('Upper floor');
   });
 
 });

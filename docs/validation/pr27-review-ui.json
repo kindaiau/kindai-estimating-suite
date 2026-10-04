@@ -1,0 +1,82 @@
+[
+  {
+    "width": 375,
+    "paid": false,
+    "pricingAdjustableBeforeScan": true,
+    "markup": "25",
+    "labour": "90",
+    "sheetSelector": true,
+    "fullPdfMessage": false,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 375,
+    "paid": true,
+    "pricingAdjustableBeforeScan": true,
+    "markup": "25",
+    "labour": "90",
+    "sheetSelector": false,
+    "fullPdfMessage": true,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 375,
+    "agentRefresh": true,
+    "textTakeoffRefresh": true,
+    "snapshotReads": 3,
+    "assuranceReads": 0,
+    "errors": []
+  },
+  {
+    "width": 375,
+    "defaultDemoSendsOnlySampleOptions": true,
+    "demoInput": {
+      "trade": "electrical",
+      "markupPercent": 20,
+      "labourRate": 95,
+      "useTradePrice": true
+    }
+  },
+  {
+    "width": 1440,
+    "paid": false,
+    "pricingAdjustableBeforeScan": true,
+    "markup": "25",
+    "labour": "90",
+    "sheetSelector": true,
+    "fullPdfMessage": false,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "paid": true,
+    "pricingAdjustableBeforeScan": true,
+    "markup": "25",
+    "labour": "90",
+    "sheetSelector": false,
+    "fullPdfMessage": true,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "agentRefresh": true,
+    "textTakeoffRefresh": true,
+    "snapshotReads": 3,
+    "assuranceReads": 0,
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "defaultDemoSendsOnlySampleOptions": true,
+    "demoInput": {
+      "trade": "electrical",
+      "markupPercent": 20,
+      "labourRate": 95,
+      "useTradePrice": true
+    }
+  }
+]

@@ -456,7 +456,8 @@ ${input.jobDescription}` : ""}`,
           : fallback;
       }
     } else {
-      result = DEMO_SCENARIOS[input.trade] ?? DEMO_SCENARIOS.electrical;
+      const sample = DEMO_SCENARIOS[input.trade] ?? DEMO_SCENARIOS.electrical;
+      result = { ...sample, items: sample.sampleItems };
     }
 
     // Calculate pricing summary

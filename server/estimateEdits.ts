@@ -2,7 +2,7 @@ import { TRPCError } from '@trpc/server';
 import { and, eq } from 'drizzle-orm';
 import { estimates, lineItems, estimateCorrections } from '../drizzle/schema';
 import { getDb } from './db';
-import { itemFields, priceEstimate, priceLine } from './estimatePricing';
+import { itemFields, priceEstimate, priceLine, sameDecimal } from './estimatePricing';
 import type { z } from 'zod';
 
 type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
@@ -59,7 +59,7 @@ export async function editEstimate(db: Db, userId: number, estimateId: number, v
       for (const field of Object.keys(types) as (keyof typeof types)[]) {
         const previous = String(before[field] ?? '');
         const next = String(saved[field] ?? '');
-        if (previous !== next) await tx.insert(estimateCorrections).values({ estimateId, lineItemId: id, userId, trade: estimate.trade,
+        if ((field === 'description' || field === 'unit') ? previous !== next : !sameDecimal(previous, next)) await tx.insert(estimateCorrections).values({ estimateId, lineItemId: id, userId, trade: estimate.trade,
           correctionType: types[field], fieldName: field, aiValue: previous, humanValue: next,
           reason: 'Previous saved value; original extraction remains in aiTakeoffData.', itemDescription: before.description });
       }

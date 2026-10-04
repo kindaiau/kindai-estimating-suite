@@ -1,6 +1,6 @@
-import { beginTakeoff, completeTakeoff, failTakeoff } from "../takeoffJobs";
+import { beginTakeoff, completeTakeoff, failTakeoff, hasPaidAccess } from "../takeoffJobs";
 import { preparePlan } from "../planPreparation";
-import { planUploads, takeoffJobs } from "../../drizzle/schema";
+import { planUploads, takeoffJobs, users } from "../../drizzle/schema";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -1372,13 +1372,15 @@ export const aiRouter = router({
     } else {
       finalBuffer = rawBuffer;
     }
-    const prepared = await preparePlan(finalBuffer, contentType, input.selectedPage);
+    const db = await getDb();
+    if (!db) throw new Error("Database unavailable");
+    const [account] = await db.select().from(users).where(eq(users.id, ctx.user.id)).limit(1);
+    if (!account) throw new TRPCError({ code: 'UNAUTHORIZED' });
+    const prepared = await preparePlan(finalBuffer, contentType, hasPaidAccess(account) ? undefined : (input.selectedPage ?? 1));
     finalBuffer = prepared.buffer;
     ext = prepared.ext;
     const key = `plans/${ctx.user.id}/${nanoid()}.${ext}`;
     const { url } = await storagePut(key, finalBuffer, contentType);
-    const db = await getDb();
-    if (!db) throw new Error("Database unavailable");
     await db.insert(planUploads).values({ fileKey: key, userId: ctx.user.id, url, pageCount: prepared.pageCount });
     return { url, key, pageCount: prepared.pageCount };
   }),

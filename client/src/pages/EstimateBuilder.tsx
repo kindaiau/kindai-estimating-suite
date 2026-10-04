@@ -334,7 +334,7 @@ export default function EstimateBuilder() {
   const handleAddAiItems = async () => {
     if (!aiResult?.items) return;
     let addedCount = 0;
-    await Promise.all([utils.estimates.get.invalidate({ id: estimateId }), utils.estimates.getLineItems.invalidate({ estimateId })]);
+    await Promise.all([utils.estimates.getWithLineItems.invalidate({ id: estimateId }), utils.estimates.getAssurance.invalidate()]);
     toast.success("Saved takeoff loaded. Review quantities and rates before exporting.");
     setAiOpen(false); setAiResult(null); setAiDescription("");
   };
@@ -1067,8 +1067,8 @@ export default function EstimateBuilder() {
         estimateId={estimateId}
         trade={estimate?.trade ?? undefined}
         onEstimateChanged={() => {
-          utils.estimates.getLineItems.invalidate({ estimateId });
-          utils.estimates.get.invalidate({ id: estimateId });
+          void utils.estimates.getWithLineItems.invalidate({ id: estimateId });
+          void utils.estimates.getAssurance.invalidate();
         }}
       />
     </AppLayout>
