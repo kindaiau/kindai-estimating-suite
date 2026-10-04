@@ -18,7 +18,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6.0.2
 
+      - name: Check dependency graph availability
+        id: dependency-graph
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set +e
+          response="$(gh api --include "repos/${GITHUB_REPOSITORY}/dependency-graph/sbom" 2>&1 | sed -n '1p')"
+          result=$?
+          set -e
+          if [ "$result" -eq 0 ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          elif printf '%s' "$response" | grep -qE '^HTTP/[0-9.]+ 404'; then
+            echo "::warning::Dependency review skipped because the repository dependency graph is not enabled."
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          else
+            printf '%s\n' "$response"
+            echo "::error::Dependency graph availability check failed."
+            exit 1
+          fi
+
       - name: Dependency Review
+        if: steps.dependency-graph.outputs.available == 'true'
         uses: actions/dependency-review-action@v4.9.0
 
   validate:
