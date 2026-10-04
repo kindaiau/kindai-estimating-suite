@@ -24,7 +24,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set +e
-          response="$(gh api --include "repos/${GITHUB_REPOSITORY}/dependency-graph/sbom" 2>&1)"
+          response="$(gh api --include "repos/${GITHUB_REPOSITORY}/dependency-graph/sbom" 2>&1 | sed -n '1p')"
           result=$?
           set -e
           if [ "$result" -eq 0 ]; then
