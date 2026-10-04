@@ -26,10 +26,10 @@ export async function findOrCreateCustomer(opts: {
   // If we already have a customer ID, verify it exists
   if (opts.existingCustomerId) {
     try {
-      await stripe.customers.retrieve(opts.existingCustomerId);
-      return opts.existingCustomerId;
-    } catch {
-      // Customer was deleted, create a new one
+      const customer = await stripe.customers.retrieve(opts.existingCustomerId);
+      if (!customer.deleted) return opts.existingCustomerId;
+    } catch (error) {
+      if ((error as { statusCode?: number }).statusCode !== 404) throw error;
     }
   }
 
@@ -57,13 +57,14 @@ export async function createCheckoutSession(opts: {
   idempotencyKey?: string;
   successPath?: string;
   cancelPath?: string;
-}): Promise<string> {
+}) {
   const stripe = getStripe();
 
   const session = await stripe.checkout.sessions.create({
     customer: opts.customerId,
     mode: "subscription",
     automatic_tax: { enabled: opts.automaticTax ?? false },
+    ...(opts.automaticTax ? { billing_address_collection: 'required' as const, customer_update: { address: 'auto' as const } } : {}),
     subscription_data: { metadata: { planId: opts.planId ?? "" } },
     line_items: [{ price: opts.priceId, quantity: 1 }],
     allow_promotion_codes: false,
@@ -78,7 +79,7 @@ export async function createCheckoutSession(opts: {
   }, opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : undefined);
 
   if (!session.url) throw new Error("Failed to create checkout session URL");
-  return session.url;
+  return session;
 }
 
 /**

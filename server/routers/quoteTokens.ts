@@ -1,5 +1,5 @@
 import { lockEstimate } from "../estimateEdits";
-import { priceEstimate } from "../estimatePricing";
+import { priceEstimate, savedPricingMatches } from "../estimatePricing";
 import { appOrigin } from "../xeroState";
 import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
@@ -34,6 +34,9 @@ export const quoteTokensRouter = router({
       .select()
       .from(lineItems)
       .where(eq(lineItems.estimateId, input.estimateId));
+    if (!savedPricingMatches(estimate, items)) throw new TRPCError({
+      code: 'PRECONDITION_FAILED', message: 'Saved pricing needs Recalculate. Review the newly saved version before issuing this quote.',
+    });
     const totals = priceEstimate(items, estimate.margin);
     const snapshot = {
       estimate: { id: estimate.id, title: estimate.title, trade: estimate.trade, notes: estimate.notes, version: estimate.version, ...totals },

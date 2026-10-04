@@ -162,6 +162,7 @@ export default function AITakeoff() {
     }
   }, [tradeProfileQuery.data]);
 
+  const paidScan = !!user && user.subscriptionTier !== 'free' && ['active', 'trialing', 'cancelling'].includes(user.subscriptionStatus ?? '');
   const uploadPlan = trpc.ai.uploadPlan.useMutation();
   const uploadScopeDoc = trpc.ai.uploadScopeDoc.useMutation();
   const uploadSupplierQuote = trpc.ai.uploadSupplierQuote.useMutation();
@@ -288,7 +289,7 @@ export default function AITakeoff() {
         const uploaded = await uploadPlan.mutateAsync({
           fileName: file.name, fileBase64: base64,
           contentType: ctUp,
-          selectedPage: ctUp === "application/pdf" ? selectedPage : undefined,
+          selectedPage: ctUp === "application/pdf" && !paidScan ? selectedPage : undefined,
         });
         setUploadedImageUrls(prev => [...prev, uploaded.url]);
         setUploadingCount(prev => Math.max(0, prev - 1));
@@ -608,11 +609,11 @@ export default function AITakeoff() {
 
                 {mode === "vision" ? (
                   <div className="space-y-3">
-                    <label className="block text-sm font-medium mb-4">
+                    {!paidScan ? <label className="block text-sm font-medium mb-4">
                       PDF drawing sheet to scan (starting at 1)
                       <input aria-label="PDF drawing sheet" type="number" min="1" step="1" value={selectedPage} onChange={e => setSelectedPage(Number(e.target.value))} className="block border rounded p-3 mt-2 w-32" />
                       <span className="block text-xs text-gray-600 mt-2">Choose the sheet number before uploading. Only that sheet is sent for analysis. The free offer covers one sheet, without a scope attachment.</span>
-                    </label>
+                    </label> : <p className="text-sm text-gray-600">Your paid scan includes every sheet in each uploaded PDF.</p>}
                     {/* Drop zone */}
                     <div className="space-y-2">
                       <button
@@ -846,7 +847,7 @@ export default function AITakeoff() {
             </Card>
 
             {/* Pricing Controls */}
-            {result && (
+            {!isAnalysing && (
               <Card className="border-0 shadow-md rounded-2xl overflow-hidden">
                 <CardHeader className="pb-2 pt-4 px-4">
                   <CardTitle className="text-sm font-black flex items-center gap-2">

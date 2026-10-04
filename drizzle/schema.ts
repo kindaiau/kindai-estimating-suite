@@ -1100,3 +1100,12 @@ export const emailChallenges = mysqlTable('email_challenges', {
   sends: int('sends').notNull(),
   attempts: int('attempts').notNull(),
 });
+
+// One durable checkout attempt per account, serialized with the user row lock.
+export const checkoutAttempts = mysqlTable('checkout_attempts', {
+  userId: int('userId').primaryKey(),
+  id: varchar('id', { length: 64 }).notNull().unique(),
+  options: json('options').notNull(),
+  sessionId: varchar('sessionId', { length: 255 }),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+});

@@ -244,7 +244,7 @@ export const estimateAgentRouter = router({
                 notes?: string;
               };
               const subtotal = (quantity * unitRate).toFixed(2);
-              const saved = await editEstimate(db, ctx.user.id, input.estimateId, editVersion, { kind: 'add', values: { description, category, unit, quantity, unitRate, notes, wasteFactor: 0 } });
+              const saved = await editEstimate(db, ctx.user.id, input.estimateId, editVersion, { kind: 'add', values: { description, category, unit, quantity, unitRate, section, notes, wasteFactor: 0 } });
               editVersion = saved.version;
               toolResult = `Added: ${description} — ${quantity} ${unit} @ $${unitRate} = $${subtotal}`;
             } else if (toolName === "update_line_item") {

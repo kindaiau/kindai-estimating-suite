@@ -68,50 +68,56 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   }
 
   try {
-    const values: InsertUser = {
-      openId: user.openId,
-    };
-    const updateSet: Record<string, unknown> = {};
+    await db.transaction(async tx => {
+      const [existing] = await tx.select().from(users).where(eq(users.openId, user.openId)).limit(1).for('update');
+      const values: InsertUser = {
+        openId: user.openId,
+      };
+      const updateSet: Record<string, unknown> = {};
 
-    const textFields = ["name", "email", "loginMethod", "defaultTrade"] as const;
-    type TextField = (typeof textFields)[number];
+      const textFields = ["name", "email", "loginMethod", "defaultTrade"] as const;
+      type TextField = (typeof textFields)[number];
 
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      values[field] = normalized;
-      updateSet[field] = normalized;
-    };
+      const assignNullable = (field: TextField) => {
+        const value = user[field];
+        if (value === undefined) return;
+        const normalized = value ?? null;
+        values[field] = normalized;
+        updateSet[field] = normalized;
+      };
 
-    textFields.forEach(assignNullable);
+      // Challenge confirmation takes the same user lock. Preserve verification
+      // only while the account's email is unchanged, regardless of provider flags.
+      if (user.emailVerified !== undefined || user.email !== undefined) {
+        const sameEmail = !!existing?.email && (user.email === undefined || existing.email === user.email);
+        const verified = user.emailVerified === true || (sameEmail && existing?.emailVerified === true);
+        values.emailVerified = verified;
+        updateSet.emailVerified = verified;
+      }
+      textFields.forEach(assignNullable);
+      if (user.lastSignedIn !== undefined) {
+        values.lastSignedIn = user.lastSignedIn;
+        updateSet.lastSignedIn = user.lastSignedIn;
+      }
+      if (user.role !== undefined) {
+        values.role = user.role;
+        updateSet.role = user.role;
+      } else if (user.openId === ENV.ownerOpenId) {
+        values.role = 'admin';
+        updateSet.role = 'admin';
+      }
 
-    if (user.emailVerified !== undefined) {
-      values.emailVerified = user.emailVerified;
-      updateSet.emailVerified = user.emailVerified;
-    }
-    if (user.lastSignedIn !== undefined) {
-      values.lastSignedIn = user.lastSignedIn;
-      updateSet.lastSignedIn = user.lastSignedIn;
-    }
-    if (user.role !== undefined) {
-      values.role = user.role;
-      updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
-    }
+      if (!values.lastSignedIn) {
+        values.lastSignedIn = new Date();
+      }
 
-    if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
-    }
+      if (Object.keys(updateSet).length === 0) {
+        updateSet.lastSignedIn = new Date();
+      }
 
-    if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
-    }
-
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
+      await tx.insert(users).values(values).onDuplicateKeyUpdate({
+        set: updateSet,
+      });
     });
   } catch (error) {
     console.error("[Database] Failed to upsert user:", error);

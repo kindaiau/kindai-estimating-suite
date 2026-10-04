@@ -8,6 +8,7 @@ const fixed = (scale: number, max: number, positive = false) => z.number().finit
   .min(positive ? 10 ** -scale : 0).max(max)
   .refine(v => new D(v).decimalPlaces() <= scale, `Use at most ${scale} decimal places`);
 export const itemFields = z.object({
+  section: z.string().trim().max(150).nullable().optional(),
   category: z.string().trim().min(1).max(100),
   description: z.string().trim().min(1).max(500),
   unit: z.string().trim().min(1).max(30),
@@ -41,4 +42,13 @@ export function priceEstimate(items: PricedInput[], markup: string | number | nu
   const subtotal = halfUp(base * (BigInt(10000) + scaled(markup ?? 0, 2)), BigInt(10000));
   const gstAmount = halfUp(subtotal, BigInt(10));
   return { subtotal: aud(subtotal), gstAmount: aud(gstAmount), total: aud(subtotal + gstAmount) };
+}
+
+export function sameDecimal(a: string | number | null | undefined, b: string | number | null | undefined) {
+  return new D(a ?? 0).eq(new D(b ?? 0));
+}
+export function savedPricingMatches(estimate: { margin: string | number | null; subtotal: string; gstAmount: string; total: string }, items: (PricedInput & { subtotal: string })[]) {
+  const totals = priceEstimate(items, estimate.margin);
+  return items.every(item => sameDecimal(item.subtotal, priceLine(item))) &&
+    (['subtotal', 'gstAmount', 'total'] as const).every(field => sameDecimal(estimate[field], totals[field]));
 }

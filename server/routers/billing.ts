@@ -1,3 +1,4 @@
+import { pendingCheckout } from "../stripe/pendingCheckout";
 import { assertProPrice, proTaxConfig } from "../stripe/proCheckout";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
@@ -9,7 +10,6 @@ import { eq } from "drizzle-orm";
 import { PILOT_SETUP_OFFER, NEW_SALES_PLANS, PLANS, getPlanById, getPlanCheckoutAmount } from "../stripe/products";
 import {
   findOrCreateCustomer,
-  createCheckoutSession,
   createPilotSetupCheckoutSession,
   createPortalSession,
   getStripe,
@@ -129,8 +129,6 @@ export const billingRouter = router({
 
       if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
 
-      if (user.stripeSubscriptionId && !["canceled", "cancelled", "incomplete_expired"].includes(user.subscriptionStatus ?? "")) throw new TRPCError({ code: "CONFLICT", message: "Manage your existing subscription in Billing; no second subscription was created." });
-
       // Find or create Stripe customer
       const customerId = await findOrCreateCustomer({
         email: user.email ?? ctx.user.email ?? "",
@@ -195,7 +193,7 @@ export const billingRouter = router({
       }
 
       // Create checkout session
-      const checkoutUrl = await createCheckoutSession({
+      return pendingCheckout(db, {
         customerId,
         priceId,
         userId: ctx.user.id,
@@ -204,10 +202,7 @@ export const billingRouter = router({
         origin: input.origin,
         automaticTax: tax.automatic,
         planId: "pro",
-        idempotencyKey: `pro-checkout:${ctx.user.id}:${priceId}`,
       });
-
-      return { url: checkoutUrl };
     }),
 
   /** Create a one-time Stripe Checkout Session for the founding pilot setup sprint */
