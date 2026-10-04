@@ -1,0 +1,18 @@
+[
+  {
+    "width": 375,
+    "keyboardVerification": true,
+    "recoveryPreservesId": true,
+    "retryErrorVisible": true,
+    "overflow": false,
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "keyboardVerification": true,
+    "recoveryPreservesId": true,
+    "retryErrorVisible": true,
+    "overflow": false,
+    "errors": []
+  }
+]

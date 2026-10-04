@@ -1,3 +1,5 @@
+import Decimal from "decimal.js";
+import { priceLine } from "../estimatePricing";
 /**
  * insertAiLineItems.ts
  * Reusable helper to insert AI-generated takeoff items into the lineItems table.
@@ -45,10 +47,10 @@ export function buildAiLineItemRows(
       category: item.category || "Materials",
       description: item.description || "AI-generated item",
       unit: item.unit || "ea",
-      quantity: String(qty),
-      unitRate: String(unitRate),
-      wasteFactor: String(waste),
-      subtotal: String(Math.round(subtotal * 100) / 100),
+      quantity: new Decimal(qty).toFixed(3),
+      unitRate: new Decimal(unitRate).toFixed(2),
+      wasteFactor: new Decimal(waste).toFixed(2),
+      subtotal: priceLine({ quantity: new Decimal(qty).toFixed(3), unitRate: new Decimal(unitRate).toFixed(2), wasteFactor: new Decimal(waste).toFixed(2) }),
       isFromAi: true,
       notes: null,
       sortOrder: idx,
@@ -56,7 +58,7 @@ export function buildAiLineItemRows(
   });
 
   const labourRows = items
-    .filter((item) => (Number(item.labourMinutes) || 0) > 0)
+    .filter((item) => item.category !== "Labour" && (Number(item.labourMinutes) || 0) > 0)
     .map((item, idx) => {
       const qty = Number(item.quantity) || 0;
       const hours = (qty * (Number(item.labourMinutes) || 0)) / 60;
@@ -67,10 +69,10 @@ export function buildAiLineItemRows(
         category: "Labour",
         description: `Labour: ${item.description || "AI-generated"}`,
         unit: "hr",
-        quantity: String(Math.round(hours * 100) / 100),
+        quantity: new Decimal(hours).toFixed(3),
         unitRate: String(labourRate),
         wasteFactor: "0",
-        subtotal: String(Math.round(subtotal * 100) / 100),
+        subtotal: priceLine({ quantity: new Decimal(hours).toFixed(3), unitRate: new Decimal(labourRate).toFixed(2) }),
         isFromAi: true,
         notes: null,
         sortOrder: materialRows.length + idx,
@@ -78,41 +80,4 @@ export function buildAiLineItemRows(
     });
 
   return [...materialRows, ...labourRows];
-}
-
-/**
- * Clears existing AI-generated line items for an estimate, then inserts new ones.
- * Splits materials and labour into separate rows.
- * Returns the count of inserted rows.
- */
-export async function insertAiLineItems(
-  estimateId: number,
-  items: AiItem[],
-  labourRate: number = 110,
-  useTradePrice: boolean = true
-): Promise<number> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  // Clear existing AI-generated items for this estimate
-  await db.delete(lineItems).where(
-    and(
-      eq(lineItems.estimateId, estimateId),
-      eq(lineItems.isFromAi, true)
-    )
-  );
-
-  if (!items || items.length === 0) return 0;
-  const allRows = buildAiLineItemRows(estimateId, items, { labourRate, useTradePrice });
-
-  // Insert in batches of 50 to avoid MySQL packet limits
-  for (let i = 0; i < allRows.length; i += 50) {
-    const batch = allRows.slice(i, i + 50);
-    await db.insert(lineItems).values(batch as any);
-  }
-
-  const materialCount = allRows.filter((row) => row.category !== "Labour").length;
-  const labourCount = allRows.length - materialCount;
-  console.log(`[AI LineItems] Inserted ${allRows.length} items (${materialCount} materials + ${labourCount} labour) for estimate ${estimateId}`);
-  return allRows.length;
 }

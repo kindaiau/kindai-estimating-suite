@@ -1,3 +1,6 @@
+import { RecoverTakeoff } from "@/components/RecoverTakeoff";
+import { VerifyAccountEmail } from "@/components/VerifyAccountEmail";
+import { useLocation } from "wouter";
 import { useState, useRef, useMemo, useEffect } from "react";
 import { pixelUploadPlan, pixelRunTakeoff } from "@/lib/metaPixel";
 import { getAnalyticsContext, trackEvent } from "@/lib/analytics";
@@ -101,6 +104,10 @@ type SupplierQuoteExtractionResult = {
 };
 
 export default function AITakeoff() {
+  const [, navigate] = useLocation();
+  const requestId = useRef(crypto.randomUUID());
+  const [selectedPage, setSelectedPage] = useState(1);
+
   const { user, isAuthenticated } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -239,6 +246,7 @@ export default function AITakeoff() {
       projectId: projId,
       trade: selectedTrade,
       title: `AI Takeoff — ${tradeName}`,
+      margin: markupPercent,
     });
     const estId = Number(est.id);
     if (!estId || isNaN(estId)) throw new Error("Failed to create estimate — please try again");
@@ -280,6 +288,7 @@ export default function AITakeoff() {
         const uploaded = await uploadPlan.mutateAsync({
           fileName: file.name, fileBase64: base64,
           contentType: ctUp,
+          selectedPage: ctUp === "application/pdf" ? selectedPage : undefined,
         });
         setUploadedImageUrls(prev => [...prev, uploaded.url]);
         setUploadingCount(prev => Math.max(0, prev - 1));
@@ -425,6 +434,7 @@ export default function AITakeoff() {
   function handleOrchestrationComplete(result: unknown) {
     const takeoffResult = result as TakeoffResult;
     setResult(takeoffResult);
+    if (tempEstimateId) navigate(`/estimates/${tempEstimateId}`);
     setShowOrchestration(false);
     setIsAnalysing(false);
     toast.success(`Takeoff complete! ${takeoffResult.items.length} items found. Confidence: ${takeoffResult.confidence}%`);
@@ -471,12 +481,14 @@ export default function AITakeoff() {
   return (
     <div className="min-h-screen bg-gray-50">
       <SEO
-        title="AI Vision Takeoff | Scan Plans & Get Instant Quotes"
+        title="AI Vision Takeoff | Scan Plans & Review Your Takeoff"
         description="Upload or photograph your construction plans. Kindai AI reads every symbol, counts every fixture, and generates a full materials and labour quote with GST automatically. All 20 Australian trades."
         canonical="/ai-takeoff"
         keywords="AI takeoff software Australia, construction plan scanning, automated quantity takeoff, AI estimating from plans, scan plans get quote, electrical plan takeoff, plumbing takeoff software"
         noIndex={false}
       />
+      {user && !user.emailVerified && user.subscriptionTier === "free" && <VerifyAccountEmail />}
+      {user && <RecoverTakeoff />}
       {/* Hero Header */}
       <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
         <div className="absolute inset-0 opacity-20">
@@ -596,7 +608,12 @@ export default function AITakeoff() {
 
                 {mode === "vision" ? (
                   <div className="space-y-3">
-                    {/* Drop zone — always visible so more pages can be added */}
+                    <label className="block text-sm font-medium mb-4">
+                      PDF drawing sheet to scan (starting at 1)
+                      <input aria-label="PDF drawing sheet" type="number" min="1" step="1" value={selectedPage} onChange={e => setSelectedPage(Number(e.target.value))} className="block border rounded p-3 mt-2 w-32" />
+                      <span className="block text-xs text-gray-600 mt-2">Choose the sheet number before uploading. Only that sheet is sent for analysis. The free offer covers one sheet, without a scope attachment.</span>
+                    </label>
+                    {/* Drop zone */}
                     <div className="space-y-2">
                       <button
                         onClick={() => fileInputRef.current?.click()}
@@ -916,10 +933,13 @@ export default function AITakeoff() {
                     </div>
                     <div>
                       <h3 className="text-base font-black text-gray-900">AI Orchestration Running</h3>
-                      <p className="text-xs text-gray-500">5-step pipeline — takes 30-60 seconds</p>
+                      <p className="text-xs text-gray-500">Progress updates appear as each step completes</p>
                     </div>
                   </div>
                   <OrchestrationProgress
+                    requestId={requestId.current}
+                    labourRate={labourRate}
+                    useTradePrice={useTradePrice}
                     estimateId={tempEstimateId}
                     trade={selectedTrade}
                     mode={mode}

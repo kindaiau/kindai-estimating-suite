@@ -1,3 +1,4 @@
+import { issueXeroState, appOrigin } from "../xeroState";
 import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -126,8 +127,10 @@ export const xeroRouter = router({
       throw new Error("Xero OAuth app is not configured. Enable the platform connector before customers connect their own Xero account.");
     }
 
-    const redirectUri = `${input.origin}/api/xero/callback`;
-    const state = Buffer.from(JSON.stringify({ userId: ctx.user.id, origin: input.origin })).toString("base64url");
+    const origin = appOrigin(input.origin);
+    const redirectUri = `${origin}/api/xero/callback`;
+    const { state, browser } = await issueXeroState(requireDatabase(await getDb()), ctx.user.id, origin);
+    ctx.res.cookie('kindai_xero_state', browser, { httpOnly: true, secure: origin.startsWith('https:'), sameSite: 'lax', path: '/api/xero/callback', maxAge: 600_000 });
     const scopes = "openid profile email accounting.transactions accounting.contacts accounting.settings offline_access";
 
     const url = `${XERO_AUTH_URL}?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}&state=${state}`;

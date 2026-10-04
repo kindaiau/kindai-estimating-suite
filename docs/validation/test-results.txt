@@ -1,0 +1,8 @@
+
+ RUN  v4.1.4 /workspace/kindai-estimating-suite
+
+
+ Test Files  26 passed | 3 skipped (29)
+      Tests  384 passed | 5 skipped (389)
+   Start at  21:09:15
+   Duration  4.64s (transform 1.34s, setup 0ms, import 6.46s, tests 2.60s, environment 2ms)

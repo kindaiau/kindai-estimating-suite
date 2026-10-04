@@ -13,6 +13,7 @@ import { useEffect } from "react";
 import { pixelPurchase } from "@/lib/metaPixel";
 
 const TIER_COLOURS: Record<string, string> = {
+  pro: "bg-emerald-100 text-emerald-900",
   free: "bg-slate-100 text-slate-700 border-slate-200",
   sole_trader: "bg-gradient-to-r from-pink-500 to-orange-500 text-white border-transparent",
   small_builder: "bg-gradient-to-r from-blue-500 to-purple-500 text-white border-transparent",
@@ -21,6 +22,7 @@ const TIER_COLOURS: Record<string, string> = {
 };
 
 const TIER_NAMES: Record<string, string> = {
+  pro: "Pro",
   free: "Starter (Free)",
   sole_trader: "Sole Tradie",
   small_builder: "Pro",

@@ -14,7 +14,7 @@ import {
   AlertTriangle, ArrowLeft, Bot, CheckCircle2, DollarSign, ExternalLink,
   FileText, Loader2, Plus, Shield, Sparkles, Trash2, Download, Send, Copy,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EstimateAgentChat } from "@/components/EstimateAgentChat";
 import { pixelSendQuote } from "@/lib/metaPixel";
 import { ph } from "@/lib/posthog";
@@ -26,6 +26,7 @@ const UNITS = ["ea", "m²", "m³", "lm", "hr", "day", "tonne", "kg", "L", "set",
 // ─── Market Benchmark Panel ───────────────────────────────────────────────────
 function BenchmarkPanel({ estimateId }: { estimateId: number }) {
   const { data: bench, isLoading } = trpc.estimates.getBenchmark.useQuery({ id: estimateId });
+
 
   if (isLoading) return <div className="text-center py-12 text-muted-foreground text-sm">Calculating market benchmark...</div>;
   if (!bench) return <div className="text-center py-12 text-muted-foreground text-sm">Add line items to see market benchmarking.</div>;
@@ -177,22 +178,37 @@ export default function EstimateBuilder() {
   });
 
   // Inline editing state
+  const [editVersion, setEditVersion] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editValues, setEditValues] = useState<{ quantity: string; unitRate: string; description: string; unit: string; wasteFactor: string }>({ quantity: "", unitRate: "", description: "", unit: "", wasteFactor: "0" });
 
+  const hasUnsavedEdits = editingId !== null || Boolean(newItem.description || newItem.quantity || newItem.unitRate || newItem.notes || newItem.wasteFactor !== '0');
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => { if (hasUnsavedEdits) { event.preventDefault(); event.returnValue = ''; } };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [hasUnsavedEdits]);
   const utils = trpc.useUtils();
-  const { data: estimate, isLoading } = trpc.estimates.get.useQuery({ id: estimateId });
-  const { data: lineItems, isLoading: itemsLoading } = trpc.estimates.getLineItems.useQuery({ estimateId });
+  const { data: snapshot, isLoading } = trpc.estimates.getWithLineItems.useQuery({ id: estimateId });
+  const estimate = snapshot;
+  const lineItems = snapshot?.lineItems;
+  const itemsLoading = isLoading;
+  const [conflictSaved, setConflictSaved] = useState<string | null>(null);
   const { data: compliance } = trpc.compliance.getProfile.useQuery(
     { trade: estimate?.trade ?? "", state: estimate?.complianceState ?? undefined },
     { enabled: !!estimate?.trade }
   );
 
+  const acceptSaved = async (data: { estimate: Omit<NonNullable<typeof estimate>, "lineItems">; items: NonNullable<typeof lineItems> }) => {
+    utils.estimates.getWithLineItems.setData({ id: estimateId }, { ...data.estimate, lineItems: data.items });
+    utils.estimates.get.setData({ id: estimateId }, data.estimate);
+    utils.estimates.getLineItems.setData({ estimateId }, data.items);
+    await Promise.all([utils.estimates.getWithLineItems.invalidate({ id: estimateId }), utils.estimates.getAssurance.invalidate(), utils.estimates.list.invalidate()]);
+  };
   const addItem = trpc.estimates.addLineItem.useMutation({
-    onSuccess: () => {
+    onSuccess: async (data) => {
+      await acceptSaved(data);
       toast.success("Item added");
-      utils.estimates.getLineItems.invalidate();
-      recalc.mutate({ id: estimateId });
       setAddOpen(false);
       setNewItem({ category: "Materials", description: "", unit: "ea", quantity: "", unitRate: "", wasteFactor: "0", notes: "" });
     },
@@ -200,19 +216,17 @@ export default function EstimateBuilder() {
   });
 
   const deleteItem = trpc.estimates.deleteLineItem.useMutation({
-    onSuccess: () => {
-      utils.estimates.getLineItems.invalidate();
-      recalc.mutate({ id: estimateId });
+    onSuccess: async (data) => {
+      await acceptSaved(data);
     },
     onError: (e) => toast.error("Failed to delete item: " + e.message),
   });
 
   const updateItem = trpc.estimates.updateLineItem.useMutation({
-    onSuccess: () => {
-      utils.estimates.getLineItems.invalidate();
-      recalc.mutate({ id: estimateId });
+    onSuccess: async (data) => {
+      await acceptSaved(data);
       setEditingId(null);
-      toast.success("Item updated — correction recorded");
+      toast.success("Item saved and totals updated");
     },
     onError: (e) => toast.error(e.message),
   });
@@ -240,6 +254,9 @@ export default function EstimateBuilder() {
   });
 
   const startEditing = (item: any) => {
+    if (editingId !== null) return toast.error("Save or cancel the current edit first.");
+    setEditVersion(estimate?.version ?? null);
+    setConflictSaved(null);
     setEditingId(item.id);
     setEditValues({
       quantity: parseFloat(item.quantity as string).toString(),
@@ -251,28 +268,31 @@ export default function EstimateBuilder() {
   };
 
   const saveEditing = () => {
-    if (editingId == null) return;
-    const qty = parseFloat(editValues.quantity);
-    const rate = parseFloat(editValues.unitRate);
-    const waste = parseFloat(editValues.wasteFactor);
+    if (editingId == null || editVersion == null) return;
+    const qty = Number(editValues.quantity);
+    const rate = Number(editValues.unitRate);
+    const waste = Number(editValues.wasteFactor);
+    if (!editValues.quantity.trim() || !editValues.unitRate.trim() || !Number.isFinite(qty) || !Number.isFinite(rate) || !Number.isFinite(waste)) return toast.error("Enter valid quantity, rate and waste values. Your draft has not been saved.");
     updateItem.mutate({
       id: editingId,
+      expectedVersion: editVersion,
       estimateId,
       quantity: !isNaN(qty) ? qty : undefined,
       unitRate: !isNaN(rate) ? rate : undefined,
-      description: editValues.description || undefined,
-      unit: editValues.unit || undefined,
+      description: editValues.description,
+      unit: editValues.unit,
       wasteFactor: !isNaN(waste) ? waste : undefined,
     });
   };
 
   const recalc = trpc.estimates.recalculate.useMutation({
-    onSuccess: () => utils.estimates.get.invalidate(),
+    onSuccess: acceptSaved,
     onError: (e) => toast.error("Recalculate failed: " + e.message),
   });
 
   const updateStatus = trpc.estimates.update.useMutation({
-    onSuccess: () => { toast.success("Updated"); utils.estimates.get.invalidate(); },
+    onSuccess: async (data) => { await acceptSaved(data); toast.success("Updated"); },
+    onError: (e) => toast.error(e.message),
   });
 
   const generatePdf = trpc.estimates.generatePdf.useMutation({
@@ -280,6 +300,7 @@ export default function EstimateBuilder() {
       toast.success("PDF generated! Opening now...");
       window.open(data.url, "_blank");
       utils.estimates.get.invalidate();
+      utils.estimates.getWithLineItems.invalidate({ id: estimateId });
       ph.quoteGenerated(estimate?.trade ?? "unknown", parseFloat(estimate?.total as string) || 0);
     },
     onError: (e) => toast.error("PDF failed: " + e.message),
@@ -290,6 +311,7 @@ export default function EstimateBuilder() {
       setSentUrl(data.quoteUrl);
       toast.success("Quote link generated! Copy and send to your client.");
       utils.estimates.get.invalidate();
+      utils.estimates.getWithLineItems.invalidate({ id: estimateId });
       // Fire SendQuote pixel event
       pixelSendQuote({ trade: estimate?.trade });
       ph.quoteSent(estimate?.trade ?? "unknown");
@@ -306,32 +328,14 @@ export default function EstimateBuilder() {
     if (!aiDescription.trim()) return toast.error("Please describe your project");
     setAiLoading(true);
     setAiResult(null);
-    analyzePlan.mutate({ estimateId, trade: estimate?.trade ?? "", planDescription: aiDescription });
+    analyzePlan.mutate({ requestId: crypto.randomUUID(), estimateId, trade: estimate?.trade ?? "", planDescription: aiDescription });
   };
 
   const handleAddAiItems = async () => {
     if (!aiResult?.items) return;
     let addedCount = 0;
-    const errors: string[] = [];
-    for (const item of aiResult.items) {
-      try {
-        await addItem.mutateAsync({
-          estimateId, category: item.category, description: item.description,
-          unit: item.unit, quantity: item.quantity, unitRate: item.unitRate,
-          wasteFactor: 5, isFromAi: true,
-        });
-        addedCount++;
-      } catch (err: any) {
-        errors.push(item.description);
-      }
-    }
-    if (errors.length === 0) {
-      toast.success(`${addedCount} items added from AI takeoff`);
-    } else if (addedCount > 0) {
-      toast.warning(`${addedCount} items added, ${errors.length} failed: ${errors.slice(0, 2).join(", ")}${errors.length > 2 ? "…" : ""}`);
-    } else {
-      toast.error("Failed to add AI items. Please try again.");
-    }
+    await Promise.all([utils.estimates.get.invalidate({ id: estimateId }), utils.estimates.getLineItems.invalidate({ estimateId })]);
+    toast.success("Saved takeoff loaded. Review quantities and rates before exporting.");
     setAiOpen(false); setAiResult(null); setAiDescription("");
   };
 
@@ -340,12 +344,20 @@ export default function EstimateBuilder() {
       return toast.error("Description, quantity and rate are required");
     }
     addItem.mutate({
-      estimateId, category: newItem.category, description: newItem.description,
-      unit: newItem.unit, quantity: parseFloat(newItem.quantity),
-      unitRate: parseFloat(newItem.unitRate),
-      wasteFactor: parseFloat(newItem.wasteFactor) || 0,
+      estimateId, expectedVersion: estimate?.version ?? 0, category: newItem.category, description: newItem.description,
+      unit: newItem.unit, quantity: Number(newItem.quantity),
+      unitRate: Number(newItem.unitRate),
+      wasteFactor: Number(newItem.wasteFactor),
       notes: newItem.notes || undefined,
     });
+  };
+
+  const reviewConflict = async () => {
+    const saved = await utils.estimates.getWithLineItems.fetch({ id: estimateId });
+    const current = saved?.lineItems.find(item => item.id === editingId);
+    setConflictSaved(current ? `Saved v${saved?.version}: ${current.description}, quantity ${current.quantity} ${current.unit}, rate $${current.unitRate}, waste ${current.wasteFactor}%. Your draft remains above.` : 'This item was removed. Cancel this draft and add a new item if needed.');
+    setEditVersion(saved?.version ?? null);
+    toast.info("Latest saved rows loaded; your draft is retained. Review the current values before saving again.");
   };
 
   if (isLoading) return (
@@ -377,6 +389,7 @@ export default function EstimateBuilder() {
   return (
     <AppLayout title={estimate.title}>
       <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-7xl mx-auto">
+        {hasUnsavedEdits && <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Unsaved edits: save or cancel your item draft before exporting or sending this quote.</p>}
         {/* Header */}
         <div>
           <Button variant="ghost" size="sm" onClick={() => navigate(`/projects/${estimate.projectId}`)} className="mb-3 -ml-2 text-muted-foreground rounded-full">
@@ -397,6 +410,7 @@ export default function EstimateBuilder() {
             </div>
             <div className="flex items-center gap-2">
               <Button
+                disabled={hasUnsavedEdits || updateItem.isPending || addItem.isPending || deleteItem.isPending}
                 onClick={() => { setSentUrl(null); setSendQuoteOpen(true); }}
                 size="sm"
                 className="rounded-xl text-xs font-bold bg-orange-500 hover:bg-orange-600 text-white h-8"
@@ -404,8 +418,8 @@ export default function EstimateBuilder() {
                 <Send className="w-3.5 h-3.5 mr-1.5" /> Send to Client
               </Button>
               <Button
-                onClick={() => generatePdf.mutate({ id: estimateId })}
-                disabled={generatePdf.isPending}
+                onClick={() => generatePdf.mutate({ id: estimateId, expectedVersion: estimate.version })}
+                disabled={generatePdf.isPending || hasUnsavedEdits || addOpen || addItem.isPending || updateItem.isPending || deleteItem.isPending || updateStatus.isPending || recalc.isPending}
                 variant="outline"
                 size="sm"
                 className="rounded-xl text-xs font-bold border-pink-300 text-pink-600 hover:bg-pink-50 h-8"
@@ -424,7 +438,7 @@ export default function EstimateBuilder() {
                 </Button>
               )}
             </div>
-            <Select value={estimate.status} onValueChange={(v) => updateStatus.mutate({ id: estimateId, status: v as any })}>
+            <Select value={estimate.status} onValueChange={(v) => updateStatus.mutate({ id: estimateId, expectedVersion: estimate.version, status: v as any })}>
               <SelectTrigger className="w-32 text-xs h-8 rounded-xl"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {["draft", "review", "sent", "accepted", "declined"].map(s => (
@@ -586,12 +600,12 @@ export default function EstimateBuilder() {
                       <div className="bg-gray-50 rounded-2xl p-3 text-sm">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Subtotal (excl. waste):</span>
-                          <span className="font-bold">${(parseFloat(newItem.quantity) * parseFloat(newItem.unitRate)).toFixed(2)}</span>
+                          <span className="font-bold">${(Number(newItem.quantity) * Number(newItem.unitRate)).toFixed(2)}</span>
                         </div>
                         {parseFloat(newItem.wasteFactor) > 0 && (
                           <div className="flex justify-between mt-1">
                             <span className="text-muted-foreground">With {newItem.wasteFactor}% waste:</span>
-                            <span className="font-bold">${(parseFloat(newItem.quantity) * parseFloat(newItem.unitRate) * (1 + parseFloat(newItem.wasteFactor) / 100)).toFixed(2)}</span>
+                            <span className="font-bold">${(Number(newItem.quantity) * Number(newItem.unitRate) * (1 + parseFloat(newItem.wasteFactor) / 100)).toFixed(2)}</span>
                           </div>
                         )}
                       </div>
@@ -645,22 +659,24 @@ export default function EstimateBuilder() {
                             editingId === item.id ? (
                               <tr key={item.id} className="border-t border-blue-200 bg-blue-50/50">
                                 <td className="p-2">
-                                  <Input value={editValues.description} onChange={e => setEditValues(v => ({ ...v, description: e.target.value }))} className="h-7 text-xs" />
+                                  <Input aria-label="Item description" value={editValues.description} onChange={e => setEditValues(v => ({ ...v, description: e.target.value }))} className="h-7 text-xs" />
                                 </td>
                                 <td className="p-2">
-                                  <Input type="number" value={editValues.quantity} onChange={e => setEditValues(v => ({ ...v, quantity: e.target.value }))} className="h-7 text-xs w-16 text-right" />
+                                  <Input aria-label="Quantity" type="number" step="0.001" value={editValues.quantity} onChange={e => setEditValues(v => ({ ...v, quantity: e.target.value }))} className="h-7 text-xs w-16 text-right" />
                                 </td>
                                 <td className="p-2">
-                                  <Input value={editValues.unit} onChange={e => setEditValues(v => ({ ...v, unit: e.target.value }))} className="h-7 text-xs w-12 text-right" />
+                                  <Input aria-label="Unit" value={editValues.unit} onChange={e => setEditValues(v => ({ ...v, unit: e.target.value }))} className="h-7 text-xs w-12 text-right" />
                                 </td>
                                 <td className="p-2">
-                                  <Input type="number" step="0.01" value={editValues.unitRate} onChange={e => setEditValues(v => ({ ...v, unitRate: e.target.value }))} className="h-7 text-xs w-20 text-right" />
+                                  <Input aria-label="Rate excluding GST" type="number" step="0.01" value={editValues.unitRate} onChange={e => setEditValues(v => ({ ...v, unitRate: e.target.value }))} className="h-7 text-xs w-20 text-right" />
                                 </td>
                                 <td className="p-2 text-right">
-                                  <Button size="sm" className="h-6 text-[10px] px-2 mr-1" onClick={saveEditing} disabled={updateItem.isPending}>
+                                  <Button aria-label="Save item" size="sm" className="min-h-11 min-w-11 text-xs px-2 mr-1" onClick={saveEditing} disabled={updateItem.isPending}>
                                     {updateItem.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
                                   </Button>
-                                  <Button size="sm" variant="ghost" className="h-6 text-[10px] px-2" onClick={() => setEditingId(null)}>Cancel</Button>
+                                  <Button size="sm" variant="ghost" className="min-h-11 text-xs px-2" onClick={() => setEditingId(null)}>Cancel</Button>
+                                  {conflictSaved && <p className="text-xs">{conflictSaved}</p>}
+                                  {updateItem.error && <div role="alert" className="text-xs text-destructive">{updateItem.error.message}<Button variant="outline" onClick={reviewConflict}>Load current saved values; keep draft</Button></div>}
                                 </td>
                                 <td></td>
                               </tr>
@@ -678,10 +694,10 @@ export default function EstimateBuilder() {
                                 <td className="p-3 text-right text-xs">${parseFloat(item.unitRate as string).toFixed(2)}</td>
                                 <td className="p-3 text-right text-xs font-bold">${parseFloat(item.subtotal as string).toFixed(2)}</td>
                                 <td className="p-3 flex gap-1">
-                                  <button onClick={() => startEditing(item)} aria-label={`Edit ${item.description || "item"}`} className="text-muted-foreground hover:text-blue-500 transition-colors" title="Edit">
+                                  <button onClick={() => startEditing(item)} aria-label={`Edit ${item.description || "item"}`} className="min-h-11 min-w-11 text-muted-foreground hover:text-blue-500 transition-colors" title="Edit">
                                     <FileText className="w-3.5 h-3.5" />
                                   </button>
-                                  <button onClick={() => deleteItem.mutate({ id: item.id, estimateId })} aria-label={`Delete ${item.description || "item"}`} className="text-muted-foreground hover:text-destructive transition-colors" title="Delete">
+                                  <button onClick={() => deleteItem.mutate({ id: item.id, estimateId, expectedVersion: estimate.version })} aria-label={`Delete ${item.description || "item"}`} disabled={hasUnsavedEdits || deleteItem.isPending} className="min-h-11 min-w-11 text-muted-foreground hover:text-destructive transition-colors" title="Delete">
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 </td>
@@ -715,7 +731,7 @@ export default function EstimateBuilder() {
                   <Button
                     size="sm"
                     className="w-full kindai-btn-primary rounded-xl font-bold mt-1"
-                    onClick={() => recalc.mutate({ id: estimateId })}
+                    onClick={() => recalc.mutate({ id: estimateId, expectedVersion: estimate.version })}
                     disabled={recalc.isPending}
                   >
                     {recalc.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <DollarSign className="w-3.5 h-3.5 mr-1.5" />}
@@ -803,7 +819,7 @@ export default function EstimateBuilder() {
                     type="checkbox"
                     id="complianceCheck"
                     checked={estimate.complianceChecked ?? false}
-                    onChange={(e) => updateStatus.mutate({ id: estimateId, complianceChecked: e.target.checked })}
+                    onChange={(e) => updateStatus.mutate({ id: estimateId, expectedVersion: estimate.version, complianceChecked: e.target.checked })}
                     className="w-4 h-4 rounded border-border accent-pink-500"
                   />
                   <label htmlFor="complianceCheck" className="text-sm text-foreground cursor-pointer">
@@ -863,7 +879,7 @@ export default function EstimateBuilder() {
                     size="sm"
                     className="kindai-btn-primary rounded-full font-bold text-xs px-5"
                     onClick={() => {
-                      updateStatus.mutate({ id: estimateId, status: "sent" });
+                      updateStatus.mutate({ id: estimateId, expectedVersion: estimate.version, status: "sent" });
                       toast.success("Quote marked as sent!");
                     }}
                   >
@@ -873,8 +889,8 @@ export default function EstimateBuilder() {
                     size="sm"
                     variant="outline"
                     className="rounded-full font-bold text-xs"
-                    onClick={() => generatePdf.mutate({ id: estimateId })}
-                    disabled={generatePdf.isPending}
+                    onClick={() => generatePdf.mutate({ id: estimateId, expectedVersion: estimate.version })}
+                    disabled={generatePdf.isPending || hasUnsavedEdits || addOpen || addItem.isPending || updateItem.isPending || deleteItem.isPending || updateStatus.isPending || recalc.isPending}
                   >
                     {generatePdf.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Download className="w-3.5 h-3.5 mr-1.5" />}
                     Export PDF
@@ -1031,13 +1047,14 @@ export default function EstimateBuilder() {
               <Button
                 onClick={() => sendQuote.mutate({
                   estimateId,
+                  expectedVersion: estimate.version,
                   clientName: sendForm.clientName || "Client",
                   clientEmail: sendForm.clientEmail || "",
                   origin: window.location.origin,
                   message: sendForm.message || undefined,
                   expiryDays: parseInt(sendForm.expiryDays),
                 })}
-                disabled={sendQuote.isPending}
+                disabled={sendQuote.isPending || hasUnsavedEdits}
                 className="bg-orange-500 hover:bg-orange-600 text-white"
               >
                 {sendQuote.isPending ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Generating...</> : <><Send className="w-3.5 h-3.5 mr-1.5" /> Generate Quote Link</>}

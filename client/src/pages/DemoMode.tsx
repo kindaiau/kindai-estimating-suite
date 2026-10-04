@@ -1,3 +1,4 @@
+import { PRO_OFFER } from '@shared/kindaiOffer';
 import { useState, useRef, useEffect } from "react";
 import { pixelViewDemoPage, pixelStartTrial, pixelRunTakeoff } from "@/lib/metaPixel";
 import { getAnalyticsContext, trackEvent } from "@/lib/analytics";
@@ -805,7 +806,7 @@ export default function DemoMode() {
                               View Pricing
                             </Button>
                           </div>
-                          <p className="text-xs text-gray-600 mt-2">Sole Tradie plan from $149/mo. Free demo available.</p>
+                          <p className="text-xs text-gray-600 mt-2">Pro is A${PRO_OFFER.monthlyCents / 100}/month or A${PRO_OFFER.yearlyCents / 100}/year, including GST. Free demo available.</p>
                         </div>
                       </div>
                     </CardContent>

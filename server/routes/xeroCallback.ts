@@ -1,3 +1,5 @@
+import { consumeXeroState } from "../xeroState";
+import { parse } from "cookie";
 import { Router } from "express";
 import { ENV } from "../_core/env";
 import { getDb } from "../db";
@@ -16,13 +18,16 @@ xeroCallbackRouter.get("/api/xero/callback", async (req, res) => {
       return res.status(400).send("Missing code or state parameter");
     }
 
-    // Decode state
-    let stateData: { userId: number; origin: string };
+    if (typeof code !== 'string' || typeof state !== 'string') return res.status(400).send('Invalid callback');
+    const db = await getDb();
+    if (!db) return res.status(503).send('Database unavailable');
+    let stateData;
     try {
-      stateData = JSON.parse(Buffer.from(state as string, "base64url").toString());
+      stateData = await consumeXeroState(db, state, parse(req.headers.cookie ?? '').kindai_xero_state ?? '');
     } catch {
-      return res.status(400).send("Invalid state parameter");
+      return res.status(400).send('Invalid or expired Xero connection. Start again from Settings.');
     }
+    res.clearCookie('kindai_xero_state', { path: '/api/xero/callback' });
 
     const clientId = ENV.xeroClientId;
     const clientSecret = ENV.xeroClientSecret;
@@ -48,7 +53,7 @@ xeroCallbackRouter.get("/api/xero/callback", async (req, res) => {
 
     if (!tokenResponse.ok) {
       const err = await tokenResponse.text();
-      console.error("[Xero] Token exchange failed:", err);
+      console.error("[Xero] Token exchange failed:", tokenResponse.status);
       return res.redirect(`${stateData.origin}/settings?xero=error&msg=token_exchange_failed`);
     }
 
@@ -76,10 +81,7 @@ xeroCallbackRouter.get("/api/xero/callback", async (req, res) => {
     const tenantName = connections[0].tenantName;
 
     // Save to company profile (upsert)
-    const db = await getDb();
-    if (!db) {
-      return res.status(500).send("Database not available");
-    }
+
 
     // Check if profile exists
     const [existing] = await db.select({ id: companyProfiles.id })
@@ -109,7 +111,7 @@ xeroCallbackRouter.get("/api/xero/callback", async (req, res) => {
     console.log(`[Xero] Connected for user ${stateData.userId} — org: ${tenantName}`);
     return res.redirect(`${stateData.origin}/settings?xero=success&org=${encodeURIComponent(tenantName)}`);
   } catch (err: any) {
-    console.error("[Xero] Callback error:", err);
-    return res.status(500).send("Xero connection failed: " + err.message);
+    console.error("[Xero] Callback failed");
+    return res.status(500).send("Xero connection failed. Restart from Settings.");
   }
 });

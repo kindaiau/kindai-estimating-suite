@@ -1,8 +1,9 @@
+import { requireProFeature } from "../entitlements";
 import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { variations } from "../../drizzle/schema";
+import { variations, projects, estimates } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 
@@ -28,9 +29,16 @@ export const variationsRouter = router({
     timeImpactDays: z.number().int().default(0),
     notes: z.string().max(2000).optional(),
   })).mutation(async ({ input, ctx }) => {
+    await requireProFeature(ctx.user.id);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
+    const [project] = await db.select().from(projects).where(and(eq(projects.id, input.projectId), eq(projects.userId, ctx.user.id))).limit(1);
+    if (!project) throw new TRPCError({ code: 'NOT_FOUND', message: 'Project not found' });
+    if (input.estimateId) {
+      const [estimate] = await db.select().from(estimates).where(and(eq(estimates.id, input.estimateId), eq(estimates.projectId, input.projectId), eq(estimates.userId, ctx.user.id))).limit(1);
+      if (!estimate) throw new TRPCError({ code: 'NOT_FOUND', message: 'Estimate not found in project' });
+    }
     // Auto-generate variation number
     const existing = await db
       .select({ id: variations.id })
@@ -67,6 +75,7 @@ export const variationsRouter = router({
     approvedBy: z.string().max(255).optional(),
     notes: z.string().max(2000).optional(),
   })).mutation(async ({ input, ctx }) => {
+    await requireProFeature(ctx.user.id);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
@@ -99,6 +108,7 @@ export const variationsRouter = router({
   delete: protectedProcedure.input(z.object({
     id: z.number().int().positive(),
   })).mutation(async ({ input, ctx }) => {
+    await requireProFeature(ctx.user.id);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 

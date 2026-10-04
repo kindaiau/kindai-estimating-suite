@@ -1,3 +1,4 @@
+import { requireProFeature } from "../entitlements";
 import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -85,6 +86,7 @@ export const companyMemoryRouter = router({
     supplierName: z.string().optional(),
     supplierAccountNumber: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
+    await requireProFeature(ctx.user.id);
     const db = requireDatabase(await getDb());
     const result = await db.insert(priceBookItems).values({
       userId: ctx.user.id,
@@ -106,6 +108,7 @@ export const companyMemoryRouter = router({
     supplierName: z.string().optional(),
     supplierAccountNumber: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
+    await requireProFeature(ctx.user.id);
     const db = requireDatabase(await getDb());
     const { id, unitPrice, ...rest } = input;
     const data: any = { ...rest };
@@ -116,6 +119,7 @@ export const companyMemoryRouter = router({
   }),
 
   deletePriceBookItem: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+    await requireProFeature(ctx.user.id);
     const db = requireDatabase(await getDb());
     // Soft delete
     await db.update(priceBookItems).set({ isActive: false })
@@ -135,6 +139,7 @@ export const companyMemoryRouter = router({
       supplierName: z.string().optional(),
     })),
   })).mutation(async ({ ctx, input }) => {
+    await requireProFeature(ctx.user.id);
     const db = requireDatabase(await getDb());
     let imported = 0;
     for (const item of input.items) {
