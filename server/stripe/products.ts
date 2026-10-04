@@ -258,7 +258,7 @@ export const PRO_PLAN: SubscriptionPlan = {
   ],
   limits: { estimatesPerMonth: -1, aiTakeoffsPerMonth: -1, projectsTotal: -1, teamMembers: 1 },
   targetAudience: 'Australian plumbing, gas and hydraulic contractors',
-  annualSavings: 'AUD298 (16.67%) versus twelve monthly payments', roiStatement: '',
+  annualSavings: `AUD${PRO_OFFER.annualSavingAud} (${PRO_OFFER.annualSavingPercent}%) versus twelve monthly payments`, roiStatement: '',
 };
 export const NEW_SALES_PLANS = [
   { ...PLANS[0], name: 'One free sheet', description: 'One lifetime drawing-sheet scan per verified user. No credit card.',

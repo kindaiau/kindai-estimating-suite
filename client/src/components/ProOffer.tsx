@@ -1,3 +1,4 @@
+import { pixelInitiateCheckout } from '@/lib/metaPixel';
 import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
@@ -7,7 +8,10 @@ export function ProOffer() {
   const { user } = useAuth();
   const [interval, setInterval] = useState<'monthly' | 'yearly'>('monthly');
   const tax = trpc.billing.offerTax.useQuery();
-  const checkout = trpc.billing.createCheckout.useMutation({ onSuccess: data => { window.location.assign(data.url); } });
+  const checkout = trpc.billing.createCheckout.useMutation({ onSuccess: (data, variables) => {
+    pixelInitiateCheckout({ content_name: 'Kindai Pro', value: (variables.interval === 'yearly' ? PRO_OFFER.yearlyCents : PRO_OFFER.monthlyCents) / 100 });
+    window.location.assign(data.url);
+  } });
   return <section id="pricing" className="rounded-3xl border border-emerald-400/30 bg-slate-900 p-7 sm:p-10 text-slate-100">
     <p className="text-emerald-300 font-semibold">One Pro subscription</p>
     <h2 className="text-3xl font-semibold mt-3">Your next quote, all the way through.</h2>
@@ -15,7 +19,7 @@ export function ProOffer() {
       {(['monthly', 'yearly'] as const).map(value => <label key={value} className="flex gap-2 items-center min-h-11 cursor-pointer"><input type="radio" name="billing" checked={interval === value} onChange={() => setInterval(value)} />{value === 'monthly' ? 'Monthly' : 'Yearly, billed upfront'}</label>)}
     </fieldset>
     <p className="text-4xl font-semibold">A${(interval === 'monthly' ? PRO_OFFER.monthlyCents : PRO_OFFER.yearlyCents) / 100}<span className="text-base text-slate-300"> / {interval === 'monthly' ? 'month' : 'year'}</span></p>
-    <p className="text-slate-300 mt-3">Annual saving: A$298 (16.67%) versus twelve monthly payments.</p>
+    <p className="text-slate-300 mt-3">Annual saving: A${PRO_OFFER.annualSavingAud} ({PRO_OFFER.annualSavingPercent}%) versus twelve monthly payments.</p>
     <p className="text-sm text-slate-300 mt-2">Prices include GST.</p>
     {!tax.data?.ready && <p className="text-sm text-slate-300 mt-2">Checkout is not yet available.</p>}
     <ul className="grid sm:grid-cols-2 gap-3 my-7 text-slate-200">

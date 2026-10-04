@@ -1,3 +1,4 @@
+import { PRO_OFFER } from '@shared/kindaiOffer';
 import { Helmet } from "react-helmet-async";
 
 /**
@@ -16,35 +17,25 @@ export function SoftwareAppSchema() {
     "offers": [
       {
         "@type": "Offer",
-        "name": "Free Trial",
+        "name": "One free sheet",
         "price": "0",
         "priceCurrency": "AUD",
-        "description": "Free plan — 3 AI quotes per month, 5 projects"
+        "description": "One lifetime drawing-sheet scan per verified user. No credit card."
       },
-      {
+      ...(["monthly", "yearly"] as const).map(interval => ({
         "@type": "Offer",
-        "name": "Sole Tradie",
-        "price": "149",
-        "priceCurrency": "AUD",
-        "billingIncrement": "P1M",
-        "description": "Solo tradie plan — AI takeoffs, PDF quotes, GST"
-      },
-      {
-        "@type": "Offer",
-        "name": "Pro",
-        "price": "450",
-        "priceCurrency": "AUD",
-        "billingIncrement": "P1M",
-        "description": "Pro plan — team workflows, Xero, accuracy dashboard"
-      },
-      {
-        "@type": "Offer",
-        "name": "Enterprise & Custom Solutions",
-        "price": "0",
-        "priceCurrency": "AUD",
-        "billingIncrement": "P1M",
-        "description": "Custom pricing by contact for enterprise workflows"
-      }
+        "name": `Pro (${interval})`,
+        "price": String((interval === "monthly" ? PRO_OFFER.monthlyCents : PRO_OFFER.yearlyCents) / 100),
+        "priceCurrency": PRO_OFFER.currency.toUpperCase(),
+        "priceSpecification": {
+          "@type": "UnitPriceSpecification",
+          "price": String((interval === "monthly" ? PRO_OFFER.monthlyCents : PRO_OFFER.yearlyCents) / 100),
+          "priceCurrency": PRO_OFFER.currency.toUpperCase(),
+          "billingDuration": interval === "monthly" ? "P1M" : "P1Y",
+          "valueAddedTaxIncluded": true,
+        },
+        "description": "Pro subscription. Prices include GST."
+      }))
     ],
     "featureList": [
       "AI Vision Takeoff from construction plans",
@@ -144,7 +135,7 @@ export function FAQSchema() {
         "name": "How much does Kindai cost?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Kindai pricing starts at $149/month for Sole Tradie, $450/month for Pro, and Enterprise & Custom Solutions are scoped directly with the Kindai team."
+          "text": `Kindai Pro is A$${PRO_OFFER.monthlyCents / 100}/month or A$${PRO_OFFER.yearlyCents / 100}/year, including GST. Annual billing saves A$${PRO_OFFER.annualSavingAud} (${PRO_OFFER.annualSavingPercent}%) versus twelve monthly payments.`
         }
       },
       {
