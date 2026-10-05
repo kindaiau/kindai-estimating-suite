@@ -20,7 +20,7 @@ type FeatureRequirement = {
 const FEATURE_REQUIREMENTS: Record<FeatureKey, FeatureRequirement> = {
   auth: {
     label: "Authentication",
-    required: [],
+    required: ["AUTH_PROVIDER_CONFIG"],
     optional: [
       "VITE_APP_ID",
       "JWT_SECRET",
@@ -56,6 +56,7 @@ const FEATURE_REQUIREMENTS: Record<FeatureKey, FeatureRequirement> = {
       "HUBSPOT_API_KEY",
       "RESEND_API_KEY",
       "RESEND_FROM_EMAIL",
+      "OWNER_NOTIFICATION_EMAIL",
       "MATTHEW_NOTIFICATION_EMAIL",
     ],
   },
@@ -125,6 +126,32 @@ function getFeatureStatus(requirement: FeatureRequirement) {
   };
 }
 
+function getAuthFeatureStatus() {
+  const appId = readEnv("VITE_APP_ID");
+  const jwtSecret = readEnv("JWT_SECRET");
+  const oauthServerUrl = readEnv("OAUTH_SERVER_URL");
+  const supabaseUrl = readEnv("SUPABASE_URL") ?? readEnv("VITE_SUPABASE_URL");
+  const supabaseAnonKey = readEnv("SUPABASE_ANON_KEY") ?? readEnv("VITE_SUPABASE_ANON_KEY");
+
+  const legacyAuthReady = Boolean(appId && jwtSecret && oauthServerUrl);
+  const supabaseAuthReady = Boolean(supabaseUrl && supabaseAnonKey);
+  const ready = legacyAuthReady || supabaseAuthReady;
+
+  return {
+    label: FEATURE_REQUIREMENTS.auth.label,
+    ready,
+    missingRequired: ready
+      ? []
+      : [
+          "(SUPABASE_URL|VITE_SUPABASE_URL) + (SUPABASE_ANON_KEY|VITE_SUPABASE_ANON_KEY)",
+          "or (VITE_APP_ID + JWT_SECRET + OAUTH_SERVER_URL)",
+        ],
+    configuredOptional: (FEATURE_REQUIREMENTS.auth.optional ?? []).filter((name) =>
+      Boolean(readEnv(name))
+    ),
+  };
+}
+
 export const ENV = {
   appId: readEnv("VITE_APP_ID"),
   cookieSecret: readEnv("JWT_SECRET"),
@@ -138,6 +165,8 @@ export const ENV = {
   brevoApiKey: readEnv("BREVO_API_KEY"),
   resendApiKey: readEnv("RESEND_API_KEY"),
   resendFromEmail: readEnv("RESEND_FROM_EMAIL"),
+  ownerNotificationEmail:
+    readEnv("OWNER_NOTIFICATION_EMAIL") ?? readEnv("MATTHEW_NOTIFICATION_EMAIL"),
   matthewNotificationEmail: readEnv("MATTHEW_NOTIFICATION_EMAIL"),
   hubspotApiKey: readEnv("HUBSPOT_API_KEY"),
   openAiApiKey: readEnv("OPENAI_API_KEY"),
@@ -167,10 +196,12 @@ export const ENV = {
 
 export function getEnvironmentStatus() {
   return Object.fromEntries(
-    Object.entries(FEATURE_REQUIREMENTS).map(([key, requirement]) => [
-      key,
-      getFeatureStatus(requirement),
-    ])
+    Object.entries(FEATURE_REQUIREMENTS).map(([key, requirement]) => {
+      if (key === "auth") {
+        return [key, getAuthFeatureStatus()];
+      }
+      return [key, getFeatureStatus(requirement)];
+    })
   ) as Record<
     FeatureKey,
     ReturnType<typeof getFeatureStatus>
