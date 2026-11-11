@@ -1,3 +1,4 @@
+import { prepareInlineLogo } from '@/lib/logoUpload';
 import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -150,6 +151,7 @@ export default function TradeProfile() {
   });
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoPdfReady, setLogoPdfReady] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
 
   const trade = TRADES.find(t => t.id === selectedTrade)!;
@@ -205,6 +207,7 @@ export default function TradeProfile() {
       });
       setSuppliers((profile.suppliers as Supplier[]) ?? []);
       setLogoUrl(profile.logoUrl ?? null);
+      setLogoPdfReady(profile.pdfLogoReady);
     }
   }, [profile]);
 
@@ -245,7 +248,9 @@ export default function TradeProfile() {
   const uploadLogoMutation = trpc.tradeProfiles.uploadLogo.useMutation({
     onSuccess: (data) => {
       setLogoUrl(data.url);
-      toast.success("Logo uploaded! It will appear on all your quotes and emails.");
+      setLogoPdfReady(data.pdfLogoReady);
+      if (data.pdfLogoReady) toast.success("Logo saved and ready for PDF quotes.");
+      else toast.warning(data.warning || "Logo saved online; re-upload a PNG, JPEG or WebP for PDF branding.");
     },
     onError: (err) => toast.error(err.message),
   });
@@ -253,30 +258,24 @@ export default function TradeProfile() {
   const removeLogoMutation = trpc.tradeProfiles.removeLogo.useMutation({
     onSuccess: () => {
       setLogoUrl(null);
+      setLogoPdfReady(false);
       toast.success("Logo removed.");
     },
   });
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 4 * 1024 * 1024) {
-      toast.error("Logo must be under 4MB.");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = (reader.result as string).split(",")[1];
-      setLogoUploading(true);
-      uploadLogoMutation.mutate({
-        trade: selectedTrade,
-        fileName: file.name,
-        fileBase64: base64,
-        contentType: file.type as any,
-      }, { onSettled: () => setLogoUploading(false) });
-    };
-    reader.readAsDataURL(file);
     e.target.value = "";
+    if (!file) return;
+    if (file.size > 4 * 1024 * 1024) { toast.error("Logo must be under 4MB."); return; }
+    setLogoUploading(true);
+    try {
+      const prepared = await prepareInlineLogo(file);
+      await uploadLogoMutation.mutateAsync({ trade: selectedTrade, ...prepared });
+    } catch (error) {
+      // Mutation errors are reported by onError; conversion errors occur here.
+      if (!(error && typeof error === 'object' && 'data' in error)) toast.error(error instanceof Error ? error.message : "Logo could not be prepared.");
+    } finally { setLogoUploading(false); }
   };
 
   const generateTemplate = trpc.tradeProfiles.generateEmailTemplate.useMutation({
@@ -445,17 +444,17 @@ export default function TradeProfile() {
                 {/* Company Logo Upload */}
                 <div className="col-span-1 sm:col-span-2">
                   <Label>Company Logo</Label>
-                  <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>Appears on all PDF quotes and emails instead of the Kindai logo. PNG, JPG, or SVG, max 4MB.</p>
+                  <p className="text-xs mb-3" style={{ color: "var(--text-muted)" }}>Upload a PNG, JPG or WebP for PDF quote branding. Images are resized locally before upload. Maximum 4MB.</p>
                   {logoUrl ? (
                     <div className="flex items-center gap-4 p-4 rounded-xl border" style={{ borderColor: "var(--border-color)", background: "var(--surface-2)" }}>
                       <img src={logoUrl} alt="Company logo" className="h-16 w-auto max-w-[200px] object-contain rounded" />
                       <div className="flex-1">
                         <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Logo uploaded</p>
-                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>This logo will appear on your quotes and emails</p>
+                        <p className="text-xs" style={{ color: "var(--text-muted)" }}>{logoPdfReady ? "Embedded logo ready for PDF quotes" : "Legacy online logo: re-upload to enable offline PDF branding"}</p>
                       </div>
                       <div className="flex gap-2">
                         <label className="cursor-pointer">
-                          <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={handleLogoUpload} />
+                          <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleLogoUpload} />
                           <Button variant="outline" size="sm" asChild><span><Upload className="w-4 h-4 mr-1" />Replace</span></Button>
                         </label>
                         <Button variant="outline" size="sm" onClick={() => removeLogoMutation.mutate({ trade: selectedTrade })}>
@@ -465,7 +464,7 @@ export default function TradeProfile() {
                     </div>
                   ) : (
                     <label className="cursor-pointer block">
-                      <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="hidden" onChange={handleLogoUpload} />
+                      <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleLogoUpload} />
                       <div className="border-2 border-dashed rounded-xl p-8 text-center transition-colors hover:border-pink-400" style={{ borderColor: "var(--border-color)" }}>
                         {logoUploading ? (
                           <div className="flex flex-col items-center gap-2">
@@ -478,7 +477,7 @@ export default function TradeProfile() {
                               <ImageIcon className="w-6 h-6" style={{ color: "var(--text-muted)" }} />
                             </div>
                             <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Upload your company logo</p>
-                            <p className="text-xs" style={{ color: "var(--text-muted)" }}>PNG, JPG, SVG · Max 4MB · Click to browse</p>
+                            <p className="text-xs" style={{ color: "var(--text-muted)" }}>PNG, JPG, WebP · Max 4MB · Click to browse</p>
                           </div>
                         )}
                       </div>

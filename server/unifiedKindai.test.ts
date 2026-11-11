@@ -197,7 +197,7 @@ integration('transaction and quota integration against disposable MariaDB', () =
     await db.update(estimates).set({ aiTakeoffData: null }).where(eq(estimates.id, 1));
     const urls = Array.from({ length: 6 }, (_, n) => `https://test.invalid/plan-${n}.png`);
     await db.insert(planUploads).values(urls.map((url, n) => ({ fileKey: `plans/1/${n}.png`, userId: 1, url, pageCount: 1 })));
-    modelMock.mockReset(); modelMock.mockResolvedValueOnce({ choices: [{ message: { content: JSON.stringify({ items: [{ quantity: 1, tradePrice: 10 }], confidence: 75, assumptions: [] }) } }] }).mockResolvedValueOnce({ choices: [{ message: { content: 'invalid-json' } }] });
+    modelMock.mockReset(); modelMock.mockResolvedValueOnce({ choices: [{ message: { content: JSON.stringify({ items: [{ quantity: 1, tradePrice: 10, sourceReferences: [{ documentIndex: 1, pageNumber: 1, evidence: 'Synthetic 1 unit annotation' }] }], confidence: 75, assumptions: [] }) } }] }).mockResolvedValueOnce({ choices: [{ message: { content: 'invalid-json' } }] });
     const { aiRouter } = await import('./routers/ai');
     const caller = aiRouter.createCaller({ user: { id: 1 }, req: {}, res: {} } as any);
     await expect(caller.visionTakeoffMultiPage({ estimateId: 1, requestId: 'batch-submission-123', trade: 'plumbing', imageUrls: urls })).rejects.toThrow('No partial takeoff');
@@ -312,7 +312,7 @@ integration('transaction and quota integration against disposable MariaDB', () =
     const visible = await caller.getByToken({ token: issued.token });
     expect(visible.estimate.total).toBe('14.60');
     expect(visible.items[0].quantity).toBe('1.005');
-    const responses = await Promise.allSettled(['accepted', 'declined'].map(action => caller.respond({ token: issued.token, action: action as 'accepted' | 'declined' })));
+    const responses = await Promise.allSettled(['accepted', 'declined'].map(action => caller.respond({ token: issued.token, action: action as 'accepted' | 'declined', clientSignature: 'Synthetic Client' })));
     expect(responses.filter(r => r.status === 'fulfilled')).toHaveLength(1);
     await expect(caller.sendQuote({ estimateId: 1, expectedVersion: saved.version, clientName: 'Client', origin: 'https://kindai.au' })).rejects.toMatchObject({ code: 'CONFLICT' });
     vi.unstubAllEnvs();

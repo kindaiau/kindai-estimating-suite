@@ -5,13 +5,17 @@ import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { quoteTokens, estimates, lineItems, users } from "../../drizzle/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import crypto from "crypto";
 import { buildQuoteAssuranceReport, deriveAssuranceEstimate } from "../assurance";
 
 function generateToken(): string {
   return crypto.randomBytes(48).toString("hex");
+}
+
+export function quoteIssueRequestKey(input: { estimateId: number; expectedVersion: number; clientName: string; clientEmail?: string; message?: string; expiryDays: number }) {
+  return crypto.createHash('sha256').update(JSON.stringify([input.estimateId, input.expectedVersion, input.clientName, input.clientEmail || null, input.message || '', input.expiryDays])).digest('hex');
 }
 
 export function buildIssuedQuoteSnapshot(estimate: typeof estimates.$inferSelect, items: (typeof lineItems.$inferSelect)[], sender: typeof users.$inferSelect) {
@@ -46,7 +50,16 @@ export const quoteTokensRouter = router({
     if (!savedPricingMatches(estimate, items)) throw new TRPCError({
       code: 'PRECONDITION_FAILED', message: 'Saved pricing needs Recalculate. Review the newly saved version before issuing this quote.',
     });
-    const snapshot = buildIssuedQuoteSnapshot(estimate, items, ctx.user);
+    const requestKey = quoteIssueRequestKey(input);
+    const [previous] = await db.select().from(quoteTokens).where(and(
+      eq(quoteTokens.estimateId, input.estimateId), eq(quoteTokens.userId, ctx.user.id),
+      sql`${quoteTokens.status} IN ('pending', 'viewed')`
+    )).orderBy(desc(quoteTokens.createdAt)).limit(1);
+    if (previous && previous.expiresAt && previous.expiresAt > new Date()) {
+      const snapshot = typeof previous.snapshot === 'string' ? JSON.parse(previous.snapshot) : previous.snapshot;
+      if (snapshot?.issueRequestKey === requestKey) return { token: previous.token, quoteUrl: `${appOrigin(input.origin)}/quote/accept/${previous.token}`, expiresAt: previous.expiresAt, clientEmail: previous.clientEmail };
+    }
+    const snapshot = { ...buildIssuedQuoteSnapshot(estimate, items, ctx.user), issueRequestKey: requestKey };
     const assurance = buildQuoteAssuranceReport(deriveAssuranceEstimate(estimate, items), items);
     if (!assurance.canIssue) {
       throw new TRPCError({

@@ -1,3 +1,4 @@
+import { safeEmbeddedLogo } from './quoteLogo';
 import puppeteer from "puppeteer-core";
 import { ENV } from "./_core/env";
 import type { QuoteAssuranceReport } from "./assurance";
@@ -98,20 +99,6 @@ function formatCurrency(amount: number): string {
 }
 
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
-// PDFs render offline. Only bounded embedded raster images are accepted; URLs,
-// SVG, local files and redirects must never turn this renderer into a fetch proxy.
-function safeEmbeddedLogo(value?: string): string | null {
-  if (!value || value.length > 2_800_000) return null;
-  const match = /^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/]+={0,2})$/.exec(value);
-  if (!match) return null;
-  const bytes = Buffer.from(match[2], 'base64');
-  if (bytes.length > 2_000_000) return null;
-  const valid = match[1] === 'png' ? bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))
-    : match[1] === 'jpeg' ? bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255
-    : bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP';
-  return valid ? value : null;
-}
-
 export function buildHtml(input: PdfQuoteData): string {
   const data = { ...input };
   const logo = safeEmbeddedLogo(input.companyLogoUrl || LOGO_URL);

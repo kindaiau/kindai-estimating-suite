@@ -69,3 +69,30 @@ it('freezes issued terms, line prices and totals independently of later edits', 
   expect(snapshot.estimate).toMatchObject({ quoteTerms: 'Payment due in 14 days', quoteNumber: 'KAI-TEST', subtotal: '13.27', gstAmount: '1.33', total: '14.60' });
   expect(snapshot.items[0].unitRate).toBe('10.00');
 });
+it('uses a stable issue identity but distinguishes review version, recipient and terms of delivery', async () => {
+  const { quoteIssueRequestKey } = await import('./routers/quoteTokens');
+  const input = { estimateId: 1, expectedVersion: 2, clientName: 'Synthetic Client', clientEmail: 'synthetic@example.test', message: 'Reviewed scope', expiryDays: 30 };
+  const key = quoteIssueRequestKey(input);
+  expect(quoteIssueRequestKey({ ...input })).toBe(key);
+  for (const changed of [{ expectedVersion: 3 }, { clientEmail: 'different@example.test' }, { message: 'Revised scope' }, { expiryDays: 14 }]) expect(quoteIssueRequestKey({ ...input, ...changed })).not.toBe(key);
+});
+it('reuses an identical unexpired issued link after a lost response, without expiring or inserting', async () => {
+  const { quoteIssueRequestKey } = await import('./routers/quoteTokens');
+  vi.stubEnv('PUBLIC_APP_ORIGIN', 'https://kindai.au');
+  try {
+    const input = { estimateId: 7, expectedVersion: 2, clientName: 'Synthetic Client', expiryDays: 30, origin: 'https://kindai.au' };
+    const estimate = { id: 7, userId: 9, version: 2, margin: '0', subtotal: '10.00', gstAmount: '1.00', total: '11.00' };
+    const items = [{ quantity: '1.000', unitRate: '10.00', wasteFactor: '0', subtotal: '10.00' }];
+    const previous = { token: 'synthetic-existing', expiresAt: new Date(Date.now() + 10000), clientEmail: null, snapshot: { issueRequestKey: quoteIssueRequestKey(input) } };
+    let count = 0; const mutation = vi.fn();
+    const tx = { select: () => ({ from: () => ({ where: () => {
+      if (count++ === 0) return { limit: () => ({ for: async () => [estimate] }) };
+      if (count === 2) return Promise.resolve(items);
+      return { orderBy: () => ({ limit: async () => [previous] }) };
+    } }) }), insert: mutation, update: mutation };
+    mocks.db = { transaction: (fn: any) => fn(tx) };
+    const caller = quoteTokensRouter.createCaller({ user: { id: 9 }, req: {}, res: {} } as any);
+    await expect(caller.sendQuote(input)).resolves.toMatchObject({ token: previous.token });
+    expect(mutation).not.toHaveBeenCalled();
+  } finally { vi.unstubAllEnvs(); }
+});
