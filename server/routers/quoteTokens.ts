@@ -14,6 +14,15 @@ function generateToken(): string {
   return crypto.randomBytes(48).toString("hex");
 }
 
+export function buildIssuedQuoteSnapshot(estimate: typeof estimates.$inferSelect, items: (typeof lineItems.$inferSelect)[], sender: typeof users.$inferSelect) {
+  return structuredClone({
+    estimate: { id: estimate.id, title: estimate.title, trade: estimate.trade, notes: estimate.notes, version: estimate.version,
+      quoteTerms: estimate.quoteTerms, quoteNumber: estimate.quoteNumber, ...priceEstimate(items, estimate.margin) },
+    items,
+    sender: { name: sender.name, companyName: sender.companyName, abn: sender.abn, phone: sender.phone, email: sender.email, licenseNumber: sender.licenseNumber },
+  });
+}
+
 export const quoteTokensRouter = router({
   // Send quote to client — creates a token and returns the public URL
   sendQuote: protectedProcedure.input(z.object({
@@ -37,12 +46,7 @@ export const quoteTokensRouter = router({
     if (!savedPricingMatches(estimate, items)) throw new TRPCError({
       code: 'PRECONDITION_FAILED', message: 'Saved pricing needs Recalculate. Review the newly saved version before issuing this quote.',
     });
-    const totals = priceEstimate(items, estimate.margin);
-    const snapshot = {
-      estimate: { id: estimate.id, title: estimate.title, trade: estimate.trade, notes: estimate.notes, version: estimate.version, ...totals },
-      items,
-      sender: { name: ctx.user.name, companyName: ctx.user.companyName, abn: ctx.user.abn, phone: ctx.user.phone, email: ctx.user.email, licenseNumber: ctx.user.licenseNumber },
-    };
+    const snapshot = buildIssuedQuoteSnapshot(estimate, items, ctx.user);
     const assurance = buildQuoteAssuranceReport(deriveAssuranceEstimate(estimate, items), items);
     if (!assurance.canIssue) {
       throw new TRPCError({
@@ -165,9 +169,9 @@ export const quoteTokensRouter = router({
   respond: publicProcedure.input(z.object({
     token: z.string().min(1),
     action: z.enum(["accepted", "declined"]),
-    clientSignature: z.string().optional(),
+    clientSignature: z.string().trim().max(255).optional(),
     clientNotes: z.string().max(1000).optional(),
-  })).mutation(async ({ input }) => {
+  }).refine(input => input.action !== "accepted" || Boolean(input.clientSignature), { message: "Type your full name to accept this quote", path: ["clientSignature"] })).mutation(async ({ input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 

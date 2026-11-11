@@ -1,7 +1,7 @@
 import { requireProFeature } from "../entitlements";
 import { TRPCError } from "@trpc/server";
 import { editEstimate, lockEstimate, saveTotals } from "../estimateEdits";
-import { itemFields, markupSchema, priceEstimate, priceLine } from "../estimatePricing";
+import { itemFields, markupSchema, priceEstimate, priceLine, savedPricingMatches } from "../estimatePricing";
 import { z } from "zod";
 import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -164,7 +164,7 @@ export const estimatesRouter = router({
     complianceState: z.enum(["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"]).optional(),
     complianceChecked: z.boolean().optional(),
     complianceNotes: z.string().optional(),
-    quoteValidDays: z.number().optional(),
+    quoteValidDays: z.number().int().min(1).max(90).optional(),
     quoteTerms: z.string().optional(),
     notes: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
@@ -323,9 +323,8 @@ export const estimatesRouter = router({
     const { estimate, items } = await db.transaction(async tx => {
       const estimate = await lockEstimate(tx, ctx.user.id, input.id, input.expectedVersion);
       const items = await tx.select().from(lineItems).where(eq(lineItems.estimateId, input.id));
-      const totals = priceEstimate(items, estimate.margin);
-      await tx.update(estimates).set(totals).where(eq(estimates.id, input.id));
-      return { estimate: { ...estimate, ...totals }, items: items.map(item => ({ ...item, subtotal: priceLine(item) })) };
+      if (!savedPricingMatches(estimate, items)) throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Saved pricing needs Recalculate. Review and approve the newly saved version before exporting this quote.' });
+      return { estimate, items };
     });
 
     // Load user profile
