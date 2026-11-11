@@ -19,6 +19,7 @@ export async function assertNoLiveSubscription(stripe: ReturnType<typeof getStri
     const page = await stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 100, starting_after });
     if (page.data.some(sub => !terminal(sub.status))) throw new TRPCError({ code: 'CONFLICT', message: 'An existing subscription is awaiting billing reconciliation; no second subscription was created.' });
     starting_after = page.has_more ? page.data.at(-1)?.id : undefined;
+    if (page.has_more && !starting_after) throw new Error('Incomplete provider subscription history; billing reconciliation required');
   } while (starting_after);
 }
 
@@ -27,6 +28,34 @@ function optionsOf(attempt: typeof checkoutAttempts.$inferSelect): Options {
 }
 function matches(a: Options, b: Options) {
   return a.customerId === b.customerId && a.priceId === b.priceId && a.origin === b.origin && a.automaticTax === b.automaticTax;
+}
+
+// A lost creation response must never be recovered by creating another session
+// against a replaced customer. Inspect the provider history before rotating it.
+export async function recoverDeletedCustomerAttempt(stripe: ReturnType<typeof getStripe>, saved: Options, mappedSubscriptionId?: string | null) {
+  const conflict = () => new TRPCError({ code: 'CONFLICT', message: 'Previous billing customer requires reconciliation before another checkout can be created.' });
+  const customer = await stripe.customers.retrieve(saved.customerId);
+  if (!customer.deleted) throw conflict();
+  await assertNoLiveSubscription(stripe, saved.customerId, mappedSubscriptionId);
+  let starting_after: string | undefined;
+  do {
+    const page = await stripe.checkout.sessions.list({ customer: saved.customerId, limit: 100, starting_after });
+    for (const session of page.data) {
+      if (session.mode !== 'subscription') continue;
+      const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
+      if (customerId !== saved.customerId || session.client_reference_id !== String(saved.userId)) throw conflict();
+      const subscriptionId = typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
+      if (session.status === 'complete' && (!subscriptionId || subscriptionId !== mappedSubscriptionId)) throw conflict();
+      if (session.status === 'open') {
+        const expired = await stripe.checkout.sessions.expire(session.id);
+        if (expired.status !== 'expired') throw conflict();
+      } else if (!['expired', 'complete'].includes(session.status ?? '')) throw conflict();
+    }
+    starting_after = page.has_more ? page.data.at(-1)?.id : undefined;
+    if (page.has_more && !starting_after) throw conflict();
+  } while (starting_after);
+  // Close the completion race between listing and expiring sessions.
+  await assertNoLiveSubscription(stripe, saved.customerId, mappedSubscriptionId);
 }
 
 export async function pendingCheckout(db: Db, options: Options) {
@@ -41,17 +70,21 @@ export async function pendingCheckout(db: Db, options: Options) {
     const [pending] = await tx.select().from(checkoutAttempts).where(eq(checkoutAttempts.userId, options.userId)).limit(1);
     if (pending) {
       const savedOptions = optionsOf(pending);
-      const session = pending.sessionId
-        ? await stripe.checkout.sessions.retrieve(pending.sessionId)
-        : await createCheckoutSession({ ...savedOptions, idempotencyKey: `pro-checkout:${pending.id}` });
-      const completedSubscription = typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
-      if (session.status === 'complete' && (!completedSubscription || completedSubscription !== user.stripeSubscriptionId)) throw new TRPCError({ code: 'CONFLICT', message: 'Checkout completed; await billing reconciliation before retrying.' });
-      if (session.status === 'open' && matches(savedOptions, options)) {
-        if (!pending.sessionId) await tx.update(checkoutAttempts).set({ sessionId: session.id }).where(eq(checkoutAttempts.userId, options.userId));
-        return pending.id;
+      if (!pending.sessionId && savedOptions.customerId !== options.customerId) {
+        await recoverDeletedCustomerAttempt(stripe, savedOptions, user.stripeSubscriptionId);
+      } else {
+        const session = pending.sessionId
+          ? await stripe.checkout.sessions.retrieve(pending.sessionId)
+          : await createCheckoutSession({ ...savedOptions, idempotencyKey: `pro-checkout:${pending.id}` });
+        const completedSubscription = typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
+        if (session.status === 'complete' && (!completedSubscription || completedSubscription !== user.stripeSubscriptionId)) throw new TRPCError({ code: 'CONFLICT', message: 'Checkout completed; await billing reconciliation before retrying.' });
+        if (session.status === 'open' && matches(savedOptions, options)) {
+          if (!pending.sessionId) await tx.update(checkoutAttempts).set({ sessionId: session.id }).where(eq(checkoutAttempts.userId, options.userId));
+          return pending.id;
+        }
+        if (session.status === 'open') await stripe.checkout.sessions.expire(session.id);
+        else if (!['expired', 'complete'].includes(session.status ?? '')) throw new Error('Unrecognised checkout session state');
       }
-      if (session.status === 'open') await stripe.checkout.sessions.expire(session.id);
-      else if (!['expired', 'complete'].includes(session.status ?? '')) throw new Error('Unrecognised checkout session state');
     }
     // Drain sessions made by the old checkout implementation or a response lost
     // before this migration. Only this account's subscription sessions are touched.

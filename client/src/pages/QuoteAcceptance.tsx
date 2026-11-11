@@ -78,7 +78,7 @@ export default function QuoteAcceptance() {
       if (result.status === "accepted") {
         toast.success("Quote accepted! The contractor will be in touch shortly.");
       } else {
-        toast.info("Quote declined. The contractor has been notified.");
+        toast.info("Quote declined. Your response has been saved for the contractor.");
       }
     },
     onError: (err) => {
@@ -366,6 +366,10 @@ export default function QuoteAcceptance() {
           </div>
         </div>
 
+        <section className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-6" aria-label="Issued quote terms">
+            <h2 className="font-semibold text-zinc-900 mb-3">Terms of this quote</h2>
+            <p className="text-sm text-zinc-700 whitespace-pre-wrap">{estimate.quoteTerms || "No terms were captured with this issued quote. Confirm payment and commencement arrangements with the contractor before accepting."}</p>
+        </section>
         {/* Accept / Decline */}
         <div className="bg-white rounded-2xl shadow-sm border border-zinc-200 p-6">
           <h2 className="font-semibold text-zinc-900 mb-4 flex items-center gap-2">

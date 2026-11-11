@@ -4,6 +4,7 @@ export async function preparePlan(buffer: Buffer, contentType: string, selectedP
   if (contentType === 'application/pdf') {
     const document = await PDFDocument.load(buffer);
     const count = document.getPageCount();
+    if (count < 1) throw new Error('The PDF must contain at least one drawing sheet');
     if (selectedPage !== undefined) {
       if (!Number.isInteger(selectedPage) || selectedPage < 1 || selectedPage > count) throw new Error(`Choose a drawing sheet from 1 to ${count}`);
       const single = await PDFDocument.create();

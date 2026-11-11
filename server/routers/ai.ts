@@ -1,3 +1,4 @@
+import { validateBatchSourceRange, validateDrawingSources, type SourceReference } from '../takeoffProvenance';
 import { beginTakeoff, completeTakeoff, failTakeoff, hasPaidAccess } from "../takeoffJobs";
 import { preparePlan } from "../planPreparation";
 import { planUploads, takeoffJobs, users } from "../../drizzle/schema";
@@ -8,7 +9,7 @@ import { invokeLLM, type MessageContent } from "../_core/llm";
 import { mediaContentFromUrl } from "../_core/mediaInputs";
 import { getDb } from "../db";
 import { estimates, lineItems, tradeProfiles, companyProfiles, priceBookItems, estimateCorrections } from "../../drizzle/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 import { storageGet, storagePut } from "../storage";
 import { nanoid } from "nanoid";
 import { buildProductivityPromptSection } from "../labourProductivity";
@@ -1131,6 +1132,9 @@ const takeoffResponseSchema = {
           items: {
             type: "object",
             properties: {
+              sourceReferences: { type: "array", items: { type: "object", properties: {
+                documentIndex: { type: "integer" }, pageNumber: { type: "integer" }, evidence: { type: "string" },
+              }, required: ["documentIndex", "pageNumber", "evidence"], additionalProperties: false } },
               section: { type: "string" },
               description: { type: "string" },
               unit: { type: "string" },
@@ -1141,7 +1145,7 @@ const takeoffResponseSchema = {
               labourMinutes: { type: "number" },
               wasteFactor: { type: "number" },
             },
-            required: ["section", "description", "unit", "quantity", "retailPrice", "tradePrice", "category", "labourMinutes", "wasteFactor"],
+            required: ["sourceReferences", "section", "description", "unit", "quantity", "retailPrice", "tradePrice", "category", "labourMinutes", "wasteFactor"],
             additionalProperties: false,
           },
         },
@@ -1169,6 +1173,7 @@ const takeoffResponseSchema = {
 
 // ─── Type for the AI response ────────────────────────────────────────────────
 type TakeoffItem = {
+  sourceReferences?: SourceReference[];
   section: string;
   description: string;
   unit: string;
@@ -1300,21 +1305,10 @@ function assertOwnedSupplierQuoteKey(userId: number, key: string): string {
 }
 
 // ─── Merge multiple batch takeoff results into one combined result ───────────
-function mergeTakeoffResults(results: TakeoffResult[], totalPages: number): TakeoffResult {
-  // Combine all items — use description+unit as dedup key, sum quantities
-  const itemMap = new Map<string, TakeoffItem>();
-  for (const result of results) {
-    for (const item of result.items) {
-      const key = `${item.description.toLowerCase().trim()}|${item.unit.toLowerCase().trim()}|${item.category.toLowerCase().trim()}`;
-      const existing = itemMap.get(key);
-      if (existing) {
-        // Sum quantities for duplicate items across pages
-        existing.quantity += item.quantity;
-      } else {
-        itemMap.set(key, { ...item });
-      }
-    }
-  }
+export function mergeTakeoffResults(results: TakeoffResult[], totalPages: number): TakeoffResult {
+  // Preserve independently cited lines and rates. Identical descriptions alone
+  // do not prove identical materials or justify silently summing quantities.
+  const items = results.flatMap(result => result.items);
 
   // Average confidence across batches, weighted by item count
   const totalItems = results.reduce((sum, r) => sum + r.items.length, 0);
@@ -1332,14 +1326,14 @@ function mergeTakeoffResults(results: TakeoffResult[], totalPages: number): Take
     }
   }
 
-  const planNotesParts = results.map((r, i) => r.planNotes ? `Pages ${i * 5 + 1}–${Math.min((i + 1) * 5, totalPages)}: ${r.planNotes}` : null).filter(Boolean);
+  const planNotesParts = results.map((r, i) => r.planNotes ? `Documents ${i * 5 + 1}–${Math.min((i + 1) * 5, totalPages)}: ${r.planNotes}` : null).filter(Boolean);
 
   return {
-    items: Array.from(itemMap.values()),
+    items,
     confidence: Math.round(weightedConfidence * 10) / 10,
     assumptions: allAssumptions,
     roomBreakdown: Array.from(roomMap.entries()).map(([room, items]) => ({ room, items })),
-    planNotes: planNotesParts.join(" | ") || `Combined takeoff from ${totalPages} plan pages.`,
+    planNotes: planNotesParts.join(" | ") || `Combined takeoff from ${totalPages} uploaded documents.`,
   };
 }
 
@@ -1548,7 +1542,7 @@ export const aiRouter = router({
     const customRates = await fetchCustomRates(db, ctx.user.id, input.trade);
     const memory = await fetchCompanyMemory(db, ctx.user.id, input.trade);
     const systemPrompt = buildVisionPrompt(input.trade, customRates, memory);
-    const userContent: MessageContent[] = [mediaContentFromUrl(input.imageUrl)];
+    const userContent: MessageContent[] = [{ type: "text", text: "Document 1 follows. For every measured item, cite sourceReferences with documentIndex 1, the actual PDF pageNumber (1 for an image), and the visible dimension/count evidence. Never invent missing dimensions. If measurement is unknown, omit the item and explain the missing information in assumptions." }, mediaContentFromUrl(input.imageUrl)];
     if (input.additionalContext) {
       userContent.push({ type: "text", text: `Additional context from the estimator: ${input.additionalContext}` });
     }
@@ -1567,6 +1561,8 @@ export const aiRouter = router({
 
     const result = JSON.parse(content) as TakeoffResult;
 
+    const [sourceUpload] = await db.select().from(planUploads).where(and(eq(planUploads.userId, ctx.user.id), eq(planUploads.url, input.imageUrl))).limit(1);
+    result.items = validateDrawingSources(result.items, sourceUpload ? [sourceUpload] : []);
     // Save AI data to estimate
     await completeTakeoff(db, job, result, Number(customRates?.defaultLabourRate ?? 95));
 
@@ -1582,7 +1578,7 @@ export const aiRouter = router({
     requestId: z.string().min(16).max(64),
     estimateId: z.number(),
     trade: z.string(),
-    imageUrls: z.array(z.string().url()).min(1).max(50),
+    imageUrls: z.array(z.string().url()).min(1).max(50).refine(urls => new Set(urls).size === urls.length, "Each drawing may be included only once"),
     additionalContext: z.string().optional(),
   })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
@@ -1614,14 +1610,16 @@ export const aiRouter = router({
       const userContent: MessageContent[] = [];
 
       // Add all uploaded plan pages in this batch, preserving PDFs as file input.
-      for (const url of batch) {
+      for (let offset = 0; offset < batch.length; offset++) {
+        const url = batch[offset];
+        userContent.push({ type: "text", text: `Document ${batchIdx * BATCH_SIZE + offset + 1} follows. Cite this documentIndex, actual PDF pageNumber (1 for an image), and visible dimension/count evidence in each item's sourceReferences. Never invent missing dimensions; omit unmeasurable items and explain in assumptions.` });
         userContent.push(mediaContentFromUrl(url));
       }
 
-      const batchLabel = `Pages ${batchIdx * BATCH_SIZE + 1}–${Math.min((batchIdx + 1) * BATCH_SIZE, input.imageUrls.length)} of ${input.imageUrls.length}`;
+      const batchLabel = `Documents ${batchIdx * BATCH_SIZE + 1}–${Math.min((batchIdx + 1) * BATCH_SIZE, input.imageUrls.length)} of ${input.imageUrls.length}`;
       userContent.push({
         type: "text",
-        text: `You are analysing ${batchLabel} of a ${input.imageUrls.length}-page construction document set for trade: ${input.trade}. Extract ALL materials, quantities, and items visible in these pages. Do not duplicate items already found in earlier pages — focus on what is unique to these pages.${input.additionalContext ? `\nEstimator notes: ${input.additionalContext}` : ""}`,
+        text: `You are analysing ${batchLabel} of a ${input.imageUrls.length}-document construction set for trade: ${input.trade}. Extract ALL materials, quantities, and items visible in these pages. Do not duplicate items already found in earlier pages — focus on what is unique to these pages.${input.additionalContext ? `\nEstimator notes: ${input.additionalContext}` : ""}`,
       });
 
       const response = await invokeLLM({
@@ -1636,7 +1634,9 @@ export const aiRouter = router({
       const content = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent);
       if (content) {
         try {
-          batchResults.push(JSON.parse(content) as TakeoffResult);
+          const batchResult = JSON.parse(content) as TakeoffResult;
+          batchResult.items = validateBatchSourceRange(batchResult.items, batchIdx * BATCH_SIZE + 1, batchIdx * BATCH_SIZE + batch.length);
+          batchResults.push(batchResult);
         } catch {
           throw new Error(`Drawing batch ${batchIdx + 1} could not be read. No partial takeoff was saved; retry the same submission.`);
         }
@@ -1649,10 +1649,14 @@ export const aiRouter = router({
 
     // Merge all batch results into a single combined takeoff
     const merged = mergeTakeoffResults(batchResults, input.imageUrls.length);
+    const sourceUploads = await db.select().from(planUploads).where(and(eq(planUploads.userId, ctx.user.id), inArray(planUploads.url, input.imageUrls)));
+    const documents = input.imageUrls.map(url => sourceUploads.find(upload => upload.url === url));
+    if (documents.some(document => !document)) throw new Error('A source drawing is unavailable. No takeoff was saved.');
+    merged.items = validateDrawingSources(merged.items, documents as { pageCount: number }[]);
     // Save merged AI data to estimate
     await completeTakeoff(db, job, merged, Number(customRates?.defaultLabourRate ?? 95));
 
-    return { ...merged, pageCount: input.imageUrls.length, batchCount: batches.length };
+    return { ...merged, pageCount: documents.reduce((total, document) => total + document!.pageCount, 0), documentCount: input.imageUrls.length, batchCount: batches.length };
     } catch (error) {
       await failTakeoff(db, job);
       throw error;
@@ -1687,7 +1691,7 @@ export const aiRouter = router({
 Job Description:
 ${input.planDescription}
 
-Generate a complete, section-by-section takeoff with accurate 2024-25 Australian market pricing (both retail and trade). Include all labour, materials, plant, and consumables.`;
+Generate a section-by-section draft takeoff. Prices are provisional and require the contractor to verify against current supplier and labour rates. Do not invent missing dimensions. No drawings were provided: return an empty sourceReferences array for every item.`;
 
     const response = await invokeLLM({
       messages: [
@@ -1702,6 +1706,8 @@ Generate a complete, section-by-section takeoff with accurate 2024-25 Australian
     if (!content) throw new Error("No response from AI");
 
     const result = JSON.parse(content) as TakeoffResult;
+    // Text descriptions cannot establish drawing provenance.
+    result.items = result.items.map(item => ({ ...item, sourceReferences: [] }));
 
     await completeTakeoff(db, job, result, Number(customRates?.defaultLabourRate ?? 95));
 

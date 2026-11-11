@@ -1,3 +1,4 @@
+import { drawingSourceNotes, type SourceReference } from '../takeoffProvenance';
 import Decimal from "decimal.js";
 import { priceLine } from "../estimatePricing";
 /**
@@ -10,6 +11,7 @@ import { lineItems } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 
 interface AiItem {
+  sourceReferences?: SourceReference[];
   section?: string;
   description?: string;
   unit?: string;
@@ -34,6 +36,14 @@ export function buildAiLineItemRows(
   const labourRate = options.labourRate ?? 110;
   const useTradePrice = options.useTradePrice ?? true;
 
+  // Unknown dimensions/quantities require human clarification, not a fabricated
+  // zero-valued estimate line. Throw before any caller can persist partial rows.
+  for (const item of items) {
+    if (typeof item.quantity !== 'number' || !Number.isFinite(item.quantity) || item.quantity < 0.001 || item.quantity > 9999999.999) {
+      throw new Error('AI takeoff returned a missing or invalid quantity. Review the drawing and provide the missing dimensions before retrying.');
+    }
+  }
+
   const materialRows = items.map((item, idx) => {
     const qty = Number(item.quantity) || 0;
     const unitRate = Number(useTradePrice ? item.tradePrice : item.retailPrice) || 0;
@@ -52,7 +62,7 @@ export function buildAiLineItemRows(
       wasteFactor: new Decimal(waste).toFixed(2),
       subtotal: priceLine({ quantity: new Decimal(qty).toFixed(3), unitRate: new Decimal(unitRate).toFixed(2), wasteFactor: new Decimal(waste).toFixed(2) }),
       isFromAi: true,
-      notes: null,
+      notes: drawingSourceNotes(item.sourceReferences),
       sortOrder: idx,
     };
   });
@@ -74,7 +84,7 @@ export function buildAiLineItemRows(
         wasteFactor: "0",
         subtotal: priceLine({ quantity: new Decimal(hours).toFixed(3), unitRate: new Decimal(labourRate).toFixed(2) }),
         isFromAi: true,
-        notes: null,
+        notes: drawingSourceNotes(item.sourceReferences),
         sortOrder: materialRows.length + idx,
       };
     });

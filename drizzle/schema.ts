@@ -435,7 +435,8 @@ export type InsertSupplierConnection = typeof supplierConnections.$inferInsert;
 
 // ─── Quote Tokens (Public Quote Acceptance Links) ─────────────────────────────
 export type IssuedQuoteSnapshot = {
-  estimate: Pick<typeof estimates.$inferSelect, 'id' | 'title' | 'trade' | 'notes' | 'subtotal' | 'gstAmount' | 'total' | 'version'>;
+  issueRequestKey?: string;
+  estimate: Pick<typeof estimates.$inferSelect, 'id' | 'title' | 'trade' | 'notes' | 'subtotal' | 'gstAmount' | 'total' | 'version'> & Partial<Pick<typeof estimates.$inferSelect, 'quoteTerms' | 'quoteNumber'>>;
   items: (typeof lineItems.$inferSelect)[];
   sender: Pick<typeof users.$inferSelect, 'name' | 'companyName' | 'abn' | 'phone' | 'email' | 'licenseNumber'>;
 };

@@ -6,7 +6,7 @@ import { requireDatabase } from "../_core/errors";
 import { router, protectedProcedure, publicProcedure } from "../_core/trpc";
 import { getDb } from "../db";
 import { users } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { PILOT_SETUP_OFFER, NEW_SALES_PLANS, PLANS, getPlanById, getPlanCheckoutAmount } from "../stripe/products";
 import {
   findOrCreateCustomer,
@@ -14,6 +14,20 @@ import {
   createPortalSession,
   getStripe,
 } from "../stripe/stripe";
+
+export function requireBillingOrigin(origin: string): string {
+  const configured = process.env.PUBLIC_APP_ORIGIN;
+  let allowed: string;
+  try {
+    const url = new URL(configured ?? '');
+    if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) throw new Error('Invalid origin');
+    allowed = url.origin;
+  } catch {
+    throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Billing is awaiting a configured application origin" });
+  }
+  if (origin !== allowed) throw new TRPCError({ code: "BAD_REQUEST", message: "Unrecognised billing origin" });
+  return allowed;
+}
 
 export const billingRouter = router({
   offerTax: publicProcedure.query(() => {
@@ -108,11 +122,10 @@ export const billingRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      requireBillingOrigin(input.origin);
       const db = requireDatabase(await getDb());
 
       const tax = proTaxConfig();
-      const publicOrigin = process.env.PUBLIC_APP_ORIGIN;
-      if (!publicOrigin || new URL(publicOrigin).origin !== input.origin) throw new TRPCError({ code: "BAD_REQUEST", message: "Unrecognised checkout origin" });
 
       // Get user's current Stripe customer ID
       const [user] = await db
@@ -137,12 +150,14 @@ export const billingRouter = router({
         existingCustomerId: user.stripeCustomerId,
       });
 
-      // Save customer ID if new
-      if (!user.stripeCustomerId) {
+      // Persist a replacement too; never overwrite a concurrently changed mapping.
+      if (user.stripeCustomerId !== customerId) {
         await db
           .update(users)
           .set({ stripeCustomerId: customerId })
-          .where(eq(users.id, ctx.user.id));
+          .where(and(eq(users.id, ctx.user.id), user.stripeCustomerId
+            ? eq(users.stripeCustomerId, user.stripeCustomerId)
+            : isNull(users.stripeCustomerId)));
       }
 
       // Create the price in Stripe on-the-fly (or use existing)
@@ -217,6 +232,7 @@ export const billingRouter = router({
       })
     )
     .mutation(async ({ input }) => {
+      requireBillingOrigin(input.origin);
       const checkoutUrl = await createPilotSetupCheckoutSession({
         name: input.name,
         email: input.email,
@@ -236,6 +252,7 @@ export const billingRouter = router({
   createPortal: protectedProcedure
     .input(z.object({ origin: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      requireBillingOrigin(input.origin);
       const db = requireDatabase(await getDb());
 
       const [user] = await db

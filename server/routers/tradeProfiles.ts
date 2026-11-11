@@ -1,3 +1,5 @@
+import { TRPCError } from '@trpc/server';
+import { inlineUploadedLogo, safeEmbeddedLogo } from '../quoteLogo';
 import z from "zod";
 import { requireDatabase } from "../_core/errors";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -146,7 +148,7 @@ export const tradeProfilesRouter = router({
     const result = await db.select().from(tradeProfiles)
       .where(and(eq(tradeProfiles.userId, ctx.user.id), eq(tradeProfiles.trade, input.trade)))
       .limit(1);
-    return result[0] ?? null;
+    return result[0] ? { ...result[0], pdfLogoReady: Boolean(safeEmbeddedLogo(result[0].logoUrl ?? undefined)) } : null;
   }),
 
   // Get all trade profiles for the user
@@ -373,7 +375,7 @@ Return JSON: { "subject": "...", "bodyHtml": "..." }`,
     return { renderedHtml: rendered, renderedSubject };
   }),
 
-  // Upload company logo to S3 and save URL to trade profile
+  // Embed small raster logos for offline PDFs; preserve larger legacy uploads.
   uploadLogo: protectedProcedure.input(z.object({
     trade: z.string(),
     fileName: z.string().max(255),
@@ -385,9 +387,13 @@ Return JSON: { "subject": "...", "bodyHtml": "..." }`,
     if (buffer.length > MAX_SIZE) {
       throw new Error(`Logo too large. Maximum is 4MB. Your file is ${(buffer.length / 1024 / 1024).toFixed(1)}MB.`);
     }
+    if (!safeEmbeddedLogo(`data:${input.contentType};base64,${input.fileBase64}`, MAX_SIZE)) {
+      throw new TRPCError({ code: 'BAD_REQUEST', message: 'Upload a valid PNG, JPEG or WebP logo. The file type must match its contents.' });
+    }
+    const embedded = inlineUploadedLogo(input.fileBase64, input.contentType);
     const ext = input.fileName.split(".").pop()?.toLowerCase() ?? "png";
-    const key = `logos/${ctx.user.id}/${nanoid()}.${ext}`;
-    const { url } = await storagePut(key, buffer, input.contentType);
+    const key = embedded ? null : `logos/${ctx.user.id}/${nanoid()}.${ext}`;
+    const url = embedded ?? (await storagePut(key!, buffer, input.contentType)).url;
     const db = requireDatabase(await getDb());
     const existing = await db.select().from(tradeProfiles)
       .where(and(eq(tradeProfiles.userId, ctx.user.id), eq(tradeProfiles.trade, input.trade)))
@@ -398,7 +404,7 @@ Return JSON: { "subject": "...", "bodyHtml": "..." }`,
     } else {
       await db.insert(tradeProfiles).values({ userId: ctx.user.id, trade: input.trade, logoUrl: url });
     }
-    return { url, key };
+    return { url, key, pdfLogoReady: Boolean(embedded), warning: embedded ? null : 'Logo saved for online use. For an offline PDF logo, upload a PNG, JPEG or WebP no larger than 48 KB.' };
   }),
 
   // Remove company logo from trade profile
