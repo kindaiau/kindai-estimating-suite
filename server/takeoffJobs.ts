@@ -1,3 +1,4 @@
+import { verifyTakeoffEntitlement } from './stripe/verifyTakeoffEntitlement';
 import { createHash } from 'node:crypto';
 import { TRPCError } from '@trpc/server';
 import { and, eq, inArray } from 'drizzle-orm';
@@ -27,6 +28,7 @@ export async function beginTakeoff(db: Db, userId: number, estimateId: number, r
       // A retry starts new provider work. Retain completed results above, but do
       // not let a historical paid reservation bypass today's entitlement.
       if (existing.freeUserId === null && !hasPaidAccess(user)) throw new TRPCError({ code: 'FORBIDDEN', message: 'An active paid plan is required to retry this paid scan. Your saved work is preserved.' });
+      if (existing.freeUserId === null) await verifyTakeoffEntitlement(user);
       await lockEstimate(tx, userId, estimateId, existing.expectedVersion);
       const leaseExpiresAt = new Date(Date.now() + 30 * 60_000);
       await tx.update(takeoffJobs).set({ status: 'running', leaseExpiresAt, attempts: existing.attempts + 1 }).where(eq(takeoffJobs.id, id));
@@ -35,6 +37,7 @@ export async function beginTakeoff(db: Db, userId: number, estimateId: number, r
     const estimate = await lockEstimate(tx, userId, estimateId);
     if (estimate.aiTakeoffData) throw new TRPCError({ code: 'CONFLICT', message: 'This estimate already has a takeoff. Create a new estimate to preserve its original evidence.' });
     const paid = hasPaidAccess(user);
+    if (paid) await verifyTakeoffEntitlement(user);
     if (!paid && !user.emailVerified) throw new TRPCError({ code: 'FORBIDDEN', message: 'Verify your email with the sign-in provider before using your free scan.' });
     if (!paid && (textMode || scopeDoc || urls.length !== 1)) throw new TRPCError({ code: 'FORBIDDEN', message: 'The free scan covers one drawing sheet. Select one sheet without an additional scope document.' });
     if (urls.length) {

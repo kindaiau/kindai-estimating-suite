@@ -1,3 +1,4 @@
+import { drawingSourceNotes, type SourceReference } from '../takeoffProvenance';
 import Decimal from "decimal.js";
 import { priceLine } from "../estimatePricing";
 /**
@@ -10,6 +11,7 @@ import { lineItems } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 
 interface AiItem {
+  sourceReferences?: SourceReference[];
   section?: string;
   description?: string;
   unit?: string;
@@ -60,7 +62,7 @@ export function buildAiLineItemRows(
       wasteFactor: new Decimal(waste).toFixed(2),
       subtotal: priceLine({ quantity: new Decimal(qty).toFixed(3), unitRate: new Decimal(unitRate).toFixed(2), wasteFactor: new Decimal(waste).toFixed(2) }),
       isFromAi: true,
-      notes: null,
+      notes: drawingSourceNotes(item.sourceReferences),
       sortOrder: idx,
     };
   });
@@ -82,7 +84,7 @@ export function buildAiLineItemRows(
         wasteFactor: "0",
         subtotal: priceLine({ quantity: new Decimal(hours).toFixed(3), unitRate: new Decimal(labourRate).toFixed(2) }),
         isFromAi: true,
-        notes: null,
+        notes: drawingSourceNotes(item.sourceReferences),
         sortOrder: materialRows.length + idx,
       };
     });
