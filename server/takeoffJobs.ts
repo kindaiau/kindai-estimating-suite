@@ -24,6 +24,9 @@ export async function beginTakeoff(db: Db, userId: number, estimateId: number, r
       if (existing.status === 'completed') return { ...existing, result: typeof existing.result === 'string' ? JSON.parse(existing.result) : existing.result };
       if (existing.status === 'running' && existing.leaseExpiresAt > new Date()) throw new TRPCError({ code: 'CONFLICT', message: 'This scan is still running. Retry the same submission after it finishes; it will not be submitted again while it is running.' });
       if (existing.attempts >= 3) throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Scan retry limit reached. Contact support with your submission ID.' });
+      // A retry starts new provider work. Retain completed results above, but do
+      // not let a historical paid reservation bypass today's entitlement.
+      if (existing.freeUserId === null && !hasPaidAccess(user)) throw new TRPCError({ code: 'FORBIDDEN', message: 'An active paid plan is required to retry this paid scan. Your saved work is preserved.' });
       await lockEstimate(tx, userId, estimateId, existing.expectedVersion);
       const leaseExpiresAt = new Date(Date.now() + 30 * 60_000);
       await tx.update(takeoffJobs).set({ status: 'running', leaseExpiresAt, attempts: existing.attempts + 1 }).where(eq(takeoffJobs.id, id));

@@ -34,6 +34,14 @@ export function buildAiLineItemRows(
   const labourRate = options.labourRate ?? 110;
   const useTradePrice = options.useTradePrice ?? true;
 
+  // Unknown dimensions/quantities require human clarification, not a fabricated
+  // zero-valued estimate line. Throw before any caller can persist partial rows.
+  for (const item of items) {
+    if (typeof item.quantity !== 'number' || !Number.isFinite(item.quantity) || item.quantity < 0.001 || item.quantity > 9999999.999) {
+      throw new Error('AI takeoff returned a missing or invalid quantity. Review the drawing and provide the missing dimensions before retrying.');
+    }
+  }
+
   const materialRows = items.map((item, idx) => {
     const qty = Number(item.quantity) || 0;
     const unitRate = Number(useTradePrice ? item.tradePrice : item.retailPrice) || 0;

@@ -37,7 +37,7 @@ export async function findOrCreateCustomer(opts: {
     email: opts.email,
     name: opts.name ?? undefined,
     metadata: { userId: opts.userId.toString() },
-  }, { idempotencyKey: `kindai-customer:${opts.userId}` });
+  }, { idempotencyKey: `kindai-customer:${opts.userId}${opts.existingCustomerId ? `:replace:${opts.existingCustomerId}` : ""}` });
 
   return customer.id;
 }
